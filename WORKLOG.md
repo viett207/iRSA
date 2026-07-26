@@ -28,7 +28,7 @@
 
 <!-- Format: copy block trên cho mỗi ngày làm việc -->
 
-## [2026-07-26]
+## 2026-07-26
 
 | Member | Task | Status | Output | Time |
 |--------|------|--------|--------|------|
@@ -37,7 +37,8 @@
 | [Quách Xuân Trường] | [Tìm hiểu thư viện đề tài, chốt đề tài cùng team, hoàn thành 01-Project-Brief, 02-PRD, 03-Wireframe-UI-Flow.md] | ✅ Done | [https://github.com/AI20K-Build-Phase-Cohort-3/P-164.git] | 6h |
 | [Phạm Hải Yến] | [Tìm hiểu thư viện đề tài, chốt đề tài cùng team, hoàn thành 01-Project-Brief, 02-PRD, 03-Wireframe-UI-Flow.md] | ✅ Done | [https://github.com/AI20K-Build-Phase-Cohort-3/P-164.git] | 7h |
 
-**Tổng kết ngày:** [1-2 câu về tiến độ chung]
+**Tổng kết ngày:**
+
 Cả nhóm đã thống nhất được đề tài cần làm, đăng kí thành công đề tài và đã bắt đầu phân tích đề tài
 Cả nhóm cài đặt thành công AI_log
 ---
