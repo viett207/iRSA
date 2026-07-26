@@ -39,6 +39,6 @@
 
 **Tổng kết ngày:**
 
-Cả nhóm đã thống nhất được đề tài cần làm, đăng kí thành công đề tài và đã bắt đầu phân tích đề tài
-Cả nhóm cài đặt thành công AI_log
+***Cả nhóm đã thống nhất được đề tài cần làm, đăng kí thành công đề tài và đã bắt đầu phân tích đề tài***
+***Cả nhóm cài đặt thành công AI_log***
 ---
