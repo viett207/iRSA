@@ -109,9 +109,17 @@ class ResumeScorer:
             return None
 
         criteria = getattr(app.job, 'criteria', None)
-        if not criteria:
-            logger.warning(f"Job for Application {application_id} has no scoring criteria.")
-            return None
+        if not criteria and app.job:
+            logger.info(f"Job {app.job_id} has no criteria. Auto-creating default JobCriteria.")
+            criteria = JobCriteria(
+                job_id=app.job_id,
+                must_have_skills=[],
+                nice_to_have_skills=[],
+                min_experience_years=0,
+                min_education="bachelor",
+            )
+            db.add(criteria)
+            db.flush()
 
         # ========== BƯỚC 2: Lấy resume text ==========
         resume_text = app.resume.raw_text

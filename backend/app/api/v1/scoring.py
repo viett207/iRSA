@@ -101,11 +101,12 @@ async def trigger_scoring(
     if not app:
         raise HTTPException(status_code=404, detail="Application not found")
 
-    # Only job creator or admin can trigger scoring
+    # Job creator, HR, Admin or Recruiter can trigger scoring
     job_result = await db.execute(select(Job).where(Job.id == job_id))
     job = job_result.scalar_one_or_none()
-    if job and job.created_by != current_user.id:
-        raise HTTPException(status_code=403, detail="Chỉ người tạo tin tuyển dụng mới được chấm điểm")
+    allowed_roles = {"admin", "hr", "manager", "recruiter", "leader"}
+    if job and job.created_by != current_user.id and current_user.role not in allowed_roles:
+        raise HTTPException(status_code=403, detail="Chỉ HR hoặc người quản lý mới có quyền chấm điểm ứng viên")
 
     def _run_scoring():
         with get_sync_session() as sync_db:
@@ -113,7 +114,10 @@ async def trigger_scoring(
 
     score = await asyncio.to_thread(_run_scoring)
     if not score:
-        raise HTTPException(status_code=400, detail="Scoring failed - missing resume or criteria")
+        raise HTTPException(
+            status_code=400,
+            detail="Không thể chấm điểm: Ứng viên chưa đính kèm CV hoặc file CV không có nội dung chữ dạng text.",
+        )
 
     return ScoringResultResponse(
         id=score.id,
@@ -143,11 +147,12 @@ async def trigger_score_all(
     db: DBSession,
 ):
     """Score all applications for a job synchronously."""
-    # Only job creator or admin can trigger scoring
+    # Job creator, HR, Admin or Recruiter can trigger scoring
     job_result = await db.execute(select(Job).where(Job.id == job_id))
     job = job_result.scalar_one_or_none()
-    if job and job.created_by != current_user.id:
-        raise HTTPException(status_code=403, detail="Chỉ người tạo tin tuyển dụng mới được chấm điểm")
+    allowed_roles = {"admin", "hr", "manager", "recruiter", "leader"}
+    if job and job.created_by != current_user.id and current_user.role not in allowed_roles:
+        raise HTTPException(status_code=403, detail="Chỉ HR hoặc người quản lý mới có quyền chấm điểm ứng viên")
 
     result = await db.execute(
         select(Application.id).where(Application.job_id == job_id)

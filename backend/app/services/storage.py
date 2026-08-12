@@ -1,5 +1,6 @@
 """MinIO storage service for file uploads."""
 
+import asyncio
 import uuid
 from io import BytesIO
 from datetime import timedelta
@@ -52,7 +53,7 @@ class StorageService:
         self, file: UploadFile, user_id: int
     ) -> tuple[str, int, str, bytes]:
         """
-        Upload a resume file to MinIO.
+        Upload a resume file to MinIO (non-blocking).
 
         Returns: (minio_path, file_size, content_type, file_bytes)
         """
@@ -64,7 +65,7 @@ class StorageService:
                 detail=f"File type not allowed. Allowed: PDF, DOCX",
             )
 
-        # Read file contents
+        # Read file contents asynchronously
         contents = await file.read()
         file_size = len(contents)
 
@@ -86,7 +87,8 @@ class StorageService:
         path = f"{user_id}/{filename}"
 
         try:
-            self.client.put_object(
+            await asyncio.to_thread(
+                self.client.put_object,
                 self.bucket,
                 path,
                 BytesIO(contents),
@@ -108,7 +110,6 @@ class StorageService:
             url = self.client.presigned_get_object(
                 self.bucket, path, expires=timedelta(hours=expires_hours)
             )
-            # Replace the internal storage host with its browser-facing URL.
             internal = f"http://{settings.MINIO_ENDPOINT}"
             public = settings.MINIO_PUBLIC_URL
             if internal != public:
@@ -137,8 +138,7 @@ class StorageService:
         """Delete a file from storage."""
         try:
             self.client.remove_object(self.bucket, path)
-        except S3Error as e:
-            # Log but don't fail - file might already be deleted
+        except S3Error:
             pass
 
     def _get_extension(self, filename: str) -> str:
@@ -148,7 +148,6 @@ class StorageService:
         return ".pdf"
 
 
-# Singleton instance
 _storage_service: StorageService | None = None
 
 

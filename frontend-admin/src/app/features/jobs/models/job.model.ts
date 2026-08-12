@@ -161,8 +161,11 @@ export const EDUCATION_LABELS: Record<string, string> = {
 
 export type ApplicationStatus =
   | 'submitted'
+  | 'reviewing'
   | 'shortlisted'
   | 'interviewing'
+  | 'offered'
+  | 'hired'
   | 'rejected';
 
 export interface Applicant {
@@ -180,12 +183,25 @@ export interface Applicant {
   education_score?: number | null;
 }
 
-// Valid transitions from each status
+const ALL_STATUSES: ApplicationStatus[] = [
+  'submitted',
+  'reviewing',
+  'shortlisted',
+  'interviewing',
+  'offered',
+  'hired',
+  'rejected',
+];
+
+// Valid transitions from each status (allows free transition to any other valid status)
 export const STATUS_TRANSITIONS: Record<string, ApplicationStatus[]> = {
-  submitted: ['shortlisted', 'rejected'],
-  shortlisted: ['interviewing', 'rejected'],
-  interviewing: ['rejected'],
-  rejected: [],
+  submitted: ALL_STATUSES.filter((s) => s !== 'submitted'),
+  reviewing: ALL_STATUSES.filter((s) => s !== 'reviewing'),
+  shortlisted: ALL_STATUSES.filter((s) => s !== 'shortlisted'),
+  interviewing: ALL_STATUSES.filter((s) => s !== 'interviewing'),
+  offered: ALL_STATUSES.filter((s) => s !== 'offered'),
+  hired: ALL_STATUSES.filter((s) => s !== 'hired'),
+  rejected: ALL_STATUSES.filter((s) => s !== 'rejected'),
 };
 
 export interface ApplicantDetail extends Applicant {
@@ -202,8 +218,11 @@ export interface ApplicantListResponse {
 
 export const APPLICATION_STATUS_LABELS: Record<string, string> = {
   submitted: 'Đã nộp',
+  reviewing: 'Đang xem xét',
   shortlisted: 'Lọt vòng',
   interviewing: 'Phỏng vấn',
+  offered: 'Mời nhận việc',
+  hired: 'Đã tuyển',
   rejected: 'Từ chối',
 };
 

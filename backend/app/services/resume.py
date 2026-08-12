@@ -1,6 +1,7 @@
 """Resume service for managing candidate CVs."""
 # Module này quản lý toàn bộ lifecycle của CV: upload, list, delete, set default
 
+import asyncio
 import os
 import re
 import unicodedata
@@ -108,7 +109,7 @@ class ResumeService:
         # Text này sẽ dùng để:
         # - AI scoring (match skills, experience, education)
         # - Search/filter candidates
-        raw_text = extract_text(file_bytes, content_type)
+        raw_text = await asyncio.to_thread(extract_text, file_bytes, content_type)
 
         # ========== BƯỚC 4: Tạo Resume record ==========
         resume = Resume(

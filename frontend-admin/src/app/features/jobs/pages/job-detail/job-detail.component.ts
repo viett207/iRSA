@@ -439,6 +439,20 @@ import {
                           >
                             <span nz-icon nzType="info-circle" nzTheme="outline"></span>
                           </button>
+                          @if (isOwner()) {
+                            <button
+                              nz-button
+                              nzType="link"
+                              nzSize="small"
+                              (click)="triggerScoring(app)"
+                              [nzLoading]="scoringAppId === app.id"
+                              nz-tooltip
+                              nzTooltipTitle="Chấm điểm lại (Bước 1 sơ loại)"
+                              style="padding: 0; height: 24px; color: #fa8c16"
+                            >
+                              <span nz-icon nzType="reload" nzTheme="outline"></span>
+                            </button>
+                          }
                           <ng-template #scoreDetail>
                             <div style="font-size: 13px; min-width: 200px">
                               <div style="margin-bottom: 6px">
@@ -465,13 +479,15 @@ import {
                         <button
                           nz-button
                           nzSize="small"
-                          nzType="dashed"
+                          nzType="primary"
+                          nzGhost
                           (click)="triggerScoring(app)"
                           [nzLoading]="scoringAppId === app.id"
                           nz-tooltip
-                          nzTooltipTitle="Chấm điểm"
+                          nzTooltipTitle="Chấm điểm Lọc sơ loại (Bước 1)"
                         >
                           <span nz-icon nzType="calculator"></span>
+                          Chấm điểm
                         </button>
                       } @else {
                         <nz-tag>Chưa chấm</nz-tag>
@@ -759,10 +775,12 @@ export class JobDetailComponent implements OnInit {
     });
   }
 
-  // Permission: only the HR who created the job can operate (except approve)
+  // Permission: HR/Admin/Recruiter or owner can operate
   isOwner(): boolean {
     const j = this.job();
-    return !!j && j.created_by === this.authService.user()?.id;
+    const u = this.authService.user();
+    if (!j || !u) return false;
+    return this.authService.hasRole('admin', 'hr', 'leader', 'manager', 'recruiter') || j.created_by === u.id;
   }
 
   canEdit(): boolean {
@@ -999,9 +1017,9 @@ export class JobDetailComponent implements OnInit {
         this.scoringAppId = null;
         this.message.success('Đã chấm điểm xong');
       },
-      error: () => {
+      error: (err) => {
         this.scoringAppId = null;
-        this.message.error('Không thể chấm điểm');
+        this.message.error(err.error?.detail || 'Không thể chấm điểm');
       },
     });
   }
@@ -1116,7 +1134,9 @@ export class JobDetailComponent implements OnInit {
   // --- Status management ---
 
   getAvailableTransitions(status: string): ApplicationStatus[] {
-    return STATUS_TRANSITIONS[status] || [];
+    const all: ApplicationStatus[] = ['submitted', 'reviewing', 'shortlisted', 'interviewing', 'offered', 'hired', 'rejected'];
+    const list = STATUS_TRANSITIONS[status] || all;
+    return list.filter((s) => s !== status);
   }
 
   updateStatus(app: Applicant, newStatus: ApplicationStatus): void {

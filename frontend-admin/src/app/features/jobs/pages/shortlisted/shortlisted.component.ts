@@ -269,9 +269,11 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     private notificationSvc: NotificationService,
   ) {}
 
-  /** Only the HR who created the job can operate */
+  /** HR/Admin/Recruiter or owner can operate */
   isOwner(app: ShortlistedApplicant): boolean {
-    return app.job_created_by === this.authService.user()?.id;
+    const u = this.authService.user();
+    if (!u) return false;
+    return this.authService.hasRole('admin', 'hr', 'leader', 'manager', 'recruiter') || app.job_created_by === u.id;
   }
 
   ngOnInit(): void {

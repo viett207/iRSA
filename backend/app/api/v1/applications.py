@@ -138,19 +138,25 @@ class StatusUpdateRequest(BaseModel):
     reason: str | None = None
 
 
-# Valid internal status transitions
-_STATUS_TRANSITIONS: dict[str, list[str]] = {
-    "submitted": ["shortlisted", "rejected"],
-    "shortlisted": ["interviewing", "rejected"],
-    "interviewing": ["rejected"],
-    "rejected": [],
+# All valid application statuses
+VALID_APPLICATION_STATUSES: set[str] = {
+    "submitted",
+    "reviewing",
+    "shortlisted",
+    "interviewing",
+    "offered",
+    "hired",
+    "rejected",
 }
 
 # Internal → public status mapping
 _PUBLIC_STATUS_MAP: dict[str, str] = {
     "submitted": "in_review",
+    "reviewing": "in_review",
     "shortlisted": "shortlisted",
     "interviewing": "shortlisted",
+    "offered": "shortlisted",
+    "hired": "selected",
     "rejected": "not_selected",
 }
 
@@ -202,7 +208,7 @@ async def update_application_status(
     current_user: HRUser,
     db: DBSession,
 ):
-    """Update application status (shortlist, reject, schedule interview)."""
+    """Update application status (shortlist, reject, schedule interview, etc.)."""
     result = await db.execute(
         select(Application)
         .options(
@@ -216,17 +222,15 @@ async def update_application_status(
     if not app:
         raise HTTPException(status_code=404, detail="Application not found")
 
-    # Only the HR who created the job can change application status
-    if app.job and app.job.created_by != current_user.id:
-        raise HTTPException(status_code=403, detail="Chỉ người tạo tin tuyển dụng mới được thao tác")
+    # Job creator, HR, Admin or Recruiter can change application status
+    allowed_roles = {"admin", "hr", "manager", "recruiter", "leader"}
+    if app.job and app.job.created_by != current_user.id and current_user.role not in allowed_roles:
+        raise HTTPException(status_code=403, detail="Chỉ người tạo tin tuyển dụng hoặc HR mới có quyền thao tác")
 
-    old_status = app.status
-    allowed = _STATUS_TRANSITIONS.get(old_status, [])
-    if body.status not in allowed:
+    if body.status not in VALID_APPLICATION_STATUSES:
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot transition from '{old_status}' to '{body.status}'. "
-                   f"Allowed: {allowed}",
+            detail=f"Trạng thái '{body.status}' không hợp lệ. Các trạng thái hợp lệ: {sorted(list(VALID_APPLICATION_STATUSES))}",
         )
 
     app.status = body.status

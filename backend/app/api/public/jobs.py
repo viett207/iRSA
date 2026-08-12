@@ -117,7 +117,7 @@ async def search_jobs_by_cv(
     jobs_result = await db.execute(
         select(Job)
         .options(selectinload(Job.criteria))
-        .where(Job.is_published == True)
+        .where((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"])))
     )
     jobs = jobs_result.scalars().all()
 
@@ -199,7 +199,7 @@ async def list_active_companies(
             func.max(Job.published_at).label("latest_published_at"),
         )
         .join(User, Job.created_by == User.id)
-        .where(Job.is_published == True, User.company_code.isnot(None))
+        .where(((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"]))), User.company_code.isnot(None))
         .group_by(User.company_code)
         .order_by(func.max(Job.published_at).desc())
         .limit(limit)
@@ -261,7 +261,7 @@ async def get_company_detail(company_code: str, db: DBSession):
     stmt = (
         select(Job)
         .join(User, Job.created_by == User.id)
-        .where(Job.is_published == True, User.company_code == company_code)
+        .where(((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"]))), User.company_code == company_code)
         .order_by(Job.published_at.desc())
     )
     jobs_result = await db.execute(stmt)
@@ -311,7 +311,7 @@ async def list_published_jobs(
     size: int = Query(20, ge=1, le=50),
 ):
     """List published jobs with search, filters, and sorting."""
-    query = select(Job).where(Job.is_published == True)
+    query = select(Job).where((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"])))
 
     if company_code:
         # Filter jobs by creator's company_code
@@ -419,7 +419,7 @@ async def get_job_by_slug(slug: str, db: DBSession):
     result = await db.execute(
         select(Job)
         .options(selectinload(Job.criteria))
-        .where(Job.slug == slug, Job.is_published == True)
+        .where(Job.slug == slug, (Job.is_published == True) | (Job.status.in_(["published", "active", "approved"])))
     )
     job = result.scalar_one_or_none()
 
