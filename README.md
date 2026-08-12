@@ -1,4 +1,8 @@
-# 🤖 AI20K Agent Template
+# 🤖 P-164 AI Recruitment Screening Agent
+
+Project đã được merge với backend và hai frontend từ iRSA. `backend` là API
+nghiệp vụ chính; `src` là package AI Agent và được mount vào cùng API.
+Xem [LOCAL_SETUP.md](LOCAL_SETUP.md) để chạy toàn bộ hệ thống trên máy local.
 
 Template chính thức cho học viên **VinUni AI20K Build Phase** — cung cấp sẵn cấu trúc dự án, code mẫu, và hướng dẫn kỹ thuật chi tiết để xây dựng AI Agent đạt điểm cao (35+/50).
 
@@ -10,7 +14,7 @@ Khi tham gia AI20K Build Phase, mỗi đội cần xây dựng một AI Agent ho
 
 - **Cấu trúc thư mục chuẩn** — đã được thiết kế theo best practices (separation of concerns)
 - **Code mẫu** cho các phần cốt lõi: LangGraph agent, FastAPI API, config, schemas
-- **Docker + CI/CD sẵn** — Dockerfile multi-stage, GitHub Actions workflow
+- **CI/CD sẵn** — GitHub Actions workflow
 - **Hướng dẫn kỹ thuật 10 chương** — từ clone template đến nộp bài Demo Day
 - **Checklist 10 deliverables** — đảm bảo không bỏ sót yêu cầu BTC
 - **AI Usage Logging tự động** — Pre-configured hooks cho Claude Code, Cursor, Codex, Gemini CLI, Antigravity, và GitHub Copilot
@@ -39,7 +43,7 @@ python3.11 -m venv .venv
 source .venv/bin/activate
 
 # Cài dependencies
-pip install -e ".[dev]"
+pip install -r requirements.txt
 
 # Cấu hình API keys
 cp .env.example .env
@@ -64,7 +68,7 @@ Hooks tự động log mọi AI prompt khi dùng Claude Code, Cursor, Codex, Gem
 
 ```bash
 # Chạy FastAPI backend
-uvicorn src.main:app --reload --port 8000
+uvicorn run_local:app --reload --port 8000
 
 # Mở Swagger UI
 # http://localhost:8000/docs
@@ -108,8 +112,6 @@ uvicorn src.main:app --reload --port 8000
 ├── presentation/         # 🎤 Demo Day slides
 ├── .github/workflows/    # ⚡ CI/CD (GitHub Actions)
 ├── .github/hooks/        # 🪝 Copilot hook config
-├── Dockerfile            # 🐳 Multi-stage build
-├── docker-compose.yml    # 🐙 Full stack orchestration
 └── README_boilerplate.md # 📝 README template cho đội của bạn
 ```
 
@@ -123,7 +125,7 @@ uvicorn src.main:app --reload --port 8000
 | 4 | **LangGraph Agent** — State, nodes, edges, tools, RAG | 8 giờ |
 | 5 | FastAPI — Routes, validation, error handling, streaming | 6 giờ |
 | 6 | Giao diện — Next.js + Streamlit quickstart | 6 giờ |
-| 7 | DevOps — Docker, CI/CD, deploy, logging | 6 giờ |
+| 7 | DevOps — CI/CD, deploy, logging | 6 giờ |
 | 8 | Kiểm thử — Unit test, integration test, RAGAS | 4 giờ |
 | 9 | Demo Day — 10 deliverables, checklist, tips | 2 giờ |
 | 10 | Tài nguyên — Khóa học, docs, BMAD method | tham khảo |
@@ -154,7 +156,7 @@ uvicorn src.main:app --reload --port 8000
 | LLM | OpenAI GPT-4o-mini | API |
 | Frontend | Next.js / Streamlit | 14+ / 1.30+ |
 | Database | SQLite (dev) / PostgreSQL (prod) | — |
-| DevOps | Docker + GitHub Actions | — |
+| DevOps | GitHub Actions | — |
 | Testing | pytest + pytest-asyncio | 8+ |
 
 ## 📊 AI Usage Logging

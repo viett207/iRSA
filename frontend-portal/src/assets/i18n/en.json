@@ -1,0 +1,168 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear filters",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "view": "View",
+    "apply": "Apply",
+    "applied": "Applied",
+    "viewAll": "View all",
+    "or": "or"
+  },
+  "auth": {
+    "login": "Sign In",
+    "logout": "Sign Out",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "fullName": "Full Name",
+    "phone": "Phone Number",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "loginSuccess": "Login successful",
+    "loginFailed": "Login failed",
+    "registerSuccess": "Registration successful! Please verify your email.",
+    "registerFailed": "Registration failed",
+    "invalidEmail": "Please enter a valid email address",
+    "invalidPassword": "Please enter password",
+    "invalidName": "Please enter your name",
+    "passwordMismatch": "Passwords do not match",
+    "passwordMinLength": "Password must be at least 8 characters",
+    "enterPassword": "Enter password",
+    "enterPasswordConfirm": "Re-enter password",
+    "minPasswordChars": "At least 8 characters",
+    "phoneOptional": "optional",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "registerNow": "Register now",
+    "loginNow": "Sign in now",
+    "continueWithGoogle": "Continue with Google",
+    "agreeTerms": "I agree to the",
+    "termsOfService": "Terms of Service",
+    "and": "and",
+    "privacyPolicy": "Privacy Policy",
+    "createAccount": "Create Account",
+    "enterInfo": "Enter your credentials to continue",
+    "fillInfo": "Fill in your information to start applying"
+  },
+  "register": {
+    "title": "Create Account",
+    "subtitle": "Fill in your details to start job hunting",
+    "success": "Registration successful!",
+    "emailSent": "We have sent a confirmation email to",
+    "checkEmail": "Please check your inbox and verify your email to activate your account.",
+    "goToLogin": "Go to login page",
+    "goToHome": "Back to home"
+  },
+  "branding": {
+    "title": "iRSA",
+    "welcomeBack": "Welcome back!",
+    "loginPrompt": "Sign in to continue finding career opportunities and track your application status.",
+    "startJourney": "Start your new journey",
+    "registerPrompt": "Create an account to access thousands of job opportunities and connect with top employers.",
+    "feature1": "Quick access to your profile",
+    "feature2": "Track your applications",
+    "feature3": "Get notified about new jobs",
+    "feature4": "Completely free",
+    "feature5": "Create profile in 2 minutes",
+    "feature6": "AI-powered job recommendations",
+    "feature7": "Absolute data security"
+  },
+  "jobs": {
+    "title": "Jobs",
+    "searchPlaceholder": "Search for jobs...",
+    "location": "Location",
+    "salary": "Salary",
+    "postedDate": "Posted",
+    "deadline": "Deadline",
+    "viewDetail": "View details",
+    "applyNow": "Apply now",
+    "alreadyApplied": "You have already applied for this position",
+    "requirements": "Requirements",
+    "responsibilities": "Responsibilities",
+    "benefits": "Benefits",
+    "aboutCompany": "About the company",
+    "similarJobs": "Similar jobs",
+    "noResults": "No results found"
+  },
+  "employmentType": {
+    "full_time": "Full-time",
+    "part_time": "Part-time",
+    "contract": "Contract",
+    "internship": "Internship",
+    "remote": "Remote"
+  },
+  "applications": {
+    "title": "Applications",
+    "myApplications": "My Applications",
+    "status": "Status",
+    "appliedOn": "Applied on",
+    "noApplications": "You have no applications yet",
+    "startApplying": "Start job hunting",
+    "viewJob": "View job",
+    "withdrawApplication": "Withdraw application"
+  },
+  "applicationStatus": {
+    "submitted": "Submitted",
+    "in_review": "Under review",
+    "shortlisted": "Shortlisted",
+    "selected": "Selected",
+    "not_selected": "Not selected"
+  },
+  "profile": {
+    "title": "Profile",
+    "personalInfo": "Personal Information",
+    "contactInfo": "Contact Information",
+    "resume": "Resume/CV",
+    "uploadResume": "Upload Resume",
+    "updateProfile": "Update Profile",
+    "changePassword": "Change Password",
+    "editProfile": "Edit Profile"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Hello",
+    "totalApplications": "Total Applications",
+    "inReview": "Under Review",
+    "shortlisted": "Shortlisted",
+    "recentApplications": "Recent Applications"
+  },
+  "navigation": {
+    "home": "Home",
+    "jobs": "Jobs",
+    "dashboard": "Dashboard",
+    "applications": "Applications",
+    "profile": "Profile",
+    "login": "Sign In",
+    "register": "Register"
+  },
+  "messages": {
+    "success": {
+      "applied": "Application submitted successfully",
+      "profileUpdated": "Profile updated successfully",
+      "resumeUploaded": "Resume uploaded successfully"
+    },
+    "error": {
+      "applyFailed": "Failed to submit application",
+      "loadFailed": "Failed to load data",
+      "updateFailed": "Failed to update"
+    }
+  },
+  "footer": {
+    "copyright": "iRSA. All rights reserved.",
+    "aboutUs": "About Us",
+    "contact": "Contact",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  }
+}

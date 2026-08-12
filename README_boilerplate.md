@@ -29,7 +29,7 @@ Sản phẩm giải quyết vấn đề như thế nào bằng AI:
 | Backend | FastAPI + Python 3.11+ |
 | Frontend | React/Next.js + TypeScript |
 | Database | PostgreSQL / SQLite |
-| DevOps | Docker + GitHub Actions |
+| DevOps | GitHub Actions |
 
 ## Quick Start
 
@@ -67,8 +67,6 @@ uvicorn src.main:app --reload
 ├── docs/                # Documentation
 ├── eval/                # Evaluation results
 ├── presentation/        # Demo materials
-├── Dockerfile           # Multi-stage build
-├── docker-compose.yml   # Full stack
 └── .github/workflows/   # CI/CD pipelines
 ```
 

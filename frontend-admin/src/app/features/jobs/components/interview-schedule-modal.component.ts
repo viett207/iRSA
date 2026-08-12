@@ -1,0 +1,237 @@
+import { Component, Input, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { NzModalRef } from 'ng-zorro-antd/modal';
+import { NzFormModule } from 'ng-zorro-antd/form';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
+import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
+
+import { JobService } from '../services/job.service';
+import { Interview, InterviewCreateRequest } from '../models/job.model';
+
+@Component({
+  selector: 'app-interview-schedule-modal',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    NzFormModule,
+    NzInputModule,
+    NzDatePickerModule,
+    NzSelectModule,
+    NzButtonModule,
+    NzIconModule,
+    NzTagModule,
+    NzEmptyModule,
+    NzSpinModule,
+    NzPopconfirmModule,
+  ],
+  template: `
+    <!-- Existing interviews -->
+    <nz-spin [nzSpinning]="loading">
+      @if (interviews.length > 0) {
+        <div class="existing-interviews">
+          <h4>Lịch phỏng vấn đã đặt</h4>
+          @for (iv of interviews; track iv.id) {
+            <div class="interview-item" [class.cancelled]="iv.status === 'cancelled'">
+              <div class="interview-info">
+                <div class="interview-date">
+                  <span nz-icon nzType="calendar"></span>
+                  {{ iv.interview_date | date:'dd/MM/yyyy HH:mm' }}
+                </div>
+                <div class="interview-meta">
+                  <nz-tag [nzColor]="iv.interview_type === 'online' ? 'blue' : 'green'">
+                    {{ iv.interview_type === 'online' ? 'Online' : 'Trực tiếp' }}
+                  </nz-tag>
+                  <nz-tag [nzColor]="getStatusColor(iv.status)">
+                    {{ getStatusLabel(iv.status) }}
+                  </nz-tag>
+                </div>
+                <div class="interview-location" *ngIf="iv.location">
+                  <span nz-icon nzType="environment"></span> {{ iv.location }}
+                </div>
+                <div class="interview-notes" *ngIf="iv.notes">
+                  <span nz-icon nzType="message"></span> {{ iv.notes }}
+                </div>
+                <div class="interview-scheduler" *ngIf="iv.scheduler_name">
+                  <span nz-icon nzType="user"></span> {{ iv.scheduler_name }}
+                </div>
+              </div>
+              @if (iv.status === 'scheduled') {
+                <div class="interview-actions">
+                  <button nz-button nzSize="small" nzType="primary" (click)="markCompleted(iv)">
+                    <span nz-icon nzType="check"></span> Hoàn thành
+                  </button>
+                  <button nz-button nzSize="small" nzDanger
+                    nz-popconfirm nzPopconfirmTitle="Hủy lịch phỏng vấn này?"
+                    (nzOnConfirm)="cancelExisting(iv)">
+                    <span nz-icon nzType="close"></span> Hủy
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <hr style="margin: 16px 0; border-color: #f0f0f0;">
+      }
+    </nz-spin>
+
+    <!-- Schedule new -->
+    <h4>Đặt lịch mới</h4>
+    <nz-form-item>
+      <nz-form-label>Ngày giờ phỏng vấn</nz-form-label>
+      <nz-form-control>
+        <nz-date-picker
+          [(ngModel)]="form.interview_date"
+          nzShowTime
+          nzFormat="dd/MM/yyyy HH:mm"
+          nzPlaceHolder="Chọn ngày giờ"
+          style="width: 100%"
+        ></nz-date-picker>
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label>Hình thức</nz-form-label>
+      <nz-form-control>
+        <nz-select [(ngModel)]="form.interview_type" style="width: 100%">
+          <nz-option nzValue="online" nzLabel="Online (Google Meet / Zoom)"></nz-option>
+          <nz-option nzValue="offline" nzLabel="Trực tiếp"></nz-option>
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label>{{ form.interview_type === 'online' ? 'Link phỏng vấn' : 'Địa chỉ' }}</nz-form-label>
+      <nz-form-control>
+        <input nz-input [(ngModel)]="form.location"
+          [placeholder]="form.interview_type === 'online' ? 'https://meet.google.com/...' : 'Số 1 Đại Cồ Việt, Hà Nội'" />
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label>Ghi chú cho ứng viên</nz-form-label>
+      <nz-form-control>
+        <textarea nz-input [(ngModel)]="form.notes" [nzAutosize]="{ minRows: 2, maxRows: 4 }"
+          placeholder="VD: Vui lòng chuẩn bị laptop, mang theo CCCD..."></textarea>
+      </nz-form-control>
+    </nz-form-item>
+
+    <div class="modal-footer">
+      <button nz-button (click)="modalRef.close()">Hủy</button>
+      <button nz-button nzType="primary" [nzLoading]="submitting"
+        [disabled]="!form.interview_date" (click)="submit()">
+        <span nz-icon nzType="calendar"></span> Đặt lịch
+      </button>
+    </div>
+  `,
+  styles: [`
+    .existing-interviews { margin-bottom: 8px; }
+    .interview-item {
+      padding: 12px;
+      border: 1px solid #f0f0f0;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .interview-item.cancelled { opacity: 0.5; }
+    .interview-date { font-weight: 600; margin-bottom: 4px; }
+    .interview-meta { margin-bottom: 4px; }
+    .interview-location, .interview-notes, .interview-scheduler {
+      font-size: 13px; color: #595959; margin-top: 2px;
+    }
+    .interview-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+    nz-form-item { margin-bottom: 12px; }
+    h4 { margin: 0 0 12px; font-weight: 600; }
+  `],
+})
+export class InterviewScheduleModalComponent implements OnInit {
+  @Input() jobId!: number;
+  @Input() appId!: number;
+  @Input() candidateName = '';
+
+  interviews: Interview[] = [];
+  loading = false;
+  submitting = false;
+
+  form: InterviewCreateRequest = {
+    interview_date: '',
+    interview_type: 'online',
+    location: '',
+    notes: '',
+  };
+
+  constructor(
+    public modalRef: NzModalRef,
+    private jobService: JobService,
+    private message: NzMessageService,
+  ) {}
+
+  ngOnInit(): void {
+    this.loadInterviews();
+  }
+
+  loadInterviews(): void {
+    this.loading = true;
+    this.jobService.getInterviews(this.jobId, this.appId).subscribe({
+      next: (data) => { this.interviews = data; this.loading = false; },
+      error: () => { this.loading = false; },
+    });
+  }
+
+  submit(): void {
+    if (!this.form.interview_date) return;
+
+    this.submitting = true;
+    const body: InterviewCreateRequest = {
+      ...this.form,
+      interview_date: new Date(this.form.interview_date).toISOString(),
+    };
+
+    this.jobService.scheduleInterview(this.jobId, this.appId, body).subscribe({
+      next: (iv) => {
+        this.message.success('Đã đặt lịch phỏng vấn');
+        this.submitting = false;
+        this.modalRef.close(iv);
+      },
+      error: (err) => {
+        this.message.error(err.error?.detail || 'Không thể đặt lịch');
+        this.submitting = false;
+      },
+    });
+  }
+
+  markCompleted(iv: Interview): void {
+    this.jobService.updateInterview(this.jobId, this.appId, iv.id, { status: 'completed' }).subscribe({
+      next: () => { this.message.success('Đã đánh dấu hoàn thành'); this.loadInterviews(); },
+      error: () => this.message.error('Không thể cập nhật'),
+    });
+  }
+
+  cancelExisting(iv: Interview): void {
+    this.jobService.cancelInterview(this.jobId, this.appId, iv.id).subscribe({
+      next: () => { this.message.success('Đã hủy lịch'); this.loadInterviews(); },
+      error: () => this.message.error('Không thể hủy'),
+    });
+  }
+
+  getStatusColor(status: string): string {
+    return { scheduled: 'blue', completed: 'green', cancelled: 'default' }[status] || 'default';
+  }
+
+  getStatusLabel(status: string): string {
+    return { scheduled: 'Đã lên lịch', completed: 'Hoàn thành', cancelled: 'Đã hủy' }[status] || status;
+  }
+}

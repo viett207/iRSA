@@ -81,14 +81,14 @@ graph LR
 5. Tools thực thi actions (nếu cần)
 6. Response trả về Frontend
 
-## Deployment Architecture
+## Local Development Architecture
 
 ```mermaid
 graph LR
-    subgraph Docker
-        FE[Frontend Container]
-        BE[Backend Container]
-        DB_C[Database Container]
+    subgraph Local Machine
+        FE[Frontend]
+        BE[FastAPI Backend]
+        DB_C[Local Database]
     end
     FE --> BE --> DB_C
 ```

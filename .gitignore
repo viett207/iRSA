@@ -42,11 +42,9 @@ htmlcov/
 .coverage
 coverage.xml
 
-# Docker
-docker-compose.override.yml
-
 # Node (frontend)
 node_modules/
+.angular/
 .next/
 out/
 .nuxt/
