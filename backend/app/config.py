@@ -52,6 +52,21 @@ class Settings(BaseSettings):
 
     # AI / Gemini
     GEMINI_API_KEY: str = ""
+    GEMINI_API_KEYS: str = ""
+
+    @property
+    def parsed_gemini_api_keys(self) -> list[str]:
+        import os
+        raw_keys = (
+            self.GEMINI_API_KEYS
+            or self.GEMINI_API_KEY
+            or os.environ.get("GEMINI_API_KEYS", "")
+            or os.environ.get("GEMINI_API_KEY", "")
+        )
+        if not raw_keys:
+            return []
+        keys = [k.strip() for k in raw_keys.replace("\n", ",").split(",") if k.strip()]
+        return keys
 
     # Model name for embedding scoring (multilingual model supports Vietnamese)
     EMBEDDING_MODEL: str = "paraphrase-multilingual-MiniLM-L12-v2"
