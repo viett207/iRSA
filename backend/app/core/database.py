@@ -8,9 +8,18 @@ from app.config import get_settings
 
 settings = get_settings()
 
+# Format async and sync URLs properly
+raw_db_url = settings.DATABASE_URL
+if raw_db_url.startswith("postgresql://"):
+    async_database_url = raw_db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+else:
+    async_database_url = raw_db_url
+
+sync_database_url = raw_db_url.replace("postgresql+asyncpg://", "postgresql://")
+
 # Async engine for FastAPI
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    async_database_url,
     echo=settings.DEBUG,
     future=True,
 )
@@ -24,7 +33,6 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 # Sync engine for Celery tasks
-sync_database_url = settings.DATABASE_URL.replace("+asyncpg", "")
 sync_engine = create_engine(sync_database_url, echo=settings.DEBUG)
 SyncSessionLocal = sessionmaker(bind=sync_engine, expire_on_commit=False)
 

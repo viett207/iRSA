@@ -1,10 +1,17 @@
+from pathlib import Path
+import sys
 from unittest.mock import AsyncMock
+
+# Add backend directory to sys.path so 'app' imports resolve
+BACKEND_DIR = Path(__file__).resolve().parent.parent / "backend"
+sys.path.insert(0, str(BACKEND_DIR))
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from src.main import app
+
 
 
 @pytest_asyncio.fixture
