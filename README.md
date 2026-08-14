@@ -203,5 +203,5 @@ bất kỳ markdown viewer/editor nào (VS Code, Obsidian, GitHub UI, …).
 MIT — Sử dụng tự do cho mục đích giáo dục.
 
 
-
+## Khoi dong toan bo du an
    .\start_all.ps1
