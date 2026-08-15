@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute } from '@angular/router';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil, switchMap, tap, catchError } from 'rxjs/operators';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -925,6 +925,7 @@ export class JobsComponent implements OnInit, OnDestroy {
 
   appliedJobIds = new Set<number>();
   private searchSubject = new Subject<string>();
+  private suggestionSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
 
   searchQuery = '';
@@ -993,6 +994,39 @@ export class JobsComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         this.currentPage = 1;
         this.loadJobs();
+      });
+
+    this.suggestionSubject
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        tap((query) => {
+          if (!query || query.trim().length < 2) {
+            this.suggestions = [];
+            this.suggestionsLoading = false;
+          } else {
+            this.suggestionsLoading = true;
+          }
+        }),
+        switchMap((query) => {
+          if (!query || query.trim().length < 2) {
+            return of({ items: [] as PublicJobListItem[] });
+          }
+          return this.jobService.list({ q: query.trim(), size: 5 }).pipe(
+            catchError(() => of({ items: [] as PublicJobListItem[] }))
+          );
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (res) => {
+          this.suggestions = res.items || [];
+          this.suggestionsLoading = false;
+        },
+        error: () => {
+          this.suggestions = [];
+          this.suggestionsLoading = false;
+        },
       });
 
     this.route.queryParams.subscribe((params) => {
@@ -1172,25 +1206,11 @@ export class JobsComponent implements OnInit, OnDestroy {
 
   onSearchInput(query: string): void {
     this.searchSubject.next(query);
-    this.loadSuggestions(query);
-  }
-
-  private loadSuggestions(query: string): void {
-    if (!query || query.length < 2) {
+    if (!query || query.trim().length < 2) {
       this.suggestions = [];
-      return;
+      this.suggestionsLoading = false;
     }
-    this.suggestionsLoading = true;
-    this.jobService.list({ q: query, size: 5 }).subscribe({
-      next: (res) => {
-        this.suggestions = res.items;
-        this.suggestionsLoading = false;
-      },
-      error: () => {
-        this.suggestions = [];
-        this.suggestionsLoading = false;
-      },
-    });
+    this.suggestionSubject.next(query);
   }
 
   onSearch(): void {
