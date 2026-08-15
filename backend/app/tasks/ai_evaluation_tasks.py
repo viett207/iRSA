@@ -10,15 +10,17 @@ logger = logging.getLogger(__name__)
 
 
 def _run_async(coro):
-    """Run async function in sync Celery context."""
+    """Run async function in sync Celery context with proper cleanup."""
+    loop = asyncio.new_event_loop()
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    return loop.run_until_complete(coro)
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(coro)
+    finally:
+        try:
+            loop.run_until_complete(loop.shutdown_asyncgens())
+        finally:
+            loop.close()
+            asyncio.set_event_loop(None)
 
 
 @celery_app.task(bind=True, max_retries=2, default_retry_delay=60)
