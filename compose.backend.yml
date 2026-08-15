@@ -1,0 +1,25 @@
+services:
+  migrate:
+    image: p164-backend:local
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    volumes:
+      - ./.env:/app/.env:ro
+    working_dir: /app/backend
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    restart: "no"
+
+  backend:
+    image: p164-backend:local
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    volumes:
+      - ./.env:/app/.env:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "8000:8000"
+    restart: unless-stopped

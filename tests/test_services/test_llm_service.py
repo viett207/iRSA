@@ -52,6 +52,24 @@ class TestGeminiKeyRotation(unittest.TestCase):
         self.assertEqual(mock_llm1.ainvoke.call_count, 1)
         self.assertEqual(mock_llm2.ainvoke.call_count, 1)
 
+    def test_rotating_gemini_llm_generate_content_async(self):
+        """Test generate_content_async method of RotatingGeminiLLM."""
+        rotator = RotatingGeminiLLM(api_keys=["key1"], model_name="gemini-1.5-flash")
+
+        # Mock direct genai
+        mock_response = MagicMock()
+        mock_response.text = "Async response"
+
+        with unittest.mock.patch("google.generativeai.GenerativeModel") as MockModel:
+            mock_instance = MockModel.return_value
+            mock_instance.generate_content_async = AsyncMock(return_value=mock_response)
+
+            async def run_test():
+                return await rotator.generate_content_async("Hello")
+
+            result = asyncio.run(run_test())
+            self.assertEqual(result.text, "Async response")
+
 
 if __name__ == "__main__":
     unittest.main()

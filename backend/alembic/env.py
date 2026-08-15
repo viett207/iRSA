@@ -14,8 +14,13 @@ from app.models import User, CandidateProfile  # noqa: F401 - Import for metadat
 config = context.config
 settings = get_settings()
 
-# Override sqlalchemy.url from environment
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# ConfigParser treats percent signs in encoded passwords as interpolation.
+# Escape them before handing the URL to Alembic; SQLAlchemy receives the
+# original single-percent URL after ConfigParser resolves the value.
+database_url = settings.DATABASE_URL
+if database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

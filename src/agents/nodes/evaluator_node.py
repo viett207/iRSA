@@ -1,5 +1,6 @@
 """Node 2: Evaluator Node — Deep skill assessment using Gemini LLM + Evidence matching."""
 
+import asyncio
 import json
 import logging
 from typing import Dict, Any
@@ -53,16 +54,19 @@ async def evaluator_node(state: AgentState) -> dict:
     if llm:
         try:
             # Check type of llm (LangChain vs direct GenAI)
-            if hasattr(llm, "invoke"):
+            if hasattr(llm, "ainvoke"):
                 messages = [
                     ("system", EVALUATION_SYSTEM_PROMPT),
                     ("human", user_prompt),
                 ]
                 resp = await llm.ainvoke(messages)
                 content = resp.content if hasattr(resp, "content") else str(resp)
+            elif hasattr(llm, "generate_content_async"):
+                resp = await llm.generate_content_async(f"{EVALUATION_SYSTEM_PROMPT}\n\n{user_prompt}")
+                content = resp.text if hasattr(resp, "text") else str(resp)
             elif hasattr(llm, "generate_content"):
-                resp = llm.generate_content(f"{EVALUATION_SYSTEM_PROMPT}\n\n{user_prompt}")
-                content = resp.text
+                resp = await asyncio.to_thread(llm.generate_content, f"{EVALUATION_SYSTEM_PROMPT}\n\n{user_prompt}")
+                content = resp.text if hasattr(resp, "text") else str(resp)
             else:
                 content = ""
 

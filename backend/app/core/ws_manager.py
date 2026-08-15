@@ -34,7 +34,7 @@ class ConnectionManager:
         """Send JSON message to all connections of a specific user."""
         connections = self._connections.get(user_id, [])
         dead = []
-        for ws in connections:
+        for ws in list(connections):
             try:
                 await ws.send_json(data)
             except Exception:

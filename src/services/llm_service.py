@@ -1,5 +1,6 @@
 """LLM Factory service for initializing Gemini & OpenAI models with key rotation."""
 
+import asyncio
 import os
 import logging
 from typing import Any, List
@@ -66,7 +67,10 @@ class RotatingGeminiLLM:
                     model = genai.GenerativeModel(self.model_name)
                     logger.info(f"Invoking direct google.generativeai (async) using API Key #{idx + 1}/{num_keys}...")
                     prompt = str(input)
-                    res = model.generate_content(prompt)
+                    if hasattr(model, "generate_content_async"):
+                        res = await model.generate_content_async(prompt)
+                    else:
+                        res = await asyncio.to_thread(model.generate_content, prompt)
                     self.current_index = idx
                     return res
             except Exception as e:
@@ -110,6 +114,36 @@ class RotatingGeminiLLM:
                 self._rotate_key()
 
         logger.error("All Gemini API keys in rotation failed!")
+        if last_exception:
+            raise last_exception
+
+    async def generate_content_async(self, prompt: str, **kwargs) -> Any:
+        """Async fallback interface matching google.generativeai GenerativeModel."""
+        import google.generativeai as genai
+
+        num_keys = len(self.api_keys)
+        last_exception = None
+        start_idx = self.current_index
+
+        for attempt in range(num_keys):
+            idx = (start_idx + attempt) % num_keys
+            try:
+                genai.configure(api_key=self.api_keys[idx])
+                model = genai.GenerativeModel(self.model_name)
+                logger.info(f"Generating content (async) with google.generativeai using API Key #{idx + 1}/{num_keys}...")
+                if hasattr(model, "generate_content_async"):
+                    res = await model.generate_content_async(prompt, **kwargs)
+                else:
+                    res = await asyncio.to_thread(model.generate_content, prompt, **kwargs)
+                self.current_index = idx
+                return res
+            except Exception as e:
+                last_exception = e
+                logger.warning(
+                    f"Gemini API Key #{idx + 1} failed on generate_content_async: {e}"
+                )
+                self._rotate_key()
+
         if last_exception:
             raise last_exception
 
