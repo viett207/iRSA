@@ -11,11 +11,18 @@ Sử dụng URI **Session pooler** của Supabase để kết nối được qua
 ```env
 DATABASE_URL=postgresql+asyncpg://postgres.PROJECT_REF:PASSWORD@POOLER_HOST:5432/postgres
 DEBUG=false
+JWT_SECRET=<chuỗi-ngẫu-nhiên-dài-và-bí-mật>
+MINIO_ACCESS_KEY=<access-key-không-dùng-giá-trị-mặc-định>
+MINIO_SECRET_KEY=<secret-key-không-dùng-giá-trị-mặc-định>
 ```
 
 Các ký tự đặc biệt trong mật khẩu phải được percent-encode. Không commit `.env`.
 Ở local, Compose mount file này read-only vào `/app/.env`; file không được copy
 vào image và các ký tự `$` trong URI không bị Compose nội suy.
+
+Khi `DEBUG=false`, backend sẽ từ chối khởi động nếu ba biến bảo mật phía trên
+vẫn thiếu hoặc dùng giá trị mặc định. Nếu chưa dùng MinIO ở production, vẫn cần
+quyết định dịch vụ lưu CV thay thế và cấu hình tương ứng trước khi deploy.
 
 ## Build image
 
