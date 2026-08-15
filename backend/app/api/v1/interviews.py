@@ -1,8 +1,8 @@
 """Interview scheduling API endpoints."""
 
-import asyncio
 import logging
 from datetime import datetime
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -108,22 +108,21 @@ async def schedule_interview(
     await db.commit()
     await db.refresh(interview)
 
-    # Send email notification to candidate (non-blocking)
-    try:
-        from app.services.email import send_interview_notification_email
-        asyncio.create_task(
-            send_interview_notification_email(
-                candidate_email=app.candidate.email,
-                candidate_name=app.candidate.full_name,
-                job_title=app.job.title_vi,
+    # Send email notification to candidate via Celery (non-blocking)
+    if app.candidate and app.candidate.email:
+        try:
+            from app.tasks.notification_tasks import send_interview_notification
+            send_interview_notification.delay(
+                email=app.candidate.email,
+                full_name=app.candidate.full_name or "Ứng viên",
+                job_title=app.job.title_vi if app.job else "N/A",
                 interview_date=interview.interview_date.isoformat(),
                 interview_type=interview.interview_type,
                 location=interview.location,
                 notes=interview.notes,
             )
-        )
-    except Exception as e:
-        logger.warning(f"Failed to send interview email: {e}")
+        except Exception as e:
+            logger.warning(f"Failed to enqueue interview email notification: {e}")
 
     # Real-time notification to candidate
     try:

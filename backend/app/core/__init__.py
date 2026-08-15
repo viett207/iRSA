@@ -13,6 +13,7 @@ from .exceptions import (
     BadRequestException,
     ConflictException,
 )
+from .background_tasks import background_tasks, create_background_task
 
 __all__ = [
     "create_access_token",
@@ -26,4 +27,7 @@ __all__ = [
     "NotFoundException",
     "BadRequestException",
     "ConflictException",
+    "background_tasks",
+    "create_background_task",
 ]
+

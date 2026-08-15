@@ -133,3 +133,56 @@ def send_application_received_notification(
     except Exception as e:
         logger.exception(f"Error sending confirmation to {email}: {e}")
         self.retry(exc=e)
+
+
+@celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
+def send_interview_notification(
+    self,
+    email: str,
+    full_name: str,
+    job_title: str,
+    interview_date: str,
+    interview_type: str,
+    location: str | None = None,
+    notes: str | None = None,
+):
+    """
+    Send email notification when interview is scheduled.
+
+    Args:
+        email: Candidate email address
+        full_name: Candidate full name
+        job_title: Job title (Vietnamese)
+        interview_date: ISO formatted date string
+        interview_type: online or offline
+        location: Meeting link or location address
+        notes: Additional notes for candidate
+    """
+    from app.services.email import send_interview_notification_email
+
+    logger.info(f"Sending interview notification to {email} for job {job_title}")
+
+    try:
+        result = run_async(
+            send_interview_notification_email(
+                candidate_email=email,
+                candidate_name=full_name,
+                job_title=job_title,
+                interview_date=interview_date,
+                interview_type=interview_type,
+                location=location,
+                notes=notes,
+            )
+        )
+
+        if result:
+            logger.info(f"Interview notification sent to {email}")
+            return {"status": "sent", "email": email}
+        else:
+            logger.warning(f"Failed to send interview notification to {email}")
+            return {"status": "failed", "email": email}
+
+    except Exception as e:
+        logger.exception(f"Error sending interview notification to {email}: {e}")
+        self.retry(exc=e)
+
