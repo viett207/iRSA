@@ -59,6 +59,7 @@ ARCHIVE_DIR = LOG_DIR / "archive"
 # If the local file has more than this, we submit the oldest BATCH_LIMIT
 # and leave the rest for the next push.
 BATCH_LIMIT = 500
+REQUEST_TIMEOUT_SECONDS = 30
 
 
 def _archive(pending: Path) -> None:
@@ -143,9 +144,9 @@ def main():
     )
 
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT_SECONDS) as resp:
             print(f"[ai-log] Submitted {len(entries)} entries → {resp.status}", file=sys.stderr)
-    except urllib.error.URLError as e:
+    except (urllib.error.URLError, TimeoutError) as e:
         # Failure: restore the whole pending (including leftover) for next push.
         _restore_pending(pending)
         print(f"[ai-log] Submit failed: {e} — logs kept locally.", file=sys.stderr)
