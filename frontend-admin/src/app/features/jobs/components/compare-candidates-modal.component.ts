@@ -342,6 +342,12 @@ export class CompareCandidatesModalComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (!this.data?.candidates || this.data.candidates.length === 0) {
+      this.candidates = [];
+      this.loading = false;
+      return;
+    }
+
     this.candidates = this.data.candidates.map(a => ({
       applicant: a,
       screening: null,
@@ -360,6 +366,11 @@ export class CompareCandidatesModalComponent implements OnInit {
         ),
       })
     );
+
+    if (requests.length === 0) {
+      this.loading = false;
+      return;
+    }
 
     forkJoin(requests).subscribe({
       next: (results) => {
