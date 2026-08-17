@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin"
     MINIO_BUCKET: str = "resumes"
+    MINIO_REGION: str = "ap-south-1"
     MINIO_SECURE: bool = False
     MINIO_PUBLIC_URL: str = "http://localhost:9000"
 

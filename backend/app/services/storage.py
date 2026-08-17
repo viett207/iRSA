@@ -43,7 +43,7 @@ class StorageService:
             endpoint_url=self.endpoint_url,
             aws_access_key_id=settings.MINIO_ACCESS_KEY,
             aws_secret_access_key=settings.MINIO_SECRET_KEY,
-            region_name="ap-south-1",
+            region_name=settings.MINIO_REGION,
             config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
         )
         self._ensure_bucket()
