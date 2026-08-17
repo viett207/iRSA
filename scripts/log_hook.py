@@ -180,8 +180,10 @@ def main():
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-    # Output valid JSON (required by some tools like Gemini)
-    print(json.dumps({"status": "logged"}))
+    # Hooks are side-effect-only: logging must not alter the prompt or stop
+    # decision. Emit an empty response object because event hook schemas are
+    # strict and reject arbitrary fields such as the old ``status`` field.
+    print("{}")
 
 
 if __name__ == "__main__":
