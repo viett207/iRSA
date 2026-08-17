@@ -1,0 +1,37 @@
+{
+  "version": "2026-08-16",
+  "purpose": "Classify publicly downloadable job datasets before any transformation. A dataset is never promoted to Golden solely because a host page declares a permissive license.",
+  "sources": [
+    {
+      "id": "vietjobs_mit",
+      "language": "vi",
+      "raw_path": "data/raw/jobs/vietjobs_mit/VietJobs.csv",
+      "source_url": "https://huggingface.co/datasets/dinhieufam/VietJobs",
+      "license": "MIT",
+      "record_count_claimed": 48092,
+      "has_full_job_description": true,
+      "intended_use": "silver_candidate",
+      "promotion_requirements": [
+        "Validate UTF-8 decoding and CSV row count.",
+        "Deduplicate, validate required fields, and preserve source/version evidence.",
+        "Create human-reviewed evaluation labels before any Golden promotion."
+      ]
+    },
+    {
+      "id": "role_radar_jobs_apache",
+      "language": "en",
+      "raw_path": "data/raw/jobs/role_radar_jobs_apache/scraped_jobs.json",
+      "source_url": "https://huggingface.co/datasets/oksomu/role-radar-dataset",
+      "license": "Apache-2.0 (declared by dataset publisher)",
+      "record_count_verified": 2500,
+      "has_full_job_description": true,
+      "intended_use": "silver_candidate_with_upstream_rights_review",
+      "promotion_requirements": [
+        "Exclude every candidate/profile/resume file from this source.",
+        "Filter stale, placeholder, and duplicate postings.",
+        "Confirm commercial suitability of the job-description content before Golden promotion.",
+        "Create human-reviewed evaluation labels before any Golden promotion."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "recruitment-agent/project-authored-job-review-v1",
+  "title": "Human QA review for project-authored bilingual job benchmark",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id", "job_record_id", "language", "title_original",
+    "description_original", "input_jobs_sha256", "review_status",
+    "review_decision", "reviewer_id", "reviewed_at", "reviewer_notes", "created_at"
+  ],
+  "properties": {
+    "review_id": {"type": "string", "pattern": "^job_review_onet_[a-f0-9]{24}$"},
+    "job_record_id": {"type": "string", "pattern": "^job_benchmark_[a-z0-9_]+$"},
+    "language": {"type": "string", "enum": ["vi", "en"]},
+    "title_original": {"type": "string", "minLength": 1},
+    "description_original": {"type": "string", "minLength": 250},
+    "input_jobs_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "review_status": {"type": "string", "enum": ["pending_human_review", "reviewed"]},
+    "review_decision": {"type": ["string", "null"], "enum": ["approved", "needs_remediation", "rejected", null]},
+    "reviewer_id": {"type": ["string", "null"]},
+    "reviewed_at": {"type": ["string", "null"], "format": "date-time"},
+    "reviewer_notes": {"type": ["string", "null"]},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"review_status": {"const": "pending_human_review"}}},
+      "then": {"properties": {"review_decision": {"type": "null"}, "reviewer_id": {"type": "null"}, "reviewed_at": {"type": "null"}, "reviewer_notes": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"review_status": {"const": "reviewed"}}},
+      "then": {"properties": {"review_decision": {"type": "string", "enum": ["approved", "needs_remediation", "rejected"]}, "reviewer_id": {"type": "string", "minLength": 1}, "reviewed_at": {"type": "string", "format": "date-time"}, "reviewer_notes": {"type": "string", "minLength": 1}}}
+    }
+  ]
+}

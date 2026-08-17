@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "recruitment-agent/automated-review-draft-v1",
+  "title": "Non-decisional automated review draft",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["draft_id", "target_type", "target_id", "method", "decision_taxonomy", "suggested_decision", "confidence", "evidence", "metrics", "decision_status", "input_sha256", "created_at"],
+  "properties": {
+    "draft_id": {"type": "string", "pattern": "^auto_draft_[a-f0-9]{24}$"},
+    "target_type": {"type": "string", "enum": ["job_content", "candidate_job_match"]},
+    "target_id": {"type": "string", "minLength": 1},
+    "method": {"type": "string", "enum": ["deterministic_job_precheck_v1", "deterministic_match_label_v1"]},
+    "decision_taxonomy": {"type": "string", "enum": ["job_precheck_v1", "match_label_v1"]},
+    "suggested_decision": {"type": "string", "enum": ["ready_for_human_approval", "needs_remediation", "strong_match", "partial_match", "not_match", "insufficient_evidence"]},
+    "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+    "evidence": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+    "metrics": {"type": "object", "additionalProperties": {"type": "number"}},
+    "decision_status": {"type": "string", "const": "automated_not_human_decision"},
+    "input_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

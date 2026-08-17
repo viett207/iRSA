@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "recruitment-agent/jd-cv-match-v1",
+  "title": "Explainable baseline JD-CV match result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "match_id",
+    "pair_id",
+    "candidate_profile_id",
+    "job_record_id",
+    "scoring_method",
+    "candidate_skills_detected",
+    "job_skills_detected",
+    "matched_skills",
+    "missing_job_skills",
+    "extra_candidate_skills",
+    "skill_f1_score",
+    "role_alignment_score",
+    "experience_assessment",
+    "component_scores",
+    "overall_score",
+    "match_tier",
+    "confidence",
+    "decision_status",
+    "input_lineage",
+    "created_at"
+  ],
+  "properties": {
+    "match_id": {"type": "string", "pattern": "^match_[a-f0-9]{24}$"},
+    "pair_id": {"type": "string", "pattern": "^pair_[a-f0-9]{24}$"},
+    "candidate_profile_id": {"type": "string", "pattern": "^candidate_[a-z0-9_]+$"},
+    "job_record_id": {"type": "string", "minLength": 1},
+    "scoring_method": {"type": "string", "const": "jd_cv_baseline_v1"},
+    "candidate_skills_detected": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "job_skills_detected": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "matched_skills": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "missing_job_skills": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "extra_candidate_skills": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "skill_f1_score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+    "role_alignment_score": {"type": "number", "minimum": 0, "maximum": 100},
+    "experience_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_years", "job_minimum_years", "score", "status"],
+      "properties": {
+        "candidate_years": {"type": "number", "minimum": 0},
+        "job_minimum_years": {"type": ["number", "null"], "minimum": 0},
+        "score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+        "status": {"type": "string", "enum": ["met", "below_requirement", "not_stated_in_jd"]}
+      }
+    },
+    "component_scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skills", "experience", "role_alignment", "active_weights"],
+      "properties": {
+        "skills": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+        "experience": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+        "role_alignment": {"type": "number", "minimum": 0, "maximum": 100},
+        "active_weights": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["skills", "experience", "role_alignment"],
+          "properties": {
+            "skills": {"type": "number", "minimum": 0, "maximum": 1},
+            "experience": {"type": "number", "minimum": 0, "maximum": 1},
+            "role_alignment": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        }
+      }
+    },
+    "overall_score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+    "match_tier": {"type": "string", "enum": ["high", "medium", "low", "insufficient_evidence"]},
+    "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+    "decision_status": {"type": "string", "const": "heuristic_not_recruiter_decision"},
+    "input_lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jobs_sha256", "candidates_sha256", "queue_sha256"],
+      "properties": {
+        "jobs_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "candidates_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "queue_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

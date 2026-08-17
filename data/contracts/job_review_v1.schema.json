@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "recruitment-agent/job-review-v1",
+  "title": "Human job-description quality review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "job_record_id",
+    "source_name",
+    "job_language",
+    "title_original",
+    "description_original",
+    "location_original",
+    "job_source_url",
+    "source_job_id",
+    "raw_payload_path",
+    "raw_payload_sha256",
+    "input_batch_sha256",
+    "quality_status_snapshot",
+    "sampling_method",
+    "sample_stratum",
+    "automated_quality_hints",
+    "review_status",
+    "review_decision",
+    "reviewer_id",
+    "reviewed_at",
+    "reviewer_notes",
+    "created_at"
+  ],
+  "properties": {
+    "review_id": {"type": "string", "pattern": "^job_review_[a-f0-9]{24}$"},
+    "job_record_id": {"type": "string", "minLength": 1},
+    "source_name": {"type": "string", "const": "vietjobs_mit"},
+    "job_language": {"type": "string", "const": "vi"},
+    "title_original": {"type": "string", "minLength": 1},
+    "description_original": {"type": "string", "minLength": 1},
+    "location_original": {"type": ["string", "null"]},
+    "job_source_url": {"type": "string", "format": "uri"},
+    "source_job_id": {"type": "string", "minLength": 1},
+    "raw_payload_path": {"type": "string", "pattern": "^data/raw/"},
+    "raw_payload_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "input_batch_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "quality_status_snapshot": {"type": "string", "const": "needs_review"},
+    "sampling_method": {"type": "string", "const": "round_robin_title_strata_v1"},
+    "sample_stratum": {"type": "string", "minLength": 1},
+    "automated_quality_hints": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "review_status": {"type": "string", "enum": ["pending_human_review", "reviewed"]},
+    "review_decision": {
+      "type": ["string", "null"],
+      "enum": ["approved", "needs_remediation", "rejected", null]
+    },
+    "reviewer_id": {"type": ["string", "null"], "minLength": 1},
+    "reviewed_at": {"type": ["string", "null"], "format": "date-time"},
+    "reviewer_notes": {"type": ["string", "null"]},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"review_status": {"const": "pending_human_review"}}},
+      "then": {
+        "properties": {
+          "review_decision": {"type": "null"},
+          "reviewer_id": {"type": "null"},
+          "reviewed_at": {"type": "null"},
+          "reviewer_notes": {"type": "null"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"review_status": {"const": "reviewed"}}},
+      "then": {
+        "properties": {
+          "review_decision": {"type": "string", "enum": ["approved", "needs_remediation", "rejected"]},
+          "reviewer_id": {"type": "string", "minLength": 1},
+          "reviewed_at": {"type": "string", "format": "date-time"},
+          "reviewer_notes": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  ]
+}

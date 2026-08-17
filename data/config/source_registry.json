@@ -1,0 +1,32 @@
+{
+  "version": "2026-08-16",
+  "policy": "Only named employer career sites marked approved may be collected. Record the employer's career-site URL and a terms or written-permission reference before enabling it.",
+  "sources": [
+    {
+      "id": "lalamove-lever-vietnam",
+      "provider": "lever",
+      "company_name": "Lalamove",
+      "enabled": false,
+      "approval_status": "pending_employer_permission",
+      "language_hint": "vi,en",
+      "career_site_url": "https://jobs.lever.co/lalamove?location=Vietnam",
+      "terms_url": "https://hire.lever.co/developer/support",
+      "permission_reference": null,
+      "site": "lalamove",
+      "candidate_note": "Public employer job board with Vietnamese and English postings observed. Keep disabled until an employer-use permission or equivalent documented approval is recorded."
+    },
+    {
+      "id": "aleph-lever-vietnam",
+      "provider": "lever",
+      "company_name": "Aleph",
+      "enabled": false,
+      "approval_status": "pending_employer_permission",
+      "language_hint": "en",
+      "career_site_url": "https://jobs.lever.co/aleph/?location=Ho+Chi+Minh%2C+Vietnam",
+      "terms_url": "https://hire.lever.co/developer/support",
+      "permission_reference": null,
+      "site": "aleph",
+      "candidate_note": "Public employer job board with English Vietnam postings observed. Keep disabled until an employer-use permission or equivalent documented approval is recorded."
+    }
+  ]
+}

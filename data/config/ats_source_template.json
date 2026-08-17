@@ -1,0 +1,39 @@
+{
+  "instructions": "Copy a reviewed source object into source_registry.json. A public ATS endpoint alone is not permission to build a Golden corpus: do not enable a source until its career site, provider documentation or terms, and employer permission or other documented approval have been reviewed.",
+  "greenhouse_example": {
+    "id": "company-name-greenhouse",
+    "provider": "greenhouse",
+    "company_name": "Company name",
+    "enabled": false,
+    "approval_status": "pending_terms_review",
+    "language_hint": "en",
+    "career_site_url": "https://boards.greenhouse.io/companyname",
+    "terms_url": "https://developers.greenhouse.io/job-board",
+    "permission_reference": null,
+    "board_token": "companyname"
+  },
+  "lever_example": {
+    "id": "company-name-lever",
+    "provider": "lever",
+    "company_name": "Company name",
+    "enabled": false,
+    "approval_status": "pending_terms_review",
+    "language_hint": "en",
+    "career_site_url": "https://jobs.lever.co/companyname",
+    "terms_url": "https://github.com/lever/postings-api",
+    "permission_reference": null,
+    "site": "companyname"
+  },
+  "smartrecruiters_example": {
+    "id": "company-name-smartrecruiters",
+    "provider": "smartrecruiters",
+    "company_name": "Company name",
+    "enabled": false,
+    "approval_status": "pending_terms_review",
+    "language_hint": "en",
+    "career_site_url": "https://careers.smartrecruiters.com/companyname",
+    "terms_url": "https://developers.smartrecruiters.com/docs/endpoints",
+    "permission_reference": null,
+    "company_identifier": "companyname"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "recruitment-agent/candidate-profile-v1",
+  "title": "Privacy-safe candidate profile for recruitment-agent evaluation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile_id",
+    "schema_version",
+    "data_origin",
+    "usage_scope",
+    "language",
+    "profile_headline",
+    "profile_summary_original",
+    "resume_text_original",
+    "skills_canonical",
+    "experience_years",
+    "experience_level",
+    "target_roles",
+    "preferred_locations",
+    "preferred_work_modes",
+    "work_history",
+    "education",
+    "pii_status",
+    "consent_status",
+    "created_at",
+    "quality_status",
+    "quality_flags"
+  ],
+  "properties": {
+    "profile_id": {"type": "string", "pattern": "^candidate_[a-z0-9_]+$"},
+    "schema_version": {"type": "string", "const": "1.0.0"},
+    "data_origin": {"type": "string", "enum": ["synthetic", "consented_partner", "consented_user"]},
+    "usage_scope": {"type": "string", "enum": ["development_evaluation_only", "approved_internal_recruitment"]},
+    "language": {"type": "string", "enum": ["vi", "en", "mixed"]},
+    "profile_headline": {"type": "string", "minLength": 1},
+    "profile_summary_original": {"type": "string", "minLength": 1},
+    "resume_text_original": {"type": "string", "minLength": 1},
+    "skills_canonical": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "experience_years": {"type": "number", "minimum": 0},
+    "experience_level": {"type": "string", "enum": ["entry", "junior", "mid", "senior", "lead"]},
+    "target_roles": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "preferred_locations": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "preferred_work_modes": {"type": "array", "items": {"type": "string", "enum": ["onsite", "hybrid", "remote"]}, "uniqueItems": true},
+    "work_history": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role_title", "duration_months", "employment_context", "achievement_summary_original", "skills_used"],
+        "properties": {
+          "role_title": {"type": "string", "minLength": 1},
+          "duration_months": {"type": "integer", "minimum": 1},
+          "employment_context": {"type": "string", "const": "synthetic_simulation"},
+          "achievement_summary_original": {"type": "string", "minLength": 1},
+          "skills_used": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+        }
+      }
+    },
+    "education": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "field", "is_synthetic"],
+      "properties": {
+        "level": {"type": "string", "enum": ["certificate", "associate", "bachelor", "master", "doctorate"]},
+        "field": {"type": "string", "minLength": 1},
+        "is_synthetic": {"type": "boolean", "const": true}
+      }
+    },
+    "pii_status": {"type": "string", "const": "no_personal_data"},
+    "consent_status": {"type": "string", "enum": ["not_applicable_synthetic", "documented"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "quality_status": {"type": "string", "enum": ["structurally_valid", "needs_review", "quarantine"]},
+    "quality_flags": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+  }
+}

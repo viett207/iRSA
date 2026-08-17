@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "recruitment-agent/consented-candidate-document-v1",
+  "title": "PII-redacted candidate document extracted from a consented PDF",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_id",
+    "candidate_ref",
+    "data_origin",
+    "usage_scope",
+    "consent_status",
+    "source_document_sha256",
+    "source_document_type",
+    "language",
+    "resume_text_redacted",
+    "extraction",
+    "redaction",
+    "quality_status",
+    "quality_flags",
+    "created_at"
+  ],
+  "properties": {
+    "record_id": {"type": "string", "pattern": "^candidate_document_[a-f0-9]{24}$"},
+    "candidate_ref": {"type": "string", "pattern": "^cv_[0-9]{3}$"},
+    "data_origin": {"type": "string", "const": "consented_user"},
+    "usage_scope": {"type": "string", "const": "approved_internal_recruitment"},
+    "consent_status": {"type": "string", "const": "documented"},
+    "source_document_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "source_document_type": {"type": "string", "const": "pdf"},
+    "language": {"type": "string", "enum": ["vi", "en", "mixed", "undetermined"]},
+    "resume_text_redacted": {"type": "string", "minLength": 1},
+    "extraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["page_count", "native_text_pages", "ocr_pages", "ocr_languages"],
+      "properties": {
+        "page_count": {"type": "integer", "minimum": 1},
+        "native_text_pages": {"type": "integer", "minimum": 0},
+        "ocr_pages": {"type": "integer", "minimum": 0},
+        "ocr_languages": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "redaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "redacted_categories", "manual_review_required", "residual_machine_detected_pii"],
+      "properties": {
+        "version": {"type": "string", "const": "1.0.0"},
+        "redacted_categories": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+        "manual_review_required": {"type": "boolean", "const": true},
+        "residual_machine_detected_pii": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "quality_status": {"type": "string", "const": "needs_review"},
+    "quality_flags": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}
