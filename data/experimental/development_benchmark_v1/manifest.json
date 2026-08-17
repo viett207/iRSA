@@ -1,0 +1,55 @@
+{
+  "dataset_name": "p164_development_benchmark_v1",
+  "manifest_version": "1.0.0",
+  "created_at": "2026-08-16T16:37:32.970879Z",
+  "usage_scope": "local_development_and_offline_pipeline_evaluation_only",
+  "ground_truth_status": "automated_drafts_not_human_ground_truth",
+  "assets": {
+    "jobs": {
+      "path": "data/experimental/development_benchmark_v1/jobs.jsonl",
+      "source_path": "data/silver/jobs/project_authored_onet_bilingual_v1.jsonl",
+      "record_count": 200,
+      "sha256": "febb5105d19f0a7ca694abbd51d08f5dacaf7c82f5a1d876883d4c92f6fe282b",
+      "byte_identical_to_source": true
+    },
+    "candidates": {
+      "path": "data/experimental/development_benchmark_v1/candidates.jsonl",
+      "source_path": "data/silver/candidates/synthetic_candidate_profiles_v1.jsonl",
+      "record_count": 120,
+      "sha256": "25ba156f73fac9e183afaae61c5c176f1f868730ccabb1dfeeeafb0b320f67b9",
+      "byte_identical_to_source": true
+    },
+    "match_review_queue": {
+      "path": "data/experimental/development_benchmark_v1/match_review_queue.jsonl",
+      "source_path": "data/labels/project_authored_onet_candidate_match_review_queue_v1.jsonl",
+      "record_count": 360,
+      "sha256": "581625aa62f86cc12fc325fb7b98ae1bec01864639a83c7cbe9781de528d222b",
+      "byte_identical_to_source": true
+    },
+    "automated_job_prechecks": {
+      "path": "data/experimental/development_benchmark_v1/automated_job_prechecks.jsonl",
+      "source_path": "data/labels/project_authored_onet_automated_job_qa_drafts_v1.jsonl",
+      "record_count": 200,
+      "sha256": "1406d189380a2051d5d03332e4f73079e87b6e8188506b73427d499a0f7d116f",
+      "byte_identical_to_source": true
+    },
+    "automated_match_label_drafts": {
+      "path": "data/experimental/development_benchmark_v1/automated_match_label_drafts.jsonl",
+      "source_path": "data/labels/project_authored_onet_automated_match_label_drafts_v1.jsonl",
+      "record_count": 360,
+      "sha256": "5c73b343aefe04f9c3b4bcadd35d5f6830a765edaaebaf74fe8f61c3e3231910",
+      "byte_identical_to_source": true
+    }
+  },
+  "source_lineage": {
+    "job_content": "Project-authored fictional bilingual JDs informed by O*NET 30.3 under CC BY 4.0; attribution is retained in every job record.",
+    "candidate_content": "Synthetic, non-identifying candidate profiles only.",
+    "label_content": "Deterministic automated drafts derived from explicit skills, role family and experience; original human-review queues are retained separately."
+  },
+  "limitations": [
+    "This package contains no human-reviewed ground-truth labels.",
+    "Do not use it to make real hiring decisions or claim production matching accuracy.",
+    "Jobs are fictional benchmark records, not live recruitment opportunities.",
+    "Do not redistribute this experimental package without a separate rights and governance review."
+  ]
+}

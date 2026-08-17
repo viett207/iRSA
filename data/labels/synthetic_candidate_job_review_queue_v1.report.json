@@ -1,0 +1,34 @@
+{
+  "dataset_name": "synthetic_candidate_job_review_queue_v1",
+  "generator_version": "1.0.0",
+  "created_at": "2026-08-16T14:57:13.016350Z",
+  "purpose": "Pending recruiter review queue; not a ground-truth label set.",
+  "output": {
+    "path": "data/labels/synthetic_candidate_job_review_queue_v1.jsonl",
+    "record_count": 360,
+    "sha256": "15439f572515b18603287158934a999018084b5b65dfa373cc632dd1844c1cc6"
+  },
+  "inputs": {
+    "jobs_path": "data/silver/jobs/open_dataset_jobs_v1.jsonl",
+    "jobs_sha256": "887462f2c05952a2de27f55345b330ac986aeb9a15d6d6a01355a65e82f7c69b",
+    "candidates_path": "data/silver/candidates/synthetic_candidate_profiles_v1.jsonl",
+    "candidates_sha256": "25ba156f73fac9e183afaae61c5c176f1f868730ccabb1dfeeeafb0b320f67b9"
+  },
+  "counts": {
+    "by_candidate_language": {
+      "en": 180,
+      "vi": 180
+    },
+    "by_suggested_bucket": {
+      "likely_match": 120,
+      "likely_not_match": 120,
+      "uncertain_match": 120
+    },
+    "pending_recruiter_review": 360
+  },
+  "promotion_blockers": [
+    "Every label is pending recruiter review.",
+    "Candidate profiles are synthetic, not consented real candidates.",
+    "Suggested buckets are heuristic triage, not ground truth."
+  ]
+}

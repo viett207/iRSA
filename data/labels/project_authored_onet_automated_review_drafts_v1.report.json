@@ -1,0 +1,33 @@
+{
+  "dataset_name": "project_authored_onet_automated_review_drafts_v1",
+  "created_at": "2026-08-16T16:33:50.721356Z",
+  "purpose": "Automated development drafts only; not human review, Golden ground truth or production hiring decisions.",
+  "outputs": {
+    "job_precheck": {
+      "path": "data/labels/project_authored_onet_automated_job_qa_drafts_v1.jsonl",
+      "record_count": 200,
+      "sha256": "1406d189380a2051d5d03332e4f73079e87b6e8188506b73427d499a0f7d116f"
+    },
+    "match_labels": {
+      "path": "data/labels/project_authored_onet_automated_match_label_drafts_v1.jsonl",
+      "record_count": 360,
+      "sha256": "5c73b343aefe04f9c3b4bcadd35d5f6830a765edaaebaf74fe8f61c3e3231910"
+    }
+  },
+  "counts": {
+    "job_precheck_decisions": {
+      "ready_for_human_approval": 200
+    },
+    "match_label_suggestions": {
+      "insufficient_evidence": 44,
+      "not_match": 124,
+      "partial_match": 166,
+      "strong_match": 26
+    }
+  },
+  "non_negotiable_limitations": [
+    "No reviewer queue was modified.",
+    "Automated suggestions are not ground-truth labels.",
+    "Do not use these drafts to make real hiring decisions."
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "dataset_name": "project_authored_onet_bilingual_v1",
+  "generator_version": "1.0.0",
+  "created_at": "2026-08-16T16:26:06.566184Z",
+  "purpose": "Fictional bilingual JD benchmark authored by P-164 and informed by O*NET 30.3; pending human QA, not Golden yet.",
+  "license": {
+    "source": "CC-BY-4.0",
+    "attribution": "Contains information from O*NET 30.3 Database, USDOL/ETA, used under CC BY 4.0; P-164 authored and modified this benchmark text. USDOL/ETA has not approved, endorsed, or tested these modifications.",
+    "source_artifact_path": "data/raw/taxonomies/onet_30_3.zip",
+    "source_artifact_sha256": "7758ec966fd91895b3d290b83c9f1f1d46730d37fdda4faac67104d1c0d2a780"
+  },
+  "jobs": {
+    "path": "data/silver/jobs/project_authored_onet_bilingual_v1.jsonl",
+    "record_count": 200,
+    "sha256": "febb5105d19f0a7ca694abbd51d08f5dacaf7c82f5a1d876883d4c92f6fe282b"
+  },
+  "review_queue": {
+    "path": "data/labels/project_authored_onet_job_review_queue_v1.jsonl",
+    "record_count": 200,
+    "sha256": "e821a4f351320e102f1bcaff775bac78ba00df3d82f70cc73391519b71c0e7b6"
+  },
+  "counts": {
+    "by_language": {
+      "en": 100,
+      "vi": 100
+    },
+    "by_role_family": {
+      "b2b_sales": 16,
+      "backend_engineering": 18,
+      "data_analytics": 18,
+      "data_engineering": 18,
+      "devops_cloud": 16,
+      "digital_marketing": 16,
+      "finance_accounting": 16,
+      "frontend_engineering": 18,
+      "machine_learning": 16,
+      "product_management": 16,
+      "quality_assurance": 16,
+      "recruiting_hr": 16
+    },
+    "by_experience_level": {
+      "entry": 24,
+      "junior": 48,
+      "lead": 32,
+      "mid": 48,
+      "senior": 48
+    }
+  },
+  "promotion_blockers": [
+    "Every job is pending human content QA.",
+    "No reviewed job-candidate labels are included.",
+    "Fictional benchmark records must never be represented as active job postings."
+  ]
+}

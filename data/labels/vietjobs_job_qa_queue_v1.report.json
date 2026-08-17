@@ -1,0 +1,47 @@
+{
+  "dataset_name": "vietjobs_job_qa_queue_v1",
+  "generator_version": "1.0.0",
+  "created_at": "2026-08-16T15:52:56.533465Z",
+  "purpose": "Pending human content QA for a Vietnamese job-description pilot; not Golden data.",
+  "output": {
+    "path": "data/labels/vietjobs_job_qa_queue_v1.jsonl",
+    "record_count": 200,
+    "sha256": "b46edaff883f11fbffbd23267fdfe2b3cf8ebf062687d40aac92f76eca77c88d"
+  },
+  "input": {
+    "path": "data/silver/jobs/open_dataset_jobs_v1.jsonl",
+    "sha256": "887462f2c05952a2de27f55345b330ac986aeb9a15d6d6a01355a65e82f7c69b",
+    "eligible_vietjobs_records": 35697
+  },
+  "sampling": {
+    "method": "round_robin_title_strata_v1",
+    "sample_size": 200,
+    "by_title_stratum": {
+      "administration": 19,
+      "education": 19,
+      "engineering_construction": 18,
+      "finance_accounting": 18,
+      "healthcare": 18,
+      "hr_recruiting": 18,
+      "it_data": 18,
+      "marketing_design": 18,
+      "operations_logistics": 18,
+      "other": 18,
+      "sales_customer": 18
+    }
+  },
+  "review_state": {
+    "pending_human_review": 200,
+    "reviewed": 0,
+    "review_decisions": {
+      "approved": 0,
+      "needs_remediation": 0,
+      "rejected": 0
+    }
+  },
+  "promotion_blockers": [
+    "Every record is pending human content QA.",
+    "VietJobs is a dataset snapshot: it has no original job-posting URL or company provenance.",
+    "A content-approved record remains reviewed Silver data, not production Golden data."
+  ]
+}

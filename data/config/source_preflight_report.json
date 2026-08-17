@@ -1,0 +1,32 @@
+{
+  "checked_at": "2026-08-16T15:56:23.971666+00:00",
+  "configuration_valid": true,
+  "sources": [
+    {
+      "id": "lalamove-lever-vietnam",
+      "provider": "lever",
+      "language_hint": "vi,en",
+      "enabled": false,
+      "approved": false,
+      "career_site_url_present": true,
+      "terms_url_present": true,
+      "permission_reference_present": false,
+      "provider_identifier_present": true,
+      "ready_to_collect": false
+    },
+    {
+      "id": "aleph-lever-vietnam",
+      "provider": "lever",
+      "language_hint": "en",
+      "enabled": false,
+      "approved": false,
+      "career_site_url_present": true,
+      "terms_url_present": true,
+      "permission_reference_present": false,
+      "provider_identifier_present": true,
+      "ready_to_collect": false
+    }
+  ],
+  "errors": [],
+  "next_action": "Add reviewed employer sources from ats_source_template.json, record a permission_reference, then explicitly enable approved records."
+}

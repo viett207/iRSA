@@ -1,0 +1,33 @@
+{
+  "dataset_name": "project_authored_onet_candidate_match_review_queue_v1",
+  "generator_version": "1.0.0",
+  "created_at": "2026-08-16T16:28:37.361878Z",
+  "purpose": "Pending human labels for fictional O*NET-informed jobs and synthetic candidates; no suggested bucket is ground truth.",
+  "output": {
+    "path": "data/labels/project_authored_onet_candidate_match_review_queue_v1.jsonl",
+    "record_count": 360,
+    "sha256": "581625aa62f86cc12fc325fb7b98ae1bec01864639a83c7cbe9781de528d222b"
+  },
+  "inputs": {
+    "jobs_path": "data/silver/jobs/project_authored_onet_bilingual_v1.jsonl",
+    "jobs_sha256": "febb5105d19f0a7ca694abbd51d08f5dacaf7c82f5a1d876883d4c92f6fe282b",
+    "candidates_path": "data/silver/candidates/synthetic_candidate_profiles_v1.jsonl",
+    "candidates_sha256": "25ba156f73fac9e183afaae61c5c176f1f868730ccabb1dfeeeafb0b320f67b9"
+  },
+  "counts": {
+    "by_language": {
+      "en": 180,
+      "vi": 180
+    },
+    "by_suggested_bucket": {
+      "likely_match": 120,
+      "likely_not_match": 120,
+      "uncertain_match": 120
+    }
+  },
+  "promotion_blockers": [
+    "All labels are pending reviewer decisions.",
+    "Candidates and jobs are synthetic development fixtures.",
+    "The queue is not a production accuracy claim."
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "dataset_name": "synthetic_jd_cv_baseline_v1",
+  "scorer_version": "1.0.0",
+  "created_at": "2026-08-16T15:04:25.094288Z",
+  "purpose": "Explainable heuristic score for pending recruiter review; not a recruiter decision.",
+  "output": {
+    "path": "data/silver/matches/synthetic_jd_cv_baseline_v1.jsonl",
+    "record_count": 360,
+    "sha256": "7be85da780bfd33aff18410a96fe59fac96eeb3df76fa7207a9e984c197dba68"
+  },
+  "inputs": {
+    "jobs_sha256": "887462f2c05952a2de27f55345b330ac986aeb9a15d6d6a01355a65e82f7c69b",
+    "candidates_sha256": "25ba156f73fac9e183afaae61c5c176f1f868730ccabb1dfeeeafb0b320f67b9",
+    "queue_sha256": "15439f572515b18603287158934a999018084b5b65dfa373cc632dd1844c1cc6"
+  },
+  "counts": {
+    "by_match_tier": {
+      "high": 78,
+      "insufficient_evidence": 51,
+      "low": 177,
+      "medium": 54
+    },
+    "by_confidence": {
+      "high": 13,
+      "low": 113,
+      "medium": 234
+    },
+    "jobs_with_explicit_experience_requirement": 66
+  },
+  "limitations": [
+    "Only skills in the explicit synthetic profile taxonomy can be detected.",
+    "Education is not scored because the public JD text does not reliably separate requirements from general mentions.",
+    "Scores require recruiter review and cannot be used as Golden labels or production hiring decisions."
+  ]
+}

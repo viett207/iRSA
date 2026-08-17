@@ -1,0 +1,35 @@
+{
+  "normalizer_version": "1.0.0",
+  "generated_at": "2026-08-16T14:41:38.667735Z",
+  "collection_policy_id": "open_dataset_registry_2026-08-16",
+  "inputs": {
+    "vietjobs_mit": {
+      "raw_path": "data/raw/jobs/vietjobs_mit/VietJobs.csv",
+      "raw_sha256": "85862b06fda4e814fe0c1d8622f173d189c92758345f77df16d1232d0c49d477"
+    },
+    "role_radar_jobs_apache": {
+      "raw_path": "data/raw/jobs/role_radar_jobs_apache/scraped_jobs.json",
+      "raw_sha256": "78d32995b4a770f4bf19f8052e984cee617a5935f15820045fc6b16785384bef"
+    }
+  },
+  "output": {
+    "path": "data/silver/jobs/open_dataset_jobs_v1.jsonl",
+    "record_count": 38165,
+    "sha256": "887462f2c05952a2de27f55345b330ac986aeb9a15d6d6a01355a65e82f7c69b",
+    "quality_status": "needs_review"
+  },
+  "counts": {
+    "role_radar_duplicate_id": 29,
+    "role_radar_emitted": 2468,
+    "role_radar_input": 2500,
+    "role_radar_placeholder_posting": 3,
+    "vietjobs_duplicate_title_description": 12395,
+    "vietjobs_emitted": 35697,
+    "vietjobs_input": 48092
+  },
+  "promotion_blockers": [
+    "No consented candidate dataset is available.",
+    "No human-reviewed job-candidate labels are available.",
+    "Role Radar upstream job-description rights require review before commercial Golden promotion."
+  ]
+}

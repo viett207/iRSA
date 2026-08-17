@@ -1,0 +1,37 @@
+{
+  "dataset_name": "synthetic_candidate_profiles_v1",
+  "generator_version": "1.0.0",
+  "created_at": "2026-08-16T14:49:51.047186Z",
+  "data_origin": "synthetic",
+  "usage_scope": "development_evaluation_only",
+  "output": {
+    "path": "data/silver/candidates/synthetic_candidate_profiles_v1.jsonl",
+    "record_count": 120,
+    "sha256": "25ba156f73fac9e183afaae61c5c176f1f868730ccabb1dfeeeafb0b320f67b9"
+  },
+  "counts": {
+    "by_language": {
+      "en": 60,
+      "vi": 60
+    },
+    "by_experience_level": {
+      "entry": 24,
+      "junior": 24,
+      "lead": 24,
+      "mid": 24,
+      "senior": 24
+    },
+    "by_role_family": 12
+  },
+  "privacy_checks": {
+    "profiles_with_possible_pii": 0,
+    "full_name_field_present": false,
+    "email_field_present": false,
+    "phone_field_present": false
+  },
+  "promotion_blockers": [
+    "Synthetic profiles do not represent consented real candidates.",
+    "No recruiter-reviewed job-candidate labels are included.",
+    "This development fixture is ineligible for Golden v2 promotion."
+  ]
+}
