@@ -73,22 +73,46 @@ Applied Position: {job_title}
         logger.warning("[Node 3: Question Gen] Using fallback question set.")
         questions = [
             {
-                "question": f"Anh/Chị có thể trình bày chi tiết về dự án nổi bật nhất liên quan đến vị trí {job_title}?",
+                "question": f"Anh/Chị hãy trình bày chi tiết về kiến trúc dự án nổi bật nhất liên quan đến vị trí {job_title} mà anh/chị từng đảm nhiệm?",
                 "category": "experience",
-                "target_skill": "Kinh nghiệm thực tế",
-                "purpose": "Xác minh quy mô dự án và vai trò thực tế của ứng viên"
+                "target_skill": "Kinh nghiệm thực tế & Kiến trúc",
+                "purpose": "Xác minh quy mô dự án, vai trò thực tế và mức độ làm chủ công nghệ của ứng viên"
             },
             {
-                "question": "Cách bạn tiếp cận và giải quyết rào cản kỹ thuật khó khăn nhất trong dự án gần đây?",
+                "question": "Trong các dự án trước đây, anh/chị đã giải quyết vấn đề hiệu năng (Performance / Bottleneck) hoặc tối ưu truy vấn Database lớn như thế nào?",
                 "category": "technical",
-                "target_skill": "Giải quyết vấn đề",
-                "purpose": "Đánh giá tư duy kỹ thuật và khả năng chịu áp lực"
+                "target_skill": "Tối ưu hóa & Database",
+                "purpose": "Đánh giá tư duy kỹ thuật chuyên sâu và khả năng xử lý bài toán quy mô lớn"
             },
             {
-                "question": "Bạn phối hợp thế nào với các thành viên trong team khi có bất đồng ý kiến về giải pháp?",
+                "question": "Anh/Chị thiết kế cơ chế bảo mật, phân quyền (Authentication / Authorization) và kiểm soát lỗi (Error Handling) cho hệ thống Backend ra sao?",
+                "category": "architecture",
+                "target_skill": "Bảo mật & Clean Architecture",
+                "purpose": "Kiểm tra kiến thức về an toàn thông tin và tiêu chuẩn thiết kế phần mềm"
+            },
+            {
+                "question": "Anh/Chị đã từng gặp sự cố Production nghiêm trọng nào chưa? Quy trình anh/chị điều tra log, khoanh vùng và khắc phục sự cố đó diễn ra thế nào?",
+                "category": "situational",
+                "target_skill": "Xử lý sự cố & Troubleshooting",
+                "purpose": "Đánh giá khả năng bình tĩnh xử lý áp lực và kỹ năng giải quyết sự cố thực tế"
+            },
+            {
+                "question": "Khi có bất đồng quan điểm về giải pháp kỹ thuật giữa anh/chị và thành viên khác trong nhóm, anh/chị đã thuyết phục hoặc thỏa hiệp như thế nào?",
                 "category": "behavioral",
-                "target_skill": "Kỹ năng mềm",
-                "purpose": "Đánh giá khả năng làm việc nhóm và giao tiếp"
+                "target_skill": "Kỹ năng mềm & Giao tiếp",
+                "purpose": "Đánh giá khả năng làm việc nhóm, tư duy xây dựng và lắng nghe"
+            },
+            {
+                "question": "Anh/Chị áp dụng quy trình CI/CD, viết Unit Test / Integration Test và Code Review trong công việc hàng ngày như thế nào?",
+                "category": "technical",
+                "target_skill": "DevOps & Quality Assurance",
+                "purpose": "Đo lường kỷ luật công nghệ và thói quen bảo đảm chất lượng mã nguồn"
+            },
+            {
+                "question": "Nếu được giao một công nghệ hoặc nghiệp vụ hoàn toàn mới trong dự án với thời hạn gấp, phương pháp nghiên cứu và làm chủ của anh/chị là gì?",
+                "category": "behavioral",
+                "target_skill": "Khả năng tự học & Thích ứng",
+                "purpose": "Đánh giá tiềm năng phát triển và tính linh hoạt trong môi trường thay đổi nhanh"
             }
         ]
 

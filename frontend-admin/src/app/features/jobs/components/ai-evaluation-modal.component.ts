@@ -52,6 +52,7 @@ const LEVEL_LABELS: Record<string, string> = {
     } @else if (error) {
       <nz-alert nzType="error" [nzMessage]="error" nzShowIcon></nz-alert>
     } @else if (eval) {
+      <div class="evaluation-grid">
       <!-- Overall Score & Recommendation -->
       <div class="overview-card">
         <div class="overview-score">
@@ -169,7 +170,7 @@ const LEVEL_LABELS: Record<string, string> = {
       <!-- Interview Questions -->
       @if (eval.interview_questions && eval.interview_questions.length > 0) {
         <nz-divider></nz-divider>
-        <section class="section">
+        <section class="section questions-section">
           <h4 class="section-title">
             <span nz-icon nzType="question-circle" nzTheme="outline" style="color: #1890ff"></span>
             Câu hỏi phỏng vấn gợi ý ({{ eval.interview_questions.length }})
@@ -194,16 +195,28 @@ const LEVEL_LABELS: Record<string, string> = {
           }
         </section>
       }
+      </div>
     } @else {
       <nz-empty nzNotFoundContent="Chưa có kết quả đánh giá AI"></nz-empty>
     }
   `,
   styles: [`
+    .evaluation-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+    .evaluation-grid > nz-divider { display: none; }
     .overview-card {
       display: flex;
       align-items: center;
       gap: 20px;
-      padding: 8px;
+      padding: 16px;
+      grid-column: 1 / -1;
+      border: 1px solid #e6f0ff;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #f5f9ff, #fff);
     }
     .overview-info { flex: 1; }
     .assessment-text {
@@ -212,7 +225,14 @@ const LEVEL_LABELS: Record<string, string> = {
       color: #555;
       line-height: 1.6;
     }
-    .section { margin-bottom: 4px; }
+    .section {
+      margin: 0;
+      padding: 16px;
+      border: 1px solid #f0f0f0;
+      border-radius: 10px;
+      min-width: 0;
+      background: #fff;
+    }
     .section-title {
       font-size: 14px;
       font-weight: 600;
@@ -222,17 +242,22 @@ const LEVEL_LABELS: Record<string, string> = {
       gap: 8px;
     }
     .skill-row {
-      padding: 8px;
+      display: grid;
+      grid-template-columns: minmax(180px, .8fr) minmax(140px, .55fr);
+      gap: 4px 12px;
+      align-items: center;
+      padding: 8px 0;
       border-bottom: 1px solid #f5f5f5;
     }
     .skill-info {
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-bottom: 4px;
+      margin-bottom: 0;
     }
-    .skill-bar { max-width: 200px; }
+    .skill-bar { width: 100%; }
     .skill-evidence {
+      grid-column: 1 / -1;
       font-size: 12px;
       color: #888;
       margin-top: 2px;
@@ -262,6 +287,13 @@ const LEVEL_LABELS: Record<string, string> = {
       padding: 10px 12px;
       margin-bottom: 8px;
     }
+    .questions-section {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .questions-section .section-title { grid-column: 1 / -1; }
+    .questions-section .question-card { margin-bottom: 0; }
     .question-header {
       display: flex;
       align-items: center;
@@ -293,6 +325,17 @@ const LEVEL_LABELS: Record<string, string> = {
       color: #888;
       margin: 0;
       font-style: italic;
+    }
+    @media (max-width: 1050px) {
+      .evaluation-grid { grid-template-columns: 1fr; }
+      .overview-card { grid-column: auto; }
+    }
+    @media (max-width: 680px) {
+      .questions-section { grid-template-columns: 1fr; }
+      .skill-row { grid-template-columns: 1fr; }
+      .skill-evidence { grid-column: auto; }
+      .overview-card { align-items: flex-start; gap: 12px; padding: 12px; }
+      .section { padding: 12px; }
     }
   `],
 })

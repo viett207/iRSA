@@ -208,6 +208,12 @@ class PublicJobListItem(BaseModel):
     published_at: datetime | None = None
     application_deadline: date | None = None
     applications_count: int = 0
+    must_have_skills: list[str] = []
+    min_experience_years: int | None = None
+    max_experience_years: int | None = None
+    company_name: str | None = None
+    company_code: str | None = None
+    description_vi: str | None = None
 
     class Config:
         from_attributes = True

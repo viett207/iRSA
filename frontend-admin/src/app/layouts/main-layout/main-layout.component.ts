@@ -61,59 +61,80 @@ import { NotificationService } from '../../core/services/notification.service';
 
         <!-- Navigation Menu -->
         <ul nz-menu nzMode="inline" nzTheme="dark" class="sidebar-menu">
-          <!-- Dashboard -->
+          <!-- Section 1: Overview -->
+          @if (!isCollapsed) {
+            <li class="menu-section-header">TỔNG QUAN</li>
+          }
           <li nz-menu-item nzMatchRouter routerLink="/dashboard" class="menu-item">
-            <span nz-icon nzType="appstore" nzTheme="outline"></span>
-            <span class="menu-text">Trang chủ</span>
+            <span nz-icon nzType="dashboard" nzTheme="outline"></span>
+            <span class="menu-text">Bảng điều khiển</span>
+          </li>
+          <li nz-menu-item nzMatchRouter routerLink="/reports" class="menu-item">
+            <span nz-icon nzType="bar-chart" nzTheme="outline"></span>
+            <span class="menu-text">Báo cáo & Thống kê</span>
           </li>
 
-          <!-- Jobs Section -->
-          <li nz-submenu nzIcon="solution" nzTitle="Việc làm" nzMatchRouter nzMatchRouterExact class="menu-item">
+          <!-- Section 2: Recruitment Pipeline -->
+          @if (!isCollapsed) {
+            <li class="menu-section-header">QUẢN LÝ TUYỂN DỤNG</li>
+          }
+          <li nz-submenu nzIcon="solution" nzTitle="Tin tuyển dụng" nzMatchRouter nzMatchRouterExact class="menu-item">
             <ul>
               <li nz-menu-item routerLink="/jobs" nzMatchRouter [nzMatchRouterExact]="true">
                 <span nz-icon nzType="unordered-list"></span>
-                Danh sách
+                Tất cả tin tuyển dụng
               </li>
               <li nz-menu-item routerLink="/jobs/new" nzMatchRouter>
                 <span nz-icon nzType="plus-circle"></span>
-                Tạo mới
-              </li>
-              <li nz-menu-item routerLink="/jobs/shortlisted" nzMatchRouter>
-                <span nz-icon nzType="check-circle"></span>
-                Vòng 1 đạt
-              </li>
-              <li nz-menu-item routerLink="/jobs/interviewing" nzMatchRouter>
-                <span nz-icon nzType="team"></span>
-                Chờ phỏng vấn
+                Tạo tin tuyển dụng mới
               </li>
             </ul>
           </li>
 
-          <!-- Reports -->
-          <li nz-menu-item nzMatchRouter routerLink="/reports" class="menu-item">
-            <span nz-icon nzType="bar-chart" nzTheme="outline"></span>
-            <span class="menu-text">Báo cáo</span>
+          <li nz-submenu nzIcon="funnel-plot" nzTitle="Quy trình sàng lọc AI" nzMatchRouter class="menu-item">
+            <ul>
+              <li nz-menu-item routerLink="/jobs/shortlisted" nzMatchRouter>
+                <span nz-icon nzType="check-circle" class="status-icon--success"></span>
+                Vòng 1 - Đạt sàng lọc
+              </li>
+              <li nz-menu-item routerLink="/jobs/interviewing" nzMatchRouter>
+                <span nz-icon nzType="calendar" class="status-icon--primary"></span>
+                Vòng 2 - Lịch phỏng vấn
+              </li>
+              <li nz-menu-item routerLink="/jobs/interview-passed" nzMatchRouter>
+                <span nz-icon nzType="trophy" class="status-icon--warning"></span>
+                Vòng 3 - Trúng tuyển
+              </li>
+            </ul>
           </li>
 
-          <!-- Admin Section -->
+          <!-- Section 3: Admin Management -->
           @if (authService.hasRole('admin')) {
+            @if (!isCollapsed) {
+              <li class="menu-section-header">QUẢN TRỊ HỆ THỐNG</li>
+            }
             <li nz-menu-item routerLink="/companies" nzMatchRouter class="menu-item">
               <span nz-icon nzType="bank" nzTheme="outline"></span>
-              <span class="menu-text">Công ty</span>
+              <span class="menu-text">Quản lý Công ty</span>
             </li>
             <li nz-menu-item routerLink="/users" nzMatchRouter class="menu-item">
-              <span nz-icon nzType="user" nzTheme="outline"></span>
-              <span class="menu-text">Người dùng</span>
+              <span nz-icon nzType="team" nzTheme="outline"></span>
+              <span class="menu-text">Quản lý Người dùng</span>
             </li>
             <li nz-menu-item routerLink="/approvals" nzMatchRouter class="menu-item">
-              <span nz-icon nzType="audit" nzTheme="outline"></span>
-              <span class="menu-text">Phê duyệt</span>
+              <span nz-icon nzType="safety-certificate" nzTheme="outline"></span>
+              <span class="menu-text">Phê duyệt tài khoản</span>
             </li>
           }
         </ul>
 
         <!-- Sidebar Footer -->
-        <div class="sidebar-footer" [class.collapsed]="isCollapsed"></div>
+        <div class="sidebar-footer" [class.collapsed]="isCollapsed">
+          <div class="user-quick-status" *ngIf="!isCollapsed">
+            <span class="status-dot"></span>
+            <span class="status-text">{{ authService.user()?.company_code || 'iRSA System' }}</span>
+          </div>
+        </div>
       </nz-sider>
 
       <!-- Main Content Area -->
@@ -134,7 +155,6 @@ import { NotificationService } from '../../core/services/notification.service';
                 nzTheme="outline"
               ></span>
             </button>
-
           </div>
 
           <div class="header-right">
@@ -197,9 +217,9 @@ import { NotificationService } from '../../core/services/notification.service';
               ></nz-avatar>
               <div class="user-info hide-mobile">
                 <span class="user-name">{{ authService.user()?.full_name }}</span>
-                <span class="user-role">{{ getRoleLabel() }}</span>
+                <span class="user-role">{{ authService.user()?.email }}</span>
               </div>
-              <span nz-icon nzType="down" nzTheme="outline" class="hide-mobile"></span>
+              <span nz-icon nzType="down" nzTheme="outline" class="hide-mobile user-arrow"></span>
             </div>
 
             <nz-dropdown-menu #userMenu="nzDropdownMenu">
@@ -210,13 +230,9 @@ import { NotificationService } from '../../core/services/notification.service';
                     <div>
                       <strong>{{ authService.user()?.full_name }}</strong>
                       <span>{{ authService.user()?.email }}</span>
+                      <span class="dropdown-role-label">{{ getRoleLabel() }}</span>
                     </div>
                   </div>
-                </li>
-                <li nz-menu-divider></li>
-                <li nz-menu-item routerLink="/profile">
-                  <span nz-icon nzType="user" nzTheme="outline"></span>
-                  Thông tin cá nhân
                 </li>
                 <li nz-menu-divider></li>
                 <li nz-menu-item (click)="logout()" class="logout-item">
@@ -247,7 +263,6 @@ import { NotificationService } from '../../core/services/notification.service';
       min-height: 100vh;
     }
 
-    /* Ensure sticky header works - nz-layout must not clip overflow */
     :host ::ng-deep .main-area > .ant-layout-content {
       overflow: visible;
     }
@@ -261,14 +276,18 @@ import { NotificationService } from '../../core/services/notification.service';
       z-index: 100;
       display: flex;
       flex-direction: column;
+      background: linear-gradient(180deg, #091326 0%, #0d1b38 100%) !important;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
     }
 
     .sidebar-logo {
-      height: 64px;
+      height: 68px;
       display: flex;
       align-items: center;
-      padding: 0 16px;
-      background: rgba(0, 0, 0, 0.2);
+      padding: 0 18px;
+      background: rgba(0, 0, 0, 0.25);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       gap: 12px;
       overflow: hidden;
       transition: all 0.2s ease;
@@ -287,6 +306,7 @@ import { NotificationService } from '../../core/services/notification.service';
       svg {
         width: 100%;
         height: 100%;
+        filter: drop-shadow(0 2px 4px rgba(24, 144, 255, 0.3));
       }
     }
 
@@ -299,7 +319,7 @@ import { NotificationService } from '../../core/services/notification.service';
 
     .logo-title {
       font-family: var(--font-heading);
-      font-size: 18px;
+      font-size: 19px;
       font-weight: 700;
       color: #fff;
       letter-spacing: -0.5px;
@@ -307,7 +327,8 @@ import { NotificationService } from '../../core/services/notification.service';
 
     .logo-subtitle {
       font-size: 11px;
-      color: rgba(255, 255, 255, 0.65);
+      font-weight: 600;
+      color: #38bdf8;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
@@ -318,41 +339,106 @@ import { NotificationService } from '../../core/services/notification.service';
       overflow-y: auto;
       overflow-x: hidden;
       padding: 12px 0;
+      background: transparent !important;
     }
 
-    .menu-item {
-      margin: 4px 8px !important;
+    .menu-section-header {
+      padding: 16px 20px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      list-style: none;
+    }
+
+    :host ::ng-deep .sidebar-menu {
+      .ant-menu-item,
+      .ant-menu-submenu-title {
+        margin: 3px 10px !important;
+        border-radius: 8px !important;
+        height: 42px !important;
+        line-height: 42px !important;
+        color: rgba(255, 255, 255, 0.72) !important;
+        transition: all 0.2s ease !important;
+
+        .anticon {
+          font-size: 16px !important;
+        }
+
+        &:hover {
+          color: #ffffff !important;
+          background: rgba(255, 255, 255, 0.08) !important;
+        }
+      }
+
+      .ant-menu-item-selected {
+        background: linear-gradient(90deg, rgba(24, 144, 255, 0.25) 0%, rgba(24, 144, 255, 0.08) 100%) !important;
+        color: #38bdf8 !important;
+        font-weight: 600 !important;
+        border-left: 3px solid #38bdf8 !important;
+
+        .anticon {
+          color: #38bdf8 !important;
+        }
+      }
+
+      .ant-menu-sub {
+        background: rgba(0, 0, 0, 0.2) !important;
+        border-radius: 8px;
+        margin: 4px 8px;
+        padding: 4px 0;
+      }
+    }
+
+    .status-icon--success {
+      color: #52c41a !important;
+    }
+    .status-icon--primary {
+      color: #1890ff !important;
+    }
+    .status-icon--warning {
+      color: #faad14 !important;
     }
 
     .menu-text {
       margin-left: 10px;
+      font-size: 14px;
     }
 
     /* Sidebar Footer */
     .sidebar-footer {
-      padding: 16px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 14px 18px;
+      background: rgba(0, 0, 0, 0.2);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
 
       &.collapsed {
-        padding: 16px 8px;
+        padding: 12px;
+        text-align: center;
       }
     }
 
-    .help-section {
+    .user-quick-status {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 12px;
-      color: rgba(255, 255, 255, 0.65);
-      font-size: 13px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
+    }
 
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-        color: #fff;
-      }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #52c41a;
+      box-shadow: 0 0 6px #52c41a;
+    }
+
+    .status-text {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.65);
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     /* ===== Main Area ===== */
@@ -377,40 +463,41 @@ import { NotificationService } from '../../core/services/notification.service';
       align-items: center;
       justify-content: space-between;
       padding: 0 24px !important;
-      background: #fff !important;
+      background: #ffffff !important;
       height: 64px !important;
       line-height: 64px !important;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      border-bottom: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
       flex-shrink: 0;
     }
 
     .header-left {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
 
     .header-right {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .menu-toggle {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 40px;
-      height: 40px;
-      border: none;
-      background: transparent;
+      width: 38px;
+      height: 38px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
       color: var(--color-text-secondary);
 
       &:hover {
-        background: var(--color-bg-tertiary);
+        background: #e2e8f0;
         color: var(--color-primary);
       }
 
@@ -419,64 +506,32 @@ import { NotificationService } from '../../core/services/notification.service';
       }
     }
 
-    .header-search {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      background: var(--color-bg-tertiary);
-      border-radius: 8px;
-      width: 240px;
-      height: 36px;
-      transition: all 0.2s ease;
-
-      &:focus-within {
-        background: #fff;
-        box-shadow: 0 0 0 2px var(--color-primary-100);
-      }
-
-      span {
-        color: var(--color-text-tertiary);
-      }
-
-      input {
-        border: none;
-        background: transparent;
-        outline: none;
-        width: 100%;
-        font-size: 14px;
-        color: var(--color-text-primary);
-
-        &::placeholder {
-          color: var(--color-text-tertiary);
-        }
-      }
-    }
-
     .header-action {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
       cursor: pointer;
       transition: all 0.2s ease;
       color: var(--color-text-secondary);
 
       &:hover {
-        background: var(--color-bg-tertiary);
+        background: #e2e8f0;
         color: var(--color-primary);
       }
 
       span {
-        font-size: 20px;
+        font-size: 18px;
       }
     }
 
     .header-divider {
       height: 24px;
-      margin: 0 8px;
+      margin: 0 4px;
       background: var(--color-border);
     }
 
@@ -485,36 +540,55 @@ import { NotificationService } from '../../core/services/notification.service';
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 6px 12px 6px 6px;
+      padding: 4px 10px 4px 4px;
       border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
       cursor: pointer;
       transition: all 0.2s ease;
 
       &:hover {
-        background: var(--color-bg-tertiary);
+        background: #f1f5f9;
+        border-color: #cbd5e1;
       }
     }
 
     .user-avatar {
-      background: var(--color-primary) !important;
+      background: #0050b3 !important;
       font-weight: 600;
     }
 
     .user-info {
       display: flex;
       flex-direction: column;
-      line-height: 1.3;
+      line-height: 1.2;
     }
 
     .user-name {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--color-text-primary);
     }
 
     .user-role {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--color-text-tertiary);
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .user-arrow {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .dropdown-role-label {
+      font-size: 11px;
+      color: #0050b3;
+      font-weight: 600;
+      margin-top: 2px;
     }
 
     /* Notification Dropdown */

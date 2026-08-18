@@ -9,8 +9,8 @@ Write-Host "1. Khieu chay MinIO Storage (Port 9000)..." -ForegroundColor Yellow
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot'; .\minio.exe server .\data\minio --address ':9000' --console-address ':9001'"
 
 # 2. FastAPI Backend & AI Agent
-Write-Host "2. Khieu chay FastAPI Backend & AI Agent (Port 8000)..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot'; .\.venv\Scripts\Activate.ps1; uvicorn run_local:app --reload --port 8000"
+Write-Host "2. Khoi chay FastAPI Backend & AI Agent (Port 8000)..." -ForegroundColor Yellow
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot'; .\.venv\Scripts\python.exe -m uvicorn run_local:app --reload --host 127.0.0.1 --port 8000"
 
 # 3. Celery Worker
 Write-Host "3. Khieu chay Celery Async Worker..." -ForegroundColor Yellow

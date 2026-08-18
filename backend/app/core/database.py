@@ -17,11 +17,12 @@ else:
 
 sync_database_url = raw_db_url.replace("postgresql+asyncpg://", "postgresql://")
 
-# Async engine for FastAPI
+# Async engine for FastAPI (statement_cache_size=0 is required for Supabase / PgBouncer pooler)
 engine = create_async_engine(
     async_database_url,
     echo=settings.DEBUG,
     future=True,
+    connect_args={"statement_cache_size": 0} if "asyncpg" in async_database_url else {},
 )
 
 AsyncSessionLocal = async_sessionmaker(

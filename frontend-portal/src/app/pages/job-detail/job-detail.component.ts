@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, SecurityContext } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -569,6 +570,15 @@ export class JobDetailComponent implements OnInit {
   }
 
   beforeUpload = (file: NzUploadFile): boolean => {
+    const extension = file.name.toLowerCase().split('.').pop();
+    if (!extension || !['pdf', 'doc', 'docx'].includes(extension)) {
+      this.message.error('Định dạng CV không được hỗ trợ. Vui lòng sử dụng PDF, DOC hoặc DOCX.');
+      return false;
+    }
+    if ((file.size ?? 0) > 5 * 1024 * 1024) {
+      this.message.error('Dung lượng CV vượt quá 5 MB. Vui lòng chọn file nhỏ hơn.');
+      return false;
+    }
     // Clear selection when uploading new file
     this.selectedResumeId = null;
     this.uploadedFiles = [file];
@@ -594,7 +604,9 @@ export class JobDetailComponent implements OnInit {
     if (this.selectedResumeId) {
       formData.append('resume_id', this.selectedResumeId.toString());
     } else if (this.uploadedFiles.length > 0) {
-      formData.append('file', this.uploadedFiles[0] as unknown as File);
+      const upload = this.uploadedFiles[0];
+      const rawFile = upload.originFileObj ?? (upload as unknown as File);
+      formData.append('file', rawFile, upload.name);
     }
 
     if (this.coverLetter.trim()) {
@@ -608,11 +620,35 @@ export class JobDetailComponent implements OnInit {
         this.closeApplyModal();
         this.router.navigate(['/dashboard/applications']);
       },
-      error: (err) => {
-        this.message.error(err.error?.detail || 'Có lỗi xảy ra, vui lòng thử lại');
+      error: (err: HttpErrorResponse) => {
+        this.message.error(this.getApplicationErrorMessage(err));
         this.submitting = false;
       },
     });
+  }
+
+  private getApplicationErrorMessage(err: HttpErrorResponse): string {
+    const detail = err.error?.detail;
+    const code = typeof detail === 'object' ? detail?.code : undefined;
+    const messages: Record<string, string> = {
+      ALREADY_APPLIED: 'Bạn đã ứng tuyển vị trí này trước đó.',
+      RESUME_REQUIRED: 'Vui lòng tải lên CV hoặc chọn một CV đã lưu.',
+      JOB_NOT_ACCEPTING_APPLICATIONS: 'Tin tuyển dụng không tồn tại hoặc đã ngừng nhận hồ sơ.',
+    };
+
+    if (code && messages[code]) return messages[code];
+    if (err.status === 0) return 'Không thể kết nối đến hệ thống. Vui lòng kiểm tra mạng và thử lại.';
+    if (err.status === 401) return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để ứng tuyển.';
+    if (err.status === 403) return 'Tài khoản của bạn không có quyền ứng tuyển vị trí này.';
+    if (err.status === 413) return 'Dung lượng CV vượt quá giới hạn cho phép.';
+    if (err.status === 415) return 'Định dạng CV không được hỗ trợ. Vui lòng sử dụng PDF, DOC hoặc DOCX.';
+    if (err.status === 422) return 'Dữ liệu hồ sơ chưa hợp lệ. Vui lòng chọn lại CV và thử lại.';
+    if (err.status === 429) return 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng đợi một lát rồi thử lại.';
+    if (err.status === 503) return 'Dịch vụ lưu trữ CV đang tạm thời gián đoạn. Vui lòng thử lại sau.';
+    if (err.status >= 500) return 'Hệ thống chưa thể tiếp nhận hồ sơ lúc này. Vui lòng thử lại sau.';
+    if (typeof detail === 'object' && detail?.message) return detail.message;
+    if (typeof detail === 'string') return detail;
+    return 'Không thể gửi hồ sơ. Vui lòng thử lại.';
   }
 
   formatSalary(min?: number, max?: number): string {

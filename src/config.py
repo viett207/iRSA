@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_api_keys: str = ""
     deepseek_api_key: str = ""
-    model_name: str = "gemini-1.5-flash"
+    model_name: str = "gemini-3.6-flash"
     llm_temperature: float = Field(default=0.2, ge=0.0, le=2.0)
     embedding_model: str = "paraphrase-multilingual-MiniLM-L12-v2"
 
@@ -39,7 +39,11 @@ class Settings(BaseSettings):
         )
         if not raw_keys:
             return []
-        keys = [k.strip() for k in raw_keys.replace("\n", ",").split(",") if k.strip()]
+        keys = [
+            k.strip()
+            for k in raw_keys.replace("\n", ",").split(",")
+            if k.strip() and k.strip().lower() not in {"your-api-key", "your_api_key", "your_gemini_api_key_here", "your-api-key-here"}
+        ]
         return keys
 
     # Database & Vector Store

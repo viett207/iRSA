@@ -34,6 +34,12 @@ export interface PublicJobListItem {
   published_at?: string;
   application_deadline?: string;
   applications_count: number;
+  must_have_skills?: string[];
+  min_experience_years?: number;
+  max_experience_years?: number;
+  company_name?: string;
+  company_code?: string;
+  description_vi?: string;
 }
 
 export interface PublicJobListResponse {

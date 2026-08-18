@@ -19,12 +19,23 @@ class UserService:
         page: int = 1,
         page_size: int = 20,
         role: str | None = None,
+        is_active: bool | None = None,
+        search: str | None = None,
     ) -> UserList:
         """Get paginated list of users."""
         query = select(User)
 
         if role:
             query = query.where(User.role == role)
+        if is_active is not None:
+            query = query.where(User.is_active == is_active)
+        if search:
+            search_term = f"%{search}%"
+            query = query.where(
+                User.email.ilike(search_term)
+                | User.full_name.ilike(search_term)
+                | User.phone.ilike(search_term)
+            )
 
         # Get total count
         count_query = select(func.count()).select_from(query.subquery())

@@ -1,0 +1,39 @@
+services:
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - .env
+    working_dir: /app/backend
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend-portal:
+    build:
+      context: .
+      dockerfile: frontend-portal/Dockerfile
+    ports:
+      - "4300:80"
+    restart: unless-stopped
+
+  frontend-admin:
+    build:
+      context: .
+      dockerfile: frontend-admin/Dockerfile
+    ports:
+      - "4200:80"
+    restart: unless-stopped

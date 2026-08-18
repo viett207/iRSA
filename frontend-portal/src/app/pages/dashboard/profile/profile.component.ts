@@ -1,6 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { NzCardModule } from 'ng-zorro-antd/card';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 
@@ -15,6 +18,8 @@ import { ProfileInfoComponent } from './profile-info/profile-info.component';
   imports: [
     CommonModule,
     NzCardModule,
+    NzAlertModule,
+    NzButtonModule,
     NzSpinModule,
     ProfileInfoComponent,
   ],
@@ -38,6 +43,16 @@ import { ProfileInfoComponent } from './profile-info/profile-info.component';
             [saving]="savingProfile"
             (save)="saveProfile()"
           ></app-profile-info>
+        } @else if (profileError) {
+          <nz-alert
+            nzType="error"
+            nzShowIcon
+            nzMessage="Không thể hiển thị hồ sơ cá nhân"
+            [nzDescription]="profileError"
+          ></nz-alert>
+          <button nz-button nzType="primary" class="retry-button" (click)="loadProfile()">
+            Thử tải lại
+          </button>
         }
       </div>
     </div>
@@ -74,6 +89,10 @@ import { ProfileInfoComponent } from './profile-info/profile-info.component';
       justify-content: center;
       padding: var(--space-12);
     }
+
+    .retry-button {
+      margin-top: var(--space-4);
+    }
   `],
 })
 export class ProfileComponent implements OnInit {
@@ -83,6 +102,7 @@ export class ProfileComponent implements OnInit {
   loadingProfile = true;
   savingProfile = false;
   profile: Profile | null = null;
+  profileError: string | null = null;
 
   ngOnInit(): void {
     this.loadProfile();
@@ -90,13 +110,15 @@ export class ProfileComponent implements OnInit {
 
   loadProfile(): void {
     this.loadingProfile = true;
+    this.profileError = null;
     this.profileService.get().subscribe({
       next: (profile) => {
         this.profile = profile;
         this.loadingProfile = false;
       },
-      error: () => {
-        this.message.error('Không thể tải thông tin hồ sơ');
+      error: (err: HttpErrorResponse) => {
+        this.profileError = this.getProfileErrorMessage(err);
+        this.message.error(this.profileError);
         this.loadingProfile = false;
       },
     });
@@ -121,10 +143,25 @@ export class ProfileComponent implements OnInit {
           this.message.success('Đã lưu thay đổi');
           this.savingProfile = false;
         },
-        error: (err) => {
-          this.message.error(err.error?.detail || 'Có lỗi xảy ra');
+        error: (err: HttpErrorResponse) => {
+          this.message.error(this.getProfileErrorMessage(err, true));
           this.savingProfile = false;
         },
       });
+  }
+
+  private getProfileErrorMessage(err: HttpErrorResponse, saving = false): string {
+    const detail = err.error?.detail;
+    const serverMessage = typeof detail === 'object' ? detail?.message : detail;
+    if (err.status === 0) return 'Không thể kết nối đến hệ thống. Vui lòng kiểm tra backend và kết nối mạng.';
+    if (err.status === 401) return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+    if (err.status === 403) return 'Tài khoản không có quyền truy cập hồ sơ ứng viên.';
+    if (err.status === 404) return 'Không tìm thấy hồ sơ cá nhân của bạn.';
+    if (err.status === 422) return saving
+      ? 'Thông tin hồ sơ chưa hợp lệ. Vui lòng kiểm tra các trường vừa nhập.'
+      : 'Dữ liệu hồ sơ từ hệ thống không hợp lệ.';
+    if (err.status >= 500) return 'Hệ thống chưa thể xử lý hồ sơ lúc này. Vui lòng thử lại sau.';
+    if (typeof serverMessage === 'string' && serverMessage.trim()) return serverMessage;
+    return saving ? 'Không thể lưu hồ sơ. Vui lòng thử lại.' : 'Không thể tải thông tin hồ sơ.';
   }
 }

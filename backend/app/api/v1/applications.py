@@ -1,7 +1,7 @@
 """Admin API for viewing job applications."""
 
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from io import BytesIO
 from pydantic import BaseModel
@@ -197,6 +197,18 @@ async def get_application_detail(
     )
 
 
+async def _run_ai_eval_background(application_id: int):
+    """Execute AI evaluation agent directly in background without requiring Celery daemon."""
+    import logging
+    try:
+        from app.core.database import get_sync_session
+        from src.services.agent_service import run_evaluation_agent
+        with get_sync_session() as session:
+            await run_evaluation_agent(session, application_id)
+    except Exception as e:
+        logging.getLogger(__name__).exception(f"Background AI evaluation failed for app {application_id}: {e}")
+
+
 @router.patch(
     "/jobs/{job_id}/applications/{app_id}/status",
     response_model=ApplicantResponse,
@@ -207,6 +219,7 @@ async def update_application_status(
     body: StatusUpdateRequest,
     current_user: HRUser,
     db: DBSession,
+    background_tasks: BackgroundTasks,
 ):
     """Update application status (shortlist, reject, schedule interview, etc.)."""
     result = await db.execute(
@@ -239,10 +252,14 @@ async def update_application_status(
     await db.commit()
     await db.refresh(app)
 
-    # Auto-trigger Gemini AI evaluation when shortlisted
+    # Auto-trigger AI evaluation when shortlisted
     if body.status == "shortlisted":
-        from app.tasks.ai_evaluation_tasks import ai_evaluate_application_task
-        ai_evaluate_application_task.delay(app.id)
+        background_tasks.add_task(_run_ai_eval_background, app.id)
+        try:
+            from app.tasks.ai_evaluation_tasks import ai_evaluate_application_task
+            ai_evaluate_application_task.delay(app.id)
+        except Exception:
+            pass
 
     # Real-time + email notification to candidate on status change
     candidate = app.candidate
@@ -490,6 +507,7 @@ async def trigger_ai_evaluation(
     app_id: int,
     current_user: HRUser,
     db: DBSession,
+    background_tasks: BackgroundTasks,
 ):
     """Manually trigger AI evaluation for a specific application."""
     result = await db.execute(
@@ -501,10 +519,57 @@ async def trigger_ai_evaluation(
     if not app:
         raise HTTPException(status_code=404, detail="Application not found")
 
-    from app.tasks.ai_evaluation_tasks import ai_evaluate_application_task
-    ai_evaluate_application_task.delay(app_id)
+    # Run in background via FastAPI background tasks
+    background_tasks.add_task(_run_ai_eval_background, app_id)
+    try:
+        from app.tasks.ai_evaluation_tasks import ai_evaluate_application_task
+        ai_evaluate_application_task.delay(app_id)
+    except Exception:
+        pass
 
-    return {"message": "AI evaluation triggered", "application_id": app_id}
+class CandidateChatRequest(BaseModel):
+    message: str
+    history: list[dict] | None = None
+
+
+class CandidateChatResponse(BaseModel):
+    reply: str
+    suggested_followups: list[str] = []
+    candidate_name: str | None = None
+
+
+@router.post(
+    "/jobs/{job_id}/applications/{app_id}/chat",
+    response_model=CandidateChatResponse,
+)
+async def chat_with_candidate_agent(
+    job_id: int,
+    app_id: int,
+    body: CandidateChatRequest,
+    current_user: HRUser,
+    db: DBSession,
+):
+    """Interactive Chatbot with AI Recruiter Copilot regarding candidate's CV and qualifications."""
+    result = await db.execute(
+        select(Application).where(
+            Application.id == app_id, Application.job_id == job_id
+        )
+    )
+    app = result.scalar_one_or_none()
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    from app.core.database import get_sync_session
+    from src.services.agent_service import run_candidate_chat
+
+    with get_sync_session() as sync_session:
+        res = await run_candidate_chat(sync_session, app_id, body.message, body.history)
+
+    return CandidateChatResponse(
+        reply=res.get("reply", "Không thể tạo câu trả lời."),
+        suggested_followups=res.get("suggested_followups", []),
+        candidate_name=res.get("candidate_name"),
+    )
 
 
 # --- Interviewing Dashboard ---

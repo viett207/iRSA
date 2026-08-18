@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings,SettingsConfigDict
 from functools import lru_cache
 from pathlib import Path
@@ -75,6 +76,18 @@ class Settings(BaseSettings):
     # Environment
     ENVIRONMENT: str = "development"
     DEBUG: bool = False  # Set True only for development
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def parse_debug_mode(cls, value):
+        """Tolerate common environment-mode values injected by process managers."""
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"release", "production", "prod"}:
+                return False
+            if normalized in {"development", "dev", "debug"}:
+                return True
+        return value
 
     # Cookie settings for JWT (HttpOnly cookies)
     COOKIE_SECURE: bool = False  # Set True in production (HTTPS only)

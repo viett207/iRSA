@@ -81,10 +81,14 @@ async def list_users(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     role: str | None = Query(None, pattern="^(candidate|recruiter|leader|admin)$"),
+    is_active: bool | None = Query(None),
+    search: str | None = Query(None),
 ):
     """List all users (admin only)."""
     service = UserService(db)
-    return await service.get_users(page=page, page_size=page_size, role=role)
+    return await service.get_users(
+        page=page, page_size=page_size, role=role, is_active=is_active, search=search
+    )
 
 
 @router.post("", response_model=UserResponse, status_code=201)

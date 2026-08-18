@@ -690,6 +690,7 @@ export class JobListComponent implements OnInit {
         page: this.pageIndex,
         page_size: this.pageSize,
         status: this.statusFilter || undefined,
+        department: this.departmentFilter || undefined,
         search: this.searchText || undefined,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))

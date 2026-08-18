@@ -90,7 +90,7 @@ class ResumeService:
         if count >= self.MAX_RESUMES_PER_USER:
             raise HTTPException(
                 status_code=400,  # Bad Request
-                detail=f"Maximum {self.MAX_RESUMES_PER_USER} resumes allowed. Delete one to upload more.",
+                detail=f"Bạn đã đạt giới hạn {self.MAX_RESUMES_PER_USER} CV. Vui lòng xóa một CV cũ trước khi tải lên CV mới.",
             )
 
         # ========== BƯỚC 2: Upload file lên MinIO ==========
@@ -208,7 +208,10 @@ class ResumeService:
         
         # Nếu không tìm thấy => 404 Not Found
         if not resume:
-            raise HTTPException(status_code=404, detail="Resume not found")
+            raise HTTPException(
+                status_code=404,
+                detail="CV đã chọn không tồn tại hoặc không thuộc tài khoản của bạn.",
+            )
         
         return resume
 

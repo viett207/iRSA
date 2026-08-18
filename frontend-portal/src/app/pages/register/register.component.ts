@@ -131,7 +131,7 @@ import { AuthService } from '../../core/auth/auth.service';
                         type="text"
                         nz-input
                         formControlName="full_name"
-                        placeholder="Nguyễn Văn A"
+                        placeholder="Nhập họ và tên đầy đủ"
                       />
                     </nz-input-group>
                     <ng-template #userIcon>
@@ -148,7 +148,7 @@ import { AuthService } from '../../core/auth/auth.service';
                         type="email"
                         nz-input
                         formControlName="email"
-                        placeholder="example&#64;email.com"
+                        placeholder="tenban&#64;example.com"
                       />
                     </nz-input-group>
                     <ng-template #emailIcon>
@@ -165,7 +165,7 @@ import { AuthService } from '../../core/auth/auth.service';
                         type="tel"
                         nz-input
                         formControlName="phone"
-                        placeholder="0912 345 678 (không bắt buộc)"
+                        placeholder="Nhập số điện thoại (không bắt buộc)"
                       />
                     </nz-input-group>
                     <ng-template #phoneIcon>
@@ -182,7 +182,7 @@ import { AuthService } from '../../core/auth/auth.service';
                         [type]="showPassword ? 'text' : 'password'"
                         nz-input
                         formControlName="password"
-                        placeholder="Tối thiểu 8 ký tự"
+                        placeholder="Nhập mật khẩu (tối thiểu 8 ký tự)"
                       />
                     </nz-input-group>
                     <ng-template #passwordIcon>
@@ -208,7 +208,7 @@ import { AuthService } from '../../core/auth/auth.service';
                         [type]="showConfirmPassword ? 'text' : 'password'"
                         nz-input
                         formControlName="confirmPassword"
-                        placeholder="Nhập lại mật khẩu"
+                        placeholder="Nhập lại mật khẩu để xác nhận"
                       />
                     </nz-input-group>
                     <ng-template #confirmIcon>

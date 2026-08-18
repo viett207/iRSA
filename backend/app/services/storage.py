@@ -79,15 +79,15 @@ class StorageService:
 
         if file_size > self.MAX_FILE_SIZE:
             raise HTTPException(
-                status_code=400,
-                detail=f"File size exceeds maximum of {self.MAX_FILE_SIZE // (1024*1024)}MB",
+                status_code=413,
+                detail=f"Dung lượng CV vượt quá {self.MAX_FILE_SIZE // (1024*1024)} MB.",
             )
 
         ext = self._get_extension(file.filename or "resume.pdf")
         if ext.lower() not in self.ALLOWED_EXTENSIONS:
             raise HTTPException(
-                status_code=400,
-                detail="Invalid file extension. Allowed: .pdf, .docx",
+                status_code=415,
+                detail="Định dạng CV không được hỗ trợ. Vui lòng sử dụng PDF, DOC hoặc DOCX.",
             )
         filename = f"{uuid.uuid4()}{ext}"
         path = f"{user_id}/{filename}"
@@ -100,9 +100,10 @@ class StorageService:
                 Body=contents,
                 ContentType=content_type,
             )
-        except Exception as e:
+        except Exception:
             raise HTTPException(
-                status_code=500, detail=f"Failed to upload file to storage: {str(e)}"
+                status_code=503,
+                detail="Dịch vụ lưu trữ CV đang tạm thời gián đoạn. Vui lòng thử lại sau.",
             )
 
         return path, file_size, content_type, contents

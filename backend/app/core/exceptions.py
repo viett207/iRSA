@@ -24,6 +24,17 @@ class UnauthorizedException(AppException):
         )
 
 
+class AuthenticationException(AppException):
+    """Authentication failure with a stable, user-safe error code."""
+
+    def __init__(self, code: str, message: str, status_code: int = status.HTTP_401_UNAUTHORIZED):
+        super().__init__(
+            status_code=status_code,
+            detail={"code": code, "message": message},
+            headers={"WWW-Authenticate": "Bearer"} if status_code == status.HTTP_401_UNAUTHORIZED else None,
+        )
+
+
 class ForbiddenException(AppException):
     """403 Forbidden."""
 

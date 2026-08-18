@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from fastapi import APIRouter, Cookie, Request, Response
+from fastapi import APIRouter, Cookie, Request, Response, status
 from sqlalchemy import select
 
 from app.api.deps import DBSession
@@ -12,6 +12,7 @@ from app.core.security import (
     verify_password,
 )
 from app.core.exceptions import (
+    AuthenticationException,
     BadRequestException,
     ConflictException,
     UnauthorizedException,
@@ -146,16 +147,40 @@ async def login(request: Request, response: Response, data: LoginRequest, db: DB
     user = result.scalar_one_or_none()
 
     if not user or not verify_password(data.password, user.password_hash):
-        raise UnauthorizedException("Invalid email or password")
+        raise AuthenticationException(
+            "INVALID_CREDENTIALS",
+            "Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra và thử lại.",
+        )
 
-    if not user.is_active:
-        raise UnauthorizedException("Account is deactivated")
+    if not user.email_verified:
+        raise AuthenticationException(
+            "EMAIL_NOT_VERIFIED",
+            "Email chưa được xác thực. Vui lòng kiểm tra hộp thư để kích hoạt tài khoản.",
+            status.HTTP_403_FORBIDDEN,
+        )
 
+    # Approval states must be checked before is_active because pending and
+    # rejected HR accounts are intentionally inactive.
     if user.approval_status == "pending":
-        raise UnauthorizedException("Tài khoản đang chờ phê duyệt từ quản trị viên")
+        raise AuthenticationException(
+            "ACCOUNT_PENDING_APPROVAL",
+            "Tài khoản đang chờ quản trị viên phê duyệt.",
+            status.HTTP_403_FORBIDDEN,
+        )
 
     if user.approval_status == "rejected":
-        raise UnauthorizedException("Tài khoản đã bị từ chối phê duyệt")
+        raise AuthenticationException(
+            "ACCOUNT_REJECTED",
+            "Yêu cầu đăng ký tài khoản đã bị từ chối. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    if not user.is_active:
+        raise AuthenticationException(
+            "ACCOUNT_DISABLED",
+            "Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
+            status.HTTP_403_FORBIDDEN,
+        )
 
     token_data = {"sub": str(user.id), "role": user.role}
     access_token = create_access_token(token_data)

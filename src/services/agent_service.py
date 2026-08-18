@@ -83,3 +83,82 @@ async def run_evaluation_agent(db: Session, application_id: int) -> Optional[Dic
         "evaluation": evaluation_dict,
         "email_sent": email_sent,
     }
+
+
+async def run_candidate_chat(
+    db: Session,
+    application_id: int,
+    message: str,
+    history: Optional[list] = None,
+) -> Dict[str, Any]:
+    """Execute AI Chat Assistant for recruiter asking about a candidate's CV and competencies."""
+    from src.services.llm_service import get_agent_llm
+    from src.agents.tools.chat_tools import get_candidate_profile, search_cv, get_evaluation_summary
+
+    profile = get_candidate_profile(db, application_id)
+    eval_data = get_evaluation_summary(db, application_id)
+    cv_search_results = search_cv(db, application_id, message)
+
+    snippets_text = "\n".join([f"- {item['content']}" for item in cv_search_results]) if cv_search_results else "Không tìm thấy trích đoạn từ khóa trực tiếp."
+
+    system_prompt = f"""Bạn là Trợ lý Tuyển dụng AI (iRSA Recruiter Copilot).
+Nhiệm vụ của bạn là hỗ trợ Nhà tuyển dụng (HR / Hiring Manager / Technical Lead) giải đáp mọi thắc mắc chuyên sâu, chi tiết về hồ sơ của ứng viên, đối chiếu năng lực với tiêu chí công việc và đề xuất chiến lược phỏng vấn/tuyển dụng.
+
+THÔNG TIN ỨNG VIÊN & VỊ TRÍ:
+- Họ và tên ứng viên: {profile.get('candidate_name', 'N/A')}
+- Email: {profile.get('candidate_email', 'N/A')}
+- Số điện thoại: {profile.get('candidate_phone', 'N/A')}
+- Vị trí ứng tuyển: {profile.get('job_title', 'N/A')}
+- Phòng ban: {profile.get('department', 'N/A')}
+- Dải lương vị trí: {profile.get('salary_range', 'Thỏa thuận')}
+- Tiêu chí bắt buộc (Must-Have): {', '.join(profile.get('must_have_skills', []))}
+- Tiêu chí ưu tiên (Nice-To-Have): {', '.join(profile.get('nice_to_have_skills', []))}
+- Yêu cầu kinh nghiệm: {profile.get('min_experience_years', 0)} năm
+- Yêu cầu học vấn: {profile.get('min_education', 'N/A')}
+
+KẾT QUẢ ĐÁNH GIÁ CỦA HỆ THỐNG:
+- Điểm sàng lọc vòng 1: {eval_data.get('screening_total_score', 'N/A')}/100 (Kỹ năng: {eval_data.get('skill_match_score', 'N/A')}, Kinh nghiệm: {eval_data.get('experience_score', 'N/A')}, Học vấn: {eval_data.get('education_score', 'N/A')})
+- Điểm đánh giá chuyên sâu AI: {eval_data.get('ai_score', 'N/A')}/100
+- Đánh giá tổng quan: {eval_data.get('ai_evaluation', {}).get('overall_assessment', 'Chưa có')}
+- Điểm mạnh nổi bật: {', '.join(eval_data.get('ai_evaluation', {}).get('strengths', []))}
+- Lưu ý / Lỗ hổng tiềm ẩn: {', '.join(eval_data.get('ai_evaluation', {}).get('concerns', []))}
+
+CÁC TRÍCH ĐOẠN KHỚP TỪ CV:
+{snippets_text}
+
+NGUYÊN TẮC TRẢ LỜI:
+1. Luôn trả lời bằng tiếng Việt chuyên nghiệp, súc tích, có dẫn chứng cụ thể từ CV và tiêu chí tuyển dụng.
+2. Nêu rõ ưu điểm, rủi ro tiềm ẩn (nếu có) và đưa ra lời khuyên thực tế cho người phỏng vấn.
+3. Định dạng câu trả lời rõ ràng bằng Markdown (bullet points, in đậm từ khóa quan trọng).
+"""
+
+    messages = [("system", system_prompt)]
+    if history:
+        for turn in history[-8:]:
+            role = "human" if turn.get("role") in ["user", "human"] else "assistant"
+            messages.append((role, turn.get("content", "")))
+    messages.append(("human", message))
+
+    llm = get_agent_llm(temperature=0.3)
+    reply_text = "Xin lỗi, không thể xử lý câu trả lời lúc này."
+
+    if llm:
+        try:
+            resp = await llm.ainvoke(messages)
+            reply_text = resp.content if hasattr(resp, "content") else str(resp)
+        except Exception as e:
+            logger.error(f"Error in run_candidate_chat: {e}")
+            reply_text = f"Đã xảy ra lỗi khi trao đổi với AI: {e}"
+
+    suggested_followups = [
+        f"Ứng viên có đáp ứng đủ kỹ năng bắt buộc của {profile.get('job_title', 'vị trí')} không?",
+        "Điểm yếu lớn nhất của ứng viên này trong CV là gì?",
+        "Gợi ý 3 câu hỏi phỏng vấn kỹ thuật hóc búa cho ứng viên này",
+    ]
+
+    return {
+        "reply": reply_text,
+        "suggested_followups": suggested_followups,
+        "candidate_name": profile.get("candidate_name"),
+    }
+

@@ -27,6 +27,7 @@ async def list_jobs(
         pattern="^(draft|pending_approval|approved|rejected|active|closed)$",
     ),
     department: str | None = Query(None),
+    search: str | None = Query(None),
     created_by: int | None = Query(None),
 ):
     """List jobs. HR users see all jobs from their company."""
@@ -43,6 +44,7 @@ async def list_jobs(
         created_by=created_by,
         department=department,
         company_code=company_code,
+        search=search,
     )
 
 

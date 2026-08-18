@@ -231,21 +231,104 @@ a {
    5. Ng-Zorro Theme Overrides
    ========================================================================== */
 
+/* Base Button */
+.ant-btn {
+  font-family: var(--font-body) !important;
+  font-weight: var(--font-medium) !important;
+  border-radius: var(--radius-md) !important;
+  height: 38px !important;
+  padding: 0 20px !important;
+  font-size: var(--text-sm) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: var(--space-2) !important;
+  transition: all var(--transition-normal) !important;
+
+  .anticon {
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Icon-only and Circle buttons */
+  &.ant-btn-icon-only,
+  &.ant-btn-circle {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    padding: 0 !important;
+
+    &.ant-btn-circle {
+      border-radius: 50% !important;
+    }
+  }
+
+  /* Small button */
+  &.ant-btn-sm {
+    height: 30px !important;
+    padding: 0 12px !important;
+    font-size: var(--text-xs) !important;
+    border-radius: var(--radius-sm) !important;
+
+    &.ant-btn-icon-only,
+    &.ant-btn-circle {
+      width: 30px !important;
+      height: 30px !important;
+      min-width: 30px !important;
+      padding: 0 !important;
+    }
+
+    .anticon {
+      font-size: 13px;
+    }
+  }
+
+  /* Large button */
+  &.ant-btn-lg {
+    height: 48px !important;
+    padding: 0 32px !important;
+    font-size: var(--text-base) !important;
+    border-radius: var(--radius-lg) !important;
+
+    &.ant-btn-icon-only,
+    &.ant-btn-circle {
+      width: 48px !important;
+      height: 48px !important;
+      min-width: 48px !important;
+      padding: 0 !important;
+    }
+
+    .anticon {
+      font-size: 18px;
+    }
+  }
+
+  /* Text & Link buttons */
+  &.ant-btn-text,
+  &.ant-btn-link {
+    height: auto !important;
+    min-height: 32px !important;
+    padding: 4px 8px !important;
+    box-shadow: none !important;
+
+    &:hover {
+      transform: none !important;
+    }
+  }
+}
+
 /* Primary Button */
 .ant-btn-primary {
   background-color: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
-  font-weight: var(--font-medium);
-  border-radius: var(--radius-md) !important;
-  height: auto !important;
-  padding: 10px 24px !important;
-  font-size: var(--text-sm) !important;
-  transition: all var(--transition-normal) !important;
+  color: #ffffff !important;
 
   &:hover,
   &:focus {
     background-color: var(--color-primary-light) !important;
     border-color: var(--color-primary-light) !important;
+    color: #ffffff !important;
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
   }
@@ -259,13 +342,7 @@ a {
 
 /* Default Button */
 .ant-btn-default {
-  border-radius: var(--radius-md) !important;
-  font-weight: var(--font-medium);
   border-color: var(--color-border) !important;
-  height: auto !important;
-  padding: 10px 24px !important;
-  font-size: var(--text-sm) !important;
-  transition: all var(--transition-normal) !important;
 
   &:hover,
   &:focus {
@@ -273,13 +350,6 @@ a {
     border-color: var(--color-primary) !important;
     transform: translateY(-1px);
   }
-}
-
-/* Large Button */
-.ant-btn-lg {
-  padding: 14px 32px !important;
-  font-size: var(--text-base) !important;
-  border-radius: var(--radius-lg) !important;
 }
 
 /* Card */

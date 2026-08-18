@@ -38,6 +38,8 @@ cors_origins = [
     for origin in [
         "http://localhost:4200",  # Angular Admin
         "http://localhost:4300",  # Angular Portal
+        "http://127.0.0.1:4200",  # Angular Admin via loopback IP
+        "http://127.0.0.1:4300",  # Angular Portal via loopback IP
         settings.FRONTEND_ADMIN_URL,
         settings.FRONTEND_PORTAL_URL,
     ]

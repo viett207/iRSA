@@ -9,10 +9,39 @@ from src.config import get_settings
 logger = logging.getLogger(__name__)
 
 
+class LLMResponseWrapper:
+    """Wrapper that exposes both .content and .text to maintain compatibility with LangChain and direct GenAI."""
+    def __init__(self, text: str):
+        self.text = text
+        self.content = text
+
+    def __str__(self):
+        return self.text
+
+
+def _format_input(input_val: Any) -> str:
+    """Format diverse message formats (tuples, BaseMessage, dicts) into a unified string prompt."""
+    if isinstance(input_val, str):
+        return input_val
+    if isinstance(input_val, list):
+        parts = []
+        for item in input_val:
+            if isinstance(item, tuple) and len(item) == 2:
+                role, text = item
+                parts.append(f"{str(role).upper()}:\n{text}")
+            elif hasattr(item, "content"):
+                role = getattr(item, "type", "user")
+                parts.append(f"{str(role).upper()}:\n{item.content}")
+            else:
+                parts.append(str(item))
+        return "\n\n".join(parts)
+    return str(input_val)
+
+
 class RotatingGeminiLLM:
     """LLM wrapper that automatically rotates through a list of Gemini API keys when quota/token limits or rate limits are reached."""
 
-    def __init__(self, api_keys: List[str], model_name: str = "gemini-1.5-flash", temperature: float = 0.2):
+    def __init__(self, api_keys: List[str], model_name: str = "gemini-3.6-flash", temperature: float = 0.2):
         self.api_keys = [k.strip() for k in api_keys if k.strip()]
         self.model_name = model_name
         self.temperature = temperature
@@ -66,13 +95,14 @@ class RotatingGeminiLLM:
                     genai.configure(api_key=self.api_keys[idx])
                     model = genai.GenerativeModel(self.model_name)
                     logger.info(f"Invoking direct google.generativeai (async) using API Key #{idx + 1}/{num_keys}...")
-                    prompt = str(input)
+                    prompt = _format_input(input)
                     if hasattr(model, "generate_content_async"):
                         res = await model.generate_content_async(prompt)
                     else:
                         res = await asyncio.to_thread(model.generate_content, prompt)
+                    text = res.text if hasattr(res, "text") else str(res)
                     self.current_index = idx
-                    return res
+                    return LLMResponseWrapper(text)
             except Exception as e:
                 last_exception = e
                 logger.warning(
@@ -102,10 +132,11 @@ class RotatingGeminiLLM:
                     genai.configure(api_key=self.api_keys[idx])
                     model = genai.GenerativeModel(self.model_name)
                     logger.info(f"Invoking direct google.generativeai (sync) using API Key #{idx + 1}/{num_keys}...")
-                    prompt = str(input)
+                    prompt = _format_input(input)
                     res = model.generate_content(prompt)
+                    text = res.text if hasattr(res, "text") else str(res)
                     self.current_index = idx
-                    return res
+                    return LLMResponseWrapper(text)
             except Exception as e:
                 last_exception = e
                 logger.warning(
@@ -184,7 +215,7 @@ def get_agent_llm(temperature: float | None = None) -> Any:
 
     # 1. Try Gemini with Key Rotation if keys are present
     if gemini_keys:
-        model_name = settings.model_name if "gemini" in settings.model_name else "gemini-1.5-flash"
+        model_name = settings.model_name if "gemini" in settings.model_name else "gemini-3.6-flash"
         logger.info(f"Initializing RotatingGeminiLLM with {len(gemini_keys)} API key(s) (model: {model_name})...")
         return RotatingGeminiLLM(api_keys=gemini_keys, model_name=model_name, temperature=temp)
 

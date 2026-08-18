@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, ActivatedRoute } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil, switchMap, tap, catchError } from 'rxjs/operators';
 import { NzGridModule } from 'ng-zorro-antd/grid';
@@ -10,6 +10,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
+import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
@@ -17,33 +18,48 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzSliderModule } from 'ng-zorro-antd/slider';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
+import { NzMessageService } from 'ng-zorro-antd/message';
 
 import { JobService } from '../../core/services/job.service';
 import { ApplicationService } from '../../core/services/application.service';
 import { AuthService } from '../../core/auth/auth.service';
-import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model';
+import { PublicJobListItem, ActiveCompany, PublicJob } from '../../shared/models/job.model';
 import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industries';
 
 interface Job {
   id: number;
+  slug: string;
   title: string;
   company: string;
+  companyCode?: string;
   companyInitial: string;
+  companyGradient: string;
   location: string;
   type: string;
+  employmentTypeValue: string;
   experience: string;
+  minExperienceYears?: number;
+  maxExperienceYears?: number;
   skills: string[];
   salaryMin?: number;
   salaryMax?: number;
   salaryLabel: string;
+  salaryFormatted: string;
   postedDate: string;
+  deadlineDate?: string;
   applicants: number;
+  descriptionSnippet: string;
+  descriptionVi?: string;
   isHot?: boolean;
   isNew?: boolean;
   isApplied?: boolean;
-  slug?: string;
+  isSaved?: boolean;
 }
 
 @Component({
@@ -59,6 +75,7 @@ interface Job {
     NzButtonModule,
     NzSelectModule,
     NzCheckboxModule,
+    NzRadioModule,
     NzTagModule,
     NzIconModule,
     NzBadgeModule,
@@ -66,883 +83,60 @@ interface Job {
     NzPaginationModule,
     NzDrawerModule,
     NzSpinModule,
+    NzSkeletonModule,
     NzAutocompleteModule,
     NzSliderModule,
+    NzToolTipModule,
+    NzDividerModule,
+    NzSegmentedModule,
   ],
-  template: `
-    <div class="jobs-page">
-      <!-- Header Section -->
-      <section class="jobs-header">
-        <div class="container">
-          <h1>Tìm việc làm</h1>
-          <p class="jobs-subtitle">
-            Khám phá cơ hội nghề nghiệp đang chờ bạn
-          </p>
-
-          <!-- Search Bar -->
-          <div class="search-bar">
-            <div class="search-bar-inner">
-              <nz-input-group [nzPrefix]="searchIcon" nzSize="large" class="search-input">
-                <input
-                  type="text"
-                  nz-input
-                  placeholder="Tìm kiếm vị trí, kỹ năng, công ty..."
-                  [(ngModel)]="searchQuery"
-                  (ngModelChange)="onSearchInput($event)"
-                  (keyup.enter)="onSearch()"
-                  [nzAutocomplete]="autoComplete"
-                />
-              </nz-input-group>
-              <ng-template #searchIcon>
-                <span nz-icon nzType="search" nzTheme="outline"></span>
-              </ng-template>
-
-              <nz-autocomplete #autoComplete [nzWidth]="480">
-                @if (suggestionsLoading) {
-                  <nz-auto-option disabled [nzValue]="searchQuery">
-                    <span nz-icon nzType="loading" nzTheme="outline"></span>
-                    Đang tìm kiếm...
-                  </nz-auto-option>
-                } @else {
-                  @for (suggestion of suggestions; track suggestion.id) {
-                    <nz-auto-option [nzValue]="suggestion.title_vi" [nzLabel]="suggestion.title_vi">
-                      <div class="suggestion-item">
-                        <div class="suggestion-title">{{ suggestion.title_vi }}</div>
-                        <div class="suggestion-meta">
-                          <span>{{ suggestion.department || 'iRSA' }}</span>
-                          @if (suggestion.location) {
-                            <span> · {{ suggestion.location }}</span>
-                          }
-                        </div>
-                      </div>
-                    </nz-auto-option>
-                  }
-                  @if (suggestions.length === 0 && searchQuery.length >= 2) {
-                    <nz-auto-option disabled [nzValue]="searchQuery">
-                      Không tìm thấy kết quả
-                    </nz-auto-option>
-                  }
-                }
-              </nz-autocomplete>
-
-              <nz-select
-                [(ngModel)]="selectedLocation"
-                nzPlaceHolder="Địa điểm"
-                nzSize="large"
-                class="location-select hide-mobile"
-                nzAllowClear
-                (ngModelChange)="onFilterChange()"
-              >
-                @for (location of locations; track location) {
-                  <nz-option [nzValue]="location" [nzLabel]="location"></nz-option>
-                }
-              </nz-select>
-
-              
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Main Content -->
-      <section class="jobs-content">
-        <div class="container">
-          <div class="jobs-layout">
-            <!-- Filter Sidebar (Desktop) -->
-            <aside class="filter-sidebar hide-mobile">
-              <div class="filter-header">
-                <h3>
-                  <span nz-icon nzType="filter" nzTheme="outline"></span>
-                  Bộ lọc
-                </h3>
-                <button nz-button nzType="link" nzSize="small" (click)="clearFilters()">
-                  Xóa tất cả
-                </button>
-              </div>
-
-              <!-- Job Type Filter -->
-              <div class="filter-section">
-                <h4 class="filter-title">Loại việc làm</h4>
-                @for (type of jobTypes; track type.value) {
-                  <label nz-checkbox [(ngModel)]="type.checked" (ngModelChange)="onJobTypeChange(type)">
-                    {{ type.label }}
-                  </label>
-                }
-              </div>
-
-              <!-- Salary Range Filter -->
-              <div class="filter-section">
-                <h4 class="filter-title">Mức lương (triệu VNĐ)</h4>
-                <div class="salary-slider-wrapper">
-                  <nz-slider
-                    [(ngModel)]="salaryRange"
-                    [nzRange]="true"
-                    [nzMin]="0"
-                    [nzMax]="100"
-                    [nzStep]="5"
-                    (nzOnAfterChange)="onFilterChange()"
-                  ></nz-slider>
-                  <div class="salary-labels">
-                    <span>{{ salaryRange[0] }}tr</span>
-                    <span>{{ salaryRange[1] === 100 ? '100tr+' : salaryRange[1] + 'tr' }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Category Filter -->
-              <div class="filter-section">
-                <h4 class="filter-title">Ngành nghề</h4>
-                <nz-select
-                  [(ngModel)]="selectedCategory"
-                  nzPlaceHolder="Chọn ngành nghề"
-                  nzAllowClear
-                  nzShowSearch
-                  (ngModelChange)="onCategorySelectChange()"
-                  style="width: 100%"
-                >
-                  @for (cat of categories; track cat.value) {
-                    <nz-option [nzValue]="cat.value" [nzLabel]="cat.label"></nz-option>
-                  }
-                </nz-select>
-              </div>
-
-              <!-- Company Filter -->
-              <div class="filter-section">
-                <h4 class="filter-title">Công ty</h4>
-                <nz-select
-                  [(ngModel)]="companyCodeFilter"
-                  nzPlaceHolder="Tìm công ty..."
-                  nzAllowClear
-                  nzShowSearch
-                  nzServerSearch
-                  (nzOnSearch)="onCompanySearch($event)"
-                  (ngModelChange)="onFilterChange()"
-                  style="width: 100%"
-                >
-                  @for (c of filteredCompanies; track c.company_code) {
-                    <nz-option
-                      [nzValue]="c.company_code"
-                      [nzLabel]="c.company_name + ' (' + c.job_count + ')'"
-                    ></nz-option>
-                  }
-                </nz-select>
-              </div>
-            </aside>
-
-            <!-- Jobs List -->
-            <main class="jobs-main">
-              <!-- Results Header -->
-              <div class="results-header">
-                <div class="results-info">
-                  <span class="results-count">
-                    <strong>{{ filteredJobs.length }}</strong> việc làm
-                  </span>
-                  <button
-                    nz-button
-                    nzType="text"
-                    class="filter-toggle show-mobile-only"
-                    (click)="filterDrawerOpen = true"
-                  >
-                    <span nz-icon nzType="filter" nzTheme="outline"></span>
-                    Bộ lọc
-                  </button>
-                </div>
-                <div class="sort-options">
-                  <span class="sort-label hide-mobile">Sắp xếp:</span>
-                  <nz-select [(ngModel)]="sortBy" nzSize="default" class="sort-select" (ngModelChange)="onFilterChange()">
-                    <nz-option nzValue="newest" nzLabel="Mới nhất"></nz-option>
-                    <nz-option nzValue="salary_desc" nzLabel="Lương cao nhất"></nz-option>
-                    <nz-option nzValue="salary_asc" nzLabel="Lương thấp nhất"></nz-option>
-                    <nz-option nzValue="popular" nzLabel="Nhiều ứng viên"></nz-option>
-                  </nz-select>
-                </div>
-              </div>
-
-              <!-- Active Filters -->
-              @if (hasActiveFilters()) {
-                <div class="active-filters">
-                  @for (filter of getActiveFilters(); track filter.key) {
-                    <nz-tag nzMode="closeable" (nzOnClose)="removeFilter(filter.key, filter.value)">
-                      {{ filter.label }}
-                    </nz-tag>
-                  }
-                </div>
-              }
-
-              <!-- Job Cards -->
-              @if (loading) {
-                <div class="loading-wrapper">
-                  <nz-spin nzSize="large"></nz-spin>
-                </div>
-              } @else if (filteredJobs.length > 0) {
-                <div class="jobs-grid">
-                  @for (job of paginatedJobs; track job.id) {
-                    <div class="job-card" [routerLink]="['/jobs', getJobSlug(job)]">
-                      <div class="job-header">
-                        <div class="company-logo">
-                          {{ job.companyInitial }}
-                        </div>
-                        <div class="job-info">
-                          <h3 class="job-title">{{ job.title }}</h3>
-                          <div class="company-name">{{ job.company }}</div>
-                        </div>
-                      </div>
-
-                      <div class="job-meta">
-                        <span class="meta-item">
-                          <span nz-icon nzType="environment" nzTheme="outline"></span>
-                          {{ job.location }}
-                        </span>
-                        <span class="meta-item">
-                          <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
-                          {{ job.type }}
-                        </span>
-                        @if (job.salaryLabel) {
-                          <span class="meta-item salary-highlight">
-                            <span nz-icon nzType="dollar" nzTheme="outline"></span>
-                            {{ job.salaryLabel }}
-                          </span>
-                        }
-                      </div>
-
-                      <div class="job-footer">
-                        <div class="posted-info">
-                          <span class="posted-date">
-                            <span nz-icon nzType="calendar" nzTheme="outline"></span>
-                            {{ job.postedDate }}
-                          </span>
-                          @if (job.isNew) {
-                            <span class="new-tag">NEW</span>
-                          }
-                        </div>
-                        @if (job.isApplied) {
-                          <button nz-button nzSize="small" disabled class="applied-btn">
-                            <span nz-icon nzType="check-circle" nzTheme="outline"></span>
-                            Đã ứng tuyển
-                          </button>
-                        } @else {
-                          <button nz-button nzType="primary" nzSize="small">
-                            Xem chi tiết
-                          </button>
-                        }
-                      </div>
-                    </div>
-                  }
-                </div>
-
-                <!-- Pagination -->
-                <div class="pagination-wrapper">
-                  <nz-pagination
-                    [(nzPageIndex)]="currentPage"
-                    [nzTotal]="totalJobs"
-                    [nzPageSize]="pageSize"
-                    nzShowSizeChanger
-                    [nzPageSizeOptions]="[10, 20, 50]"
-                    (nzPageIndexChange)="onPageChange($event)"
-                    (nzPageSizeChange)="onPageSizeChange($event)"
-                  ></nz-pagination>
-                </div>
-              } @else {
-                <div class="no-results">
-                  <nz-empty
-                    nzNotFoundImage="simple"
-                    nzNotFoundContent="Không tìm thấy việc làm phù hợp"
-                    [nzNotFoundFooter]="noResultsFooter"
-                  ></nz-empty>
-                  <ng-template #noResultsFooter>
-                    <button nz-button nzType="primary" (click)="clearFilters()">
-                      Xóa bộ lọc và thử lại
-                    </button>
-                  </ng-template>
-                </div>
-              }
-            </main>
-          </div>
-        </div>
-      </section>
-
-      <!-- Mobile Filter Drawer -->
-      <nz-drawer
-        [nzVisible]="filterDrawerOpen"
-        nzPlacement="right"
-        nzTitle="Bộ lọc"
-        (nzOnClose)="filterDrawerOpen = false"
-        [nzWidth]="320"
-        nzClosable
-        [nzFooter]="filterDrawerFooter"
-      >
-        <ng-container *nzDrawerContent>
-          <div class="mobile-filters">
-            <!-- Location Filter (Mobile) -->
-            <div class="filter-section">
-              <h4 class="filter-title">Địa điểm</h4>
-              <nz-select
-                [(ngModel)]="selectedLocation"
-                nzPlaceHolder="Chọn địa điểm"
-                nzSize="large"
-                style="width: 100%"
-                nzAllowClear
-              >
-                @for (location of locations; track location) {
-                  <nz-option [nzValue]="location" [nzLabel]="location"></nz-option>
-                }
-              </nz-select>
-            </div>
-
-            <!-- Salary Range Filter (Mobile) -->
-            <div class="filter-section">
-              <h4 class="filter-title">Mức lương (triệu VNĐ)</h4>
-              <div class="salary-slider-wrapper">
-                <nz-slider
-                  [(ngModel)]="salaryRange"
-                  [nzRange]="true"
-                  [nzMin]="0"
-                  [nzMax]="100"
-                  [nzStep]="5"
-                ></nz-slider>
-                <div class="salary-labels">
-                  <span>{{ salaryRange[0] }}tr</span>
-                  <span>{{ salaryRange[1] === 100 ? '100tr+' : salaryRange[1] + 'tr' }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Job Type Filter -->
-            <div class="filter-section">
-              <h4 class="filter-title">Loại việc làm</h4>
-              @for (type of jobTypes; track type.value) {
-                <label nz-checkbox [(ngModel)]="type.checked" (ngModelChange)="onJobTypeChange(type)">
-                  {{ type.label }}
-                </label>
-              }
-            </div>
-
-            <!-- Category Filter -->
-            <div class="filter-section">
-              <h4 class="filter-title">Ngành nghề</h4>
-              <nz-select
-                [(ngModel)]="selectedCategory"
-                nzPlaceHolder="Chọn ngành nghề"
-                nzAllowClear
-                nzShowSearch
-                (ngModelChange)="onCategorySelectChange()"
-                style="width: 100%"
-              >
-                @for (cat of categories; track cat.value) {
-                  <nz-option [nzValue]="cat.value" [nzLabel]="cat.label"></nz-option>
-                }
-              </nz-select>
-            </div>
-          </div>
-        </ng-container>
-        <ng-template #filterDrawerFooter>
-          <div class="filter-drawer-footer">
-            <button nz-button (click)="clearFilters()">Xóa tất cả</button>
-            <button nz-button nzType="primary" (click)="applyFilters()">
-              Áp dụng
-            </button>
-          </div>
-        </ng-template>
-      </nz-drawer>
-    </div>
-  `,
-  styles: [
-    `
-      .jobs-page {
-        min-height: 100vh;
-        background: var(--color-bg-primary);
-      }
-
-      .container {
-        max-width: var(--container-max);
-        margin: 0 auto;
-        padding: 0 var(--container-padding);
-      }
-
-      /* Header Section */
-      .jobs-header {
-        background: linear-gradient(135deg, var(--color-primary) 0%, #0072E5 100%);
-        padding: var(--space-12) 0;
-        text-align: center;
-
-        h1 {
-          font-family: var(--font-heading);
-          font-size: var(--text-4xl);
-          font-weight: var(--font-extrabold);
-          color: white;
-          margin-bottom: var(--space-2);
-
-          @media (max-width: 768px) {
-            font-size: var(--text-3xl);
-          }
-        }
-      }
-
-      .jobs-subtitle {
-        color: rgba(255, 255, 255, 0.9);
-        font-size: var(--text-lg);
-        margin-bottom: var(--space-8);
-
-        @media (max-width: 768px) {
-          font-size: var(--text-base);
-        }
-      }
-
-      /* Autocomplete Suggestions */
-      .suggestion-item {
-        padding: 4px 0;
-      }
-
-      .suggestion-title {
-        font-weight: var(--font-medium);
-        color: var(--color-text-primary);
-        font-size: var(--text-sm);
-        line-height: 1.4;
-      }
-
-      .suggestion-meta {
-        font-size: var(--text-xs);
-        color: var(--color-text-tertiary);
-        margin-top: 2px;
-      }
-
-      /* Search Bar */
-      .search-bar {
-        max-width: 800px;
-        margin: 0 auto;
-      }
-
-      .search-bar-inner {
-        background: var(--color-bg-secondary);
-        border-radius: var(--radius-2xl);
-        padding: var(--space-2);
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-        box-shadow: var(--shadow-xl);
-
-        @media (max-width: 768px) {
-          flex-direction: column;
-          align-items: stretch;
-          padding: var(--space-4);
-          gap: var(--space-3);
-        }
-      }
-
-      .search-input {
-        flex: 1;
-
-        .ant-input-affix-wrapper {
-          border: none !important;
-          background: transparent !important;
-          box-shadow: none !important;
-        }
-      }
-
-      .location-select {
-        width: 180px;
-        flex-shrink: 0;
-
-        ::ng-deep .ant-select-selector {
-          border: none !important;
-          background: var(--color-bg-tertiary) !important;
-          height: 40px !important;
-          border-radius: var(--radius-lg) !important;
-        }
-
-        ::ng-deep .ant-select-selection-item,
-        ::ng-deep .ant-select-selection-placeholder {
-          line-height: 40px !important;
-        }
-      }
-
-      
-
-      /* Jobs Layout */
-      .jobs-content {
-        padding: var(--space-8) 0;
-      }
-
-      .jobs-layout {
-        display: grid;
-        grid-template-columns: 280px 1fr;
-        gap: var(--space-8);
-
-        @media (max-width: 1024px) {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      /* Filter Sidebar */
-      .filter-sidebar {
-        background: var(--color-bg-secondary);
-        border-radius: var(--radius-xl);
-        padding: var(--space-6);
-        border: 1px solid var(--color-border);
-        height: fit-content;
-        position: sticky;
-        top: calc(var(--header-height) + var(--space-4));
-      }
-
-      .filter-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: var(--space-6);
-        padding-bottom: var(--space-4);
-        border-bottom: 1px solid var(--color-border);
-
-        h3 {
-          font-family: var(--font-heading);
-          font-size: var(--text-lg);
-          font-weight: var(--font-semibold);
-          color: var(--color-text-primary);
-          margin: 0;
-          display: flex;
-          align-items: center;
-          gap: var(--space-2);
-        }
-      }
-
-      .filter-section {
-        margin-bottom: var(--space-6);
-
-        &:last-child {
-          margin-bottom: 0;
-        }
-      }
-
-      :host ::ng-deep .filter-section .ant-checkbox-wrapper,
-      :host ::ng-deep .filter-section .ant-checkbox-wrapper + .ant-checkbox-wrapper {
-        display: flex !important;
-        align-items: center;
-        width: 100%;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        margin-bottom: 0;
-        padding: 7px 0;
-        font-size: var(--text-sm);
-        line-height: 1.4;
-        box-sizing: border-box;
-      }
-
-      .filter-title {
-        font-family: var(--font-heading);
-        font-size: var(--text-sm);
-        font-weight: var(--font-semibold);
-        color: var(--color-text-primary);
-        margin-bottom: var(--space-3);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      .filter-count {
-        color: var(--color-text-tertiary);
-        font-size: var(--text-xs);
-        margin-left: var(--space-1);
-      }
-
-      /* Results Header */
-      .results-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: var(--space-4);
-        flex-wrap: wrap;
-        gap: var(--space-3);
-      }
-
-      .results-info {
-        display: flex;
-        align-items: center;
-        gap: var(--space-4);
-      }
-
-      .results-count {
-        color: var(--color-text-secondary);
-        font-size: var(--text-sm);
-      }
-
-      .filter-toggle {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--space-1);
-      }
-
-      .sort-options {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-      }
-
-      .sort-label {
-        color: var(--color-text-secondary);
-        font-size: var(--text-sm);
-      }
-
-      .sort-select {
-        width: 160px;
-      }
-
-      /* Active Filters */
-      .active-filters {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-2);
-        margin-bottom: var(--space-4);
-
-        nz-tag {
-          background: var(--color-primary-50);
-          color: var(--color-primary);
-          border: none;
-        }
-      }
-
-      /* Jobs Grid */
-      .jobs-grid {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-4);
-      }
-
-      /* Job Card */
-      .job-card {
-        background: var(--color-bg-secondary);
-        border-radius: var(--radius-xl);
-        padding: var(--space-6);
-        border: 1px solid var(--color-border);
-        transition: all var(--transition-normal);
-        position: relative;
-
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--shadow-lg);
-          border-color: var(--color-primary-200);
-        }
-      }
-
-      .new-tag {
-        display: inline-flex;
-        align-items: center;
-        padding: 2px 8px;
-        border-radius: var(--radius-full);
-        font-size: 11px;
-        font-weight: var(--font-bold);
-        background: var(--color-success);
-        color: white;
-        letter-spacing: 0.02em;
-      }
-
-      .applied-btn {
-        opacity: 0.7;
-        cursor: default;
-        color: var(--color-success) !important;
-        border-color: var(--color-success) !important;
-      }
-
-      .job-header {
-        display: flex;
-        gap: var(--space-4);
-        margin-bottom: var(--space-4);
-      }
-
-      .company-logo {
-        width: 56px;
-        height: 56px;
-        border-radius: var(--radius-lg);
-        background: var(--color-bg-tertiary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: var(--font-heading);
-        font-size: var(--text-xl);
-        font-weight: var(--font-bold);
-        color: var(--color-primary);
-        flex-shrink: 0;
-      }
-
-      .job-info {
-        flex: 1;
-        min-width: 0;
-      }
-
-      .job-title {
-        font-family: var(--font-heading);
-        font-size: var(--text-lg);
-        font-weight: var(--font-semibold);
-        color: var(--color-text-primary);
-        margin-bottom: var(--space-1);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-
-        @media (max-width: 768px) {
-          white-space: normal;
-        }
-      }
-
-      .company-name {
-        font-size: var(--text-sm);
-        color: var(--color-text-secondary);
-      }
-
-      .job-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-4);
-        margin-bottom: var(--space-4);
-        font-size: var(--text-sm);
-        color: var(--color-text-secondary);
-
-        .meta-item {
-          display: inline-flex;
-          align-items: center;
-          gap: var(--space-1);
-        }
-
-        .salary-highlight {
-          color: var(--color-success);
-          font-weight: var(--font-semibold);
-        }
-      }
-
-      .job-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-2);
-        margin-bottom: var(--space-4);
-
-        nz-tag {
-          background: var(--color-primary-50);
-          color: var(--color-primary);
-          border: none;
-        }
-      }
-
-      .job-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: var(--space-4);
-        border-top: 1px solid var(--color-border);
-        gap: var(--space-3);
-      }
-
-      .posted-info {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-      }
-
-      .posted-date {
-        font-size: var(--text-sm);
-        color: var(--color-text-tertiary);
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-      }
-
-      /* Pagination */
-      .pagination-wrapper {
-        display: flex;
-        justify-content: center;
-        margin-top: var(--space-8);
-      }
-
-      /* No Results */
-      .no-results {
-        text-align: center;
-        padding: var(--space-16) 0;
-      }
-
-      /* Mobile Filters */
-      .mobile-filters {
-        .filter-section {
-          margin-bottom: var(--space-6);
-          padding-bottom: var(--space-6);
-          border-bottom: 1px solid var(--color-border);
-
-          &:last-child {
-            border-bottom: none;
-          }
-        }
-      }
-
-      :host ::ng-deep .mobile-filters .ant-checkbox-wrapper,
-      :host ::ng-deep .mobile-filters .ant-checkbox-wrapper + .ant-checkbox-wrapper {
-        display: flex !important;
-        align-items: center;
-        width: 100%;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        margin-bottom: 0;
-        padding: 8px 0;
-        font-size: var(--text-sm);
-      }
-
-      .filter-drawer-footer {
-        display: flex;
-        gap: var(--space-3);
-
-        button {
-          flex: 1;
-        }
-      }
-
-      /* Salary Slider */
-      .salary-slider-wrapper {
-        padding: 0 var(--space-2);
-      }
-
-      .salary-labels {
-        display: flex;
-        justify-content: space-between;
-        font-size: var(--text-sm);
-        color: var(--color-text-secondary);
-        margin-top: var(--space-1);
-      }
-
-      /* Responsive Utilities */
-      @media (max-width: 767px) {
-        .hide-mobile {
-          display: none !important;
-        }
-      }
-
-      @media (min-width: 768px) {
-        .show-mobile-only {
-          display: none !important;
-        }
-      }
-    `,
-  ],
+  templateUrl: './jobs.component.html',
+  styleUrls: ['./jobs.component.scss'],
 })
 export class JobsComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private jobService = inject(JobService);
   private applicationService = inject(ApplicationService);
-  private authService = inject(AuthService);
+  public authService = inject(AuthService);
+  private message = inject(NzMessageService);
 
   appliedJobIds = new Set<number>();
+  savedJobIds = new Set<number>();
   private searchSubject = new Subject<string>();
   private suggestionSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
 
+  // Filter models
   searchQuery = '';
   selectedLocation = '';
   selectedCategory: string | null = null;
+  selectedSalaryPreset: string = 'all';
   companyCodeFilter: string | null = null;
-  allActiveCompanies: ActiveCompany[] = [];
-  filteredCompanies: ActiveCompany[] = [];
+  postedDateFilter: string = 'all';
+  onlySavedFilter = false;
   sortBy = 'newest';
   salaryRange: [number, number] = [0, 100];
   currentPage = 1;
-  pageSize = 10;
+  pageSize = 20;
+
+  // View mode: 'grid' (widescreen 2-col cards) or 'split' (master-detail with sticky live preview)
+  viewMode: 'grid' | 'split' = 'grid';
+  selectedJobForPreview: Job | null = null;
+  previewJobDetail: PublicJob | null = null;
+  previewLoading = false;
+
+  // Drawer for mobile / quick preview
   filterDrawerOpen = false;
+  quickPreviewDrawerOpen = false;
+  quickPreviewJob: Job | null = null;
+
   loading = false;
   totalJobs = 0;
   suggestions: PublicJobListItem[] = [];
   suggestionsLoading = false;
+  allActiveCompanies: ActiveCompany[] = [];
+  filteredCompanies: ActiveCompany[] = [];
 
   locations = [
     'Hồ Chí Minh',
@@ -955,39 +149,79 @@ export class JobsComponent implements OnInit, OnDestroy {
   ];
 
   jobTypes = [
-    { value: 'full_time', label: 'Toàn thời gian', checked: false },
-    { value: 'part_time', label: 'Bán thời gian', checked: false },
-    { value: 'contract', label: 'Hợp đồng', checked: false },
-    { value: 'internship', label: 'Thực tập', checked: false },
+    { value: 'full_time', label: 'Toàn thời gian', checked: false, icon: 'clock-circle' },
+    { value: 'part_time', label: 'Bán thời gian', checked: false, icon: 'hourglass' },
+    { value: 'contract', label: 'Hợp đồng / Dự án', checked: false, icon: 'file-protect' },
+    { value: 'internship', label: 'Thực tập / Fresher', checked: false, icon: 'schedule' },
   ];
 
   experienceLevels = [
-    { value: 'entry', label: 'Mới tốt nghiệp', checked: false },
-    { value: 'junior', label: '1-2 năm', checked: false },
-    { value: 'mid', label: '3-5 năm', checked: false },
-    { value: 'senior', label: '5+ năm', checked: false },
-    { value: 'manager', label: 'Quản lý', checked: false },
+    { value: 'entry', label: 'Mới tốt nghiệp / Chưa có KN', min: 0, max: 0, checked: false },
+    { value: 'junior', label: '1 - 2 năm (Junior)', min: 1, max: 2, checked: false },
+    { value: 'mid', label: '3 - 5 năm (Mid-level)', min: 3, max: 5, checked: false },
+    { value: 'senior', label: '5+ năm (Senior)', min: 5, max: undefined, checked: false },
+    { value: 'manager', label: 'Quản lý / Trưởng nhóm', min: 7, max: undefined, checked: false },
   ];
 
-  // Values must match the department options in admin job form
-  categories = VIETNAMESE_INDUSTRIES.map(ind => ({
-    value: ind, label: ind, checked: false,
+  categories = VIETNAMESE_INDUSTRIES.map((ind) => ({
+    value: ind,
+    label: ind,
+    checked: false,
   }));
+
+  quickChips = [
+    { id: 'hot', label: 'Tuyển gấp 🔥', active: false },
+    { id: 'new', label: 'Mới đăng 24h ✨', active: false },
+    { id: 'high_salary', label: 'Lương > 30 triệu 💰', active: false },
+    { id: 'hcm', label: 'TP. Hồ Chí Minh 📍', active: false },
+    { id: 'hanoi', label: 'Hà Nội 📍', active: false },
+    { id: 'fulltime', label: 'Toàn thời gian 💼', active: false },
+    { id: 'fresher', label: 'Fresher / Thực tập 🌱', active: false },
+    { id: 'senior', label: 'Senior (5+ năm) 🚀', active: false },
+  ];
+
+  salaryPresets = [
+    { label: 'Tất cả', value: 'all', range: [0, 100] as [number, number] },
+    { label: '< 15 triệu', value: 'under_15', range: [0, 15] as [number, number] },
+    { label: '15 - 30 triệu', value: '15_30', range: [15, 30] as [number, number] },
+    { label: '30 - 50 triệu', value: '30_50', range: [30, 50] as [number, number] },
+    { label: '> 50 triệu', value: 'over_50', range: [50, 100] as [number, number] },
+  ];
 
   jobs: Job[] = [];
   apiJobs: PublicJobListItem[] = [];
 
+  private avatarGradients = [
+    'linear-gradient(135deg, #1890ff 0%, #0050b3 100%)',
+    'linear-gradient(135deg, #13c2c2 0%, #006d75 100%)',
+    'linear-gradient(135deg, #52c41a 0%, #237804 100%)',
+    'linear-gradient(135deg, #fa8c16 0%, #ad4e00 100%)',
+    'linear-gradient(135deg, #722ed1 0%, #391085 100%)',
+    'linear-gradient(135deg, #eb2f96 0%, #9e1068 100%)',
+    'linear-gradient(135deg, #2f54eb 0%, #10239e 100%)',
+    'linear-gradient(135deg, #faad14 0%, #ad6800 100%)',
+  ];
+
   get filteredJobs(): Job[] {
+    if (this.onlySavedFilter) {
+      return this.jobs.filter((j) => this.savedJobIds.has(j.id));
+    }
     return this.jobs;
   }
 
   get paginatedJobs(): Job[] {
-    return this.jobs;
+    return this.filteredJobs;
   }
 
   ngOnInit(): void {
+    this.loadSavedJobIds();
     this.loadAppliedJobIds();
     this.loadActiveCompanies();
+
+    // Responsive default view mode: wide screens default to split or grid
+    if (window.innerWidth >= 1440) {
+      // default grid for wide screen, user can easily toggle
+    }
 
     this.searchSubject
       .pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this.destroy$))
@@ -1012,7 +246,7 @@ export class JobsComponent implements OnInit, OnDestroy {
           if (!query || query.trim().length < 2) {
             return of({ items: [] as PublicJobListItem[] });
           }
-          return this.jobService.list({ q: query.trim(), size: 5 }).pipe(
+          return this.jobService.list({ q: query.trim(), size: 6 }).pipe(
             catchError(() => of({ items: [] as PublicJobListItem[] }))
           );
         }),
@@ -1031,10 +265,12 @@ export class JobsComponent implements OnInit, OnDestroy {
 
     this.route.queryParams.subscribe((params) => {
       if (params['category']) {
-        const category = this.categories.find((c) => c.value === params['category']);
-        if (category) {
-          category.checked = true;
-        }
+        this.selectedCategory = params['category'];
+        const cat = this.categories.find((c) => c.value === params['category']);
+        if (cat) cat.checked = true;
+      }
+      if (params['location']) {
+        this.selectedLocation = params['location'];
       }
       if (params['q']) {
         this.searchQuery = params['q'];
@@ -1043,6 +279,11 @@ export class JobsComponent implements OnInit, OnDestroy {
         this.companyCodeFilter = params['company_code'];
       } else {
         this.companyCodeFilter = null;
+      }
+      if (params['salary_min'] || params['salary_max']) {
+        const min = params['salary_min'] ? parseInt(params['salary_min'], 10) : 0;
+        const max = params['salary_max'] ? parseInt(params['salary_max'], 10) : 100;
+        this.salaryRange = [min, max];
       }
       this.loadJobs();
     });
@@ -1053,11 +294,42 @@ export class JobsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  loadSavedJobIds(): void {
+    try {
+      const raw = localStorage.getItem('irsa_saved_job_ids');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          this.savedJobIds = new Set(parsed);
+        }
+      }
+    } catch {
+      this.savedJobIds = new Set();
+    }
+  }
+
+  toggleSaveJob(event: Event, job: Job): void {
+    event.stopPropagation();
+    event.preventDefault();
+    if (this.savedJobIds.has(job.id)) {
+      this.savedJobIds.delete(job.id);
+      job.isSaved = false;
+      this.message.info('Đã bỏ lưu tin tuyển dụng');
+    } else {
+      this.savedJobIds.add(job.id);
+      job.isSaved = true;
+      this.message.success('Đã lưu tin tuyển dụng vào danh sách yêu thích');
+    }
+    try {
+      localStorage.setItem('irsa_saved_job_ids', JSON.stringify(Array.from(this.savedJobIds)));
+    } catch {}
+  }
+
   loadActiveCompanies(): void {
     this.jobService.listActiveCompanies(50).subscribe({
       next: (res) => {
-        this.allActiveCompanies = res.items;
-        this.filteredCompanies = res.items;
+        this.allActiveCompanies = res.items || [];
+        this.filteredCompanies = res.items || [];
       },
       error: () => {},
     });
@@ -1079,10 +351,9 @@ export class JobsComponent implements OnInit, OnDestroy {
     this.applicationService.getAppliedJobIds().subscribe({
       next: (ids) => {
         this.appliedJobIds = new Set(ids);
-        // Re-mark existing jobs if already loaded
         this.jobs.forEach((j) => (j.isApplied = this.appliedJobIds.has(j.id)));
       },
-      error: () => {}, // Silently fail — user may not be logged in
+      error: () => {},
     });
   }
 
@@ -1093,7 +364,7 @@ export class JobsComponent implements OnInit, OnDestroy {
 
     this.jobService
       .list({
-        q: this.searchQuery || undefined,
+        q: this.searchQuery ? this.searchQuery.trim() : undefined,
         location: this.selectedLocation || undefined,
         employment_type: selectedType?.value,
         department: this.selectedCategory || undefined,
@@ -1107,36 +378,109 @@ export class JobsComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (res) => {
-          this.apiJobs = res.items;
-          this.totalJobs = res.total;
-          this.jobs = this.mapApiJobsToDisplay(res.items);
+          this.apiJobs = res.items || [];
+          this.totalJobs = res.total || 0;
+          this.jobs = this.mapApiJobsToDisplay(this.apiJobs);
           this.loading = false;
+
+          // If in split mode and no job selected or current selection not in list, select first
+          if (this.viewMode === 'split' && this.jobs.length > 0) {
+            if (!this.selectedJobForPreview || !this.jobs.some((j) => j.id === this.selectedJobForPreview?.id)) {
+              this.selectJobForLivePreview(this.jobs[0]);
+            }
+          }
         },
         error: () => {
           this.loading = false;
+          this.jobs = [];
+          this.totalJobs = 0;
         },
       });
   }
 
   private mapApiJobsToDisplay(apiJobs: PublicJobListItem[]): Job[] {
-    return apiJobs.map((j) => ({
-      id: j.id,
-      slug: j.slug,
-      title: j.title_vi,
-      company: j.department || 'iRSA',
-      companyInitial: (j.department || 'I')[0].toUpperCase(),
-      location: j.location || 'Việt Nam',
-      type: this.getEmploymentTypeLabel(j.employment_type),
-      experience: '',
-      skills: [],
-      salaryMin: j.salary_min ?? undefined,
-      salaryMax: j.salary_max ?? undefined,
-      salaryLabel: this.formatSalaryLabel(j.salary_min, j.salary_max),
-      postedDate: this.formatDate(j.published_at),
-      applicants: j.applications_count,
-      isNew: this.isNewToday(j.published_at),
-      isApplied: this.appliedJobIds.has(j.id),
-    }));
+    return apiJobs.map((j) => {
+      const companyName = j.company_name || j.department || 'iRSA Tech';
+      const initial = (companyName.trim()[0] || 'I').toUpperCase();
+      const gradient = this.getGradientForString(companyName);
+      const isNew = this.isNewToday(j.published_at);
+      const isHot = (j.applications_count && j.applications_count >= 5) || false;
+
+      // Clean snippet from description if provided
+      let snippet = '';
+      if (j.description_vi) {
+        snippet = j.description_vi.replace(/<[^>]*>/g, '').trim();
+        if (snippet.length > 130) {
+          snippet = snippet.substring(0, 127) + '...';
+        }
+      }
+      if (!snippet) {
+        snippet = `Cơ hội làm việc tại ${companyName} với mức đãi ngộ hấp dẫn, môi trường chuyên nghiệp, phát triển kỹ năng vượt trội.`;
+      }
+
+      const skills = (j.must_have_skills && j.must_have_skills.length > 0)
+        ? j.must_have_skills.slice(0, 4)
+        : this.generateFallbackSkills(j.title_vi);
+
+      return {
+        id: j.id,
+        slug: j.slug || j.id.toString(),
+        title: j.title_vi,
+        company: companyName,
+        companyCode: j.company_code,
+        companyInitial: initial,
+        companyGradient: gradient,
+        location: j.location || 'Việt Nam',
+        type: this.getEmploymentTypeLabel(j.employment_type),
+        employmentTypeValue: j.employment_type || 'full_time',
+        experience: this.formatExperienceLabel(j.min_experience_years, j.max_experience_years),
+        minExperienceYears: j.min_experience_years,
+        maxExperienceYears: j.max_experience_years,
+        skills,
+        salaryMin: j.salary_min ?? undefined,
+        salaryMax: j.salary_max ?? undefined,
+        salaryLabel: this.formatSalaryLabel(j.salary_min, j.salary_max),
+        salaryFormatted: this.formatSalaryFormatted(j.salary_min, j.salary_max),
+        postedDate: this.formatDate(j.published_at),
+        deadlineDate: j.application_deadline ? this.formatDeadline(j.application_deadline) : undefined,
+        applicants: j.applications_count || 0,
+        descriptionSnippet: snippet,
+        descriptionVi: j.description_vi,
+        isHot,
+        isNew,
+        isApplied: this.appliedJobIds.has(j.id),
+        isSaved: this.savedJobIds.has(j.id),
+      };
+    });
+  }
+
+  private generateFallbackSkills(title: string): string[] {
+    const t = title.toLowerCase();
+    if (t.includes('frontend') || t.includes('react') || t.includes('angular') || t.includes('vue')) {
+      return ['TypeScript', 'Frontend', 'REST API', 'Git'];
+    }
+    if (t.includes('backend') || t.includes('python') || t.includes('java') || t.includes('golang') || t.includes('node')) {
+      return ['Backend', 'SQL', 'Database', 'Microservices'];
+    }
+    if (t.includes('ai') || t.includes('data') || t.includes('machine learning')) {
+      return ['Python', 'AI/ML', 'Data Analysis', 'LLM'];
+    }
+    if (t.includes('design') || t.includes('ui') || t.includes('ux')) {
+      return ['Figma', 'UI/UX', 'Design System', 'Prototyping'];
+    }
+    if (t.includes('marketing') || t.includes('sale') || t.includes('kinh doanh')) {
+      return ['Communication', 'Marketing', 'Planning', 'Teamwork'];
+    }
+    return ['Chuyên môn', 'Kỹ năng mềm', 'Làm việc nhóm'];
+  }
+
+  private getGradientForString(str: string): string {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % this.avatarGradients.length;
+    return this.avatarGradients[index];
   }
 
   private formatSalaryLabel(min?: number, max?: number): string {
@@ -1144,8 +488,27 @@ export class JobsComponent implements OnInit, OnDestroy {
       return min === max ? `${min} triệu` : `${min} - ${max} triệu`;
     }
     if (min != null) return `Từ ${min} triệu`;
-    if (max != null) return `Đến ${max} triệu`;
-    return '';
+    if (max != null) return `Tới ${max} triệu`;
+    return 'Thương lượng';
+  }
+
+  private formatSalaryFormatted(min?: number, max?: number): string {
+    if (min != null && max != null) {
+      return min === max ? `${min} triệu VNĐ` : `${min} - ${max} triệu VNĐ`;
+    }
+    if (min != null) return `Từ ${min} triệu VNĐ`;
+    if (max != null) return `Đến ${max} triệu VNĐ`;
+    return 'Thoả thuận';
+  }
+
+  private formatExperienceLabel(min?: number, max?: number): string {
+    if (min != null && max != null) {
+      if (min === 0 && max === 0) return 'Không yêu cầu KN';
+      return `${min} - ${max} năm KN`;
+    }
+    if (min != null && min > 0) return `${min}+ năm KN`;
+    if (min === 0) return 'Không yêu cầu KN';
+    return 'Không yêu cầu KN';
   }
 
   private getEmploymentTypeLabel(type?: string): string {
@@ -1153,7 +516,7 @@ export class JobsComponent implements OnInit, OnDestroy {
       full_time: 'Toàn thời gian',
       part_time: 'Bán thời gian',
       contract: 'Hợp đồng',
-      internship: 'Thực tập',
+      internship: 'Thực tập / Fresher',
     };
     return labels[type || ''] || type || 'Toàn thời gian';
   }
@@ -1166,13 +529,28 @@ export class JobsComponent implements OnInit, OnDestroy {
     if (minutes < 60) return `${minutes} phút trước`;
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `${hours} giờ trước`;
-    return new Date(dateStr).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const days = Math.floor(hours / 24);
+    if (days <= 7) return `${days} ngày trước`;
+    return new Date(dateStr).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  }
+
+  private formatDeadline(dateStr: string): string {
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
   }
 
   private isNewToday(dateStr?: string): boolean {
     if (!dateStr) return false;
     const diff = Date.now() - new Date(dateStr).getTime();
-    return diff < 24 * 60 * 60 * 1000;
+    return diff < 48 * 60 * 60 * 1000;
   }
 
   private getExperienceParams(): { min_experience?: number; max_experience?: number } {
@@ -1218,6 +596,11 @@ export class JobsComponent implements OnInit, OnDestroy {
     this.loadJobs();
   }
 
+  selectSuggestion(item: PublicJobListItem): void {
+    this.searchQuery = item.title_vi;
+    this.onSearch();
+  }
+
   onJobTypeChange(selected: { value: string; checked: boolean }): void {
     if (selected.checked) {
       this.jobTypes.forEach((t) => {
@@ -1238,20 +621,85 @@ export class JobsComponent implements OnInit, OnDestroy {
     this.loadJobs();
   }
 
-  onCategoryChange(selected: { value: string; checked: boolean }): void {
-    if (selected.checked) {
-      this.categories.forEach((c) => {
-        if (c.value !== selected.value) c.checked = false;
-      });
-    }
-    this.selectedCategory = selected.checked ? selected.value : null;
+  onSalaryPresetSelect(preset: { label: string; value: string; range: [number, number] }): void {
+    this.selectedSalaryPreset = preset.value;
+    this.salaryRange = [...preset.range];
     this.currentPage = 1;
     this.loadJobs();
   }
 
-  onCategorySelectChange(): void {
+  toggleQuickChip(chip: { id: string; label: string; active: boolean }): void {
+    chip.active = !chip.active;
     this.currentPage = 1;
+
+    switch (chip.id) {
+      case 'hot':
+        this.sortBy = chip.active ? 'popular' : 'newest';
+        break;
+      case 'new':
+        this.sortBy = 'newest';
+        break;
+      case 'high_salary':
+        this.salaryRange = chip.active ? [30, 100] : [0, 100];
+        break;
+      case 'hcm':
+        this.selectedLocation = chip.active ? 'Hồ Chí Minh' : '';
+        break;
+      case 'hanoi':
+        this.selectedLocation = chip.active ? 'Hà Nội' : '';
+        break;
+      case 'fulltime':
+        const ft = this.jobTypes.find((t) => t.value === 'full_time');
+        if (ft) ft.checked = chip.active;
+        break;
+      case 'fresher':
+        const entry = this.experienceLevels.find((e) => e.value === 'entry');
+        if (entry) entry.checked = chip.active;
+        break;
+      case 'senior':
+        const snr = this.experienceLevels.find((e) => e.value === 'senior');
+        if (snr) snr.checked = chip.active;
+        break;
+    }
     this.loadJobs();
+  }
+
+  setViewMode(mode: 'grid' | 'split'): void {
+    this.viewMode = mode;
+    if (mode === 'split' && this.jobs.length > 0 && !this.selectedJobForPreview) {
+      this.selectJobForLivePreview(this.jobs[0]);
+    }
+  }
+
+  selectJobForLivePreview(job: Job): void {
+    this.selectedJobForPreview = job;
+    this.previewLoading = true;
+    this.previewJobDetail = null;
+
+    this.jobService.getBySlug(job.slug).subscribe({
+      next: (res) => {
+        this.previewJobDetail = res;
+        this.previewLoading = false;
+      },
+      error: () => {
+        this.previewLoading = false;
+      },
+    });
+  }
+
+  openQuickPreview(event: Event, job: Job): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.quickPreviewJob = job;
+    this.quickPreviewDrawerOpen = true;
+  }
+
+  copyJobLink(job: Job): void {
+    const url = `${window.location.origin}/jobs/${job.slug}`;
+    navigator.clipboard.writeText(url).then(
+      () => this.message.success('Đã sao chép liên kết công việc vào bộ nhớ tạm'),
+      () => this.message.error('Không thể sao chép liên kết')
+    );
   }
 
   onFilterChange(): void {
@@ -1262,7 +710,7 @@ export class JobsComponent implements OnInit, OnDestroy {
   onPageChange(page: number): void {
     this.currentPage = page;
     this.loadJobs();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 380, behavior: 'smooth' });
   }
 
   onPageSizeChange(size: number): void {
@@ -1274,14 +722,19 @@ export class JobsComponent implements OnInit, OnDestroy {
   clearFilters(): void {
     this.searchQuery = '';
     this.selectedLocation = '';
+    this.selectedCategory = null;
+    this.selectedSalaryPreset = 'all';
     this.companyCodeFilter = null;
+    this.onlySavedFilter = false;
+    this.postedDateFilter = 'all';
     this.filteredCompanies = this.allActiveCompanies;
     this.salaryRange = [0, 100];
     this.jobTypes.forEach((t) => (t.checked = false));
     this.experienceLevels.forEach((e) => (e.checked = false));
     this.categories.forEach((c) => (c.checked = false));
-    this.selectedCategory = null;
+    this.quickChips.forEach((c) => (c.active = false));
     this.filterDrawerOpen = false;
+    this.currentPage = 1;
     this.loadJobs();
   }
 
@@ -1292,6 +745,11 @@ export class JobsComponent implements OnInit, OnDestroy {
 
   hasActiveFilters(): boolean {
     return (
+      !!this.searchQuery ||
+      !!this.selectedLocation ||
+      !!this.selectedCategory ||
+      !!this.companyCodeFilter ||
+      this.onlySavedFilter ||
       this.salaryRange[0] > 0 ||
       this.salaryRange[1] < 100 ||
       this.jobTypes.some((t) => t.checked) ||
@@ -1300,15 +758,48 @@ export class JobsComponent implements OnInit, OnDestroy {
     );
   }
 
+  getActiveFiltersCount(): number {
+    let count = 0;
+    if (this.searchQuery) count++;
+    if (this.selectedLocation) count++;
+    if (this.selectedCategory) count++;
+    if (this.companyCodeFilter) count++;
+    if (this.onlySavedFilter) count++;
+    if (this.salaryRange[0] > 0 || this.salaryRange[1] < 100) count++;
+    count += this.jobTypes.filter((t) => t.checked).length;
+    count += this.experienceLevels.filter((e) => e.checked).length;
+    return count;
+  }
+
   getActiveFilters(): Array<{ key: string; value: string; label: string }> {
     const filters: Array<{ key: string; value: string; label: string }> = [];
 
+    if (this.searchQuery) {
+      filters.push({ key: 'q', value: this.searchQuery, label: `Từ khóa: "${this.searchQuery}"` });
+    }
+    if (this.selectedLocation) {
+      filters.push({ key: 'location', value: this.selectedLocation, label: `Địa điểm: ${this.selectedLocation}` });
+    }
+    if (this.selectedCategory) {
+      filters.push({ key: 'category', value: this.selectedCategory, label: `Ngành: ${this.selectedCategory}` });
+    }
+    if (this.companyCodeFilter) {
+      const comp = this.allActiveCompanies.find((c) => c.company_code === this.companyCodeFilter);
+      filters.push({
+        key: 'company',
+        value: this.companyCodeFilter,
+        label: `Công ty: ${comp?.company_name || this.companyCodeFilter}`,
+      });
+    }
     if (this.salaryRange[0] > 0 || this.salaryRange[1] < 100) {
       filters.push({
         key: 'salary',
         value: 'range',
-        label: `${this.salaryRange[0]}tr - ${this.salaryRange[1] === 100 ? '100tr+' : this.salaryRange[1] + 'tr'}`,
+        label: `Lương: ${this.salaryRange[0]}tr - ${this.salaryRange[1] === 100 ? '100tr+' : this.salaryRange[1] + 'tr'}`,
       });
+    }
+    if (this.onlySavedFilter) {
+      filters.push({ key: 'onlySaved', value: 'true', label: 'Việc đã lưu' });
     }
 
     this.jobTypes
@@ -1319,31 +810,34 @@ export class JobsComponent implements OnInit, OnDestroy {
       .filter((e) => e.checked)
       .forEach((e) => filters.push({ key: 'experience', value: e.value, label: e.label }));
 
-    this.categories
-      .filter((c) => c.checked)
-      .forEach((c) => filters.push({ key: 'category', value: c.value, label: c.label }));
-
     return filters;
   }
 
   removeFilter(key: string, value: string): void {
-    if (key === 'salary') {
+    if (key === 'q') {
+      this.searchQuery = '';
+    } else if (key === 'location') {
+      this.selectedLocation = '';
+    } else if (key === 'category') {
+      this.selectedCategory = null;
+    } else if (key === 'company') {
+      this.companyCodeFilter = null;
+    } else if (key === 'salary') {
       this.salaryRange = [0, 100];
+      this.selectedSalaryPreset = 'all';
+    } else if (key === 'onlySaved') {
+      this.onlySavedFilter = false;
     } else if (key === 'jobType') {
       const type = this.jobTypes.find((t) => t.value === value);
       if (type) type.checked = false;
     } else if (key === 'experience') {
       const exp = this.experienceLevels.find((e) => e.value === value);
       if (exp) exp.checked = false;
-    } else if (key === 'category') {
-      const cat = this.categories.find((c) => c.value === value);
-      if (cat) cat.checked = false;
     }
     this.onFilterChange();
   }
 
-  getJobSlug(job: Job): string {
-    const apiJob = this.apiJobs.find((j) => j.id === job.id);
-    return apiJob?.slug || job.id.toString();
+  navigateToJob(job: Job): void {
+    this.router.navigate(['/jobs', job.slug]);
   }
 }

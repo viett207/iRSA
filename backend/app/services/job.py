@@ -118,6 +118,7 @@ class JobService:
         created_by: int | None = None,
         department: str | None = None,
         company_code: str | None = None,
+        search: str | None = None,
     ) -> JobListResponse:
         """Get paginated list of jobs with filters."""
         query = select(Job).options(
@@ -131,7 +132,15 @@ class JobService:
         if created_by:
             query = query.where(Job.created_by == created_by)
         if department:
-            query = query.where(Job.department == department)
+            query = query.where(Job.department.ilike(f"%{department}%"))
+        if search:
+            search_term = f"%{search}%"
+            query = query.where(
+                Job.title_vi.ilike(search_term)
+                | Job.description_vi.ilike(search_term)
+                | Job.requirements_vi.ilike(search_term)
+                | Job.department.ilike(search_term)
+            )
         if company_code:
             query = query.join(User, Job.created_by == User.id).where(
                 User.company_code == company_code

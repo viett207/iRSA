@@ -1,0 +1,1815 @@
+/* ==========================================================================
+   Jobs Search Page - Widescreen Enterprise Design System
+   ========================================================================== */
+
+.jobs-page {
+  min-height: 100vh;
+  background-color: var(--color-bg-primary, #F8FAFC);
+  color: var(--color-text-primary, #1E293B);
+}
+
+/* Widescreen Fluid Containers */
+.hero-container {
+  max-width: 1760px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 48px);
+}
+
+.widescreen-container {
+  max-width: 1760px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 48px);
+}
+
+/* ==========================================================================
+   1. Hero Search Section
+   ========================================================================== */
+.jobs-hero {
+  background: linear-gradient(135deg, #002c66 0%, #0047a5 40%, #0066cc 100%);
+  padding: clamp(32px, 4vw, 56px) 0 clamp(36px, 4.5vw, 64px);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: -80px;
+    width: 480px;
+    height: 480px;
+    background: radial-gradient(circle, rgba(24, 144, 255, 0.25) 0%, rgba(0, 0, 0, 0) 70%);
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -150px;
+    left: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(82, 196, 26, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+    pointer-events: none;
+  }
+}
+
+.hero-badge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px);
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.01em;
+
+  .bolt-icon {
+    color: #FADB14;
+    font-size: 14px;
+  }
+}
+
+.hero-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: rgba(82, 196, 26, 0.2);
+  color: #D9F7BE;
+  font-size: 13px;
+  border: 1px solid rgba(82, 196, 26, 0.35);
+
+  strong {
+    color: #52C41A;
+    margin-right: 4px;
+    font-weight: 700;
+  }
+}
+
+.hero-title {
+  font-family: var(--font-heading, 'Be Vietnam Pro', sans-serif);
+  font-size: clamp(24px, 3.2vw, 40px);
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.25;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: clamp(14px, 1.4vw, 17px);
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 860px;
+  margin-bottom: 28px;
+  line-height: 1.55;
+}
+
+/* ==========================================================================
+   2. Integrated Multi-Criteria Search Console
+   ========================================================================== */
+.search-console-wrapper {
+  margin-bottom: 20px;
+}
+
+.search-console {
+  background: #FFFFFF;
+  border-radius: 18px;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: 2.2fr 1.3fr 1.3fr 1.1fr auto;
+  gap: 8px;
+  align-items: center;
+  box-shadow: 0 16px 36px -8px rgba(0, 30, 80, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 2fr 1.2fr 1.2fr auto;
+    .field-salary {
+      display: none;
+    }
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr 1fr;
+    padding: 12px;
+    gap: 10px;
+
+    .field-keyword {
+      grid-column: span 2;
+    }
+    .field-location, .field-category {
+      grid-column: span 1;
+    }
+    .console-search-btn {
+      grid-column: span 2;
+    }
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+    padding: 12px;
+
+    .field-keyword, .field-location, .field-category, .console-search-btn {
+      grid-column: span 1;
+    }
+  }
+}
+
+.console-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  height: 48px;
+  transition: all 0.2s ease;
+
+  &:focus-within {
+    background: #FFFFFF;
+    border-color: #1890FF;
+    box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.12);
+  }
+
+  .field-icon {
+    color: #64748B;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+}
+
+.console-input {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 14.5px;
+  padding: 0 !important;
+  color: #1E293B;
+  width: 100%;
+
+  &::placeholder {
+    color: #94A3B8;
+    font-size: 14px;
+  }
+}
+
+.console-select {
+  width: 100%;
+
+  ::ng-deep .ant-select-selector {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    height: 100% !important;
+    display: flex;
+    align-items: center;
+  }
+
+  ::ng-deep .ant-select-selection-item,
+  ::ng-deep .ant-select-selection-placeholder {
+    font-size: 14px !important;
+    padding: 0 !important;
+    color: #1E293B;
+  }
+
+  ::ng-deep .ant-select-selection-placeholder {
+    color: #94A3B8 !important;
+  }
+}
+
+.console-search-btn {
+  height: 48px !important;
+  padding: 0 24px !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #0050b3 0%, #1890ff 100%) !important;
+  border: none !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(0, 80, 179, 0.35) !important;
+  transition: all 0.2s ease !important;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 80, 179, 0.45) !important;
+  }
+}
+
+/* Autocomplete Suggestion styling */
+.suggestion-loading,
+.suggestion-empty {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.suggestion-item {
+  padding: 6px 0;
+
+  .suggestion-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1E293B;
+    line-height: 1.4;
+  }
+
+  .suggestion-meta {
+    font-size: 12px;
+    color: #64748B;
+    margin-top: 2px;
+
+    .suggestion-salary {
+      color: #52C41A;
+      font-weight: 600;
+    }
+  }
+}
+
+/* Quick Filter Chips */
+.quick-chips-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  .chips-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    white-space: nowrap;
+  }
+
+  .chips-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+.quick-chip-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
+  }
+
+  &.active {
+    background: #FFFFFF;
+    color: #0050B3;
+    font-weight: 700;
+    border-color: #FFFFFF;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* ==========================================================================
+   3. Main Content Layout (Sidebar + Jobs Grid / Split)
+   ========================================================================== */
+.jobs-main-wrapper {
+  padding: clamp(24px, 3vw, 40px) 0 60px;
+}
+
+.jobs-layout-grid {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ==========================================================================
+   4. Sidebar Facet Filters (Desktop)
+   ========================================================================== */
+.filter-sidebar {
+  position: sticky;
+  top: 80px;
+  z-index: 10;
+}
+
+.filter-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.filter-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #F8FAFC;
+  border-bottom: 1px solid #E2E8F0;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .filter-title-icon {
+      color: #0050B3;
+      font-size: 16px;
+    }
+
+    h3 {
+      font-family: var(--font-heading, 'Be Vietnam Pro', sans-serif);
+      font-size: 15px;
+      font-weight: 700;
+      color: #1E293B;
+      margin: 0;
+    }
+  }
+
+  .filter-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: #0050B3;
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 50%;
+  }
+
+  .reset-btn {
+    font-size: 12px;
+    color: #64748B;
+    padding: 0;
+    height: auto;
+
+    &:hover:not(:disabled) {
+      color: #FF4D4F;
+    }
+  }
+}
+
+.filter-card-body {
+  padding: 16px 20px;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 4px;
+  }
+}
+
+.saved-facet {
+  .saved-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #1E293B;
+
+    .heart-icon {
+      color: #FF4D4F;
+      font-size: 14px;
+    }
+  }
+}
+
+.facet-divider {
+  margin: 14px 0 !important;
+  border-top-color: #F1F5F9 !important;
+}
+
+.filter-facet {
+  .facet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .facet-title {
+    font-family: var(--font-heading, 'Be Vietnam Pro', sans-serif);
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #334155;
+    margin: 0 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    span {
+      color: #0050B3;
+    }
+  }
+
+  .salary-dynamic-text {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #52C41A;
+    background: #F6FFED;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid #D9F7BE;
+  }
+}
+
+.salary-slider-box {
+  padding: 0 6px;
+
+  ::ng-deep .ant-slider-track {
+    background-color: #0050B3 !important;
+  }
+  ::ng-deep .ant-slider-handle {
+    border-color: #0050B3 !important;
+  }
+
+  .slider-boundary-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #94A3B8;
+    margin-top: 2px;
+  }
+}
+
+.salary-quick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.salary-quick-pill {
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: #F1F5F9;
+  border: 1px solid transparent;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #E2E8F0;
+    color: #1E293B;
+  }
+
+  &.active {
+    background: #E6F4FF;
+    border-color: #91CAFF;
+    color: #0050B3;
+    font-weight: 700;
+  }
+}
+
+.facet-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+:host ::ng-deep .facet-checkbox.ant-checkbox-wrapper {
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  font-size: 13.5px;
+  color: #334155;
+  padding: 2px 0;
+
+  &:hover {
+    color: #0050B3;
+  }
+
+  .ant-checkbox-checked .ant-checkbox-inner {
+    background-color: #0050B3;
+    border-color: #0050B3;
+  }
+}
+
+.full-select {
+  width: 100%;
+
+  ::ng-deep .ant-select-selector {
+    border-radius: 10px !important;
+    border-color: #CBD5E1 !important;
+    background: #F8FAFC !important;
+  }
+}
+
+/* ==========================================================================
+   5. Results Toolbar Card
+   ========================================================================== */
+.results-toolbar-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.toolbar-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.results-count-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .results-headline {
+    font-family: var(--font-heading, 'Be Vietnam Pro', sans-serif);
+    font-size: 17px;
+    font-weight: 700;
+    color: #1E293B;
+    margin: 0;
+
+    .highlight-count {
+      color: #0050B3;
+      font-size: 20px;
+      font-weight: 800;
+    }
+  }
+
+  .total-note {
+    font-size: 13px;
+    color: #64748B;
+  }
+}
+
+.toolbar-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mobile-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 10px;
+  font-weight: 600;
+
+  .badge-mini {
+    background: #0050B3;
+    color: #FFFFFF;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+}
+
+.view-mode-toggle {
+  display: flex;
+  background: #F1F5F9;
+  border-radius: 10px;
+  padding: 3px;
+  border: 1px solid #E2E8F0;
+}
+
+.view-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  span[nz-icon] {
+    font-size: 15px;
+  }
+
+  &:hover {
+    color: #1E293B;
+  }
+
+  &.active {
+    background: #FFFFFF;
+    color: #0050B3;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.sort-selector-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .sort-label {
+    font-size: 13px;
+    color: #64748B;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .sort-select {
+    width: 170px;
+
+    ::ng-deep .ant-select-selector {
+      border-radius: 10px !important;
+    }
+  }
+}
+
+.page-size-wrap {
+  .size-select {
+    width: 120px;
+
+    ::ng-deep .ant-select-selector {
+      border-radius: 10px !important;
+    }
+  }
+}
+
+.active-filter-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #F1F5F9;
+  flex-wrap: wrap;
+
+  .active-filter-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #64748B;
+  }
+
+  .tags-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .active-filter-pill {
+    background: #E6F4FF;
+    color: #0050B3;
+    border: 1px solid #BAE0FF;
+    border-radius: 8px;
+    padding: 3px 10px;
+    font-size: 12.5px;
+    font-weight: 500;
+  }
+
+  .clear-all-tag-btn {
+    font-size: 12px;
+    color: #FF4D4F;
+    padding: 0 4px;
+    height: auto;
+  }
+}
+
+/* ==========================================================================
+   6. Widescreen 2-Column Responsive Cards Grid
+   ========================================================================== */
+.jobs-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+  gap: 20px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.job-card-item {
+  background: #FFFFFF;
+  border-radius: 18px;
+  border: 1px solid #E2E8F0;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 18px 0 0 18px;
+    background: #0050B3;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+    border-color: #91CAFF;
+    box-shadow: 0 12px 28px -4px rgba(0, 50, 120, 0.08);
+
+    &::before {
+      opacity: 1;
+    }
+
+    .job-card-title a {
+      color: #0050B3;
+    }
+
+    .card-primary-cta {
+      background: #0050B3;
+      color: #FFFFFF;
+    }
+  }
+
+  &.is-applied {
+    background: #FAFCFF;
+    border-color: #D6E4FF;
+  }
+}
+
+.card-header-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.company-avatar-box {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-family: var(--font-heading, 'Be Vietnam Pro', sans-serif);
+  font-size: 22px;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.job-title-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.title-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.job-card-title {
+  font-family: var(--font-heading, 'Be Vietnam Pro', sans-serif);
+  font-size: 16.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 4px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  a {
+    color: #1E293B;
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+}
+
+.bookmark-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #94A3B8;
+  font-size: 18px;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    color: #FF4D4F;
+    background: #FFF1F0;
+    transform: scale(1.1);
+  }
+
+  &.saved {
+    color: #FF4D4F;
+  }
+}
+
+.company-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .company-link,
+  .company-name-text {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+  }
+
+  .company-link:hover {
+    color: #0050B3;
+    text-decoration: underline;
+  }
+
+  .verified-employer-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #096DD9;
+    background: #E6F7FF;
+    padding: 1px 7px;
+    border-radius: 6px;
+  }
+}
+
+.card-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.salary-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  background: #F6FFED;
+  border: 1px solid #B7EB8F;
+  border-radius: 8px;
+  color: #389E0D;
+  font-size: 13.5px;
+
+  strong {
+    font-weight: 700;
+  }
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+
+  &.hot-badge {
+    background: #FFF2E8;
+    color: #D4380D;
+    border: 1px solid #FFBB96;
+  }
+
+  &.new-badge {
+    background: #E6FFFB;
+    color: #08979C;
+    border: 1px solid #87E8DE;
+  }
+
+  &.applied-badge {
+    background: #F0F5FF;
+    color: #1D39C4;
+    border: 1px solid #ADC6FF;
+  }
+}
+
+.card-meta-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  padding: 8px 0;
+  border-top: 1px solid #F8FAFC;
+  border-bottom: 1px solid #F8FAFC;
+
+  .meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #64748B;
+
+    .meta-icon {
+      color: #94A3B8;
+      font-size: 14px;
+    }
+  }
+
+  .applicants-item {
+    color: #0050B3;
+    font-weight: 500;
+    .meta-icon {
+      color: #0050B3;
+    }
+  }
+}
+
+.card-skills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  .skill-tag-pill {
+    background: #F1F5F9;
+    color: #334155;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid #E2E8F0;
+  }
+}
+
+.card-description-snippet {
+  font-size: 13px;
+  color: #64748B;
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid #F1F5F9;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.posted-date-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #94A3B8;
+
+  .deadline-note {
+    color: #E056FD;
+    font-weight: 500;
+  }
+}
+
+.card-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quick-view-btn {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  color: #475569;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #E2E8F0;
+    color: #1E293B;
+  }
+}
+
+.card-primary-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: #E6F4FF;
+  color: #0050B3;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #0050B3;
+    color: #FFFFFF;
+  }
+}
+
+/* ==========================================================================
+   7. Split View Mode (Master List + Sticky Live Detail Pane)
+   ========================================================================== */
+.split-view-container {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 20px;
+  align-items: start;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 330px 1fr;
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.split-master-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding-right: 4px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 4px;
+  }
+}
+
+.split-job-item {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+
+  &:hover {
+    border-color: #91CAFF;
+    background: #F8FAFC;
+  }
+
+  &.active {
+    border-color: #0050B3;
+    background: #F0F7FF;
+    box-shadow: 0 4px 12px rgba(0, 80, 179, 0.08);
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      border-radius: 14px 0 0 14px;
+      background: #0050B3;
+    }
+  }
+}
+
+.split-item-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.company-mini-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: #FFFFFF;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.split-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.split-item-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0 0 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.split-item-company {
+  font-size: 12.5px;
+  color: #64748B;
+}
+
+.split-save-btn {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px;
+
+  &:hover, &.saved {
+    color: #FF4D4F;
+  }
+}
+
+.split-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #64748B;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+
+  .split-salary-pill {
+    color: #389E0D;
+    font-weight: 700;
+    background: #F6FFED;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+}
+
+.split-item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: #94A3B8;
+
+  .mini-badge-new {
+    background: #E6FFFB;
+    color: #08979C;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  .mini-badge-applied {
+    background: #F0F5FF;
+    color: #1D39C4;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+}
+
+/* Right: Sticky Live Detail Pane */
+.split-detail-pane {
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 4px;
+  }
+}
+
+.live-preview-card {
+  background: #FFFFFF;
+  border-radius: 18px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.preview-header {
+  padding: 24px;
+  background: #F8FAFC;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.preview-brand-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.preview-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 26px;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.preview-title-info {
+  flex: 1;
+
+  .preview-job-title {
+    font-family: var(--font-heading, 'Be Vietnam Pro', sans-serif);
+    font-size: 20px;
+    font-weight: 800;
+    color: #1E293B;
+    margin: 0 0 6px 0;
+    line-height: 1.3;
+  }
+
+  .preview-company-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    .preview-company-link,
+    .preview-company-name {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #0050B3;
+      text-decoration: none;
+    }
+
+    .preview-loc-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      color: #64748B;
+    }
+  }
+}
+
+.preview-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  .preview-apply-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #0050b3 0%, #1890ff 100%);
+    color: #FFFFFF;
+    padding: 10px 22px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 80, 179, 0.25);
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 80, 179, 0.35);
+    }
+  }
+
+  .preview-save-btn,
+  .preview-share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    color: #475569;
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: #F1F5F9;
+      color: #1E293B;
+    }
+
+    &.saved {
+      color: #FF4D4F;
+      border-color: #FFA39E;
+      background: #FFF1F0;
+    }
+  }
+}
+
+.preview-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.preview-highlights-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.highlight-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .highlight-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+
+    &.green { background: #F6FFED; color: #52C41A; }
+    &.blue { background: #E6F4FF; color: #1890FF; }
+    &.orange { background: #FFF7E6; color: #FA8C16; }
+    &.purple { background: #F9F0FF; color: #722ED1; }
+  }
+
+  .highlight-info {
+    display: flex;
+    flex-direction: column;
+
+    .highlight-label {
+      font-size: 11.5px;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .highlight-val {
+      font-size: 14px;
+      color: #1E293B;
+      font-weight: 700;
+
+      &.green {
+        color: #389E0D;
+      }
+    }
+  }
+}
+
+.preview-section {
+  .section-title {
+    font-family: var(--font-heading, 'Be Vietnam Pro', sans-serif);
+    font-size: 15px;
+    font-weight: 700;
+    color: #1E293B;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    span {
+      color: #0050B3;
+    }
+  }
+}
+
+.preview-skills-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .preview-skill-pill {
+    background: #E6F4FF;
+    color: #0050B3;
+    border: 1px solid #BAE0FF;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+}
+
+.preview-html-content {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #334155;
+
+  p { margin-bottom: 10px; }
+  ul, ol { padding-left: 20px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+}
+
+.preview-plain-desc {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.preview-company-card {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 16px;
+
+  .comp-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+
+    .comp-icon {
+      width: 36px;
+      height: 36px;
+      background: #0050B3;
+      color: #FFFFFF;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    h4 {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0;
+      color: #1E293B;
+    }
+
+    p {
+      font-size: 12.5px;
+      color: #64748B;
+      margin: 0;
+    }
+  }
+
+  .comp-card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0050B3;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+/* ==========================================================================
+   8. Skeletons & Loading States
+   ========================================================================== */
+.skeleton-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+  gap: 20px;
+
+  &.split-skeleton {
+    grid-template-columns: 1fr;
+  }
+}
+
+.job-skeleton-card {
+  background: #FFFFFF;
+  border-radius: 18px;
+  border: 1px solid #E2E8F0;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.skeleton-header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.skeleton-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: #E2E8F0;
+  animation: skeleton-pulse 1.5s infinite;
+}
+
+.skeleton-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-line {
+  background: #E2E8F0;
+  border-radius: 6px;
+  animation: skeleton-pulse 1.5s infinite;
+
+  &.skeleton-title {
+    height: 18px;
+    width: 75%;
+  }
+
+  &.skeleton-sub {
+    height: 14px;
+    width: 45%;
+  }
+}
+
+.skeleton-meta-row {
+  display: flex;
+  gap: 10px;
+}
+
+.skeleton-pill {
+  height: 24px;
+  width: 80px;
+  border-radius: 6px;
+  background: #F1F5F9;
+  animation: skeleton-pulse 1.5s infinite;
+}
+
+.skeleton-desc {
+  height: 36px;
+  background: #F8FAFC;
+  border-radius: 6px;
+  animation: skeleton-pulse 1.5s infinite;
+}
+
+.skeleton-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+}
+
+.skeleton-button {
+  height: 32px;
+  width: 110px;
+  border-radius: 8px;
+  background: #E2E8F0;
+  animation: skeleton-pulse 1.5s infinite;
+}
+
+@keyframes skeleton-pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* ==========================================================================
+   9. Empty State
+   ========================================================================== */
+.no-results-card {
+  background: #FFFFFF;
+  border-radius: 18px;
+  border: 1px solid #E2E8F0;
+  padding: 60px 24px;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+
+  .empty-illustration {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #F1F5F9;
+    color: #64748B;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 18px;
+  }
+
+  .empty-title {
+    font-family: var(--font-heading, 'Be Vietnam Pro', sans-serif);
+    font-size: 19px;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 8px;
+  }
+
+  .empty-desc {
+    font-size: 14.5px;
+    color: #64748B;
+    max-width: 520px;
+    margin: 0 auto 24px auto;
+    line-height: 1.55;
+  }
+
+  .empty-actions button {
+    height: 46px;
+    padding: 0 24px;
+    border-radius: 12px;
+    font-weight: 600;
+  }
+}
+
+/* ==========================================================================
+   10. Pagination Footer
+   ========================================================================== */
+.pagination-footer-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 36px;
+}
+
+/* ==========================================================================
+   11. Drawer Styles (Mobile & Quick Preview)
+   ========================================================================== */
+.mobile-drawer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .mobile-facet-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 8px;
+  }
+}
+
+.mobile-checkbox {
+  display: block !important;
+  margin: 6px 0 !important;
+  font-size: 13.5px;
+}
+
+.mobile-drawer-footer,
+.drawer-footer-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+
+  button, a {
+    border-radius: 8px;
+  }
+}
+
+.drawer-preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  .drawer-header-brand {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+
+    h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin: 0 0 2px 0;
+    }
+
+    .drawer-company {
+      font-size: 13.5px;
+      color: #64748B;
+      margin: 0;
+    }
+  }
+
+  .drawer-section {
+    h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #1E293B;
+    }
+    .drawer-desc {
+      font-size: 13.5px;
+      color: #475569;
+      line-height: 1.6;
+    }
+  }
+}
+
+/* Utility Media Queries */
+@media (max-width: 767px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .show-mobile-only {
+    display: none !important;
+  }
+}

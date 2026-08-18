@@ -42,20 +42,36 @@ class LocalVectorStore:
         # Lightweight keyword & overlap fallback search
         if not self._model:
             results = []
-            q_terms = set(re.findall(r"\w+", query.lower()))
+            clean_query = query.strip().lower()
+            # Escape query for regex boundary search
+            escaped_q = re.escape(clean_query)
+            
             for c in chunks:
                 text = c["text"]
-                c_terms = set(re.findall(r"\w+", text.lower()))
-                if not q_terms or not c_terms:
-                    continue
-                intersection = q_terms.intersection(c_terms)
-                overlap = len(intersection) / len(q_terms)
-                if overlap > 0:
+                text_lower = text.lower()
+                
+                # 1. Exact phrase / substring match (highest score)
+                if clean_query in text_lower or re.search(rf"\b{escaped_q}\b", text_lower, re.IGNORECASE):
                     results.append({
                         "chunk": text,
-                        "similarity": round(float(overlap), 4),
+                        "similarity": 1.0,
                         "level": c.get("level", "unknown"),
                     })
+                    continue
+                
+                # 2. Multi-word query token matching
+                q_words = [w for w in re.findall(r"\w+", clean_query) if len(w) > 1]
+                if len(q_words) > 1:
+                    matched_words = [w for w in q_words if re.search(rf"\b{re.escape(w)}\b", text_lower, re.IGNORECASE)]
+                    overlap = len(matched_words) / len(q_words)
+                    # Only accept if at least 70% of tokens match
+                    if overlap >= 0.7:
+                        results.append({
+                            "chunk": text,
+                            "similarity": round(float(overlap), 4),
+                            "level": c.get("level", "unknown"),
+                        })
+            
             results.sort(key=lambda x: x["similarity"], reverse=True)
             return results[:top_k]
 

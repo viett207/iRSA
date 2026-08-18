@@ -11,16 +11,22 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
-import { NzIconService } from 'ng-zorro-antd/icon';
-import { BellOutline } from '@ant-design/icons-angular/icons';
-import { APP_INITIALIZER } from '@angular/core';
+import { IconDefinition } from '@ant-design/icons-angular';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import * as AllIcons from '@ant-design/icons-angular/icons';
 
 registerLocaleData(vi);
+
+const antDesignIcons = AllIcons as Record<string, IconDefinition>;
+const icons: IconDefinition[] = Object.keys(antDesignIcons).map(
+  (key) => antDesignIcons[key]
+);
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
     provideNzI18n(vi_VN),
+    importProvidersFrom(NzIconModule.forRoot(icons)),
     importProvidersFrom(FormsModule),
     provideAnimationsAsync(),
     provideHttpClient(withInterceptors([authInterceptor])),
@@ -31,11 +37,6 @@ export const appConfig: ApplicationConfig = {
       prefix: './assets/i18n/',
       suffix: '.json',
     }),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: (iconSvc: NzIconService) => () => iconSvc.addIcon(BellOutline),
-      deps: [NzIconService],
-      multi: true,
-    },
   ],
 };
+

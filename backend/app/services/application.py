@@ -34,7 +34,11 @@ class ApplicationService:
         existing = await self._get_existing_application(job.id, user_id)
         if existing:
             raise HTTPException(
-                status_code=400, detail="You have already applied to this job"
+                status_code=409,
+                detail={
+                    "code": "ALREADY_APPLIED",
+                    "message": "Bạn đã ứng tuyển vị trí này trước đó.",
+                },
             )
 
         # Handle resume
@@ -50,7 +54,10 @@ class ApplicationService:
             if not resume:
                 raise HTTPException(
                     status_code=400,
-                    detail="Please upload a resume or select an existing one",
+                    detail={
+                        "code": "RESUME_REQUIRED",
+                        "message": "Vui lòng tải lên CV hoặc chọn một CV đã lưu.",
+                    },
                 )
 
         # Create application
@@ -139,7 +146,11 @@ class ApplicationService:
         job = result.scalar_one_or_none()
         if not job:
             raise HTTPException(
-                status_code=404, detail="Job not found or no longer accepting applications"
+                status_code=404,
+                detail={
+                    "code": "JOB_NOT_ACCEPTING_APPLICATIONS",
+                    "message": "Tin tuyển dụng không tồn tại hoặc đã ngừng nhận hồ sơ.",
+                },
             )
         return job
 

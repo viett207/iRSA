@@ -5,6 +5,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from pydantic import BaseModel
 from datetime import datetime
+import logging
 
 from app.api.deps import DBSession, CandidateUser
 from app.core.exceptions import NotFoundException, BadRequestException
@@ -21,6 +22,7 @@ from app.schemas.application import ApplicationResponse
 from app.services.application import ApplicationService
 
 router = APIRouter(prefix="/jobs", tags=["public-jobs"])
+logger = logging.getLogger(__name__)
 
 
 class ActiveCompanyItem(BaseModel):
@@ -249,7 +251,6 @@ class CompanyDetailResponse(BaseModel):
 @router.get("/companies/{company_code}", response_model=CompanyDetailResponse)
 async def get_company_detail(company_code: str, db: DBSession):
     """Get company info and its active published jobs."""
-    # Fetch company
     result = await db.execute(
         select(Company).where(Company.company_code == company_code)
     )
@@ -260,6 +261,7 @@ async def get_company_detail(company_code: str, db: DBSession):
     # Fetch published jobs from this company
     stmt = (
         select(Job)
+        .options(selectinload(Job.criteria))
         .join(User, Job.created_by == User.id)
         .where(((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"]))), User.company_code == company_code)
         .order_by(Job.published_at.desc())
@@ -280,6 +282,12 @@ async def get_company_detail(company_code: str, db: DBSession):
             published_at=j.published_at,
             application_deadline=j.application_deadline,
             applications_count=0,
+            must_have_skills=j.criteria.must_have_skills if j.criteria and j.criteria.must_have_skills else [],
+            min_experience_years=j.criteria.min_experience_years if j.criteria else None,
+            max_experience_years=j.criteria.max_experience_years if j.criteria else None,
+            company_name=company.company_name,
+            company_code=company.company_code,
+            description_vi=j.description_vi,
         )
         for j in jobs
     ]
@@ -311,7 +319,14 @@ async def list_published_jobs(
     size: int = Query(20, ge=1, le=50),
 ):
     """List published jobs with search, filters, and sorting."""
-    query = select(Job).where((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"])))
+    query = (
+        select(Job)
+        .options(
+            selectinload(Job.criteria),
+            selectinload(Job.creator).selectinload(User.company),
+        )
+        .where((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"])))
+    )
 
     if company_code:
         # Filter jobs by creator's company_code
@@ -388,22 +403,38 @@ async def list_published_jobs(
     result = await db.execute(query)
     rows = result.all()
 
-    items = [
-        PublicJobListItem(
-            id=job.id,
-            slug=job.slug,
-            title_vi=job.title_vi,
-            department=job.department,
-            location=job.location,
-            employment_type=job.employment_type,
-            salary_min=job.salary_min,
-            salary_max=job.salary_max,
-            published_at=job.published_at,
-            application_deadline=job.application_deadline,
-            applications_count=app_count,
+    items = []
+    for job, app_count in rows:
+        company_name = None
+        company_code_val = None
+        if job.creator:
+            company_code_val = job.creator.company_code
+            if job.creator.company:
+                company_name = job.creator.company.company_name
+        if not company_name:
+            company_name = job.department or "iRSA"
+
+        items.append(
+            PublicJobListItem(
+                id=job.id,
+                slug=job.slug,
+                title_vi=job.title_vi,
+                department=job.department,
+                location=job.location,
+                employment_type=job.employment_type,
+                salary_min=job.salary_min,
+                salary_max=job.salary_max,
+                published_at=job.published_at,
+                application_deadline=job.application_deadline,
+                applications_count=app_count,
+                must_have_skills=job.criteria.must_have_skills if job.criteria and job.criteria.must_have_skills else [],
+                min_experience_years=job.criteria.min_experience_years if job.criteria else None,
+                max_experience_years=job.criteria.max_experience_years if job.criteria else None,
+                company_name=company_name,
+                company_code=company_code_val,
+                description_vi=job.description_vi,
+            )
         )
-        for job, app_count in rows
-    ]
 
     return PublicJobListResponse(
         items=items,
@@ -457,11 +488,6 @@ async def apply_to_job(
     cover_letter: str | None = Form(None),
     file: UploadFile | None = File(None),
 ):
-    """Apply to a job with resume (upload new or select existing).
-    Sends confirmation email to candidate.
-    """
-    from app.tasks import send_application_received_notification, score_application_task
-
     service = ApplicationService(db)
     application = await service.apply(
         job_slug=slug,
@@ -471,27 +497,9 @@ async def apply_to_job(
         cover_letter=cover_letter,
     )
 
-    send_application_received_notification.delay(
-        email=user.email,
-        full_name=user.full_name,
-        job_title=application.job.title_vi or "Unknown",
-    )
-
-    # Auto-trigger resume scoring in background
-    score_application_task.delay(application.id)
-
-    # Real-time notification to job creator (HR)
-    from app.services.notification_service import notify_hr_for_new_application
-    await notify_hr_for_new_application(
-        db, application.job.created_by,
-        candidate_name=user.full_name,
-        job_title=application.job.title_vi or "N/A",
-        job_id=application.job_id,
-        application_id=application.id,
-    )
-    await db.commit()
-
-    return ApplicationResponse(
+    # Materialize the response before optional side effects. A later rollback
+    # must not expire ORM attributes needed to acknowledge the saved record.
+    application_response = ApplicationResponse(
         id=application.id,
         job_id=application.job_id,
         job_title=application.job.title_vi,
@@ -504,3 +512,35 @@ async def apply_to_job(
         public_status=application.public_status,
         submitted_at=application.submitted_at,
     )
+
+    # The application is already committed. Failures in optional notifications
+    # must not turn a successful submission into a misleading HTTP 500.
+    try:
+        send_application_received_notification.delay(
+            email=user.email,
+            full_name=user.full_name,
+            job_title=application.job.title_vi or "Unknown",
+        )
+    except Exception:
+        logger.exception("Unable to enqueue application receipt for application %s", application.id)
+
+    try:
+        score_application_task.delay(application.id)
+    except Exception:
+        logger.exception("Unable to enqueue scoring for application %s", application.id)
+
+    try:
+        from app.services.notification_service import notify_hr_for_new_application
+        await notify_hr_for_new_application(
+            db, application.job.created_by,
+            candidate_name=user.full_name,
+            job_title=application.job.title_vi or "N/A",
+            job_id=application.job_id,
+            application_id=application.id,
+        )
+        await db.commit()
+    except Exception:
+        logger.exception("Unable to notify HR for application %s", application.id)
+        await db.rollback()
+
+    return application_response
