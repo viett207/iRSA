@@ -172,7 +172,7 @@ Template đã tích hợp sẵn auto-logging hooks cho 6 AI tools:
 | GitHub Copilot | `.github/hooks/hooks.json` | Tự động |
 | Antigravity IDE | Pre-push scan transcript | Tự động trên `git push` |
 
-Tất cả prompts và tool calls được log vào `.ai-log/session.jsonl` và tự động submit lên grading server mỗi khi `git push`.
+Chỉ các prompt do người dùng gửi được log vào `.ai-log/session.jsonl` và tự động submit lên grading server mỗi khi `git push`. Tool calls và các sự kiện kết thúc phiên không được ghi.
 
 **ChatGPT / web tools khác** — log thủ công:
 ```bash

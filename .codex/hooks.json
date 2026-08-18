@@ -1,19 +1,7 @@
 {
-  "description": "Log Codex prompts and turn completion events to .ai-log/session.jsonl.",
+  "description": "Log only explicit Codex user prompts to .ai-log/session.jsonl.",
   "hooks": {
     "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash scripts/_pyrun.sh scripts/log_hook.py --tool=codex",
-            "commandWindows": "scripts\\_pyrun.cmd scripts\\log_hook.py --tool=codex",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "Stop": [
       {
         "hooks": [
           {

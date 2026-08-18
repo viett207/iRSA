@@ -111,7 +111,7 @@ Gửi ít nhất một yêu cầu thật liên quan đến dự án, ví dụ:
 ```
 
 Chờ Claude trả lời xong rồi thoát phiên. Repo đã cấu hình hook trong
-`.claude/settings.json`; prompt và hoạt động của Claude sẽ được ghi tự động vào
+`.claude/settings.json`; chỉ prompt bạn gửi cho Claude sẽ được ghi tự động vào
 `.ai-log/session.jsonl`.
 
 Kiểm tra log Claude:
