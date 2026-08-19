@@ -115,7 +115,7 @@ Bổ sung thêm trường hợp evidence rỗng, detected_years vô lý và stre
 Chỉ viết test tái hiện vấn đề, chưa sửa verifier.
 ```
 
-### Prompt 7 — Viết test cho lỗi ghi AI score vào deterministic score
+### Prompt 7 — Viết test cho lỗi ghi AI score vào deterministic score 
 
 ```text
 Hãy viết regression test cho save_agent_evaluation khi chưa có ScoringResult.
@@ -183,7 +183,7 @@ Yêu cầu:
 - Test với nhiều khoảng trắng, newline, Unicode và dấu câu.
 ```
 
-### Prompt 11 — Chuẩn hóa block_id
+### Prompt 11 — Chuẩn hóa block_id   vvvv
 
 ```text
 Hãy thiết kế và triển khai block_id ổn định cho các chunk.
@@ -196,7 +196,7 @@ Yêu cầu:
 - Có unit test về tính ổn định và uniqueness.
 ```
 
-### Prompt 12 — Validator cho span fidelity
+### Prompt 12 — Validator cho span fidelity  vvvv
 
 ```text
 Hãy tạo hàm validate_evidence_block(raw_text, block) để kiểm tra offset hợp lệ, text khớp raw_text, block_id tồn tại, section hợp lệ và confidence trong [0,1].
@@ -206,7 +206,7 @@ Phân biệt rõ hard error và warning.
 Tích hợp validator ở biên phù hợp nhưng chưa làm pipeline fail toàn bộ nếu một block lỗi; hãy trả diagnostic có cấu trúc. Thêm unit test.
 ```
 
-### Prompt 13 — Loại bỏ duplicate chunk không cần thiết
+### Prompt 13 — Loại bỏ duplicate chunk không cần thiết vvvv
 
 ```text
 Hãy kiểm tra TextChunker có tạo duplicate block hoặc các window cuối giống nhau hay không.
@@ -220,7 +220,7 @@ Thêm test chứng minh:
 
 ## Nhóm 3 — Section detection
 
-### Prompt 14 — Thiết kế SectionDetector
+### Prompt 14 — Thiết kế SectionDetector vvvv
 
 ```text
 Hãy thiết kế SectionDetector độc lập với TextChunker.
@@ -235,7 +235,7 @@ Yêu cầu:
 - Viết interface, implementation ban đầu và unit test.
 ```
 
-### Prompt 15 — Alias section tiếng Việt
+### Prompt 15 — Alias section tiếng Việt vvvv
 
 ```text
 Hãy mở rộng SectionDetector với alias tiếng Việt, bao gồm tối thiểu: Kinh nghiệm làm việc, Quá trình công tác, Kinh nghiệm chuyên môn, Dự án, Dự án tiêu biểu, Kỹ năng, Học vấn, Trình độ học vấn, Chứng chỉ và Giải thưởng.

@@ -50,7 +50,7 @@ Yêu cầu:
 - Báo cáo danh sách interface đã cập nhật.
 ```
 
-### Prompt 3 — Kiểm tra cấu hình Build, Environment & Interceptor
+### Prompt 3 — Kiểm tra cấu hình Build, Environment & Interceptor ######
 
 ```text
 Hãy kiểm tra cấu hình môi trường và HTTP client trong cả 2 app (`frontend-admin` và `frontend-portal`).
