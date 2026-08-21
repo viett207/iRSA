@@ -1,23 +1,37 @@
 """Models and Schemas package for AI Evaluation Agent."""
 
+from src.models.cv_fingerprint import (
+    PARSER_VERSION,
+    AwardEntry,
+    CandidateProfileHeader,
+    CertificationEntry,
+    CVFingerprint,
+    EducationEntry,
+    ExperienceEntry,
+    FingerprintDiagnostics,
+    ProjectEntry,
+    SkillMention,
+    compute_content_hash,
+    generate_fingerprint_cache_key,
+)
 from src.models.evidence import (
-    CVSection,
-    CVSectionLiteral,
     ChunkLevel,
     ChunkLevelLiteral,
+    CVSection,
+    CVSectionLiteral,
+    EvidenceBlock,
     EvidenceSource,
     EvidenceSourceLiteral,
-    EvidenceBlock,
     generate_block_id,
 )
 from src.models.schemas import (
-    SkillAssessment,
-    ExperienceAssessment,
-    EducationAssessment,
-    InterviewQuestion,
-    AiEvaluationOutput,
     AgentEvaluationRequest,
     AgentEvaluationResponse,
+    AiEvaluationOutput,
+    EducationAssessment,
+    ExperienceAssessment,
+    InterviewQuestion,
+    SkillAssessment,
 )
 
 __all__ = [
@@ -36,5 +50,17 @@ __all__ = [
     "AiEvaluationOutput",
     "AgentEvaluationRequest",
     "AgentEvaluationResponse",
+    "PARSER_VERSION",
+    "CVFingerprint",
+    "SkillMention",
+    "ExperienceEntry",
+    "ProjectEntry",
+    "EducationEntry",
+    "CertificationEntry",
+    "AwardEntry",
+    "CandidateProfileHeader",
+    "FingerprintDiagnostics",
+    "compute_content_hash",
+    "generate_fingerprint_cache_key",
 ]
 

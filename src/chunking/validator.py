@@ -41,6 +41,7 @@ class BlockValidationResult(BaseModel):
     normalized_confidence: float = 1.0
     exact_match: bool = False
     actual_slice_text: Optional[str] = None
+    trust_tier: str = Field(default="high", description="Evidence trust tier: high, medium, low")
 
 
 def validate_evidence_block(
@@ -288,6 +289,7 @@ def validate_evidence_block(
             )
 
     # 8. Validate Section [WARNING if unknown or unrecognized]
+    sec_str = "unknown"
     if section is not None:
         sec_str = str(section.value if isinstance(section, CVSection) else section).lower().strip()
         valid_sections = {s.value for s in CVSection}
@@ -301,17 +303,42 @@ def validate_evidence_block(
                     details={"section": section, "valid_options": sorted(list(valid_sections))},
                 )
             )
-        elif sec_str == CVSection.UNKNOWN.value:
+        elif sec_str == CVSection.UNKNOWN.value or normalized_conf < 0.60:
             warnings.append(
                 DiagnosticItem(
-                    code="UNKNOWN_SECTION",
-                    message="Section is marked as UNKNOWN",
+                    code="SECTION_DETECTION_LOW_CONFIDENCE",
+                    message=(
+                        f"Section '{sec_str}' has low confidence ({normalized_conf:.2f}) or is UNKNOWN. "
+                        "Evidence is preserved with degraded trust tier for full-text retrieval."
+                    ),
                     severity=ValidationSeverity.WARNING,
                     field="section",
+                    details={
+                        "section": sec_str,
+                        "section_confidence": normalized_conf,
+                        "trust_tier": "low",
+                        "fallback": "full_text",
+                    },
                 )
             )
+            if sec_str == CVSection.UNKNOWN.value:
+                warnings.append(
+                    DiagnosticItem(
+                        code="UNKNOWN_SECTION",
+                        message="Section is marked as UNKNOWN",
+                        severity=ValidationSeverity.WARNING,
+                        field="section",
+                    )
+                )
 
-    # 9. Compute overall status
+    # 9. Compute trust tier and overall status
+    if sec_str == CVSection.UNKNOWN.value or normalized_conf < 0.60:
+        trust_tier = "low"
+    elif normalized_conf < 0.85:
+        trust_tier = "medium"
+    else:
+        trust_tier = "high"
+
     is_valid = len(errors) == 0
     if not is_valid:
         status = ValidationStatus.INVALID
@@ -329,6 +356,7 @@ def validate_evidence_block(
         normalized_confidence=normalized_conf,
         exact_match=exact_match,
         actual_slice_text=actual_slice,
+        trust_tier=trust_tier,
     )
 
 

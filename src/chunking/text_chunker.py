@@ -7,6 +7,7 @@ import re
 from typing import Any
 
 from src.chunking.section_detector import DetectedSection, SectionDetector
+from src.models.cv_fingerprint import PARSER_VERSION as DEFAULT_PARSER_VERSION
 from src.models.evidence import (
     ChunkLevel,
     CVSection,
@@ -18,7 +19,7 @@ from src.models.evidence import (
 class TextChunker:
     """Split CV text into multi-level chunks with section grounding and confidence rating."""
 
-    PARSER_VERSION: str = "v1"
+    PARSER_VERSION: str = DEFAULT_PARSER_VERSION
 
     @staticmethod
     def generate_block_id(
