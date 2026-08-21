@@ -12,9 +12,12 @@ from src.chunking.validator import (
 )
 from src.chunking.section_detector import (
     HeadingSpan,
+    SectionConfidenceBreakdown,
     SectionDetectionResult,
     DetectedSection,
     SectionDetector,
+    calculate_section_confidence,
+    strip_accents,
 )
 
 __all__ = [
@@ -27,7 +30,10 @@ __all__ = [
     "validate_evidence_block",
     "validate_evidence_blocks",
     "HeadingSpan",
+    "SectionConfidenceBreakdown",
     "SectionDetectionResult",
     "DetectedSection",
     "SectionDetector",
+    "calculate_section_confidence",
+    "strip_accents",
 ]

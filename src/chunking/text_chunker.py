@@ -1,12 +1,22 @@
-"""Multi-level text chunking strategy for CV analysis with standardized block_id, exact offset tracking, and span+level deduplication."""
+"""Multi-level text chunking strategy for CV analysis with SectionDetector integration,
+standardized block_id, exact offset tracking, and span+level deduplication.
+"""
 
 import hashlib
 import re
-from typing import List, Dict, Any, Optional, Set, Tuple
+from typing import Any
+
+from src.chunking.section_detector import DetectedSection, SectionDetector
+from src.models.evidence import (
+    ChunkLevel,
+    CVSection,
+    EvidenceBlock,
+    EvidenceSource,
+)
 
 
 class TextChunker:
-    """Split CV text into multi-level chunks for vector search & precision extraction."""
+    """Split CV text into multi-level chunks with section grounding and confidence rating."""
 
     PARSER_VERSION: str = "v1"
 
@@ -35,11 +45,50 @@ class TextChunker:
         return f"blk_{doc_hash}_{chunk_level}_{char_start:06d}_{char_end:06d}_{sig}"
 
     @staticmethod
+    def _resolve_section_for_span(
+        char_start: int,
+        char_end: int,
+        sections: list[DetectedSection],
+    ) -> tuple[CVSection, float, bool, str | None]:
+        """Resolve the enclosing CV section, confidence, and heading status for a given text span.
+
+        Returns:
+            (section, section_confidence, is_heading, raw_heading)
+        """
+        if not sections:
+            return CVSection.UNKNOWN, 0.0, False, None
+
+        for sec in sections:
+            # 1. Check if this span is the section heading itself
+            if sec.heading_span is not None:
+                h_start = sec.heading_span.char_start
+                h_end = sec.heading_span.char_end
+                # Exact or contained within heading line
+                if h_start <= char_start and char_end <= h_end:
+                    return sec.section, sec.confidence, True, sec.raw_heading
+                # Overlaps significantly with heading line
+                if max(char_start, h_start) < min(char_end, h_end):
+                    return sec.section, sec.confidence, True, sec.raw_heading
+
+            # 2. Check if span falls into section body / full bounds [full_char_start, full_char_end)
+            if sec.full_char_start <= char_start < sec.full_char_end:
+                return sec.section, sec.confidence, False, sec.raw_heading
+
+        # 3. Fallback to last section if at document tail
+        if sections and char_start >= sections[-1].full_char_start:
+            return sections[-1].section, sections[-1].confidence, False, sections[-1].raw_heading
+
+        return CVSection.UNKNOWN, 0.0, False, None
+
+    @staticmethod
     def chunk_lines(
         text: str,
-        parser_version: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        """Extract line-level chunks with exact character offsets and standardized block_id from raw text.
+        parser_version: str | None = None,
+        detector: SectionDetector | None = None,
+        exclude_headings: bool = False,
+    ) -> list[dict[str, Any]]:
+        """Extract line-level chunks with exact character offsets, standardized block_id,
+        section classification, and section_confidence from raw text.
 
         Preserves leading whitespace and guarantees raw_text[char_start:char_end] == block['text'].
         Deduplicates strictly by (char_start, char_end) span.
@@ -49,8 +98,11 @@ class TextChunker:
             return []
 
         version = parser_version or TextChunker.PARSER_VERSION
-        line_chunks: List[Dict[str, Any]] = []
-        seen_spans: Set[Tuple[int, int]] = set()
+        sec_detector = detector or SectionDetector()
+        detected_sections = sec_detector.detect_sections(text)
+
+        line_chunks: list[dict[str, Any]] = []
+        seen_spans: set[tuple[int, int]] = set()
 
         # Match all non-newline spans (stops at \r or \n)
         for m in re.finditer(r"[^\r\n]+", text):
@@ -67,6 +119,16 @@ class TextChunker:
                 continue
             seen_spans.add(span_key)
 
+            sec_type, sec_conf, is_heading, raw_h = TextChunker._resolve_section_for_span(
+                char_start=char_start,
+                char_end=char_end,
+                sections=detected_sections,
+            )
+
+            # Option to filter out standalone heading lines from evidence content
+            if exclude_headings and is_heading:
+                continue
+
             block_id = TextChunker.generate_block_id(
                 raw_text=text,
                 chunk_level="line",
@@ -80,10 +142,17 @@ class TextChunker:
                 "text": line_text,
                 "char_start": char_start,
                 "char_end": char_end,
+                "section": sec_type.value if isinstance(sec_type, CVSection) else str(sec_type),
+                "section_confidence": sec_conf,
+                "is_heading": is_heading,
                 "chunk_level": "line",
                 "level": "line",               # Backward compatibility
                 "char_length": len(line_text), # Backward compatibility
                 "source": "resume_raw_text",
+                "metadata": {
+                    "is_heading": is_heading,
+                    "raw_heading": raw_h,
+                },
             })
 
         return line_chunks
@@ -92,12 +161,14 @@ class TextChunker:
     def chunk_windows(
         text: str,
         window_size: int = 30,
-        stride: Optional[int] = None,
+        stride: int | None = None,
         level_name: str = "window_30",
         legacy_level: str = "small_window",
-        parser_version: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        """Extract sliding word-window chunks with exact character offsets and standardized block_id from raw text.
+        parser_version: str | None = None,
+        detector: SectionDetector | None = None,
+    ) -> list[dict[str, Any]]:
+        """Extract sliding word-window chunks with exact character offsets, standardized block_id,
+        section classification, and section_confidence from raw text.
 
         Uses regex token matching to identify start/end spans without destroying original
         whitespace, multiple spaces, tabs, or newlines.
@@ -108,6 +179,9 @@ class TextChunker:
             return []
 
         version = parser_version or TextChunker.PARSER_VERSION
+        sec_detector = detector or SectionDetector()
+        detected_sections = sec_detector.detect_sections(text)
+
         if stride is None:
             stride = max(1, window_size // 2)
 
@@ -116,8 +190,8 @@ class TextChunker:
         if not tokens:
             return []
 
-        window_chunks: List[Dict[str, Any]] = []
-        seen_spans: Set[Tuple[int, int]] = set()
+        window_chunks: list[dict[str, Any]] = []
+        seen_spans: set[tuple[int, int]] = set()
 
         for idx, i in enumerate(range(0, len(tokens), stride)):
             window_tokens = tokens[i : i + window_size]
@@ -137,6 +211,12 @@ class TextChunker:
             if not chunk_text.strip():
                 continue
 
+            sec_type, sec_conf, is_heading, raw_h = TextChunker._resolve_section_for_span(
+                char_start=char_start,
+                char_end=char_end,
+                sections=detected_sections,
+            )
+
             block_id = TextChunker.generate_block_id(
                 raw_text=text,
                 chunk_level=level_name,
@@ -150,10 +230,17 @@ class TextChunker:
                 "text": chunk_text,
                 "char_start": char_start,
                 "char_end": char_end,
+                "section": sec_type.value if isinstance(sec_type, CVSection) else str(sec_type),
+                "section_confidence": sec_conf,
+                "is_heading": is_heading,
                 "chunk_level": level_name,
                 "level": legacy_level,          # Backward compatibility
                 "char_length": len(chunk_text), # Backward compatibility
                 "source": "resume_raw_text",
+                "metadata": {
+                    "is_heading": is_heading,
+                    "raw_heading": raw_h,
+                },
             })
 
         return window_chunks
@@ -161,9 +248,12 @@ class TextChunker:
     @staticmethod
     def chunk_resume(
         text: str,
-        parser_version: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        """Split resume into 3 levels with exact character offsets, standardized block_id, and span+level deduplication:
+        parser_version: str | None = None,
+        detector: SectionDetector | None = None,
+        exclude_headings: bool = False,
+    ) -> list[dict[str, Any]]:
+        """Split resume into 3 levels with exact character offsets, standardized block_id,
+        section grounding, section_confidence, and span+level deduplication:
         1. Line-level (with exact char_start and char_end offsets)
         2. Small window (30 words, 50% overlap = 15 words stride)
         3. Medium window (80 words, 50% overlap = 40 words stride)
@@ -172,10 +262,18 @@ class TextChunker:
             return []
 
         version = parser_version or TextChunker.PARSER_VERSION
-        chunks: List[Dict[str, Any]] = []
+        sec_detector = detector or SectionDetector()
+        chunks: list[dict[str, Any]] = []
 
-        # Level 1: Line-level with exact offsets
-        chunks.extend(TextChunker.chunk_lines(text, parser_version=version))
+        # Level 1: Line-level with exact offsets and section metadata
+        chunks.extend(
+            TextChunker.chunk_lines(
+                text=text,
+                parser_version=version,
+                detector=sec_detector,
+                exclude_headings=exclude_headings,
+            )
+        )
 
         # Level 2: Small word chunks (30 words, 50% overlap)
         chunks.extend(
@@ -186,6 +284,7 @@ class TextChunker:
                 level_name="window_30",
                 legacy_level="small_window",
                 parser_version=version,
+                detector=sec_detector,
             )
         )
 
@@ -198,12 +297,13 @@ class TextChunker:
                 level_name="window_80",
                 legacy_level="medium_window",
                 parser_version=version,
+                detector=sec_detector,
             )
         )
 
         # Global deduplication strictly based on (chunk_level, char_start, char_end)
-        seen_keys: Set[Tuple[Any, Any, Any]] = set()
-        unique_chunks: List[Dict[str, Any]] = []
+        seen_keys: set[tuple[Any, Any, Any]] = set()
+        unique_chunks: list[dict[str, Any]] = []
 
         for c in chunks:
             key = (c.get("chunk_level"), c.get("char_start"), c.get("char_end"))
@@ -213,3 +313,34 @@ class TextChunker:
             unique_chunks.append(c)
 
         return unique_chunks
+
+    @staticmethod
+    def chunk_to_evidence_blocks(
+        text: str,
+        parser_version: str | None = None,
+        detector: SectionDetector | None = None,
+        source: EvidenceSource | str = EvidenceSource.RESUME_RAW_TEXT,
+        exclude_headings: bool = False,
+    ) -> list[EvidenceBlock]:
+        """Convert chunked resume directly into typed, validated EvidenceBlock Pydantic models."""
+        chunks = TextChunker.chunk_resume(
+            text=text,
+            parser_version=parser_version,
+            detector=detector,
+            exclude_headings=exclude_headings,
+        )
+        blocks: list[EvidenceBlock] = []
+        for c in chunks:
+            eb = EvidenceBlock(
+                block_id=c["block_id"],
+                text=c["text"],
+                char_start=c["char_start"],
+                char_end=c["char_end"],
+                section=c.get("section", CVSection.UNKNOWN),
+                section_confidence=c.get("section_confidence", 0.0),
+                chunk_level=c.get("chunk_level", ChunkLevel.LINE),
+                source=source,
+                metadata=c.get("metadata", {}),
+            )
+            blocks.append(eb)
+        return blocks

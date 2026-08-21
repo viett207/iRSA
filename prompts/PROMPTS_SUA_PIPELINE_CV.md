@@ -243,7 +243,7 @@ Hãy mở rộng SectionDetector với alias tiếng Việt, bao gồm tối thi
 Tránh match heading từ một câu văn bình thường. Thêm positive và negative tests.
 ```
 
-### Prompt 16 — Section confidence
+### Prompt 16 — Section confidence vvvv
 
 ```text
 Hãy triển khai cách tính section_confidence có thể giải thích được.
@@ -253,7 +253,7 @@ Signal có thể gồm exact heading alias, dòng ngắn, viết hoa, dấu hai 
 Không dùng một confidence giả cố định. Ghi rõ công thức hoặc rule và thêm test cho high/medium/low confidence.
 ```
 
-### Prompt 17 — Gắn section vào chunk
+### Prompt 17 — Gắn section vào chunk vvvv
 
 ```text
 Hãy tích hợp SectionDetector với TextChunker để mỗi EvidenceBlock có section và section_confidence.

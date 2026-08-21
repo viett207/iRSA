@@ -1,16 +1,28 @@
 """Deterministic rule-based SectionDetector for English and Vietnamese CVs.
 
-Identifies standard CV sections, heading spans, and confidence scores without using LLMs.
+Identifies standard CV sections, heading spans, and explainable confidence scores without using LLMs.
 Distinguishes real section headings from normal conversational/descriptive sentences.
+Provides transparent, signal-based confidence scoring with clear formula and tiers.
 Allows runtime extension of aliases.
 """
 
+import difflib
 import re
 import unicodedata
-from typing import Dict, List, Optional, Tuple, Set, Union
+from typing import Any, Literal
+
 from pydantic import BaseModel, Field
 
 from src.models.evidence import CVSection
+
+
+def strip_accents(text: str) -> str:
+    """Strip Vietnamese diacritics and convert to lower ASCII string for accent-insensitive fuzzy matching."""
+    if not text:
+        return ""
+    nfkd = unicodedata.normalize("NFKD", text)
+    res = "".join(c for c in nfkd if unicodedata.category(c) != "Mn")
+    return res.replace("đ", "d").replace("Đ", "D").lower().strip()
 
 
 class HeadingSpan(BaseModel):
@@ -20,32 +32,261 @@ class HeadingSpan(BaseModel):
     matched_text: str = Field(min_length=1, description="Original text of the heading line")
 
 
+class SectionConfidenceBreakdown(BaseModel):
+    """Explainable signal breakdown for section heading confidence.
+
+    Confidence is computed deterministically as:
+        Confidence = Clamp[0.0, 1.0]( BaseMatchScore + Sum(SignalWeights) )
+    """
+    base_match_score: float = Field(..., description="Base score from match type: exact, prefix, fuzzy, implicit, or none")
+    match_type: Literal["exact", "prefix", "fuzzy", "implicit", "none"] = Field(..., description="Match category")
+    matched_alias: str | None = Field(default=None, description="The alias string matched")
+    similarity_ratio: float = Field(default=0.0, description="String similarity ratio [0.0, 1.0]")
+    is_short_line: bool = Field(default=False, description="Line is concise (<= 25 chars or <= 4 words)")
+    is_uppercase: bool = Field(default=False, description="Line is ALL CAPS")
+    is_title_case: bool = Field(default=False, description="Line is Title Case / Capitalized")
+    has_colon: bool = Field(default=False, description="Line ends with or has colon separator")
+    has_heading_marker: bool = Field(default=False, description="Line has markdown/banner/bullet heading marker")
+    is_standalone_line: bool = Field(default=False, description="Line is isolated without sentence punctuation/indicators")
+    has_valid_qualifier: bool = Field(default=False, description="Valid qualifier attached to heading")
+    has_sentence_penalty: bool = Field(default=False, description="Penalty if line contains descriptive prose/indicators")
+    signal_weights: dict[str, float] = Field(default_factory=dict, description="Numerical contributions of each signal")
+    raw_confidence: float = Field(..., description="Sum of base score + signal weights before clamping")
+    final_confidence: float = Field(..., description="Clamped final confidence in [0.0, 1.0]")
+    confidence_tier: Literal["high", "medium", "low", "none"] = Field(..., description="Confidence tier: high, medium, low, none")
+    explanation: str = Field(..., description="Human-readable formula explanation")
+
+
 class SectionDetectionResult(BaseModel):
     """Result of section heading classification."""
     section: CVSection = Field(default=CVSection.UNKNOWN, description="Identified section type")
     confidence: float = Field(default=0.0, ge=0.0, le=1.0, description="Classification confidence [0.0, 1.0]")
-    heading_span: Optional[HeadingSpan] = Field(default=None, description="Coordinates of heading if detected")
-    matched_alias: Optional[str] = Field(default=None, description="The alias string that triggered the match")
+    heading_span: HeadingSpan | None = Field(default=None, description="Coordinates of heading if detected")
+    matched_alias: str | None = Field(default=None, description="The alias string that triggered the match")
     is_heading: bool = Field(default=False, description="True if line was recognized as a section heading")
+    confidence_breakdown: SectionConfidenceBreakdown | None = Field(
+        default=None, description="Structured explainable breakdown of confidence score"
+    )
+    confidence_signals: dict[str, Any] | None = Field(
+        default=None, description="Dictionary of signal weights and features for backward compatibility / serialization"
+    )
+    match_type: str | None = Field(default=None, description="Match mechanism: exact, prefix, fuzzy, implicit, none")
 
 
 class DetectedSection(BaseModel):
     """A segmented region in a CV document with header and body spans."""
     section: CVSection
     confidence: float
-    heading_span: Optional[HeadingSpan] = None
+    heading_span: HeadingSpan | None = None
     body_char_start: int
     body_char_end: int
     full_char_start: int
     full_char_end: int
-    raw_heading: Optional[str] = None
+    raw_heading: str | None = None
+    confidence_breakdown: SectionConfidenceBreakdown | None = None
+    confidence_signals: dict[str, Any] | None = None
+
+
+def calculate_section_confidence(
+    raw_line: str,
+    norm_line: str,
+    match_type: Literal["exact", "prefix", "fuzzy", "implicit", "none"],
+    matched_alias: str | None = None,
+    similarity_ratio: float = 1.0,
+    has_valid_qualifier: bool = False,
+    is_implicit_header: bool = False,
+) -> SectionConfidenceBreakdown:
+    """Calculate explainable confidence score and signal breakdown for a section heading candidate.
+
+    Formula:
+        Confidence = Clamp[0.0, 1.0]( BaseScore + Sum(SignalWeights) )
+
+    Signals:
+        - BaseScore:
+            * exact match: +0.75
+            * prefix match: +0.65
+            * fuzzy match: +0.40 + (0.20 * similarity_ratio)
+            * implicit pre-heading: +0.45
+            * none: 0.00
+        - is_uppercase (ALL CAPS): +0.10
+        - is_title_case (Title Case / Capitalized words): +0.05
+        - has_colon (ends with or contains ':'): +0.05
+        - has_heading_marker (Markdown #, ---, ===, bullets, roman numerals): +0.05
+        - is_short_line (<= 25 chars & <= 4 words: +0.05, <= 45 chars: +0.00, > 45 chars: -0.10)
+        - is_standalone_line (clean line, no trailing sentence punctuation / conjunctions): +0.05
+        - has_valid_qualifier (valid qualifier attached to prefix match): +0.05
+        - has_sentence_penalty (contains sentence verbs/indicators): -0.25
+
+    Confidence Tiers:
+        - HIGH: confidence >= 0.85
+        - MEDIUM: 0.60 <= confidence < 0.85
+        - LOW: 0.0 < confidence < 0.60
+        - NONE: confidence == 0.0
+    """
+    raw_stripped = raw_line.strip() if raw_line else ""
+
+    if match_type == "none" or not raw_stripped:
+        return SectionConfidenceBreakdown(
+            base_match_score=0.0,
+            match_type="none",
+            matched_alias=None,
+            similarity_ratio=0.0,
+            is_short_line=False,
+            is_uppercase=False,
+            is_title_case=False,
+            has_colon=False,
+            has_heading_marker=False,
+            is_standalone_line=False,
+            has_sentence_penalty=False,
+            signal_weights={},
+            raw_confidence=0.0,
+            final_confidence=0.0,
+            confidence_tier="none",
+            explanation="No heading match (confidence = 0.00)",
+        )
+
+    # 1. Base score from match type
+    if match_type == "exact":
+        base_score = 0.75
+    elif match_type == "prefix":
+        base_score = 0.65
+    elif match_type == "fuzzy":
+        sim = max(0.0, min(1.0, similarity_ratio))
+        base_score = round(0.40 + 0.20 * sim, 4)
+    elif match_type == "implicit":
+        base_score = 0.45
+    else:
+        base_score = 0.0
+
+    # 2. Extract signals from raw text and structure
+    # Uppercase check: only alphabetic characters considered
+    letters_only = [c for c in raw_stripped if c.isalpha()]
+    is_uppercase = len(letters_only) > 0 and all(c.isupper() for c in letters_only)
+
+    # Title case or Capitalized first word (common in Vietnamese headings)
+    clean_words = [w for w in re.sub(r"[^\w\s]", "", raw_stripped).split() if any(c.isalpha() for c in w)]
+    is_title_case = (
+        not is_uppercase
+        and len(clean_words) > 0
+        and all(w[0].isupper() for w in clean_words)
+    )
+    is_capitalized = (
+        not is_uppercase
+        and not is_title_case
+        and len(clean_words) > 0
+        and clean_words[0][0].isupper()
+    )
+
+    # Colon indicator
+    has_colon = ":" in raw_stripped
+
+    # Heading marker indicator (Markdown #, dashes banner ---, numbered 1., bullet •)
+    has_heading_marker = bool(
+        re.search(r"^#{1,6}\s+", raw_stripped)
+        or re.search(r"^[-=~_]{2,}|[-=~_]{2,}$", raw_stripped)
+        or re.match(r"^(?:[ivxIVX]+\.|\d+\.|\([a-zA-Z\d]+\))\s+", raw_stripped)
+        or re.match(r"^[•*+]\s+", raw_stripped)
+    )
+
+    # Short line check (filtering standalone non-alpha symbols for robust word count)
+    alpha_words = [w for w in (norm_line or raw_stripped).split() if any(c.isalpha() for c in w)]
+    line_len = len(norm_line) if norm_line else len(raw_stripped)
+    if line_len <= 30 and len(alpha_words) <= 5:
+        is_short_line = True
+        short_line_val = 0.05
+    elif line_len <= 50 and len(alpha_words) <= 8:
+        is_short_line = False
+        short_line_val = 0.00
+    else:
+        is_short_line = False
+        short_line_val = -0.10
+
+    # Standalone line check
+    is_standalone_line = (
+        not raw_stripped.endswith((".", "...", ";"))
+        and len(alpha_words) <= 8
+        and not is_implicit_header
+    )
+
+    # Sentence penalty check
+    has_sentence_penalty = bool(
+        raw_stripped.endswith((".", "...", ";")) and len(alpha_words) > 3
+    )
+
+    # 3. Assemble signal weights
+    signal_weights: dict[str, float] = {}
+
+    if is_uppercase:
+        signal_weights["is_uppercase"] = 0.10
+    elif is_title_case or is_capitalized:
+        signal_weights["is_capitalized"] = 0.05
+
+    if has_colon:
+        signal_weights["has_colon"] = 0.05
+
+    if has_heading_marker:
+        signal_weights["has_heading_marker"] = 0.05
+
+    if is_short_line:
+        signal_weights["is_short_line"] = 0.05
+    elif short_line_val < 0:
+        signal_weights["long_line_penalty"] = short_line_val
+
+    if is_standalone_line:
+        signal_weights["is_standalone_line"] = 0.05
+
+    if has_valid_qualifier:
+        signal_weights["has_valid_qualifier"] = 0.10
+
+    if has_sentence_penalty:
+        signal_weights["has_sentence_penalty"] = -0.25
+
+    # 4. Compute confidence & tier
+    raw_confidence = round(base_score + sum(signal_weights.values()), 4)
+    final_confidence = round(max(0.0, min(1.0, raw_confidence)), 4)
+
+    if final_confidence >= 0.85:
+        tier = "high"
+    elif final_confidence >= 0.60:
+        tier = "medium"
+    elif final_confidence > 0.0:
+        tier = "low"
+    else:
+        tier = "none"
+
+    # 5. Build human-readable explanation
+    signals_desc = " + ".join([f"{k}({v:+.2f})" for k, v in signal_weights.items()]) if signal_weights else "no modifier signals"
+    explanation = (
+        f"Base[{match_type}]={base_score:.2f} + Signals[{signals_desc}] -> "
+        f"Raw={raw_confidence:.2f} -> Clamped={final_confidence:.2f} (Tier={tier})"
+    )
+
+    return SectionConfidenceBreakdown(
+        base_match_score=base_score,
+        match_type=match_type,
+        matched_alias=matched_alias,
+        similarity_ratio=round(similarity_ratio, 4),
+        is_short_line=is_short_line,
+        is_uppercase=is_uppercase,
+        is_title_case=is_title_case or is_capitalized,
+        has_colon=has_colon,
+        has_heading_marker=has_heading_marker,
+        is_standalone_line=is_standalone_line,
+        has_valid_qualifier=has_valid_qualifier,
+        has_sentence_penalty=has_sentence_penalty,
+        signal_weights=signal_weights,
+        raw_confidence=raw_confidence,
+        final_confidence=final_confidence,
+        confidence_tier=tier,
+        explanation=explanation,
+    )
 
 
 class SectionDetector:
     """Deterministic section detector for CVs supporting Vietnamese & English headings."""
 
     # Default alias dictionary for standard sections (lowercase, stripped)
-    DEFAULT_ALIASES: Dict[CVSection, List[str]] = {
+    DEFAULT_ALIASES: dict[CVSection, list[str]] = {
         CVSection.SUMMARY: [
             # English
             "summary", "professional summary", "profile", "professional profile",
@@ -107,6 +348,7 @@ class SectionDetector:
             "certifications", "certificates", "licenses", "courses",
             "professional certifications", "accreditations",
             "training & certifications", "certifications & licenses",
+            "licenses & certifications",
             "certifications & qualifications",
             # Vietnamese
             "chứng chỉ", "chứng chỉ chuyên môn", "chứng nhận",
@@ -127,7 +369,7 @@ class SectionDetector:
     }
 
     # Common grammatical sentence indicators that identify descriptive text rather than a heading
-    SENTENCE_INDICATORS: Set[str] = {
+    SENTENCE_INDICATORS: set[str] = {
         # Vietnamese
         "là", "đã", "đang", "được", "giúp", "tại", "với", "cho", "của",
         "bao gồm", "phát triển", "xây dựng", "tốt nghiệp", "đạt", "tham gia",
@@ -140,9 +382,9 @@ class SectionDetector:
         "achieved", "provided", "including", "served", "managed", "deployed",
     }
 
-    def __init__(self, custom_aliases: Optional[Dict[CVSection, List[str]]] = None):
+    def __init__(self, custom_aliases: dict[CVSection, list[str]] | None = None):
         """Initialize SectionDetector with default and optional custom aliases."""
-        self._aliases: Dict[CVSection, Set[str]] = {}
+        self._aliases: dict[CVSection, set[str]] = {}
         for section, alias_list in self.DEFAULT_ALIASES.items():
             self._aliases[section] = {self._normalize_text(a) for a in alias_list}
 
@@ -172,7 +414,7 @@ class SectionDetector:
         norm = re.sub(r"\s+", " ", norm).strip()
         return norm
 
-    def register_alias(self, section: CVSection, aliases: Union[str, List[str]]) -> None:
+    def register_alias(self, section: CVSection, aliases: str | list[str]) -> None:
         """Register additional aliases dynamically for a section."""
         if isinstance(aliases, str):
             aliases = [aliases]
@@ -185,14 +427,23 @@ class SectionDetector:
         self,
         line_text: str,
         char_start: int = 0,
-        char_end: Optional[int] = None,
+        char_end: int | None = None,
     ) -> SectionDetectionResult:
         """Analyze a single line of text to determine if it is a CV section heading.
 
-        Strictly rejects ordinary descriptive sentences or bullet points.
+        Calculates explainable confidence based on exact matches, qualifiers, formatting,
+        and fuzzy similarity. Strictly rejects ordinary descriptive sentences.
         """
         if not line_text or not line_text.strip():
-            return SectionDetectionResult(section=CVSection.UNKNOWN, confidence=0.0)
+            breakdown = calculate_section_confidence("", "", match_type="none")
+            return SectionDetectionResult(
+                section=CVSection.UNKNOWN,
+                confidence=0.0,
+                is_heading=False,
+                confidence_breakdown=breakdown,
+                confidence_signals=breakdown.signal_weights,
+                match_type="none",
+            )
 
         cleaned_line = line_text.strip()
         if char_end is None:
@@ -201,16 +452,43 @@ class SectionDetector:
         norm_line = self._normalize_text(cleaned_line)
         if not norm_line or len(norm_line) > 55:
             # Section headers are compact titles (rarely exceeding 55 chars)
-            return SectionDetectionResult(section=CVSection.UNKNOWN, confidence=0.0)
+            breakdown = calculate_section_confidence(cleaned_line, norm_line, match_type="none")
+            return SectionDetectionResult(
+                section=CVSection.UNKNOWN,
+                confidence=0.0,
+                is_heading=False,
+                confidence_breakdown=breakdown,
+                confidence_signals=breakdown.signal_weights,
+                match_type="none",
+            )
 
         words = norm_line.split()
 
-        # 1. Exact Match against known aliases -> High Confidence (1.0)
+        # Sentence Rejection: sentences ending in period/ellipsis with > 3 words are rejected
+        if cleaned_line.endswith((".", "...", ";")) and len(words) > 3:
+            breakdown = calculate_section_confidence(cleaned_line, norm_line, match_type="none")
+            return SectionDetectionResult(
+                section=CVSection.UNKNOWN,
+                confidence=0.0,
+                is_heading=False,
+                confidence_breakdown=breakdown,
+                confidence_signals=breakdown.signal_weights,
+                match_type="none",
+            )
+
+        # 1. Exact Match against known aliases
         for section, alias_set in self._aliases.items():
             if norm_line in alias_set:
+                breakdown = calculate_section_confidence(
+                    raw_line=cleaned_line,
+                    norm_line=norm_line,
+                    match_type="exact",
+                    matched_alias=norm_line,
+                    similarity_ratio=1.0,
+                )
                 return SectionDetectionResult(
                     section=section,
-                    confidence=1.0,
+                    confidence=breakdown.final_confidence,
                     heading_span=HeadingSpan(
                         char_start=char_start,
                         char_end=char_end,
@@ -218,24 +496,29 @@ class SectionDetector:
                     ),
                     matched_alias=norm_line,
                     is_heading=True,
+                    confidence_breakdown=breakdown,
+                    confidence_signals=breakdown.signal_weights,
+                    match_type="exact",
                 )
 
-        # 2. Prefix Match with Strict Sentence Rejection
-        # Sentences ending in period/ellipsis with > 4 words are rejected
-        if cleaned_line.endswith((".", "...", ";")) and len(words) > 3:
-            return SectionDetectionResult(section=CVSection.UNKNOWN, confidence=0.0, is_heading=False)
-
+        # 2. Prefix Match with Qualifier Validation
         for section, alias_set in self._aliases.items():
-            # Check longer aliases first
             for alias in sorted(alias_set, key=len, reverse=True):
                 if norm_line.startswith(alias):
                     suffix = norm_line[len(alias):].strip()
 
-                    # Suffix must be empty or a valid heading extension
+                    # Empty suffix or simple punctuation separator
                     if not suffix or suffix in {":", "-", "–", "—", "|"}:
+                        breakdown = calculate_section_confidence(
+                            raw_line=cleaned_line,
+                            norm_line=norm_line,
+                            match_type="exact",
+                            matched_alias=alias,
+                            similarity_ratio=1.0,
+                        )
                         return SectionDetectionResult(
                             section=section,
-                            confidence=1.0,
+                            confidence=breakdown.final_confidence,
                             heading_span=HeadingSpan(
                                 char_start=char_start,
                                 char_end=char_end,
@@ -243,6 +526,9 @@ class SectionDetector:
                             ),
                             matched_alias=alias,
                             is_heading=True,
+                            confidence_breakdown=breakdown,
+                            confidence_signals=breakdown.signal_weights,
+                            match_type="prefix",
                         )
 
                     # Reject if suffix contains verbs or sentence indicators
@@ -250,22 +536,30 @@ class SectionDetector:
                     if any(w in self.SENTENCE_INDICATORS for w in suffix_words):
                         continue
 
-                    # Reject if suffix is too long (> 4 words)
-                    if len(suffix_words) > 4:
+                    # Reject if suffix is too long (> 5 words)
+                    if len(suffix_words) > 5:
                         continue
 
                     # Allowable suffix patterns: date range, year count, or combined titles
                     is_valid_suffix = bool(
                         re.match(r"^[\(\[\{\s]*(?:19|20)\d{2}\s*[\-\–\—\tođến\s]*(?:(?:19|20)\d{2}|present|nay|hiện tại)?[\)\]\}\s\:]*$", suffix) or
                         re.match(r"^[\(\[\{\s]*\d+\s*(?:năm|years?|tháng|months?)\s*(?:kinh nghiệm|exp)?[\)\]\}\s\:]*$", suffix) or
-                        re.match(r"^(?:&|và|\/|\+)\s*[\w\s]{2,20}[\:\s]*$", suffix) or
-                        re.match(r"^(?:cá nhân|tiêu biểu|chuyên môn|nổi bật|chính|nghề nghiệp|bản thân|technical|personal|key|core)[\:\s]*$", suffix)
+                        re.match(r"^(?:&|và|\/|\+)\s*[\w\s]{2,35}[\:\s]*$", suffix) or
+                        re.match(r"^(?:cá nhân|tiêu biểu|chuyên môn|nổi bật|chính|nghề nghiệp|bản thân|tổng quan|chi tiết|technical|personal|key|core|overview|details|background|history|summary|list)[\:\s]*$", suffix)
                     )
 
                     if is_valid_suffix:
+                        breakdown = calculate_section_confidence(
+                            raw_line=cleaned_line,
+                            norm_line=norm_line,
+                            match_type="prefix",
+                            matched_alias=alias,
+                            similarity_ratio=1.0,
+                            has_valid_qualifier=True,
+                        )
                         return SectionDetectionResult(
                             section=section,
-                            confidence=0.90,
+                            confidence=breakdown.final_confidence,
                             heading_span=HeadingSpan(
                                 char_start=char_start,
                                 char_end=char_end,
@@ -273,21 +567,78 @@ class SectionDetector:
                             ),
                             matched_alias=alias,
                             is_heading=True,
+                            confidence_breakdown=breakdown,
+                            confidence_signals=breakdown.signal_weights,
+                            match_type="prefix",
                         )
 
+        # 3. Fuzzy Match for minor typos / unaccented headings (compact candidate lines only)
+        if len(norm_line) <= 45 and len(words) <= 5 and not any(w in self.SENTENCE_INDICATORS for w in words):
+            best_match: tuple[CVSection, str, float] | None = None
+            unaccented_norm = strip_accents(norm_line)
+
+            for section, alias_set in self._aliases.items():
+                for alias in alias_set:
+                    unaccented_alias = strip_accents(alias)
+
+                    # Unaccented exact equality (e.g. 'kinh nghiem lam viec' == 'kinh nghiem lam viec')
+                    if unaccented_norm == unaccented_alias:
+                        ratio = 0.95
+                    else:
+                        ratio1 = difflib.SequenceMatcher(None, norm_line, alias).ratio()
+                        ratio2 = difflib.SequenceMatcher(None, unaccented_norm, unaccented_alias).ratio()
+                        ratio = max(ratio1, ratio2)
+
+                    if ratio >= 0.80:
+                        if best_match is None or ratio > best_match[2] or (ratio == best_match[2] and len(alias) > len(best_match[1])):
+                            best_match = (section, alias, ratio)
+
+            if best_match is not None:
+                matched_sec, matched_al, match_ratio = best_match
+                breakdown = calculate_section_confidence(
+                    raw_line=cleaned_line,
+                    norm_line=norm_line,
+                    match_type="fuzzy",
+                    matched_alias=matched_al,
+                    similarity_ratio=match_ratio,
+                )
+                return SectionDetectionResult(
+                    section=matched_sec,
+                    confidence=breakdown.final_confidence,
+                    heading_span=HeadingSpan(
+                        char_start=char_start,
+                        char_end=char_end,
+                        matched_text=line_text,
+                    ),
+                    matched_alias=matched_al,
+                    is_heading=True,
+                    confidence_breakdown=breakdown,
+                    confidence_signals=breakdown.signal_weights,
+                    match_type="fuzzy",
+                )
+
+        # 4. No heading matched
+        breakdown = calculate_section_confidence(
+            raw_line=cleaned_line,
+            norm_line=norm_line,
+            match_type="none",
+        )
         return SectionDetectionResult(
             section=CVSection.UNKNOWN,
             confidence=0.0,
             is_heading=False,
+            confidence_breakdown=breakdown,
+            confidence_signals=breakdown.signal_weights,
+            match_type="none",
         )
 
-    def detect_sections(self, raw_text: str) -> List[DetectedSection]:
+    def detect_sections(self, raw_text: str) -> list[DetectedSection]:
         """Segment raw CV text into structured sections based on detected headings."""
         if not raw_text or not raw_text.strip():
             return []
 
         # 1. Scan lines for section headings with exact offsets
-        line_matches: List[Tuple[int, int, str, SectionDetectionResult]] = []
+        line_matches: list[tuple[int, int, str, SectionDetectionResult]] = []
 
         for m in re.finditer(r"[^\r\n]+", raw_text):
             line_text = m.group(0)
@@ -297,6 +648,11 @@ class SectionDetector:
 
         if not line_matches:
             # Fallback: single UNKNOWN section covering entire document
+            none_breakdown = calculate_section_confidence(
+                raw_line="",
+                norm_line="",
+                match_type="none",
+            )
             return [
                 DetectedSection(
                     section=CVSection.UNKNOWN,
@@ -307,25 +663,37 @@ class SectionDetector:
                     full_char_start=0,
                     full_char_end=len(raw_text),
                     raw_heading=None,
+                    confidence_breakdown=none_breakdown,
+                    confidence_signals=none_breakdown.signal_weights,
                 )
             ]
 
         # 2. Create segmented regions between headings
-        sections: List[DetectedSection] = []
+        sections: list[DetectedSection] = []
 
-        # If there is content before the first heading, treat as SUMMARY or UNKNOWN
+        # If there is content before the first heading, treat as SUMMARY
         first_heading_start = line_matches[0][0]
         if first_heading_start > 0 and raw_text[:first_heading_start].strip():
+            pre_slice = raw_text[:first_heading_start]
+            pre_first_line = pre_slice.strip().split("\n")[0][:40]
+            pre_breakdown = calculate_section_confidence(
+                raw_line=pre_first_line,
+                norm_line=self._normalize_text(pre_first_line),
+                match_type="implicit",
+                is_implicit_header=True,
+            )
             sections.append(
                 DetectedSection(
                     section=CVSection.SUMMARY,
-                    confidence=0.60,
+                    confidence=pre_breakdown.final_confidence,
                     heading_span=None,
                     body_char_start=0,
                     body_char_end=first_heading_start,
                     full_char_start=0,
                     full_char_end=first_heading_start,
                     raw_heading=None,
+                    confidence_breakdown=pre_breakdown,
+                    confidence_signals=pre_breakdown.signal_weights,
                 )
             )
 
@@ -343,6 +711,8 @@ class SectionDetector:
                     full_char_start=h_start,
                     full_char_end=next_start,
                     raw_heading=h_text,
+                    confidence_breakdown=res.confidence_breakdown,
+                    confidence_signals=res.confidence_signals,
                 )
             )
 
