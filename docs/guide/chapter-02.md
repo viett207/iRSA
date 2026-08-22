@@ -558,7 +558,7 @@ Nếu bạn đã có đủ 7 mục trên, bạn đang đi đúng hướng. Sang 
 
 ## Cài đặt AI Usage Logging Hooks
 
-Template tích hợp sẵn hệ thống auto-logging — ghi lại mọi prompt và tool call khi bạn dùng AI coding tools. Đây là yêu cầu bắt buộc của chương trình: BTC cần theo dõi việc sử dụng AI tools của các đội.
+Template tích hợp sẵn hệ thống auto-logging — chỉ ghi lại prompt do người dùng gửi khi dùng AI coding tools. Các tool call và sự kiện vòng đời nội bộ không được ghi.
 
 ### Tại sao cần AI Logging?
 
@@ -582,11 +582,11 @@ Lệnh này cài git pre-push hook và tạo thư mục `.ai-log/`. Sau khi ch�
 
 | Tool | Cơ chế | Khi nào log |
 |------|--------|-------------|
-| **Claude Code** | `.claude/settings.json` hooks | Mỗi prompt + mỗi tool call |
-| **Cursor** | `.cursor/hooks.json` | Mỗi prompt + khi stop |
-| **OpenAI Codex CLI** | `.codex/hooks.json` | Mỗi prompt + khi stop |
-| **Gemini CLI** | `.gemini/settings.json` | BeforeAgent + AfterModel + SessionEnd |
-| **GitHub Copilot** | `.github/hooks/hooks.json` | Mỗi prompt + khi session end |
+| **Claude Code** | `.claude/settings.json` hooks | Mỗi prompt người dùng |
+| **Cursor** | `.cursor/hooks.json` | Mỗi prompt người dùng |
+| **OpenAI Codex CLI** | `.codex/hooks.json` | Mỗi prompt người dùng |
+| **Gemini CLI** | `.gemini/settings.json` | BeforeAgent (prompt người dùng) |
+| **GitHub Copilot** | `.github/hooks/hooks.json` | Mỗi prompt người dùng |
 | **Antigravity IDE** | Pre-push scan transcript | Tự động quét transcript khi `git push` |
 
 ### Cách hoạt động

@@ -1,16 +1,30 @@
 #!/usr/bin/env python3
 """
-Shared AI hook logger — works with Claude Code, Gemini CLI, Codex, Cursor, Copilot.
-Reads JSON from stdin, normalizes to common format, appends to .ai-log/session.jsonl
+Shared AI prompt logger — works with Claude Code, Gemini CLI, Codex, Cursor,
+and Copilot. Only explicit user-prompt events are written to
+.ai-log/session.jsonl; tool-use and lifecycle events are ignored.
 """
 import json
 import os
-import sys
 import subprocess
-from datetime import datetime, timezone, timedelta
+import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 VN_TZ = timezone(timedelta(hours=7))
+
+# Keep this allowlist in addition to the hook configuration. It prevents a
+# stale/global editor configuration from turning tool calls or stop events into
+# log entries if it invokes this script directly.
+PROMPT_EVENTS = {
+    "claude": {"UserPromptSubmit"},
+    "gemini": {"BeforeAgent"},
+    "codex": {"UserPromptSubmit"},
+    "cursor": {"beforeSubmitPrompt"},
+    # Copilot's hook is named userPromptSubmitted, while some payload versions
+    # report the normalized UserPromptSubmit event name.
+    "copilot": {"userPromptSubmitted", "UserPromptSubmit"},
+}
 
 
 def git(cmd):
@@ -51,8 +65,11 @@ def detect_tool(data: dict) -> str:
 
 
 def normalize(data: dict, tool: str) -> dict | None:
-    """Normalize tool-specific payload to common log entry."""
+    """Normalize an explicit user-prompt payload to a common log entry."""
     event = data.get("hook_event_name") or data.get("event", "")
+    if event not in PROMPT_EVENTS.get(tool, set()):
+        return None
+
     ts = datetime.now(VN_TZ).isoformat()
 
     # Resolve repo from git origin. When cwd is not a git working tree (or
@@ -83,42 +100,10 @@ def normalize(data: dict, tool: str) -> dict | None:
     }
 
     if tool == "claude":
-        prompt = ""
-        # UserPromptSubmit: prompt is at top level
-        if event == "UserPromptSubmit":
-            prompt = data.get("prompt", "")[:1000]
-        # PostToolUse: extract from tool_input
-        elif isinstance(data.get("tool_input"), dict):
-            prompt = data["tool_input"].get("prompt") or data["tool_input"].get("content") or ""
-        base.update({
-            "prompt": prompt,
-            "tool_name": data.get("tool_name", ""),
-            "tool_input": data.get("tool_input") if event != "UserPromptSubmit" else None,
-            "tool_response": str(data.get("tool_response", ""))[:500],
-        })
+        base.update({"prompt": data.get("prompt", "")[:1000]})
 
     elif tool == "gemini":
-        if event == "BeforeAgent":
-            prompt = data.get("prompt", "")[:1000]
-            base.update({"prompt": prompt})
-        else:
-            req = data.get("request", {})
-            contents = req.get("contents", [])
-            prompt = ""
-            for c in reversed(contents):
-                for part in c.get("parts", []):
-                    if part.get("text"):
-                        prompt = part["text"][:1000]
-                        break
-                if prompt:
-                    break
-            resp = data.get("response", {})
-            answer = ""
-            try:
-                answer = resp["candidates"][0]["content"]["parts"][0]["text"][:500]
-            except Exception:
-                pass
-            base.update({"prompt": prompt, "response_summary": answer})
+        base.update({"prompt": data.get("prompt", "")[:1000]})
 
     elif tool == "codex":
         base.update({
@@ -134,22 +119,12 @@ def normalize(data: dict, tool: str) -> dict | None:
         })
 
     elif tool == "copilot":
-        base.update({
-            "prompt": data.get("prompt", "")[:1000],
-            "tool_name": data.get("toolName", ""),
-            "tool_args": data.get("toolArgs"),
-        })
+        base.update({"prompt": data.get("prompt", "")[:1000]})
 
-    # Skip only true noise: no prompt AND no tool-specific payload (tool_input,
-    # response_summary, tool_response, tool_args, files_context). Previously
-    # this only checked `prompt`, which dropped Claude Bash/Edit events (their
-    # tool_input has `command` / `file_path`, not `prompt` or `content`) and
-    # any Gemini/Cursor/Copilot turn that carried context but no plain prompt.
-    _PAYLOAD_KEYS = ("prompt", "tool_input", "response_summary",
-                     "tool_response", "tool_args", "files_context")
-    _LIFECYCLE_EVENTS = ("Stop", "stop", "SessionEnd", "sessionEnd", "AfterModel")
-    has_payload = any(base.get(k) for k in _PAYLOAD_KEYS)
-    if not has_payload and event not in _LIFECYCLE_EVENTS:
+    # A prompt hook without text is not a user-authored prompt and must not
+    # create a row in Phoenix.
+    prompt = base.get("prompt")
+    if not isinstance(prompt, str) or not prompt.strip():
         return None
 
     return base
@@ -180,9 +155,8 @@ def main():
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-    # Hooks are side-effect-only: logging must not alter the prompt or stop
-    # decision. Emit an empty response object because event hook schemas are
-    # strict and reject arbitrary fields such as the old ``status`` field.
+    # Hooks are side-effect-only: logging must not alter the submitted prompt.
+    # Emit an empty response object because hook schemas are strict.
     print("{}")
 
 
