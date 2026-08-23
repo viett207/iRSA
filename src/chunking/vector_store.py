@@ -1,7 +1,7 @@
 """Vector Store helper with memory-safe fallback for chunk similarity matching."""
 
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import re
 
 logger = logging.getLogger(__name__)
