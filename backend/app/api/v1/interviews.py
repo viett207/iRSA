@@ -1,16 +1,25 @@
-"""Interview scheduling API endpoints."""
+"""Interview scheduling, question management, audio transcription, streaming, and AI live recording evaluation endpoints."""
 
+import asyncio
 import logging
 from datetime import datetime
+from typing import Optional, List, Dict, Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends, Response
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import DBSession, HRUser
-from app.models import Application, User
+from app.models import Application, User, Job, ScoringResult
 from app.models.interview import Interview
+from app.services.storage import get_storage_service
+from src.services.stt_service import transcribe_audio
+from src.services.interview_eval_service import (
+    evaluate_single_answer,
+    summarize_full_interview,
+    generate_extra_interview_questions,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +53,11 @@ class InterviewResponse(BaseModel):
     location: str | None
     notes: str | None
     status: str
+    questions: list | None = None
+    answers: dict | None = None
+    overall_score: float | None = None
+    overall_feedback: str | None = None
+    recommendation: str | None = None
     created_at: datetime | None
     updated_at: datetime | None
 
@@ -51,7 +65,590 @@ class InterviewResponse(BaseModel):
         from_attributes = True
 
 
+class SaveQuestionsRequest(BaseModel):
+    questions: List[Dict[str, Any]]
+
+
+class AddCustomQuestionRequest(BaseModel):
+    question: str
+    category: str = "technical"
+    target_skill: str | None = None
+    purpose: str | None = None
+    good_signs: List[str] | None = None
+    red_flags: List[str] | None = None
+    grading_guide: str | None = None
+
+
+class GenerateQuestionsRequest(BaseModel):
+    focus_topic: str = "technical"
+    count: int = 3
+
+
+class EvaluateAnswerRequest(BaseModel):
+    transcript: str
+
+
+# --- Helper to get or create active interview record ---
+
+async def _get_or_create_interview(
+    db: DBSession, app: Application, user_id: int
+) -> Interview:
+    result = await db.execute(
+        select(Interview)
+        .options(selectinload(Interview.scheduler))
+        .where(Interview.application_id == app.id)
+        .order_by(Interview.id.desc())
+    )
+    interview = result.scalars().first()
+    if not interview:
+        default_qs = []
+        if app.scoring_result and app.scoring_result.ai_evaluation:
+            default_qs = app.scoring_result.ai_evaluation.get("interview_questions", [])
+
+        interview = Interview(
+            application_id=app.id,
+            scheduled_by=user_id,
+            interview_date=datetime.now(),
+            interview_type="online",
+            status="scheduled",
+            questions=default_qs,
+            answers={},
+        )
+        db.add(interview)
+        await db.commit()
+        await db.refresh(interview)
+    return interview
+
+
 # --- Endpoints ---
+
+@router.get(
+    "/jobs/{job_id}/applications/{app_id}/interview-data",
+)
+async def get_interview_data(
+    job_id: int,
+    app_id: int,
+    current_user: HRUser,
+    db: DBSession,
+):
+    """
+    Get full interview workspace data for an application:
+    candidate info, job criteria, suggested questions from screening,
+    official question set, audio answers, and AI evaluations.
+    """
+    result = await db.execute(
+        select(Application)
+        .options(
+            selectinload(Application.candidate),
+            selectinload(Application.job).selectinload(Job.criteria),
+            selectinload(Application.scoring_result),
+            selectinload(Application.interviews).selectinload(Interview.scheduler),
+        )
+        .where(Application.id == app_id, Application.job_id == job_id)
+    )
+    app = result.scalar_one_or_none()
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    active_interview = await _get_or_create_interview(db, app, current_user.id)
+
+    suggested_questions = []
+    if app.scoring_result and app.scoring_result.ai_evaluation:
+        suggested_questions = app.scoring_result.ai_evaluation.get("interview_questions", [])
+
+    official_questions = active_interview.questions if active_interview.questions else suggested_questions
+    answers = active_interview.answers or {}
+
+    return {
+        "application_id": app.id,
+        "job_id": app.job_id,
+        "job_title": app.job.title_vi if app.job else "Vị trí tuyển dụng",
+        "job_description": app.job.description_vi if app.job else "",
+        "job_criteria": {
+            "must_have_skills": app.job.criteria.must_have_skills if app.job and app.job.criteria else [],
+            "nice_to_have_skills": app.job.criteria.nice_to_have_skills if app.job and app.job.criteria else [],
+            "min_experience_years": app.job.criteria.min_experience_years if app.job and app.job.criteria else 0,
+        },
+        "candidate": {
+            "id": app.candidate.id if app.candidate else None,
+            "name": app.candidate.full_name if app.candidate else "Ứng viên",
+            "email": app.candidate.email if app.candidate else "",
+            "phone": getattr(app.candidate, "phone", "") or "",
+        },
+        "application_status": app.status,
+        "screening_ai_score": app.scoring_result.ai_score if app.scoring_result else None,
+        "screening_total_score": app.scoring_result.total_score if app.scoring_result else None,
+        "interview": {
+            "id": active_interview.id,
+            "interview_date": active_interview.interview_date,
+            "interview_type": active_interview.interview_type or "online",
+            "location": active_interview.location,
+            "status": active_interview.status or "scheduled",
+            "notes": active_interview.notes,
+            "overall_score": active_interview.overall_score,
+            "overall_feedback": active_interview.overall_feedback,
+            "recommendation": active_interview.recommendation,
+        },
+        "suggested_questions": suggested_questions,
+        "questions": official_questions,
+        "answers": answers,
+    }
+
+
+@router.post(
+    "/jobs/{job_id}/applications/{app_id}/interview-questions",
+)
+async def save_interview_questions(
+    job_id: int,
+    app_id: int,
+    body: SaveQuestionsRequest,
+    current_user: HRUser,
+    db: DBSession,
+):
+    """Save / Accept the official set of questions for candidate interview."""
+    result = await db.execute(
+        select(Application)
+        .options(selectinload(Application.scoring_result))
+        .where(Application.id == app_id, Application.job_id == job_id)
+    )
+    app = result.scalar_one_or_none()
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    interview = await _get_or_create_interview(db, app, current_user.id)
+    interview.questions = body.questions
+    await db.commit()
+    await db.refresh(interview)
+
+    return {
+        "status": "success",
+        "message": f"Đã lưu {len(body.questions)} câu hỏi phỏng vấn chính thức",
+        "questions": interview.questions,
+    }
+
+
+@router.post(
+    "/jobs/{job_id}/applications/{app_id}/interview-questions/add-custom",
+)
+async def add_custom_question(
+    job_id: int,
+    app_id: int,
+    body: AddCustomQuestionRequest,
+    current_user: HRUser,
+    db: DBSession,
+):
+    """Add a custom question to the interview question list."""
+    result = await db.execute(
+        select(Application)
+        .options(selectinload(Application.scoring_result))
+        .where(Application.id == app_id, Application.job_id == job_id)
+    )
+    app = result.scalar_one_or_none()
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    interview = await _get_or_create_interview(db, app, current_user.id)
+    questions = list(interview.questions or [])
+
+    new_q = {
+        "question": body.question,
+        "category": body.category,
+        "target_skill": body.target_skill,
+        "purpose": body.purpose or "Đánh giá theo yêu cầu người phỏng vấn",
+        "good_signs": body.good_signs or ["Trả lời rõ ràng, đúng trọng tâm"],
+        "red_flags": body.red_flags or ["Không trả lời được hoặc né tránh"],
+        "grading_guide": body.grading_guide or "Đánh giá tính thuyết phục và kinh nghiệm thực tế",
+        "is_custom": True,
+    }
+    questions.append(new_q)
+    interview.questions = questions
+    await db.commit()
+    await db.refresh(interview)
+
+    return {
+        "status": "success",
+        "message": "Đã thêm câu hỏi tùy chỉnh",
+        "question": new_q,
+        "questions": interview.questions,
+    }
+
+
+@router.post(
+    "/jobs/{job_id}/applications/{app_id}/interview-questions/generate-ai",
+)
+async def generate_ai_questions(
+    job_id: int,
+    app_id: int,
+    body: GenerateQuestionsRequest,
+    current_user: HRUser,
+    db: DBSession,
+):
+    """Generate extra interview questions tailored to candidate and job using AI."""
+    result = await db.execute(
+        select(Application)
+        .options(
+            selectinload(Application.candidate),
+            selectinload(Application.job).selectinload(Job.criteria),
+        )
+        .where(Application.id == app_id, Application.job_id == job_id)
+    )
+    app = result.scalar_one_or_none()
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    job_title = app.job.title_vi if app.job else "Vị trí tuyển dụng"
+    must_have = app.job.criteria.must_have_skills if app.job and app.job.criteria else []
+    candidate_name = app.candidate.full_name if app.candidate else "Ứng viên"
+
+    try:
+        generated = await generate_extra_interview_questions(
+            job_title=job_title,
+            must_have_skills=must_have,
+            candidate_name=candidate_name,
+            focus_topic=body.focus_topic,
+            count=body.count,
+        )
+    except Exception as e:
+        logger.error(f"Generate questions failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Lỗi khi AI sinh câu hỏi phỏng vấn: {str(e)}",
+        )
+
+    return {
+        "status": "success",
+        "count": len(generated),
+        "questions": generated,
+    }
+
+
+@router.post(
+    "/jobs/{job_id}/applications/{app_id}/interviews/{interview_id}/questions/{question_index}/transcribe",
+)
+async def transcribe_interview_audio_endpoint(
+    job_id: int,
+    app_id: int,
+    interview_id: int,
+    question_index: int,
+    current_user: HRUser,
+    db: DBSession,
+    audio_file: UploadFile = File(...),
+):
+    """Transcribe recorded audio file to text via Speech-to-Text and save into session."""
+    result = await db.execute(
+        select(Interview).where(
+            Interview.id == interview_id,
+            Interview.application_id == app_id,
+        )
+    )
+    interview = result.scalar_one_or_none()
+    if not interview:
+        raise HTTPException(status_code=404, detail="Interview not found")
+
+    audio_bytes = await audio_file.read()
+    if not audio_bytes:
+        raise HTTPException(status_code=400, detail="File âm thanh không hợp lệ hoặc rỗng.")
+
+    storage = get_storage_service()
+    audio_path, audio_url = await storage.upload_audio_bytes(
+        contents=audio_bytes,
+        filename=audio_file.filename or f"q_{question_index + 1}.webm",
+        application_id=app_id,
+        question_index=question_index,
+        content_type=audio_file.content_type or "audio/webm",
+    )
+
+    try:
+        transcript = await transcribe_audio(
+            audio_bytes=audio_bytes,
+            mime_type=audio_file.content_type or "audio/webm",
+            filename=audio_file.filename or "recording.webm",
+        )
+    except Exception as e:
+        logger.error(f"STT transcription failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Lỗi khi bóc băng âm thanh (STT): {str(e)}",
+        )
+
+    # Persist audio_url, audio_path and transcript into interview.answers immediately
+    questions = interview.questions or []
+    target_q = questions[question_index] if 0 <= question_index < len(questions) else {"question": f"Câu hỏi #{question_index + 1}"}
+    
+    answers = dict(interview.answers or {})
+    existing_ans = answers.get(str(question_index), {})
+    answers[str(question_index)] = {
+        **existing_ans,
+        "question_index": question_index,
+        "question_text": target_q.get("question", ""),
+        "audio_url": audio_url,
+        "audio_path": audio_path,
+        "transcript": transcript,
+        "transcribed_at": datetime.now().isoformat(),
+    }
+    interview.answers = answers
+    await db.commit()
+    await db.refresh(interview)
+
+    return {
+        "status": "success",
+        "transcript": transcript,
+        "audio_url": audio_url,
+        "audio_path": audio_path,
+    }
+
+
+@router.get(
+    "/jobs/{job_id}/applications/{app_id}/interviews/{interview_id}/questions/{question_index}/audio",
+)
+async def stream_interview_question_audio(
+    job_id: int,
+    app_id: int,
+    interview_id: int,
+    question_index: int,
+    db: DBSession,
+):
+    """Stream stored interview audio directly to browser with proper Content-Type."""
+    result = await db.execute(
+        select(Interview).where(
+            Interview.id == interview_id,
+            Interview.application_id == app_id,
+        )
+    )
+    interview = result.scalar_one_or_none()
+    if not interview or not interview.answers:
+        raise HTTPException(status_code=404, detail="Audio answer not found")
+
+    ans = interview.answers.get(str(question_index)) or interview.answers.get(question_index)
+    if not ans:
+        raise HTTPException(status_code=404, detail="Question answer not found")
+
+    storage = get_storage_service()
+    path = ans.get("audio_path")
+    if not path and ans.get("audio_url"):
+        path = ans["audio_url"].split("/resumes/")[-1]
+
+    if not path:
+        raise HTTPException(status_code=404, detail="Audio file path not available")
+
+    try:
+        audio_bytes = await asyncio.to_thread(storage.download, path)
+        content_type = "audio/webm"
+        p_lower = path.lower()
+        if p_lower.endswith(".wav"):
+            content_type = "audio/wav"
+        elif p_lower.endswith(".mp3"):
+            content_type = "audio/mpeg"
+        elif p_lower.endswith(".ogg"):
+            content_type = "audio/ogg"
+        elif p_lower.endswith(".m4a") or p_lower.endswith(".mp4"):
+            content_type = "audio/mp4"
+
+        return Response(
+            content=audio_bytes,
+            media_type=content_type,
+            headers={
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(len(audio_bytes)),
+                "Content-Type": content_type,
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+            },
+        )
+    except Exception as e:
+        logger.error(f"Failed to stream audio file {path}: {e}")
+        raise HTTPException(status_code=404, detail=f"Không thể tải file âm thanh: {e}")
+
+
+@router.post(
+    "/jobs/{job_id}/applications/{app_id}/interviews/{interview_id}/questions/{question_index}/evaluate-answer",
+)
+async def evaluate_interview_answer(
+    job_id: int,
+    app_id: int,
+    interview_id: int,
+    question_index: int,
+    current_user: HRUser,
+    db: DBSession,
+    audio_file: Optional[UploadFile] = File(None),
+    transcript: Optional[str] = Form(None),
+):
+    """
+    Evaluate candidate's answer for a specific question:
+    1. If audio file provided -> upload to Supabase Storage and transcribe with STT.
+    2. If transcript provided -> use provided transcript.
+    3. Run AI Evaluation Agent to score the answer (STAR analysis, strengths, improvements, follow-up).
+    4. Save result into interview.answers[question_index].
+    """
+    result = await db.execute(
+        select(Interview)
+        .options(
+            selectinload(Interview.application).selectinload(Application.candidate),
+            selectinload(Interview.application).selectinload(Application.job).selectinload(Job.criteria),
+        )
+        .where(Interview.id == interview_id, Interview.application_id == app_id)
+    )
+    interview = result.scalar_one_or_none()
+    if not interview:
+        raise HTTPException(status_code=404, detail="Interview not found")
+
+    app = interview.application
+    job_title = app.job.title_vi if app.job else "Vị trí tuyển dụng"
+    must_have = app.job.criteria.must_have_skills if app.job and app.job.criteria else []
+    candidate_name = app.candidate.full_name if app.candidate else "Ứng viên"
+
+    questions = interview.questions or []
+    if question_index < 0 or question_index >= len(questions):
+        target_q = {"question": f"Câu hỏi #{question_index + 1}", "category": "technical"}
+    else:
+        target_q = questions[question_index]
+
+    audio_url = None
+    audio_path = None
+    final_transcript = (transcript or "").strip()
+
+    if audio_file:
+        audio_bytes = await audio_file.read()
+        if audio_bytes:
+            storage = get_storage_service()
+            audio_path, audio_url = await storage.upload_audio_bytes(
+                contents=audio_bytes,
+                filename=audio_file.filename or f"q_{question_index + 1}.webm",
+                application_id=app_id,
+                question_index=question_index,
+                content_type=audio_file.content_type or "audio/webm",
+            )
+            if not final_transcript:
+                try:
+                    stt_result = await transcribe_audio(
+                        audio_bytes=audio_bytes,
+                        mime_type=audio_file.content_type or "audio/webm",
+                        filename=audio_file.filename or "recording.webm",
+                    )
+                    if stt_result:
+                        final_transcript = stt_result
+                except Exception as e:
+                    logger.error(f"STT transcription failed: {e}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Lỗi khi bóc băng âm thanh (STT): {str(e)}",
+                    )
+
+    if not final_transcript:
+        raise HTTPException(
+            status_code=400,
+            detail="Không có nội dung âm thanh ghi âm hoặc văn bản câu trả lời để chấm điểm.",
+        )
+
+    try:
+        eval_result = await evaluate_single_answer(
+            question_text=target_q.get("question", ""),
+            answer_transcript=final_transcript,
+            job_title=job_title,
+            must_have_skills=must_have,
+            candidate_name=candidate_name,
+            category=target_q.get("category", "technical"),
+            target_skill=target_q.get("target_skill"),
+            purpose=target_q.get("purpose"),
+            good_signs=target_q.get("good_signs"),
+            red_flags=target_q.get("red_flags"),
+            grading_guide=target_q.get("grading_guide"),
+        )
+    except Exception as e:
+        logger.error(f"AI evaluation failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Lỗi khi AI chấm điểm câu trả lời: {str(e)}",
+        )
+
+    answers = dict(interview.answers or {})
+    answers[str(question_index)] = {
+        "question_index": question_index,
+        "question_text": target_q.get("question", ""),
+        "audio_url": audio_url or answers.get(str(question_index), {}).get("audio_url"),
+        "audio_path": audio_path or answers.get(str(question_index), {}).get("audio_path"),
+        "transcript": final_transcript,
+        "score": eval_result.get("score", 0.0),
+        "assessment": eval_result.get("assessment", ""),
+        "strengths": eval_result.get("strengths", []),
+        "improvements": eval_result.get("improvements", []),
+        "star_analysis": eval_result.get("star_analysis"),
+        "follow_up_question": eval_result.get("follow_up_question"),
+        "evaluated_at": datetime.now().isoformat(),
+    }
+
+    interview.answers = answers
+    await db.commit()
+    await db.refresh(interview)
+
+    return {
+        "status": "success",
+        "question_index": question_index,
+        "answer_data": answers[str(question_index)],
+    }
+
+
+@router.post(
+    "/jobs/{job_id}/applications/{app_id}/interviews/{interview_id}/summary",
+)
+async def summarize_interview(
+    job_id: int,
+    app_id: int,
+    interview_id: int,
+    current_user: HRUser,
+    db: DBSession,
+):
+    """
+    Summarize the full interview session with AI:
+    calculates average score, overall qualitative feedback, and recommendation.
+    """
+    result = await db.execute(
+        select(Interview)
+        .options(
+            selectinload(Interview.application).selectinload(Application.candidate),
+            selectinload(Interview.application).selectinload(Application.job),
+        )
+        .where(Interview.id == interview_id, Interview.application_id == app_id)
+    )
+    interview = result.scalar_one_or_none()
+    if not interview:
+        raise HTTPException(status_code=404, detail="Interview not found")
+
+    app = interview.application
+    job_title = app.job.title_vi if app.job else "Vị trí tuyển dụng"
+    candidate_name = app.candidate.full_name if app.candidate else "Ứng viên"
+
+    try:
+        summary_data = await summarize_full_interview(
+            job_title=job_title,
+            candidate_name=candidate_name,
+            questions=interview.questions or [],
+            answers=interview.answers or {},
+        )
+    except Exception as e:
+        logger.error(f"AI summarize failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Lỗi khi AI tổng kết buổi phỏng vấn: {str(e)}",
+        )
+
+    interview.overall_score = summary_data.get("overall_score", 0.0)
+    interview.overall_feedback = summary_data.get("overall_feedback", "")
+    interview.recommendation = summary_data.get("recommendation", "CONSIDER")
+    interview.status = "completed"
+
+    await db.commit()
+    await db.refresh(interview)
+
+    return {
+        "status": "success",
+        "summary": summary_data,
+        "interview_id": interview.id,
+        "overall_score": interview.overall_score,
+        "recommendation": interview.recommendation,
+    }
+
 
 @router.post(
     "/jobs/{job_id}/applications/{app_id}/interviews",
@@ -65,12 +662,12 @@ async def schedule_interview(
     db: DBSession,
 ):
     """Schedule a new interview for an application."""
-    # Verify application exists and belongs to job, load candidate + job info
     result = await db.execute(
         select(Application)
         .options(
             selectinload(Application.candidate),
             selectinload(Application.job),
+            selectinload(Application.scoring_result),
         )
         .where(
             Application.id == app_id,
@@ -81,14 +678,10 @@ async def schedule_interview(
     if not app:
         raise HTTPException(status_code=404, detail="Application not found")
 
-    # Validate: only shortlisted or interviewing can be scheduled
-    if app.status not in ("shortlisted", "interviewing"):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Cannot schedule interview for application with status '{app.status}'"
-        )
+    default_questions = []
+    if app.scoring_result and app.scoring_result.ai_evaluation:
+        default_questions = app.scoring_result.ai_evaluation.get("interview_questions", [])
 
-    # Create interview
     interview = Interview(
         application_id=app_id,
         scheduled_by=current_user.id,
@@ -97,34 +690,18 @@ async def schedule_interview(
         location=body.location,
         notes=body.notes,
         status="scheduled",
+        questions=default_questions,
+        answers={},
     )
     db.add(interview)
 
-    # Auto-transition to interviewing if currently shortlisted
-    if app.status == "shortlisted":
+    if app.status in ("submitted", "shortlisted"):
         app.status = "interviewing"
-        app.public_status = "shortlisted"  # Candidate still sees "shortlisted"
+        app.public_status = "shortlisted"
 
     await db.commit()
     await db.refresh(interview)
 
-    # Send email notification to candidate via Celery (non-blocking)
-    if app.candidate and app.candidate.email:
-        try:
-            from app.tasks.notification_tasks import send_interview_notification
-            send_interview_notification.delay(
-                email=app.candidate.email,
-                full_name=app.candidate.full_name or "Ứng viên",
-                job_title=app.job.title_vi if app.job else "N/A",
-                interview_date=interview.interview_date.isoformat(),
-                interview_type=interview.interview_type,
-                location=interview.location,
-                notes=interview.notes,
-            )
-        except Exception as e:
-            logger.warning(f"Failed to enqueue interview email notification: {e}")
-
-    # Real-time notification to candidate
     try:
         from app.services.notification_service import notify_interview_scheduled
         await notify_interview_scheduled(
@@ -148,6 +725,11 @@ async def schedule_interview(
         location=interview.location,
         notes=interview.notes,
         status=interview.status,
+        questions=interview.questions,
+        answers=interview.answers,
+        overall_score=interview.overall_score,
+        overall_feedback=interview.overall_feedback,
+        recommendation=interview.recommendation,
         created_at=interview.created_at,
         updated_at=interview.updated_at,
     )
@@ -164,16 +746,6 @@ async def list_interviews(
     db: DBSession,
 ):
     """List all interviews for an application."""
-    # Verify application belongs to job
-    app_check = await db.execute(
-        select(Application.id).where(
-            Application.id == app_id,
-            Application.job_id == job_id,
-        )
-    )
-    if not app_check.scalar_one_or_none():
-        raise HTTPException(status_code=404, detail="Application not found")
-
     result = await db.execute(
         select(Interview)
         .options(selectinload(Interview.scheduler))
@@ -193,6 +765,11 @@ async def list_interviews(
             location=iv.location,
             notes=iv.notes,
             status=iv.status,
+            questions=iv.questions,
+            answers=iv.answers,
+            overall_score=iv.overall_score,
+            overall_feedback=iv.overall_feedback,
+            recommendation=iv.recommendation,
             created_at=iv.created_at,
             updated_at=iv.updated_at,
         )
@@ -225,7 +802,6 @@ async def update_interview(
     if not interview:
         raise HTTPException(status_code=404, detail="Interview not found")
 
-    # Update only provided fields
     if body.interview_date is not None:
         interview.interview_date = body.interview_date
     if body.interview_type is not None:
@@ -252,6 +828,11 @@ async def update_interview(
         location=interview.location,
         notes=interview.notes,
         status=interview.status,
+        questions=interview.questions,
+        answers=interview.answers,
+        overall_score=interview.overall_score,
+        overall_feedback=interview.overall_feedback,
+        recommendation=interview.recommendation,
         created_at=interview.created_at,
         updated_at=interview.updated_at,
     )

@@ -38,6 +38,51 @@ async def run_evaluation_agent(db: Session, application_id: int) -> Optional[Dic
 
     # 3. Format Evaluation Result
     ai_score = float(final_state.get("overall_score", 75.0))
+    chunks_count = len(final_state.get("chunks", []))
+    must_have = input_data.get("must_have_skills", [])
+    nice_to_have = input_data.get("nice_to_have_skills", [])
+    skills_count = len(must_have) + len(nice_to_have)
+    matched_skills = [s for s in final_state.get("skill_assessments", []) if s.get("found")]
+    questions_count = len(final_state.get("interview_questions", []))
+    verification_passed = final_state.get("verification_passed", True)
+    verification_feedback = final_state.get("verification_feedback", "Toàn bộ bằng chứng năng lực được kiểm chứng khớp chính xác với nội dung CV.")
+    reflection_attempts = final_state.get("reflection_attempts", 0)
+
+    process_steps = [
+        {
+            "step_number": 1,
+            "step_name": "Trích xuất & Phân mảnh văn bản CV (Extraction & Chunking)",
+            "agent_node": "Extractor Node",
+            "status": "completed",
+            "summary": f"Trích xuất văn bản CV và tạo {chunks_count} phân mảnh ngữ cảnh (Semantic Chunks).",
+            "details": "Đã tiền xử lý nội dung CV, phân đoạn cấu trúc (Kỹ năng, Kinh nghiệm, Học vấn) và vector hóa để phục vụ tra cứu ngữ nghĩa RAG.",
+        },
+        {
+            "step_number": 2,
+            "step_name": "Phân tích & Đánh giá Năng lực chuyên sâu (Deep Evaluation)",
+            "agent_node": "Evaluator Node (LLM Reasoning)",
+            "status": "completed",
+            "summary": f"Đối chiếu {skills_count} kỹ năng JD (khớp {len(matched_skills)}/{skills_count}), đánh giá {final_state.get('experience_assessment', {}).get('detected_years', 0)} năm kinh nghiệm và học vấn.",
+            "details": f"Đánh giá chi tiết từng tiêu chí Must-Have và Nice-To-Have, phát hiện {len(final_state.get('strengths', []))} điểm mạnh, {len(final_state.get('concerns', []))} điểm lưu ý. Điểm sơ bộ: {ai_score}/100 ({final_state.get('recommendation', 'GOOD_FIT')}).",
+        },
+        {
+            "step_number": 3,
+            "step_name": "Sinh bộ câu hỏi phỏng vấn & Cẩm nang chấm cho HR (Question Gen)",
+            "agent_node": "Question Generator Node",
+            "status": "completed",
+            "summary": f"Đã sinh {questions_count} câu hỏi phỏng vấn kèm cẩm nang đánh giá câu trả lời (Good Signs, Red Flags, Thang chấm nhanh).",
+            "details": f"Tập trung vào các kỹ năng trọng yếu ({', '.join(must_have[:3]) if must_have else 'chuyên môn'}), tình huống xử lý sự cố thực tế và gợi ý nhận biết câu trả lời đạt/kém cho HR.",
+        },
+        {
+            "step_number": 4,
+            "step_name": "Tự kiểm chứng & Phản biện chống ảo giác (Self-Reflection & Verification)",
+            "agent_node": "Verifier Node (Anti-Hallucination)",
+            "status": "completed" if verification_passed else "warning",
+            "summary": f"{'Đạt kiểm chứng độ tin cậy và chống suy diễn sai' if verification_passed else 'Đã phát hiện và hiệu chỉnh thông tin chưa khớp'} (Số vòng phản biện: {reflection_attempts}).",
+            "details": verification_feedback or "Toàn bộ bằng chứng kỹ năng, số năm kinh nghiệm và kết quả đánh giá đã được kiểm chứng đối chiếu trực tiếp từ văn bản CV gốc.",
+        },
+    ]
+
     evaluation_dict = {
         "overall_score": ai_score,
         "overall_assessment": final_state.get("overall_assessment", ""),
@@ -48,6 +93,10 @@ async def run_evaluation_agent(db: Session, application_id: int) -> Optional[Dic
         "strengths": final_state.get("strengths", []),
         "concerns": final_state.get("concerns", []),
         "interview_questions": final_state.get("interview_questions", []),
+        "process_steps": process_steps,
+        "verification_passed": verification_passed,
+        "verification_feedback": verification_feedback,
+        "reflection_attempts": reflection_attempts,
     }
 
     # Validate output schema

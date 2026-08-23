@@ -54,7 +54,7 @@ def _deterministic_fallback_evaluation(
         skill_assessments.append({
             "skill": s,
             "found": found,
-            "confidence": 90.0 if found else 95.0,
+            "confidence": 90.0 if found else 0.0,
             "evidence": evidence,
             "level": "intermediate" if found else "unknown",
         })
@@ -68,7 +68,7 @@ def _deterministic_fallback_evaluation(
         skill_assessments.append({
             "skill": s,
             "found": found,
-            "confidence": 85.0 if found else 95.0,
+            "confidence": 85.0 if found else 0.0,
             "evidence": evidence,
             "level": "intermediate" if found else "unknown",
         })
@@ -275,11 +275,23 @@ async def evaluator_node(state: AgentState) -> dict:
             min_edu=min_edu,
         )
 
+    # Clean skill assessments: if found is False, confidence must be 0.0
+    cleaned_skills = []
+    for sk in eval_dict.get("skill_assessments", []):
+        is_found = bool(sk.get("found", False))
+        conf = float(sk.get("confidence", 0.0)) if is_found else 0.0
+        cleaned_skills.append({
+            **sk,
+            "found": is_found,
+            "confidence": conf,
+            "level": sk.get("level", "unknown") if is_found else "unknown",
+        })
+
     return {
         "overall_score": float(eval_dict.get("overall_score", 0.0)),
         "overall_assessment": eval_dict.get("overall_assessment", ""),
         "recommendation": eval_dict.get("recommendation", "NOT_FIT"),
-        "skill_assessments": eval_dict.get("skill_assessments", []),
+        "skill_assessments": cleaned_skills,
         "experience_assessment": eval_dict.get("experience_assessment", {}),
         "education_assessment": eval_dict.get("education_assessment", {}),
         "strengths": eval_dict.get("strengths", []),

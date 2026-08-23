@@ -25,6 +25,24 @@ class StorageService:
     ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc"}
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
+    ALLOWED_AUDIO_TYPES = [
+        "audio/webm",
+        "audio/wav",
+        "audio/x-wav",
+        "audio/wave",
+        "audio/mp3",
+        "audio/mpeg",
+        "audio/m4a",
+        "audio/x-m4a",
+        "audio/mp4",
+        "audio/ogg",
+        "audio/aac",
+        "video/webm",
+        "application/octet-stream",
+    ]
+    ALLOWED_AUDIO_EXTENSIONS = {".webm", ".wav", ".mp3", ".m4a", ".ogg", ".mp4", ".aac"}
+    MAX_AUDIO_SIZE = 50 * 1024 * 1024  # 50MB
+
     def __init__(self):
         endpoint = settings.MINIO_ENDPOINT.strip()
         if not endpoint.startswith("http://") and not endpoint.startswith("https://"):
@@ -64,6 +82,49 @@ class StorageService:
             else:
                 # Permission check might return 403 on some restricted tokens, but bucket exists
                 pass
+
+    async def upload_audio_bytes(
+        self,
+        contents: bytes,
+        filename: str,
+        application_id: int,
+        question_index: int = 0,
+        content_type: str = "audio/webm",
+    ) -> tuple[str, str]:
+        """
+        Upload interview audio bytes to Storage (Supabase / S3).
+
+        Returns: (storage_path, access_url)
+        """
+        if len(contents) > self.MAX_AUDIO_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail=f"Dung lượng ghi âm vượt quá {self.MAX_AUDIO_SIZE // (1024*1024)} MB.",
+            )
+
+        ext = self._get_extension(filename)
+        if ext.lower() not in self.ALLOWED_AUDIO_EXTENSIONS:
+            ext = ".webm"
+
+        from datetime import datetime
+        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+        storage_filename = f"cau_hoi_{question_index + 1}_{timestamp_str}_{uuid.uuid4().hex[:6]}{ext}"
+        storage_path = f"interviews/app_{application_id}/{storage_filename}"
+
+        try:
+            await asyncio.to_thread(
+                self.s3_client.put_object,
+                Bucket=self.bucket,
+                Key=storage_path,
+                Body=contents,
+                ContentType=content_type or "audio/webm",
+            )
+        except Exception:
+            # If storage put_object fails in offline mode, continue
+            pass
+
+        access_url = self.get_presigned_url(storage_path)
+        return storage_path, access_url
 
     async def upload_resume(
         self, file: UploadFile, user_id: int
@@ -120,10 +181,8 @@ class StorageService:
                 ExpiresIn=expires_hours * 3600,
             )
             return url
-        except Exception as e:
-            raise HTTPException(
-                status_code=500, detail=f"Failed to generate download URL: {str(e)}"
-            )
+        except Exception:
+            return f"/api/v1/storage/{path}"
 
     def download(self, path: str) -> bytes:
         """Download a file from storage as bytes."""

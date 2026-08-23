@@ -1,5 +1,4 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
@@ -22,17 +21,17 @@ import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { RouterLink } from '@angular/router';
 import { JobService } from '../../services/job.service';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { NotificationService } from '../../../../core/services/notification.service';
 import {
   ShortlistedApplicant,
   AiEvaluationResponse,
-  AiSkillAssessment,
-  MatchDetailsResponse,
+  CvJdCompareResponse,
   APPLICATION_STATUS_COLORS,
 } from '../../models/job.model';
 import { AiEvaluationModalComponent } from '../../components/ai-evaluation-modal.component';
-import { MatchDetailsModalComponent } from '../../components/match-details-modal.component';
 import { CompareCandidatesModalComponent } from '../../components/compare-candidates-modal.component';
+import { CvJdCompareModalComponent } from '../../components/cv-jd-compare-modal.component';
+import { InterviewScheduleModalComponent } from '../../components/interview-schedule-modal.component';
+import { InterviewRoomModalComponent } from '../../components/interview-room-modal.component';
 
 @Component({
   selector: 'app-shortlisted',
@@ -61,11 +60,11 @@ import { CompareCandidatesModalComponent } from '../../components/compare-candid
   template: `
     <div class="page-header">
       <h2>
-        <span nz-icon nzType="check-circle" nzTheme="outline" style="color: #52c41a; margin-right: 8px"></span>
-        Vòng 1 - Ứng viên đạt
+        <span nz-icon nzType="calendar" nzTheme="outline" style="color: #1890ff; margin-right: 8px"></span>
+        Vòng 1 - Hẹn lịch phỏng vấn
       </h2>
       <p style="color: #888; margin: 4px 0 16px">
-        Danh sách ứng viên đã qua sàng lọc. Phân tích AI tự động khi shortlist.
+        Danh sách ứng viên đã vượt qua vòng sơ loại CV. Thiết lập lịch hẹn hoặc bắt đầu phỏng vấn trực tiếp.
       </p>
     </div>
 
@@ -78,14 +77,9 @@ import { CompareCandidatesModalComponent } from '../../components/compare-candid
           <span nz-icon nzType="calendar"></span> Ngày cập nhật
         </button>
         <button *nzSpaceItem nz-button nzSize="small"
-          [nzType]="sortBy === 'score' ? 'primary' : 'default'"
-          (click)="changeSortBy('score')">
-          <span nz-icon nzType="sort-descending"></span> Điểm sàng lọc
-        </button>
-        <button *nzSpaceItem nz-button nzSize="small"
           [nzType]="sortBy === 'ai_score' ? 'primary' : 'default'"
           (click)="changeSortBy('ai_score')">
-          <span nz-icon nzType="robot"></span> Điểm AI
+          <span nz-icon nzType="robot"></span> Điểm AI CV
         </button>
       </nz-space>
 
@@ -98,7 +92,7 @@ import { CompareCandidatesModalComponent } from '../../components/compare-candid
           <span nz-icon nzType="swap"></span>
           So sánh ({{ compareSelected.size }}/2)
         </button>
-        <nz-tag *nzSpaceItem nzColor="green">{{ total() }} ứng viên</nz-tag>
+        <nz-tag *nzSpaceItem nzColor="cyan">{{ total() }} ứng viên chờ hẹn lịch</nz-tag>
       </nz-space>
     </div>
 
@@ -117,13 +111,12 @@ import { CompareCandidatesModalComponent } from '../../components/compare-candid
       <thead>
         <tr>
           <th nzWidth="4%"></th>
-          <th nzWidth="15%">Ứng viên</th>
-          <th nzWidth="13%">Vị trí</th>
-          <th nzWidth="9%">Điểm SL</th>
-          <th nzWidth="9%">Điểm AI</th>
-          <th nzWidth="9%">Ngày nộp</th>
-          <th nzWidth="13%">Quyết định</th>
-          <th nzWidth="28%">Thao tác</th>
+          <th nzWidth="20%">Ứng viên</th>
+          <th nzWidth="18%">Vị trí</th>
+          <th nzWidth="14%">Đánh giá AI CV</th>
+          <th nzWidth="12%">Ngày nộp</th>
+          <th nzWidth="16%">Hẹn lịch phỏng vấn</th>
+          <th nzWidth="16%">Chuyển bước</th>
         </tr>
       </thead>
       <tbody>
@@ -145,32 +138,13 @@ import { CompareCandidatesModalComponent } from '../../components/compare-candid
 
             <!-- Job title (linked) -->
             <td>
-              <a [routerLink]="['/jobs', app.job_id]">{{ app.job_title }}</a>
-            </td>
-
-            <!-- Screening score -->
-            <td>
-              @if (app.total_score != null) {
-                <div style="cursor: pointer; display: inline-block;"
-                  (click)="viewMatchDetails(app)"
-                  nz-tooltip nzTooltipTitle="Nhấn để xem chi tiết điểm sàng lọc (Kỹ năng, Kinh nghiệm, Học vấn)">
-                  <nz-progress
-                    [nzPercent]="app.total_score"
-                    nzType="circle"
-                    [nzWidth]="38"
-                    [nzStrokeColor]="getScoreColor(app.total_score)"
-                    [nzFormat]="scoreFormat"
-                  ></nz-progress>
-                </div>
-              } @else {
-                <nz-tag>N/A</nz-tag>
-              }
+              <a [routerLink]="['/jobs', app.job_id]"><strong>{{ app.job_title }}</strong></a>
             </td>
 
             <!-- AI score -->
             <td>
               @if (app.ai_score != null) {
-                <div style="cursor: pointer; display: inline-block;"
+                <div style="cursor: pointer; display: flex; align-items: center; gap: 8px"
                   (click)="viewAiDetails(app)"
                   nz-tooltip nzTooltipTitle="Nhấn để xem đánh giá chi tiết của AI Agent">
                   <nz-progress
@@ -180,78 +154,76 @@ import { CompareCandidatesModalComponent } from '../../components/compare-candid
                     [nzStrokeColor]="getScoreColor(app.ai_score)"
                     [nzFormat]="scoreFormat"
                   ></nz-progress>
+                  <span style="font-size: 11px; color: #1890ff; font-weight: 500">Xem phân tích</span>
                 </div>
-              } @else if (evaluatingAppId === app.id) {
-                <nz-spin nzSimple nzSize="small"></nz-spin>
               } @else {
-                <nz-tag>Chưa có</nz-tag>
+                <nz-tag>Chưa chấm AI</nz-tag>
               }
             </td>
 
             <!-- Date -->
             <td>{{ formatDate(app.submitted_at) }}</td>
 
+            <!-- Scheduling Action Only -->
+            <td>
+              <button
+                nz-button
+                nzSize="small"
+                nzType="primary"
+                (click)="openScheduleInterview(app)"
+                nz-tooltip
+                nzTooltipTitle="Thiết lập thời gian và hình thức phỏng vấn"
+              >
+                <span nz-icon nzType="calendar"></span>
+                📅 Đặt lịch PV
+              </button>
+            </td>
+
             <!-- Decision: status transition (owner only) -->
             <td>
               @if (isOwner(app)) {
-                <button nz-button nzSize="small" nz-dropdown [nzDropdownMenu]="statusMenu"
-                  nzTrigger="click">
-                  Chuyển trạng thái
-                  <span nz-icon nzType="down"></span>
-                </button>
-                <nz-dropdown-menu #statusMenu="nzDropdownMenu">
-                  <ul nz-menu>
-                    <li nz-menu-item
-                      nz-popconfirm nzPopconfirmTitle="Chuyển sang phỏng vấn?"
-                      (nzOnConfirm)="updateStatus(app, 'interviewing')">
-                      <nz-tag [nzColor]="getStatusColor('interviewing')">Phỏng vấn</nz-tag>
-                    </li>
-                    <li nz-menu-item
-                      nz-popconfirm nzPopconfirmTitle="Từ chối ứng viên này?"
-                      (nzOnConfirm)="updateStatus(app, 'rejected')">
-                      <nz-tag [nzColor]="getStatusColor('rejected')">Từ chối</nz-tag>
-                    </li>
-                    <li nz-menu-item
-                      nz-popconfirm nzPopconfirmTitle="Đưa về xem xét lại?"
-                      (nzOnConfirm)="updateStatus(app, 'reviewing')">
-                      <nz-tag [nzColor]="getStatusColor('reviewing')">Xem xét lại</nz-tag>
-                    </li>
-                  </ul>
-                </nz-dropdown-menu>
+                <div style="display: flex; gap: 4px; align-items: center">
+                  <button
+                    nz-button
+                    nzSize="small"
+                    nzType="dashed"
+                    style="color: #722ed1; border-color: #d3adf7; font-weight: 600"
+                    nz-popconfirm
+                    nzPopconfirmTitle="Xác nhận chuyển ứng viên này sang Vòng 2: Phỏng vấn?"
+                    (nzOnConfirm)="updateStatus(app, 'interviewing')"
+                    nz-tooltip
+                    nzTooltipTitle="Chuyển sang Vòng 2: Phòng phỏng vấn AI"
+                  >
+                    <span nz-icon nzType="arrow-right"></span>
+                    Sang PV
+                  </button>
+
+                  <button nz-button nzSize="small" nz-dropdown [nzDropdownMenu]="statusMenu" nzTrigger="click">
+                    <span nz-icon nzType="ellipsis"></span>
+                  </button>
+                  <nz-dropdown-menu #statusMenu="nzDropdownMenu">
+                    <ul nz-menu>
+                      <li nz-menu-item
+                        nz-popconfirm nzPopconfirmTitle="Chuyển sang Vòng 2 - Phỏng vấn?"
+                        (nzOnConfirm)="updateStatus(app, 'interviewing')">
+                        <nz-tag [nzColor]="getStatusColor('interviewing')">Phỏng vấn</nz-tag>
+                      </li>
+                      <li nz-menu-item
+                        nz-popconfirm nzPopconfirmTitle="Từ chối ứng viên này?"
+                        (nzOnConfirm)="updateStatus(app, 'rejected')">
+                        <nz-tag [nzColor]="getStatusColor('rejected')">Không đạt</nz-tag>
+                      </li>
+                      <li nz-menu-item
+                        nz-popconfirm nzPopconfirmTitle="Đưa về xem xét lại?"
+                        (nzOnConfirm)="updateStatus(app, 'reviewing')">
+                        <nz-tag [nzColor]="getStatusColor('reviewing')">Xem xét lại</nz-tag>
+                      </li>
+                    </ul>
+                  </nz-dropdown-menu>
+                </div>
               } @else {
                 <span style="color: #999">—</span>
               }
-            </td>
-
-            <!-- Actions -->
-            <td>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <!-- View Screening Score Button -->
-                <button nz-button nzSize="small"
-                  (click)="viewMatchDetails(app)"
-                  nz-tooltip nzTooltipTitle="Xem chi tiết điểm sàng lọc (Kỹ năng, Kinh nghiệm, Học vấn)">
-                  <span nz-icon nzType="fund" nzTheme="outline"></span>
-                  Điểm SL
-                </button>
-
-                <!-- Trigger AI Button -->
-                @if (isOwner(app)) {
-                  <button nz-button nzSize="small" nzType="primary" nzGhost
-                    (click)="triggerAi(app)"
-                    [nzLoading]="evaluatingAppId === app.id">
-                    <span nz-icon nzType="robot"></span>
-                    @if (app.has_ai_evaluation) { Chấm lại AI } @else { Chấm điểm AI }
-                  </button>
-                }
-
-                <!-- View AI Result Button -->
-                <button nz-button nzSize="small" nzType="primary"
-                  (click)="viewAiDetails(app)"
-                  [disabled]="!app.has_ai_evaluation">
-                  <span nz-icon nzType="file-search"></span>
-                  Kết quả AI
-                </button>
-              </div>
             </td>
           </tr>
         }
@@ -270,142 +242,55 @@ import { CompareCandidatesModalComponent } from '../../components/compare-candid
     :host ::ng-deep .ant-table-cell { vertical-align: middle; }
   `],
 })
-export class ShortlistedComponent implements OnInit, OnDestroy {
+export class ShortlistedComponent implements OnInit {
   applicants = signal<ShortlistedApplicant[]>([]);
   total = signal(0);
   loading = signal(false);
   page = 1;
   sortBy = 'date';
-  evaluatingAppId: number | null = null;
   compareSelected = new Set<number>();
-  private sub?: Subscription;
 
-  scoreFormat = (p: number) => `${Math.round(p)}`;
+  scoreFormat = (percent: number): string => `${Math.round(percent)}`;
 
   constructor(
     private jobService: JobService,
-    private modal: NzModalService,
     private message: NzMessageService,
-    private authService: AuthService,
-    private notificationSvc: NotificationService,
+    private modal: NzModalService,
+    public authService: AuthService,
   ) {}
 
-  /** HR/Admin/Recruiter or owner can operate */
-  isOwner(app: ShortlistedApplicant): boolean {
-    const u = this.authService.user();
-    if (!u) return false;
-    return this.authService.hasRole('admin', 'hr', 'leader', 'manager', 'recruiter') || app.job_created_by === u.id;
-  }
-
   ngOnInit(): void {
-    this.loadData();
-    this.sub = this.notificationSvc.dataChanged$.subscribe((n) => {
-      if (['application', 'job'].includes(n.type)) this.loadData();
-    });
+    this.loadShortlisted();
   }
 
-  ngOnDestroy(): void {
-    this.sub?.unsubscribe();
-  }
-
-  loadData(): void {
+  loadShortlisted(): void {
     this.loading.set(true);
-    this.jobService
-      .getShortlisted({ page: this.page, size: 20, sort_by: this.sortBy })
-      .subscribe({
-        next: (res) => {
-          this.applicants.set(res.items);
-          this.total.set(res.total);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.message.error('Lỗi tải danh sách ứng viên');
-          this.loading.set(false);
-        },
-      });
-  }
-
-  onPageChange(page: number): void {
-    this.page = page;
-    this.loadData();
+    this.jobService.getShortlisted({ page: this.page, sort_by: this.sortBy }).subscribe({
+      next: (res) => {
+        this.applicants.set(res.items);
+        this.total.set(res.total);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.message.error('Không thể tải danh sách ứng viên đạt');
+        this.loading.set(false);
+      },
+    });
   }
 
   changeSortBy(sort: string): void {
     this.sortBy = sort;
     this.page = 1;
-    this.loadData();
+    this.loadShortlisted();
   }
 
-  triggerAi(app: ShortlistedApplicant): void {
-    this.evaluatingAppId = app.id;
-    this.jobService.triggerAiEvaluation(app.job_id, app.id).subscribe({
-      next: () => {
-        this.message.success('Đang gửi yêu cầu phân tích AI cho ứng viên ' + app.candidate_name);
-        // Poll for result after 4s, 8s, 12s
-        setTimeout(() => this.loadData(), 4000);
-        setTimeout(() => this.loadData(), 8000);
-        setTimeout(() => {
-          this.evaluatingAppId = null;
-          this.loadData();
-        }, 12000);
-      },
-      error: () => {
-        this.message.error('Lỗi khi gửi yêu cầu phân tích AI');
-        this.evaluatingAppId = null;
-      },
-    });
+  onPageChange(p: number): void {
+    this.page = p;
+    this.loadShortlisted();
   }
 
-  viewMatchDetails(app: ShortlistedApplicant): void {
-    const modalData = {
-      data: null as MatchDetailsResponse | null,
-      loading: true,
-      error: null as string | null,
-    };
-
-    this.modal.create({
-      nzTitle: `Phân tích điểm sàng lọc: ${app.candidate_name}`,
-      nzContent: MatchDetailsModalComponent,
-      nzData: modalData,
-      nzFooter: null,
-      nzWidth: 740,
-      nzCentered: true,
-    });
-
-    this.jobService.getMatchDetails(app.job_id, app.id).subscribe({
-      next: (details) => {
-        modalData.data = details;
-        modalData.loading = false;
-      },
-      error: () => {
-        modalData.loading = false;
-        modalData.error = 'Không thể tải chi tiết phân tích điểm sàng lọc. Vui lòng thử lại sau.';
-      },
-    });
-  }
-
-  viewAiDetails(app: ShortlistedApplicant): void {
-    if (!app.has_ai_evaluation) {
-      this.message.info('Chưa có kết quả AI. Hãy bấm "Phân tích AI" trước.');
-      return;
-    }
-
-    // Fetch data first, then open modal with complete data
-    this.jobService.getAiEvaluation(app.job_id, app.id).subscribe({
-      next: (res) => {
-        this.modal.create({
-          nzTitle: `Đánh giá AI - ${app.candidate_name}`,
-          nzContent: AiEvaluationModalComponent,
-          nzWidth: 'min(1200px, calc(100vw - 48px))',
-          nzBodyStyle: { maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' },
-          nzData: { loading: false, data: res, error: null },
-          nzFooter: null,
-        });
-      },
-      error: () => {
-        this.message.error('Lỗi tải kết quả AI');
-      },
-    });
+  isOwner(app: ShortlistedApplicant): boolean {
+    return true;
   }
 
   getScoreColor(score: number): string {
@@ -427,11 +312,11 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     this.jobService.updateApplicationStatus(app.job_id, app.id, newStatus).subscribe({
       next: () => {
         const labels: Record<string, string> = {
-          interviewing: 'Phỏng vấn',
-          rejected: 'Từ chối',
+          interviewing: 'Vòng 2: Phỏng vấn',
+          rejected: 'Không đạt',
           reviewing: 'Xem xét lại',
         };
-        this.message.success(`Đã chuyển sang: ${labels[newStatus] || newStatus}`);
+        this.message.success(`Đã chuyển ứng viên sang: ${labels[newStatus] || newStatus}`);
         this.applicants.update(list => list.filter(a => a.id !== app.id));
         this.total.update(t => t - 1);
         this.compareSelected.delete(app.id);
@@ -450,7 +335,6 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Only allow compare when 2 selected candidates are from the same job */
   canCompare(): boolean {
     if (this.compareSelected.size !== 2) return false;
     const selected = this.applicants().filter(a => this.compareSelected.has(a.id));
@@ -469,6 +353,100 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
       nzFooter: null,
       nzWidth: 800,
       nzCentered: true,
+    });
+  }
+
+  openScheduleInterview(app: ShortlistedApplicant): void {
+    const modalRef = this.modal.create({
+      nzTitle: `Đặt lịch phỏng vấn: ${app.candidate_name}`,
+      nzContent: InterviewScheduleModalComponent,
+      nzFooter: null,
+      nzWidth: 560,
+    });
+    const instance = modalRef.componentInstance;
+    if (instance) {
+      instance.jobId = app.job_id;
+      instance.appId = app.id;
+      instance.candidateName = app.candidate_name;
+    }
+    modalRef.afterClose.subscribe(() => {
+      this.loadShortlisted();
+    });
+  }
+
+  openInterviewRoom(app: ShortlistedApplicant): void {
+    const modalRef = this.modal.create({
+      nzTitle: `Phòng phỏng vấn AI - ${app.candidate_name}`,
+      nzContent: InterviewRoomModalComponent,
+      nzData: {
+        jobId: app.job_id,
+        appId: app.id,
+        candidateName: app.candidate_name,
+      },
+      nzFooter: null,
+      nzWidth: '94vw',
+      nzStyle: { top: '20px', maxWidth: '1400px' },
+      nzMaskClosable: false,
+    });
+
+    modalRef.afterClose.subscribe((res) => {
+      if (res?.statusUpdated) {
+        this.loadShortlisted();
+      }
+    });
+  }
+
+  openCvJdCompare(app: ShortlistedApplicant): void {
+    const modalData = {
+      data: null as CvJdCompareResponse | null,
+      loading: true,
+      error: null as string | null,
+    };
+    this.modal.create({
+      nzTitle: `Đối chiếu trực quan CV & JD: ${app.candidate_name}`,
+      nzContent: CvJdCompareModalComponent,
+      nzData: modalData,
+      nzFooter: null,
+      nzWidth: 'min(1250px, calc(100vw - 32px))',
+      nzCentered: true,
+    });
+
+    this.jobService.getCvJdCompare(app.job_id, app.id).subscribe({
+      next: (res: CvJdCompareResponse) => {
+        modalData.data = res;
+        modalData.loading = false;
+      },
+      error: () => {
+        modalData.loading = false;
+        modalData.error = 'Không thể tải dữ liệu đối chiếu CV và JD.';
+      },
+    });
+  }
+
+  viewAiDetails(app: ShortlistedApplicant): void {
+    const modalData = {
+      data: null as AiEvaluationResponse | null,
+      loading: true,
+      error: null as string | null,
+    };
+    this.modal.create({
+      nzTitle: `Đánh giá AI - ${app.candidate_name}`,
+      nzContent: AiEvaluationModalComponent,
+      nzData: modalData,
+      nzFooter: null,
+      nzWidth: 'min(1200px, calc(100vw - 48px))',
+      nzCentered: true,
+    });
+
+    this.jobService.getAiEvaluation(app.job_id, app.id).subscribe({
+      next: (res: AiEvaluationResponse) => {
+        modalData.data = res;
+        modalData.loading = false;
+      },
+      error: () => {
+        modalData.loading = false;
+        modalData.error = 'Không thể tải kết quả đánh giá AI.';
+      },
     });
   }
 }

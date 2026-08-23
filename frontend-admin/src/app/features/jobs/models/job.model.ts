@@ -181,6 +181,10 @@ export interface Applicant {
   skill_match_score?: number | null;
   experience_score?: number | null;
   education_score?: number | null;
+  ai_score?: number | null;
+  ai_evaluated_at?: string | null;
+  has_ai_evaluation?: boolean;
+  ai_recommendation?: string | null;
 }
 
 const ALL_STATUSES: ApplicationStatus[] = [
@@ -217,13 +221,13 @@ export interface ApplicantListResponse {
 }
 
 export const APPLICATION_STATUS_LABELS: Record<string, string> = {
-  submitted: 'Đã nộp',
+  submitted: 'Mới nộp CV',
   reviewing: 'Đang xem xét',
-  shortlisted: 'Lọt vòng',
-  interviewing: 'Phỏng vấn',
-  offered: 'Mời nhận việc',
-  hired: 'Đã tuyển',
-  rejected: 'Từ chối',
+  shortlisted: 'Đạt sơ loại (Chờ hẹn lịch)',
+  interviewing: 'Đang phỏng vấn',
+  offered: 'Đã Pass PV (Đề xuất tuyển)',
+  hired: 'Đã trúng tuyển',
+  rejected: 'Không đạt',
 };
 
 // --- Match Details (for scoring detail popup) ---
@@ -348,6 +352,15 @@ export interface AiEvaluationResponse {
   has_evaluation: boolean;
 }
 
+export interface ProcessStep {
+  step_number: number;
+  step_name: string;
+  agent_node: string;
+  status: 'completed' | 'in_progress' | 'warning' | 'skipped';
+  summary: string;
+  details?: string;
+}
+
 export interface AiEvaluation {
   overall_score: number;
   overall_assessment: string;
@@ -367,13 +380,42 @@ export interface AiEvaluation {
   strengths: string[];
   concerns: string[];
   interview_questions?: AiInterviewQuestion[];
+  process_steps?: ProcessStep[];
+  verification_passed?: boolean;
+  verification_feedback?: string;
+  reflection_attempts?: number;
 }
 
 export interface AiInterviewQuestion {
   question: string;
-  category: 'technical' | 'behavioral' | 'experience';
+  category: string;
   target_skill: string | null;
   purpose: string;
+  good_signs?: string[];
+  red_flags?: string[];
+  grading_guide?: string;
+}
+
+export interface CvJdCompareResponse {
+  application_id: number;
+  candidate_name: string;
+  candidate_email: string;
+  resume_filename: string;
+  cv_text: string;
+  job_id: number;
+  job_title: string;
+  job_department?: string | null;
+  job_location?: string | null;
+  job_description?: string | null;
+  job_requirements?: string | null;
+  must_have_skills: string[];
+  nice_to_have_skills: string[];
+  min_experience_years: number;
+  max_experience_years?: number | null;
+  min_education?: string | null;
+  matched_skills: string[];
+  missing_skills: string[];
+  matched_keywords: string[];
 }
 
 export interface AiSkillAssessment {
@@ -396,8 +438,58 @@ export interface Interview {
   location: string | null;
   notes: string | null;
   status: 'scheduled' | 'completed' | 'cancelled';
+  questions?: AiInterviewQuestion[];
+  answers?: Record<string, InterviewAnswer>;
+  overall_score?: number | null;
+  overall_feedback?: string | null;
+  recommendation?: string | null;
   created_at: string | null;
   updated_at: string | null;
+}
+
+export interface InterviewAnswer {
+  question_index: number;
+  question_text: string;
+  audio_url?: string | null;
+  audio_path?: string | null;
+  transcript: string;
+  score: number;
+  assessment: string;
+  strengths: string[];
+  improvements: string[];
+  star_analysis?: {
+    situation?: string;
+    task?: string;
+    action?: string;
+    result?: string;
+  } | null;
+  follow_up_question?: string | null;
+  evaluated_at?: string;
+}
+
+export interface InterviewDataResponse {
+  application_id: number;
+  job_id: number;
+  job_title: string;
+  job_description: string;
+  job_criteria: {
+    must_have_skills: string[];
+    nice_to_have_skills: string[];
+    min_experience_years: number;
+  };
+  candidate: {
+    id: number | null;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  application_status: string;
+  screening_ai_score: number | null;
+  screening_total_score: number | null;
+  interview: Interview | null;
+  suggested_questions: AiInterviewQuestion[];
+  questions: AiInterviewQuestion[];
+  answers: Record<string, InterviewAnswer>;
 }
 
 export interface InterviewCreateRequest {
@@ -411,5 +503,8 @@ export const APPLICATION_STATUS_COLORS: Record<string, string> = {
   submitted: 'default',
   shortlisted: 'green',
   interviewing: 'geekblue',
+  offered: 'gold',
+  hired: 'success',
   rejected: 'error',
 };
+

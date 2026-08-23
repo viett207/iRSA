@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NzTableModule } from 'ng-zorro-antd/table';
@@ -12,11 +12,14 @@ import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzStatisticModule } from 'ng-zorro-antd/statistic';
 import { NzCardModule } from 'ng-zorro-antd/card';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { JobService } from '../../services/job.service';
 import {
   InterviewPassedApplicant,
   APPLICATION_STATUS_COLORS,
 } from '../../models/job.model';
+import { InterviewRoomModalComponent } from '../../components/interview-room-modal.component';
 
 @Component({
   selector: 'app-interview-passed',
@@ -34,15 +37,17 @@ import {
     NzPopconfirmModule,
     NzStatisticModule,
     NzCardModule,
+    NzToolTipModule,
+    NzModalModule,
   ],
   template: `
     <div class="page-header">
       <h2>
         <span nz-icon nzType="trophy" nzTheme="outline" style="color: #faad14; margin-right: 8px"></span>
-        Ứng viên đạt phỏng vấn
+        Vòng 3 - Đã Pass phỏng vấn & Đề xuất tuyển dụng
       </h2>
       <p style="color: #888; margin: 4px 0 16px">
-        Theo dõi ứng viên đã được đề xuất hoặc tuyển dụng.
+        Danh sách ứng viên đã vượt qua vòng phỏng vấn trực tiếp. Xem lại biên bản ghi âm, điểm số AI và chốt quyết định tuyển dụng.
       </p>
     </div>
 
@@ -50,7 +55,7 @@ import {
     <div style="display: flex; gap: 16px; margin-bottom: 20px">
       <nz-card style="flex: 1; text-align: center" nzSize="small">
         <nz-statistic
-          nzTitle="Tổng"
+          nzTitle="Tổng ứng viên đạt PV"
           [nzValue]="total()"
           [nzPrefix]="totalIcon"
         ></nz-statistic>
@@ -58,7 +63,7 @@ import {
       </nz-card>
       <nz-card style="flex: 1; text-align: center" nzSize="small">
         <nz-statistic
-          nzTitle="Đã đề xuất"
+          nzTitle="Đã đề xuất nhận việc (Offered)"
           [nzValue]="offeredCount()"
           [nzValueStyle]="{ color: '#faad14' }"
           [nzPrefix]="offeredIcon"
@@ -67,7 +72,7 @@ import {
       </nz-card>
       <nz-card style="flex: 1; text-align: center" nzSize="small">
         <nz-statistic
-          nzTitle="Đã tuyển"
+          nzTitle="Chính thức trúng tuyển (Hired)"
           [nzValue]="hiredCount()"
           [nzValueStyle]="{ color: '#52c41a' }"
           [nzPrefix]="hiredIcon"
@@ -78,18 +83,18 @@ import {
 
     <!-- Filter toolbar -->
     <div style="margin-bottom: 12px; display: flex; gap: 8px">
-      <button *nzSpaceItem nz-button nzSize="small"
+      <button nz-button nzSize="small"
         [nzType]="statusFilter === 'all' ? 'primary' : 'default'"
-        (click)="changeFilter('all')">Tất cả</button>
-      <button *nzSpaceItem nz-button nzSize="small"
+        (click)="changeFilter('all')">Tất cả ({{ total() }})</button>
+      <button nz-button nzSize="small"
         [nzType]="statusFilter === 'offered' ? 'primary' : 'default'"
         (click)="changeFilter('offered')">
-        <nz-tag nzColor="gold" style="margin:0">Đã đề xuất</nz-tag>
+        <nz-tag nzColor="gold" style="margin:0">Đã đề xuất tuyển ({{ offeredCount() }})</nz-tag>
       </button>
-      <button *nzSpaceItem nz-button nzSize="small"
+      <button nz-button nzSize="small"
         [nzType]="statusFilter === 'hired' ? 'primary' : 'default'"
         (click)="changeFilter('hired')">
-        <nz-tag nzColor="success" style="margin:0">Đã tuyển</nz-tag>
+        <nz-tag nzColor="success" style="margin:0">Đã tuyển ({{ hiredCount() }})</nz-tag>
       </button>
     </div>
 
@@ -109,11 +114,10 @@ import {
         <tr>
           <th nzWidth="20%">Ứng viên</th>
           <th nzWidth="18%">Vị trí</th>
-          <th nzWidth="10%">Điểm SL</th>
-          <th nzWidth="10%">Điểm AI</th>
+          <th nzWidth="12%">Điểm AI CV</th>
           <th nzWidth="12%">Trạng thái</th>
           <th nzWidth="12%">Cập nhật</th>
-          <th nzWidth="18%">Thao tác</th>
+          <th nzWidth="26%">Biên bản PV & Tuyển dụng</th>
         </tr>
       </thead>
       <tbody>
@@ -123,14 +127,7 @@ import {
               <strong>{{ app.candidate_name }}</strong><br />
               <small style="color: #888">{{ app.candidate_email }}</small>
             </td>
-            <td><a [routerLink]="['/jobs', app.job_id]">{{ app.job_title }}</a></td>
-            <td>
-              @if (app.total_score != null) {
-                <nz-progress nzType="circle" [nzPercent]="app.total_score"
-                  [nzWidth]="38" [nzStrokeColor]="getScoreColor(app.total_score)"
-                  [nzFormat]="scoreFormat"></nz-progress>
-              } @else { <nz-tag>N/A</nz-tag> }
-            </td>
+            <td><a [routerLink]="['/jobs', app.job_id]"><strong>{{ app.job_title }}</strong></a></td>
             <td>
               @if (app.ai_score != null) {
                 <nz-progress nzType="circle" [nzPercent]="app.ai_score"
@@ -145,25 +142,49 @@ import {
             </td>
             <td>{{ formatDate(app.updated_at) }}</td>
             <td>
-              @if (app.status === 'offered') {
-                <div style="display: flex; gap: 4px">
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+                <!-- View interview room report -->
+                <button
+                  nz-button
+                  nzSize="small"
+                  style="color: #722ed1; border-color: #d3adf7; font-weight: 500"
+                  (click)="openInterviewRoom(app)"
+                  nz-tooltip
+                  nzTooltipTitle="Xem lại biên bản phỏng vấn, câu trả lời, ghi âm và điểm số"
+                >
+                  <span nz-icon nzType="solution"></span>
+                  Biên bản PV
+                </button>
+
+                @if (app.status === 'offered') {
                   <button nz-button nzSize="small" nzType="primary"
-                    nz-popconfirm nzPopconfirmTitle="Xác nhận tuyển dụng?"
-                    (nzOnConfirm)="updateStatus(app, 'hired')">
+                    style="background: #52c41a; border-color: #52c41a; font-weight: 600"
+                    nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên này CHÍNH THỨC TRÚNG TUYỂN (Hired)?"
+                    (nzOnConfirm)="updateStatus(app, 'hired')"
+                    nz-tooltip nzTooltipTitle="Chốt trúng tuyển">
                     <span nz-icon nzType="check"></span> Tuyển
                   </button>
+
                   <button nz-button nzSize="small" nzDanger
-                    nz-popconfirm nzPopconfirmTitle="Từ chối ứng viên?"
-                    (nzOnConfirm)="updateStatus(app, 'rejected')">
-                    <span nz-icon nzType="close"></span> Từ chối
+                    nz-popconfirm nzPopconfirmTitle="Từ chối ứng viên này?"
+                    (nzOnConfirm)="updateStatus(app, 'rejected')"
+                    nz-tooltip nzTooltipTitle="Không đạt">
+                    <span nz-icon nzType="close"></span>
                   </button>
-                </div>
-              } @else {
-                <nz-tag nzColor="success">
-                  <span nz-icon nzType="check-circle" style="margin-right: 4px"></span>
-                  Hoàn tất
-                </nz-tag>
-              }
+
+                  <button nz-button nzSize="small"
+                    nz-popconfirm nzPopconfirmTitle="Đưa ứng viên quay lại Vòng 2: Phỏng vấn?"
+                    (nzOnConfirm)="updateStatus(app, 'interviewing')"
+                    nz-tooltip nzTooltipTitle="Quay lại phỏng vấn">
+                    <span nz-icon nzType="rollback"></span>
+                  </button>
+                } @else {
+                  <nz-tag nzColor="success">
+                    <span nz-icon nzType="check-circle" style="margin-right: 4px"></span>
+                    Đã hoàn tất tuyển dụng
+                  </nz-tag>
+                }
+              </div>
             </td>
           </tr>
         }
@@ -184,77 +205,50 @@ import {
 export class InterviewPassedComponent implements OnInit {
   applicants = signal<InterviewPassedApplicant[]>([]);
   total = signal(0);
-  offeredCount = signal(0);
-  hiredCount = signal(0);
   loading = signal(false);
   page = 1;
   statusFilter = 'all';
 
-  scoreFormat = (p: number) => `${Math.round(p)}`;
+  offeredCount = computed(() => this.applicants().filter(a => a.status === 'offered').length);
+  hiredCount = computed(() => this.applicants().filter(a => a.status === 'hired').length);
+
+  scoreFormat = (percent: number): string => `${Math.round(percent)}`;
 
   constructor(
     private jobService: JobService,
     private message: NzMessageService,
+    private modal: NzModalService,
   ) {}
 
   ngOnInit(): void {
-    this.loadData();
-    this.loadCounts();
+    this.loadPassed();
   }
 
-  loadData(): void {
+  loadPassed(): void {
     this.loading.set(true);
-    this.jobService
-      .getInterviewPassed({ page: this.page, size: 20, status_filter: this.statusFilter })
-      .subscribe({
-        next: (res) => {
-          this.applicants.set(res.items);
-          this.total.set(res.total);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.message.error('Lỗi tải danh sách');
-          this.loading.set(false);
-        },
-      });
-  }
-
-  loadCounts(): void {
-    this.jobService.getInterviewPassed({ page: 1, size: 1, status_filter: 'offered' })
-      .subscribe(res => this.offeredCount.set(res.total));
-    this.jobService.getInterviewPassed({ page: 1, size: 1, status_filter: 'hired' })
-      .subscribe(res => this.hiredCount.set(res.total));
-  }
-
-  onPageChange(page: number): void {
-    this.page = page;
-    this.loadData();
+    const statusFilter = this.statusFilter === 'all' ? undefined : this.statusFilter;
+    this.jobService.getInterviewPassed({ page: this.page, status_filter: statusFilter }).subscribe({
+      next: (res) => {
+        this.applicants.set(res.items);
+        this.total.set(res.total);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.message.error('Không thể tải danh sách ứng viên đạt phỏng vấn');
+        this.loading.set(false);
+      },
+    });
   }
 
   changeFilter(filter: string): void {
     this.statusFilter = filter;
     this.page = 1;
-    this.loadData();
+    this.loadPassed();
   }
 
-  updateStatus(app: InterviewPassedApplicant, newStatus: string): void {
-    this.jobService.updateApplicationStatus(app.job_id, app.id, newStatus).subscribe({
-      next: () => {
-        if (newStatus === 'hired') {
-          this.message.success(`${app.candidate_name} đã được tuyển dụng!`);
-          app.status = 'hired';
-          this.loadCounts();
-        } else {
-          this.message.success('Đã từ chối ứng viên');
-          this.applicants.update(list => list.filter(a => a.id !== app.id));
-          this.total.update(t => t - 1);
-          this.loadCounts();
-        }
-      },
-      error: (err) => {
-        this.message.error(err.error?.detail || 'Lỗi cập nhật trạng thái');
-      },
-    });
+  onPageChange(p: number): void {
+    this.page = p;
+    this.loadPassed();
   }
 
   getScoreColor(score: number): string {
@@ -263,20 +257,59 @@ export class InterviewPassedComponent implements OnInit {
     return '#ff4d4f';
   }
 
+  formatDate(date: string | null): string {
+    if (!date) return '--';
+    return new Date(date).toLocaleDateString('vi-VN');
+  }
+
   getStatusColor(status: string): string {
     return APPLICATION_STATUS_COLORS[status] || 'default';
   }
 
   getStatusLabel(status: string): string {
     const labels: Record<string, string> = {
-      offered: 'Đã đề xuất',
-      hired: 'Đã tuyển',
+      offered: 'Đã đề xuất tuyển',
+      hired: 'Đã trúng tuyển',
+      rejected: 'Không đạt',
+      interviewing: 'Phỏng vấn',
     };
     return labels[status] || status;
   }
 
-  formatDate(date: string | null): string {
-    if (!date) return '--';
-    return new Date(date).toLocaleDateString('vi-VN');
+  updateStatus(app: InterviewPassedApplicant, newStatus: string): void {
+    this.jobService.updateApplicationStatus(app.job_id, app.id, newStatus).subscribe({
+      next: () => {
+        const labels: Record<string, string> = {
+          hired: 'Chính thức trúng tuyển',
+          rejected: 'Không đạt',
+          interviewing: 'Quay lại vòng phỏng vấn',
+        };
+        this.message.success(`${app.candidate_name}: ${labels[newStatus] || newStatus}`);
+        this.loadPassed();
+      },
+      error: (err) => {
+        this.message.error(err.error?.detail || 'Lỗi cập nhật trạng thái');
+      },
+    });
+  }
+
+  openInterviewRoom(app: InterviewPassedApplicant): void {
+    const modalRef = this.modal.create({
+      nzTitle: `Biên bản phỏng vấn AI - ${app.candidate_name}`,
+      nzContent: InterviewRoomModalComponent,
+      nzData: {
+        jobId: app.job_id,
+        appId: app.id,
+        candidateName: app.candidate_name,
+      },
+      nzFooter: null,
+      nzWidth: '94vw',
+      nzStyle: { top: '20px', maxWidth: '1400px' },
+      nzMaskClosable: false,
+    });
+
+    modalRef.afterClose.subscribe(() => {
+      this.loadPassed();
+    });
   }
 }

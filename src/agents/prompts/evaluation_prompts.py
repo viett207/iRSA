@@ -7,7 +7,7 @@ ANTI-HALLUCINATION & FACTUAL GROUNDING RULES:
 1. STRICT GROUNDING: You MUST ONLY use explicit facts mentioned in the candidate's CV text. NEVER infer, extrapolate, assume, or fabricate any skills, work history, projects, degrees, or certifications that are not explicitly stated in the CV.
 2. VERBATIM EVIDENCE: For each evaluated skill:
    - If the skill is explicitly present in the CV: set "found": true, and "evidence" MUST be an exact quote or direct excerpt (1-2 sentences) from the CV text demonstrating where and how it was used.
-   - If the skill is NOT mentioned or cannot be verified from the CV: you MUST set "found": false, "confidence": 100, "evidence": "Không tìm thấy trong CV", and "level": "unknown".
+   - If the skill is NOT mentioned or cannot be verified from the CV: you MUST set "found": false, "confidence": 0, "evidence": "Không tìm thấy trong CV", and "level": "unknown".
    - NEVER use general claims like "ứng viên có kinh nghiệm" as evidence without citing specific text from the CV.
 3. SCORING RUBRIC (0 - 100 Scale):
    - Must-Have Skills Match (50% weight): Ratio of must-have skills found in CV. If must-have skills are required and candidate matches 0 of them, overall_score CANNOT exceed 25.

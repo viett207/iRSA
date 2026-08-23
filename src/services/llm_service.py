@@ -94,20 +94,21 @@ class RotatingGeminiLLM:
                     import google.generativeai as genai
                     genai.configure(api_key=self.api_keys[idx])
                     model = genai.GenerativeModel(self.model_name)
-                    logger.info(f"Invoking direct google.generativeai (async) using API Key #{idx + 1}/{num_keys}...")
+                    logger.info(f"Invoking direct google.generativeai using API Key #{idx + 1}/{num_keys}...")
                     prompt = _format_input(input)
-                    if hasattr(model, "generate_content_async"):
-                        res = await model.generate_content_async(prompt)
-                    else:
-                        res = await asyncio.to_thread(model.generate_content, prompt)
+                    res = await asyncio.to_thread(model.generate_content, prompt)
                     text = res.text if hasattr(res, "text") else str(res)
                     self.current_index = idx
                     return LLMResponseWrapper(text)
             except Exception as e:
                 last_exception = e
+                err_str = str(e)
                 logger.warning(
                     f"Gemini API Key #{idx + 1} failed on attempt {attempt + 1}/{num_keys}: {e}"
                 )
+                if "429" in err_str or "Quota exceeded" in err_str:
+                    logger.info("429 Quota/RateLimit encountered. Waiting 3 seconds before key rotation/retry...")
+                    await asyncio.sleep(3)
                 self._rotate_key()
 
         logger.error("All Gemini API keys in rotation failed!")
@@ -215,7 +216,9 @@ def get_agent_llm(temperature: float | None = None) -> Any:
 
     # 1. Try Gemini with Key Rotation if keys are present
     if gemini_keys:
-        model_name = settings.model_name if "gemini" in settings.model_name else "gemini-3.6-flash"
+        model_name = settings.model_name or "gemini-3.6-flash"
+        if model_name in ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]:
+            model_name = "gemini-3.6-flash"
         logger.info(f"Initializing RotatingGeminiLLM with {len(gemini_keys)} API key(s) (model: {model_name})...")
         return RotatingGeminiLLM(api_keys=gemini_keys, model_name=model_name, temperature=temp)
 

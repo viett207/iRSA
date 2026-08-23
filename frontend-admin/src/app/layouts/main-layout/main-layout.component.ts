@@ -91,19 +91,19 @@ import { NotificationService } from '../../core/services/notification.service';
             </ul>
           </li>
 
-          <li nz-submenu nzIcon="funnel-plot" nzTitle="Quy trình sàng lọc AI" nzMatchRouter class="menu-item">
+          <li nz-submenu nzIcon="funnel-plot" nzTitle="Quy trình tuyển dụng AI" nzMatchRouter class="menu-item">
             <ul>
               <li nz-menu-item routerLink="/jobs/shortlisted" nzMatchRouter>
-                <span nz-icon nzType="check-circle" class="status-icon--success"></span>
-                Vòng 1 - Đạt sàng lọc
+                <span nz-icon nzType="calendar" class="status-icon--success"></span>
+                Vòng 1 - Hẹn lịch phỏng vấn
               </li>
               <li nz-menu-item routerLink="/jobs/interviewing" nzMatchRouter>
-                <span nz-icon nzType="calendar" class="status-icon--primary"></span>
-                Vòng 2 - Lịch phỏng vấn
+                <span nz-icon nzType="audio" class="status-icon--primary"></span>
+                Vòng 2 - Phòng phỏng vấn AI
               </li>
               <li nz-menu-item routerLink="/jobs/interview-passed" nzMatchRouter>
                 <span nz-icon nzType="trophy" class="status-icon--warning"></span>
-                Vòng 3 - Trúng tuyển
+                Vòng 3 - Đã Pass phỏng vấn
               </li>
             </ul>
           </li>

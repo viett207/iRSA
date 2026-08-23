@@ -34,6 +34,10 @@ class ApplicantResponse(BaseModel):
     skill_match_score: float | None = None
     experience_score: float | None = None
     education_score: float | None = None
+    ai_score: float | None = None
+    ai_evaluated_at: datetime | None = None
+    has_ai_evaluation: bool = False
+    ai_recommendation: str | None = None
 
     class Config:
         from_attributes = True
@@ -57,11 +61,11 @@ async def list_job_applications(
     db: DBSession,
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
-    sort_by: str = Query("date", pattern="^(date|score)$"),
+    sort_by: str = Query("date", pattern="^(date|score|ai_score)$"),
 ):
     """List applications for a job.
 
-    Supports sorting by date.
+    Supports sorting by date, score, or ai_score.
     Requires HR staff role (admin, leader, recruiter).
     """
     base_where = Application.job_id == job_id
@@ -82,7 +86,12 @@ async def list_job_applications(
     total = (await db.execute(count_query)).scalar() or 0
 
     # Sorting
-    if sort_by == "score":
+    if sort_by == "ai_score":
+        query = query.outerjoin(ScoringResult).order_by(
+            ScoringResult.ai_score.desc().nulls_last(),
+            Application.submitted_at.desc(),
+        )
+    elif sort_by == "score":
         query = query.outerjoin(ScoringResult).order_by(
             ScoringResult.total_score.desc().nulls_last(),
             Application.submitted_at.desc(),
@@ -96,23 +105,33 @@ async def list_job_applications(
     result = await db.execute(query)
     applications = result.scalars().all()
 
-    items = [
-        ApplicantResponse(
-            id=app.id,
-            candidate_name=app.candidate.full_name if app.candidate else "N/A",
-            candidate_email=app.candidate.email if app.candidate else "N/A",
-            resume_filename=app.resume.original_filename if app.resume else "N/A",
-            status=app.status,
-            public_status=app.public_status,
-            submitted_at=app.submitted_at,
-            updated_at=app.updated_at,
-            total_score=app.scoring_result.total_score if app.scoring_result else None,
-            skill_match_score=app.scoring_result.skill_match_score if app.scoring_result else None,
-            experience_score=app.scoring_result.experience_score if app.scoring_result else None,
-            education_score=app.scoring_result.education_score if app.scoring_result else None,
+    items = []
+    for app in applications:
+        sr = app.scoring_result
+        ai_eval = sr.ai_evaluation if sr else None
+        has_eval = bool(ai_eval) if ai_eval else False
+        rec = ai_eval.get("recommendation") if (has_eval and isinstance(ai_eval, dict)) else None
+
+        items.append(
+            ApplicantResponse(
+                id=app.id,
+                candidate_name=app.candidate.full_name if app.candidate else "N/A",
+                candidate_email=app.candidate.email if app.candidate else "N/A",
+                resume_filename=app.resume.original_filename if app.resume else "N/A",
+                status=app.status,
+                public_status=app.public_status,
+                submitted_at=app.submitted_at,
+                updated_at=app.updated_at,
+                total_score=sr.total_score if sr else None,
+                skill_match_score=sr.skill_match_score if sr else None,
+                experience_score=sr.experience_score if sr else None,
+                education_score=sr.education_score if sr else None,
+                ai_score=sr.ai_score if sr else None,
+                ai_evaluated_at=sr.ai_evaluated_at if sr else None,
+                has_ai_evaluation=has_eval,
+                ai_recommendation=rec,
+            )
         )
-        for app in applications
-    ]
 
     return ApplicantListResponse(
         items=items,
@@ -526,6 +545,135 @@ async def trigger_ai_evaluation(
         ai_evaluate_application_task.delay(app_id)
     except Exception:
         pass
+
+    return {
+        "message": "Đang tiến hành chấm AI cho ứng viên",
+        "application_id": app_id,
+    }
+
+
+@router.post(
+    "/jobs/{job_id}/ai-evaluate-all",
+    response_model=dict,
+)
+async def trigger_ai_evaluate_all(
+    job_id: int,
+    current_user: HRUser,
+    db: DBSession,
+    background_tasks: BackgroundTasks,
+):
+    """Trigger AI evaluation for all applicants of a job in background."""
+    result = await db.execute(
+        select(Application.id).where(Application.job_id == job_id)
+    )
+    app_ids = list(result.scalars().all())
+    if not app_ids:
+        raise HTTPException(status_code=404, detail="Không tìm thấy ứng viên nào cho việc làm này")
+
+    async def _run_all_eval():
+        for aid in app_ids:
+            await _run_ai_eval_background(aid)
+
+    background_tasks.add_task(_run_all_eval)
+    return {
+        "message": f"Đang tiến hành chấm AI cho {len(app_ids)} ứng viên.",
+        "count": len(app_ids),
+    }
+
+
+class CvJdCompareResponse(BaseModel):
+    application_id: int
+    candidate_name: str
+    candidate_email: str
+    resume_filename: str
+    cv_text: str
+    job_id: int
+    job_title: str
+    job_department: str | None = None
+    job_location: str | None = None
+    job_description: str | None = None
+    job_requirements: str | None = None
+    must_have_skills: list[str] = []
+    nice_to_have_skills: list[str] = []
+    min_experience_years: int = 0
+    max_experience_years: int | None = None
+    min_education: str | None = None
+    matched_skills: list[str] = []
+    missing_skills: list[str] = []
+    matched_keywords: list[str] = []
+
+
+@router.get(
+    "/jobs/{job_id}/applications/{app_id}/cv-jd-compare",
+    response_model=CvJdCompareResponse,
+)
+async def get_cv_jd_compare(
+    job_id: int,
+    app_id: int,
+    current_user: HRUser,
+    db: DBSession,
+):
+    """Retrieve full CV text and JD content with keyword matching without numerical scoring."""
+    import re
+    result = await db.execute(
+        select(Application)
+        .options(
+            selectinload(Application.candidate),
+            selectinload(Application.resume),
+            selectinload(Application.job).selectinload(Job.criteria),
+        )
+        .where(Application.id == app_id, Application.job_id == job_id)
+    )
+    app = result.scalar_one_or_none()
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    cv_text = app.resume.raw_text if (app.resume and app.resume.raw_text) else ""
+    job = app.job
+    criteria = job.criteria if job else None
+
+    must_have = criteria.must_have_skills if (criteria and criteria.must_have_skills) else []
+    nice_to_have = criteria.nice_to_have_skills if (criteria and criteria.nice_to_have_skills) else []
+    all_skills = list(dict.fromkeys(must_have + nice_to_have))
+
+    matched_skills = []
+    missing_skills = []
+    cv_lower = cv_text.lower() if cv_text else ""
+
+    for skill in all_skills:
+        s_clean = skill.strip()
+        if not s_clean:
+            continue
+        escaped = re.escape(s_clean.lower())
+        if re.search(rf"\b{escaped}\b", cv_lower) or s_clean.lower() in cv_lower:
+            matched_skills.append(s_clean)
+        else:
+            missing_skills.append(s_clean)
+
+    matched_keywords = list(dict.fromkeys(matched_skills))
+
+    return CvJdCompareResponse(
+        application_id=app.id,
+        candidate_name=app.candidate.full_name if app.candidate else "N/A",
+        candidate_email=app.candidate.email if app.candidate else "N/A",
+        resume_filename=app.resume.original_filename if app.resume else "N/A",
+        cv_text=cv_text,
+        job_id=job.id if job else job_id,
+        job_title=job.title_vi if job else "N/A",
+        job_department=job.department if job else None,
+        job_location=job.location if job else None,
+        job_description=job.description_vi if job else None,
+        job_requirements=job.requirements_vi if job else None,
+        must_have_skills=must_have,
+        nice_to_have_skills=nice_to_have,
+        min_experience_years=criteria.min_experience_years if criteria else 0,
+        max_experience_years=criteria.max_experience_years if criteria else None,
+        min_education=criteria.min_education if criteria else None,
+        matched_skills=matched_skills,
+        missing_skills=missing_skills,
+        matched_keywords=matched_keywords,
+    )
+
 
 class CandidateChatRequest(BaseModel):
     message: str

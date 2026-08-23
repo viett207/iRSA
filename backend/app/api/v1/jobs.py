@@ -27,10 +27,18 @@ async def list_jobs(
         pattern="^(draft|pending_approval|approved|rejected|active|closed)$",
     ),
     department: str | None = Query(None),
+    location: str | None = Query(None),
+    employment_type: str | None = Query(None),
+    salary_min: int | None = Query(None),
+    salary_max: int | None = Query(None),
+    min_experience: int | None = Query(None),
+    max_experience: int | None = Query(None),
+    has_applications: bool | None = Query(None),
     search: str | None = Query(None),
     created_by: int | None = Query(None),
+    order_by: str = Query("newest", pattern="^(newest|oldest|applicants_desc|salary_desc|salary_asc)$"),
 ):
-    """List jobs. HR users see all jobs from their company."""
+    """List jobs with comprehensive search and filtering."""
     # HR users see jobs from same company, admin sees all
     company_code = None
     if current_user.role in ("recruiter", "leader") and current_user.company_code:
@@ -43,8 +51,16 @@ async def list_jobs(
         status=status,
         created_by=created_by,
         department=department,
+        location=location,
+        employment_type=employment_type,
+        salary_min=salary_min,
+        salary_max=salary_max,
+        min_experience=min_experience,
+        max_experience=max_experience,
+        has_applications=has_applications,
         company_code=company_code,
         search=search,
+        order_by=order_by,
     )
 
 

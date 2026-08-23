@@ -73,7 +73,7 @@ async def verifier_node(state: AgentState) -> dict:
                 verified_skills.append({
                     **item,
                     "found": False,
-                    "confidence": 95.0,
+                    "confidence": 0.0,
                     "evidence": "Không tìm thấy bằng chứng xác thực trong CV (AI trích dẫn không khớp)",
                     "level": "unknown",
                 })
@@ -84,7 +84,12 @@ async def verifier_node(state: AgentState) -> dict:
                 else:
                     verified_nice_count += 1
         else:
-            verified_skills.append(item)
+            verified_skills.append({
+                **item,
+                "found": False,
+                "confidence": 0.0,
+                "level": "unknown",
+            })
 
     # 2. Consistency Check: Enforce Score-Skill alignment
     corrected_score = score

@@ -26,9 +26,22 @@ class EducationAssessment(BaseModel):
 
 class InterviewQuestion(BaseModel):
     question: str = Field(description="Interview question text in Vietnamese")
-    category: Literal["technical", "behavioral", "experience"] = "technical"
+    category: str = Field(default="technical", description="Category: technical, behavioral, experience, situational, architecture")
     target_skill: Optional[str] = Field(default=None, description="Related skill or criteria")
     purpose: str = Field(default="", description="Purpose of this question in Vietnamese")
+    good_signs: List[str] = Field(default_factory=list, description="Key points / green flags in good answer for HR to verify")
+    red_flags: List[str] = Field(default_factory=list, description="Warning signs / poor answers for HR to watch out for")
+    grading_guide: Optional[str] = Field(default="", description="Quick grading criteria guide for non-tech HR")
+
+
+
+class ProcessStep(BaseModel):
+    step_number: int = Field(default=1)
+    step_name: str = Field(description="Step title in Vietnamese")
+    agent_node: str = Field(description="Agent node name")
+    status: str = Field(default="completed", description="Status: completed, in_progress, warning, skipped")
+    summary: str = Field(description="Summary of step result in Vietnamese")
+    details: Optional[str] = Field(default=None, description="Detailed explanation")
 
 
 class AiEvaluationOutput(BaseModel):
@@ -41,6 +54,10 @@ class AiEvaluationOutput(BaseModel):
     strengths: List[str] = Field(default_factory=list, description="Candidate strengths in Vietnamese")
     concerns: List[str] = Field(default_factory=list, description="Points of concern in Vietnamese")
     interview_questions: List[InterviewQuestion] = Field(default_factory=list, description="8-10 generated interview questions")
+    process_steps: List[ProcessStep] = Field(default_factory=list, description="Timeline of CV analysis & scoring process steps")
+    verification_passed: bool = Field(default=True, description="Whether self-reflection verification passed")
+    verification_feedback: Optional[str] = Field(default="", description="Feedback from verification node")
+    reflection_attempts: int = Field(default=0, description="Number of reflection loops")
 
 
 class AgentEvaluationRequest(BaseModel):

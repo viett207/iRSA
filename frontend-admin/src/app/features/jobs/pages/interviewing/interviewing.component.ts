@@ -21,6 +21,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { InterviewScheduleModalComponent } from '../../components/interview-schedule-modal.component';
 import { CompareCandidatesModalComponent } from '../../components/compare-candidates-modal.component';
+import { InterviewRoomModalComponent } from '../../components/interview-room-modal.component';
 
 @Component({
   selector: 'app-interviewing',
@@ -44,11 +45,11 @@ import { CompareCandidatesModalComponent } from '../../components/compare-candid
   template: `
     <div class="page-header">
       <h2>
-        <span nz-icon nzType="team" nzTheme="outline" style="color: #1890ff; margin-right: 8px"></span>
-        Chờ phỏng vấn
+        <span nz-icon nzType="audio" nzTheme="outline" style="color: #722ed1; margin-right: 8px"></span>
+        Vòng 2 - Phòng phỏng vấn & Chấm điểm AI
       </h2>
       <p style="color: #888; margin: 4px 0 16px">
-        Quản lý ứng viên đang trong giai đoạn phỏng vấn.
+        Quản lý ứng viên đang phỏng vấn. Bấm "Vào phòng PV" để sử dụng bộ câu hỏi AI, ghi âm câu trả lời, bóc băng STT và chấm điểm STAR.
       </p>
     </div>
 
@@ -56,12 +57,12 @@ import { CompareCandidatesModalComponent } from '../../components/compare-candid
     <div style="display: flex; gap: 16px; margin-bottom: 20px">
       <nz-card style="flex: 1; text-align: center" nzSize="small">
         <nz-statistic
-          nzTitle="Đang chờ phỏng vấn"
+          nzTitle="Ứng viên đang trong vòng phỏng vấn"
           [nzValue]="total()"
           [nzPrefix]="totalIcon"
-          [nzValueStyle]="{ color: '#1890ff' }"
+          [nzValueStyle]="{ color: '#722ed1' }"
         ></nz-statistic>
-        <ng-template #totalIcon><span nz-icon nzType="clock-circle"></span></ng-template>
+        <ng-template #totalIcon><span nz-icon nzType="team"></span></ng-template>
       </nz-card>
     </div>
 
@@ -110,12 +111,11 @@ import { CompareCandidatesModalComponent } from '../../components/compare-candid
         <tr>
           <th nzWidth="4%"></th>
           <th nzWidth="18%">Ứng viên</th>
-          <th nzWidth="16%">Vị trí</th>
-          <th nzWidth="8%">Điểm SL</th>
-          <th nzWidth="8%">Điểm AI</th>
+          <th nzWidth="15%">Vị trí</th>
+          <th nzWidth="10%">Điểm AI CV</th>
           <th nzWidth="10%">Cập nhật</th>
-          <th nzWidth="8%">Lịch PV</th>
-          <th nzWidth="18%">Kết quả phỏng vấn</th>
+          <th nzWidth="18%">Phòng phỏng vấn AI</th>
+          <th nzWidth="25%">Chốt kết quả & Thao tác</th>
         </tr>
       </thead>
       <tbody>
@@ -132,14 +132,7 @@ import { CompareCandidatesModalComponent } from '../../components/compare-candid
               <strong>{{ app.candidate_name }}</strong><br />
               <small style="color: #888">{{ app.candidate_email }}</small>
             </td>
-            <td><a [routerLink]="['/jobs', app.job_id]">{{ app.job_title }}</a></td>
-            <td>
-              @if (app.total_score != null) {
-                <nz-progress nzType="circle" [nzPercent]="app.total_score"
-                  [nzWidth]="38" [nzStrokeColor]="getScoreColor(app.total_score)"
-                  [nzFormat]="scoreFormat"></nz-progress>
-              } @else { <nz-tag>N/A</nz-tag> }
-            </td>
+            <td><a [routerLink]="['/jobs', app.job_id]"><strong>{{ app.job_title }}</strong></a></td>
             <td>
               @if (app.ai_score != null) {
                 <nz-progress nzType="circle" [nzPercent]="app.ai_score"
@@ -149,34 +142,47 @@ import { CompareCandidatesModalComponent } from '../../components/compare-candid
             </td>
             <td>{{ formatDate(app.updated_at) }}</td>
             <td>
-              @if (isOwner(app)) {
-                <button nz-button nzType="primary"
-                  (click)="openScheduleInterview(app)"
-                  nz-tooltip nzTooltipTitle="Đặt lịch phỏng vấn">
-                  <span nz-icon nzType="calendar"></span>
-                  Đặt lịch
-                </button>
-              } @else {
-                <span style="color: #999">—</span>
-              }
+              <!-- Prominent Interview Room Button -->
+              <button
+                nz-button
+                nzType="primary"
+                style="background: #722ed1; border-color: #722ed1; font-weight: 600"
+                (click)="openInterviewRoom(app)"
+                nz-tooltip
+                nzTooltipTitle="Vào phòng phỏng vấn: Ghi âm từng câu, bóc băng & AI chấm điểm"
+              >
+                <span nz-icon nzType="audio"></span>
+                🎙️ Vào phòng PV
+              </button>
             </td>
             <td>
               @if (isOwner(app)) {
-                <div style="display: flex; gap: 4px">
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
                   <button nz-button nzSize="small" nzType="primary"
-                    nz-popconfirm nzPopconfirmTitle="Đạt phỏng vấn - đề xuất tuyển?"
-                    (nzOnConfirm)="updateStatus(app, 'offered')">
-                    <span nz-icon nzType="like"></span> Đạt
+                    style="background: #52c41a; border-color: #52c41a; font-weight: 600"
+                    nz-popconfirm nzPopconfirmTitle="Phỏng vấn ĐẠT - Chuyển sang Vòng 3: Đã Pass phỏng vấn (Đề xuất tuyển dụng)?"
+                    (nzOnConfirm)="updateStatus(app, 'offered')"
+                    nz-tooltip nzTooltipTitle="Đạt PV ➔ Chuyển sang Vòng 3: Đã Pass phỏng vấn">
+                    <span nz-icon nzType="like"></span> Đạt PV
                   </button>
+
                   <button nz-button nzSize="small" nzDanger
-                    nz-popconfirm nzPopconfirmTitle="Không đạt phỏng vấn?"
-                    (nzOnConfirm)="updateStatus(app, 'rejected')">
-                    <span nz-icon nzType="dislike"></span> Không đạt
+                    nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên này KHÔNG ĐẠT phỏng vấn?"
+                    (nzOnConfirm)="updateStatus(app, 'rejected')"
+                    nz-tooltip nzTooltipTitle="Không đạt">
+                    <span nz-icon nzType="dislike"></span>
                   </button>
+
+                  <button nz-button nzSize="small" nzType="default"
+                    (click)="openScheduleInterview(app)"
+                    nz-tooltip nzTooltipTitle="Xem / Đổi lịch phỏng vấn">
+                    <span nz-icon nzType="calendar"></span>
+                  </button>
+
                   <button nz-button nzSize="small"
-                    nz-popconfirm nzPopconfirmTitle="Đưa về danh sách shortlist?"
+                    nz-popconfirm nzPopconfirmTitle="Đưa ứng viên quay lại Vòng 1: Hẹn lịch phỏng vấn?"
                     (nzOnConfirm)="updateStatus(app, 'shortlisted')"
-                    nz-tooltip nzTooltipTitle="Quay lại shortlist">
+                    nz-tooltip nzTooltipTitle="Quay lại Hẹn lịch">
                     <span nz-icon nzType="rollback"></span>
                   </button>
                 </div>
@@ -324,6 +330,27 @@ export class InterviewingComponent implements OnInit, OnDestroy {
 
     ref.afterClose.subscribe((result) => {
       if (result) this.loadData();
+    });
+  }
+
+  openInterviewRoom(app: InterviewingApplicant): void {
+    const ref = this.modal.create({
+      nzTitle: `Phòng phỏng vấn: ${app.candidate_name} - ${app.job_title}`,
+      nzContent: InterviewRoomModalComponent,
+      nzData: {
+        jobId: app.job_id,
+        appId: app.id,
+        candidateName: app.candidate_name,
+      },
+      nzFooter: null,
+      nzWidth: 'min(1250px, calc(100vw - 32px))',
+      nzBodyStyle: { maxHeight: 'calc(100vh - 140px)', overflowY: 'auto' },
+      nzCentered: true,
+      nzMaskClosable: false,
+    });
+
+    ref.afterClose.subscribe(() => {
+      this.loadData();
     });
   }
 

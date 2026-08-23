@@ -1,7 +1,6 @@
-"""Interview scheduling model."""
-
 from datetime import datetime
-from sqlalchemy import String, ForeignKey, Text, DateTime
+from sqlalchemy import String, ForeignKey, Text, DateTime, Float
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -9,7 +8,7 @@ from app.models.base import TimestampMixin
 
 
 class Interview(Base, TimestampMixin):
-    """Interview schedule for a job application."""
+    """Interview schedule and live evaluation for a job application."""
 
     __tablename__ = "interviews"
 
@@ -36,8 +35,16 @@ class Interview(Base, TimestampMixin):
         String(20), default="scheduled", index=True
     )
 
+    # Question set & Live recording evaluations (Stored in JSONB)
+    questions: Mapped[list | None] = mapped_column(JSONB, default=list, nullable=True)
+    answers: Mapped[dict | None] = mapped_column(JSONB, default=dict, nullable=True)
+    overall_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    overall_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    recommendation: Mapped[str | None] = mapped_column(String(50), nullable=True)  # STRONG_HIRE|HIRE|CONSIDER|REJECT
+
     # Relationships
     application: Mapped["Application"] = relationship(
         "Application", back_populates="interviews"
     )
     scheduler: Mapped["User"] = relationship("User", foreign_keys=[scheduled_by])
+

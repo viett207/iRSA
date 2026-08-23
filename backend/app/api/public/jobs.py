@@ -258,16 +258,23 @@ async def get_company_detail(company_code: str, db: DBSession):
     if not company:
         raise NotFoundException("Company not found")
 
+    app_count_subquery = (
+        select(func.count(Application.id))
+        .where(Application.job_id == Job.id)
+        .correlate(Job)
+        .scalar_subquery()
+    )
+
     # Fetch published jobs from this company
     stmt = (
-        select(Job)
+        select(Job, app_count_subquery.label("app_count"))
         .options(selectinload(Job.criteria))
         .join(User, Job.created_by == User.id)
         .where(((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"]))), User.company_code == company_code)
         .order_by(Job.published_at.desc())
     )
     jobs_result = await db.execute(stmt)
-    jobs = jobs_result.scalars().all()
+    rows = jobs_result.all()
 
     job_items = [
         PublicJobListItem(
@@ -281,7 +288,7 @@ async def get_company_detail(company_code: str, db: DBSession):
             salary_max=j.salary_max,
             published_at=j.published_at,
             application_deadline=j.application_deadline,
-            applications_count=0,
+            applications_count=app_count,
             must_have_skills=j.criteria.must_have_skills if j.criteria and j.criteria.must_have_skills else [],
             min_experience_years=j.criteria.min_experience_years if j.criteria else None,
             max_experience_years=j.criteria.max_experience_years if j.criteria else None,
@@ -289,7 +296,7 @@ async def get_company_detail(company_code: str, db: DBSession):
             company_code=company.company_code,
             description_vi=j.description_vi,
         )
-        for j in jobs
+        for j, app_count in rows
     ]
 
     return CompanyDetailResponse(

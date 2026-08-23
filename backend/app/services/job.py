@@ -10,6 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import BadRequestException, NotFoundException, ForbiddenException
 from app.models.job import Job, JobCriteria
+from app.models.application import Application
 from app.models.audit import AuditLog
 from app.models.user import User
 from app.schemas.job import (
@@ -84,6 +85,25 @@ class JobService:
                 min_education=job.criteria.min_education,
             )
 
+    def _build_job_response(self, job: Job, applications_count: int | None = None) -> JobResponse:
+        """Helper to build JobResponse from Job model."""
+        criteria_response = None
+        if job.criteria:
+            criteria_response = JobCriteriaResponse(
+                id=job.criteria.id,
+                must_have_skills=job.criteria.must_have_skills or [],
+                nice_to_have_skills=job.criteria.nice_to_have_skills or [],
+                min_experience_years=job.criteria.min_experience_years,
+                max_experience_years=job.criteria.max_experience_years,
+                min_education=job.criteria.min_education,
+            )
+
+        if applications_count is None:
+            if hasattr(job, "applications") and job.applications is not None:
+                applications_count = len(job.applications)
+            else:
+                applications_count = 0
+
         return JobResponse(
             id=job.id,
             title_vi=job.title_vi,
@@ -105,7 +125,7 @@ class JobService:
             approver_name=job.approver.full_name if job.approver else None,
             approved_at=job.approved_at,
             criteria=criteria_response,
-            applications_count=0,
+            applications_count=applications_count,
             created_at=job.created_at,
             updated_at=job.updated_at,
         )
@@ -117,10 +137,18 @@ class JobService:
         status: str | None = None,
         created_by: int | None = None,
         department: str | None = None,
+        location: str | None = None,
+        employment_type: str | None = None,
+        salary_min: int | None = None,
+        salary_max: int | None = None,
+        min_experience: int | None = None,
+        max_experience: int | None = None,
+        has_applications: bool | None = None,
         company_code: str | None = None,
         search: str | None = None,
+        order_by: str = "newest",
     ) -> JobListResponse:
-        """Get paginated list of jobs with filters."""
+        """Get paginated list of jobs with comprehensive filters and sorting."""
         query = select(Job).options(
             selectinload(Job.creator),
             selectinload(Job.approver),
@@ -133,6 +161,30 @@ class JobService:
             query = query.where(Job.created_by == created_by)
         if department:
             query = query.where(Job.department.ilike(f"%{department}%"))
+        if location:
+            query = query.where(Job.location.ilike(f"%{location}%"))
+        if employment_type:
+            query = query.where(Job.employment_type == employment_type)
+
+        if salary_min is not None:
+            query = query.where((Job.salary_max >= salary_min) | (Job.salary_min.is_(None)))
+        if salary_max is not None:
+            query = query.where((Job.salary_min <= salary_max) | (Job.salary_min.is_(None)))
+
+        if min_experience is not None or max_experience is not None:
+            query = query.outerjoin(JobCriteria, Job.id == JobCriteria.job_id)
+            if min_experience is not None:
+                query = query.where(
+                    (JobCriteria.min_experience_years <= min_experience)
+                    | (JobCriteria.id.is_(None))
+                )
+            if max_experience is not None:
+                query = query.where(
+                    (JobCriteria.max_experience_years >= max_experience)
+                    | (JobCriteria.max_experience_years.is_(None))
+                    | (JobCriteria.id.is_(None))
+                )
+
         if search:
             search_term = f"%{search}%"
             query = query.where(
@@ -140,23 +192,54 @@ class JobService:
                 | Job.description_vi.ilike(search_term)
                 | Job.requirements_vi.ilike(search_term)
                 | Job.department.ilike(search_term)
+                | Job.location.ilike(search_term)
             )
         if company_code:
             query = query.join(User, Job.created_by == User.id).where(
                 User.company_code == company_code
             )
 
+        # Subquery to count applications per job
+        app_count_sub = (
+            select(func.count(Application.id))
+            .where(Application.job_id == Job.id)
+            .correlate(Job)
+            .scalar_subquery()
+        )
+
+        if has_applications is True:
+            query = query.where(app_count_sub > 0)
+        elif has_applications is False:
+            query = query.where(app_count_sub == 0)
+
         count_query = select(func.count()).select_from(query.subquery())
         total = (await self.db.execute(count_query)).scalar() or 0
 
+        # Sorting
+        if order_by == "oldest":
+            order_clause = Job.created_at.asc()
+        elif order_by == "applicants_desc":
+            order_clause = app_count_sub.desc()
+        elif order_by == "salary_desc":
+            order_clause = Job.salary_max.desc().nullslast()
+        elif order_by == "salary_asc":
+            order_clause = Job.salary_min.asc().nullslast()
+        else:  # newest
+            order_clause = Job.created_at.desc()
+
         offset = (page - 1) * page_size
-        query = query.offset(offset).limit(page_size).order_by(Job.created_at.desc())
+        query = (
+            query.add_columns(app_count_sub.label("app_count"))
+            .offset(offset)
+            .limit(page_size)
+            .order_by(order_clause)
+        )
 
         result = await self.db.execute(query)
-        jobs = result.scalars().all()
+        rows = result.all()
 
         return JobListResponse(
-            items=[self._build_job_response(job) for job in jobs],
+            items=[self._build_job_response(job, app_count) for job, app_count in rows],
             total=total,
             page=page,
             page_size=page_size,
@@ -182,9 +265,13 @@ class JobService:
         return job
 
     async def get_job_response(self, job_id: int) -> JobResponse:
-        """Get job response by ID."""
+        """Get job response by ID with actual application count."""
         job = await self.get_job(job_id)
-        return self._build_job_response(job)
+        count_res = await self.db.execute(
+            select(func.count(Application.id)).where(Application.job_id == job_id)
+        )
+        app_count = count_res.scalar() or 0
+        return self._build_job_response(job, applications_count=app_count)
 
     async def create_job(self, data: JobCreate, user_id: int) -> JobResponse:
         """Create a new job in draft status."""
