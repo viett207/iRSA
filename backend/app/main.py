@@ -46,6 +46,7 @@ cors_origins = [
         "http://localhost:4300",  # Angular Portal
         "http://127.0.0.1:4200",  # Angular Admin via loopback IP
         "http://127.0.0.1:4300",  # Angular Portal via loopback IP
+        "https://irsa-admin.vercel.app",
         settings.FRONTEND_ADMIN_URL,
         settings.FRONTEND_PORTAL_URL,
     ]
@@ -56,6 +57,7 @@ cors_origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept"],
