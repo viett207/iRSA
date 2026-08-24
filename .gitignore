@@ -27,6 +27,8 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+*.exe
+minio.exe
 
 # Data (never commit large data)
 data/

@@ -18,7 +18,8 @@ def _is_evidence_grounded(evidence: str, skill: str, resume_text: str) -> bool:
     
     # Check 1: Direct skill mention in CV
     skill_clean = skill.strip().lower()
-    if skill_clean in text_lower or re.search(rf"\b{re.escape(skill_clean)}\b", text_lower):
+    escaped_skill = re.escape(skill_clean)
+    if re.search(rf"(?<![a-zA-Z0-9_#+]){escaped_skill}(?![a-zA-Z0-9_#+])", text_lower):
         return True
 
     # Check 2: Substring or significant token match of evidence snippet

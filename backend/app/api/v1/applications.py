@@ -645,7 +645,8 @@ async def get_cv_jd_compare(
         if not s_clean:
             continue
         escaped = re.escape(s_clean.lower())
-        if re.search(rf"\b{escaped}\b", cv_lower) or s_clean.lower() in cv_lower:
+        pattern = rf"(?<![a-zA-Z0-9_#+]){escaped}(?![a-zA-Z0-9_#+])"
+        if re.search(pattern, cv_lower):
             matched_skills.append(s_clean)
         else:
             missing_skills.append(s_clean)
