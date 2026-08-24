@@ -272,9 +272,10 @@ class ResumeScorer:
             # Bước 1: Kiểm tra alias map (cho các skill tin học văn phòng)
             aliases = cls.SKILL_ALIASES.get(skill_lower)
             if aliases:
-                # Chỉ cần 1 alias xuất hiện trong CV text là match
+                # Chỉ cần 1 alias xuất hiện trong CV text với ranh giới từ là match
                 for alias in aliases:
-                    if alias in text_lower:
+                    escaped_alias = re.escape(alias.strip().lower())
+                    if re.search(rf"(?<![a-zA-Z0-9_#+]){escaped_alias}(?![a-zA-Z0-9_#+])", text_lower):
                         return True
                 return False
 

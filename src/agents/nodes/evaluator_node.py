@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 def _extract_skill_snippet(skill: str, text: str) -> str:
     """Find the exact line or surrounding sentence containing the skill."""
     escaped = re.escape(skill)
-    # Search for sentence containing the skill
-    pattern = rf"([^.\n]*\b{escaped}\b[^.\n]*)"
+    # Search for sentence containing the exact skill
+    pattern = rf"([^.\n]*(?<![a-zA-Z0-9_#+]){escaped}(?![a-zA-Z0-9_#+])[^.\n]*)"
     match = re.search(pattern, text, re.IGNORECASE)
     if match:
         snippet = match.group(1).strip()
@@ -47,7 +47,7 @@ def _deterministic_fallback_evaluation(
     
     for s in must_have:
         escaped = re.escape(s.lower())
-        found = bool(re.search(rf"\b{escaped}\b", text_lower))
+        found = bool(re.search(rf"(?<![a-zA-Z0-9_#+]){escaped}(?![a-zA-Z0-9_#+])", text_lower))
         evidence = _extract_skill_snippet(s, resume_text) if found else "Không tìm thấy trong CV"
         if found:
             matched_must += 1
@@ -61,7 +61,7 @@ def _deterministic_fallback_evaluation(
         
     for s in nice_to_have:
         escaped = re.escape(s.lower())
-        found = bool(re.search(rf"\b{escaped}\b", text_lower))
+        found = bool(re.search(rf"(?<![a-zA-Z0-9_#+]){escaped}(?![a-zA-Z0-9_#+])", text_lower))
         evidence = _extract_skill_snippet(s, resume_text) if found else "Không tìm thấy trong CV"
         if found:
             matched_nice += 1

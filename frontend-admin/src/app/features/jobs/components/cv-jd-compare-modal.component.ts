@@ -396,7 +396,8 @@ export class CvJdCompareModalComponent {
 
       for (const kw of sortedKw) {
         const kwEsc = this.escapeHtml(kw.trim());
-        const regex = new RegExp(`(${this.escapeRegex(kwEsc)})`, 'gi');
+        // Use token boundaries to avoid partial word match (e.g., 'oop' inside 'hadoop')
+        const regex = new RegExp(`(?<![a-zA-Z0-9_#+])(${this.escapeRegex(kwEsc)})(?![a-zA-Z0-9_#+])`, 'gi');
         escaped = escaped.replace(
           regex,
           '<mark class="match-highlight">$1</mark>'
@@ -407,7 +408,7 @@ export class CvJdCompareModalComponent {
     // 2. Highlight custom search term if HR entered one
     if (this.customSearchTerm.trim()) {
       const termEsc = this.escapeHtml(this.customSearchTerm.trim());
-      const regex = new RegExp(`(${this.escapeRegex(termEsc)})`, 'gi');
+      const regex = new RegExp(`(?<![a-zA-Z0-9_#+])(${this.escapeRegex(termEsc)})(?![a-zA-Z0-9_#+])`, 'gi');
       escaped = escaped.replace(
         regex,
         '<mark class="search-highlight">$1</mark>'
