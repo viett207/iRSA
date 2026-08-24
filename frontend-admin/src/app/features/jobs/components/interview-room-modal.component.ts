@@ -30,6 +30,8 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 
+import { NzRadioModule } from 'ng-zorro-antd/radio';
+
 import { JobService } from '../services/job.service';
 import {
   AiInterviewQuestion,
@@ -60,6 +62,7 @@ interface QuestionState {
   audioContext?: AudioContext;
   analyser?: AnalyserNode;
   animFrameId?: number;
+  activeStreams?: MediaStream[];
 }
 
 @Component({
@@ -86,6 +89,7 @@ interface QuestionState {
     NzDividerModule,
     NzEmptyModule,
     NzModalModule,
+    NzRadioModule,
   ],
   template: `
     <div class="interview-room-container">
@@ -158,10 +162,48 @@ interface QuestionState {
           <nz-tab [nzTitle]="tabLiveTitle">
             <ng-template #tabLiveTitle>
               <span nz-icon nzType="audio" style="color: #ff4d4f"></span>
-              <strong>Phòng phỏng vấn trực tiếp ({{ activeQuestions().length }} câu hỏi)</strong>
+              <strong>Phòng phỏng vấn ({{ activeQuestions().length }} câu hỏi)</strong>
             </ng-template>
 
             <div class="tab-body">
+              <!-- Interview Mode Selection Banner -->
+              <div class="interview-mode-banner">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px">
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+                    <span style="font-weight: 600; color: #262626; display: flex; align-items: center; gap: 6px">
+                      <span nz-icon nzType="setting" style="color: #1890ff"></span> Hình thức phỏng vấn:
+                    </span>
+                    <nz-radio-group [(ngModel)]="interviewMode" nzButtonStyle="solid" nzSize="small">
+                      <label nz-radio-button nzValue="offline">
+                        <span nz-icon nzType="team"></span> 🏢 Trực tiếp (Chỉ Mic)
+                      </label>
+                      <label nz-radio-button nzValue="online">
+                        <span nz-icon nzType="video-camera"></span> 🌐 Online (Google Meet + Mic)
+                      </label>
+                    </nz-radio-group>
+                  </div>
+
+                  @if (interviewMode === 'online') {
+                    <nz-tag nzColor="blue">
+                      <span nz-icon nzType="sound"></span> Ghi âm đồng thời: Tab Meet & Mic
+                    </nz-tag>
+                  } @else {
+                    <nz-tag nzColor="green">
+                      <span nz-icon nzType="audio"></span> Ghi âm: Microphone phòng
+                    </nz-tag>
+                  }
+                </div>
+
+                @if (interviewMode === 'online') {
+                  <div class="online-hint-box">
+                    <span nz-icon nzType="info-circle" style="color: #1890ff; font-size: 16px; margin-top: 2px"></span>
+                    <div>
+                      <strong>Hướng dẫn phỏng vấn Online:</strong> Khi bấm <em>"Bắt đầu ghi âm"</em>, trình duyệt sẽ mở cửa sổ chia sẻ. Bạn hãy chọn <strong>Tab Google Meet</strong> (hoặc Toàn màn hình) và <strong>tick chọn "Chia sẻ âm thanh tab" (Share tab audio)</strong>. Hệ thống sẽ tự động hòa âm giọng ứng viên và microphone của bạn vào cùng 1 bản ghi!
+                    </div>
+                  </div>
+                }
+              </div>
+
               <!-- Quick Stats & Actions Header -->
               <div class="room-action-bar">
                 <div style="display: flex; align-items: center; gap: 8px">
@@ -287,8 +329,12 @@ interface QuestionState {
                               (click)="startRecording(qState)"
                               [disabled]="isAnyRecording() && !qState.recording"
                             >
-                              <span nz-icon nzType="audio"></span>
-                              {{ qState.localAudioUrl || qState.rawAudioUrl || qState.audioUrl ? 'Ghi âm lại câu này' : 'Bắt đầu ghi âm câu trả lời' }}
+                              <span nz-icon [nzType]="interviewMode === 'online' ? 'video-camera' : 'audio'"></span>
+                              @if (qState.localAudioUrl || qState.rawAudioUrl || qState.audioUrl) {
+                                {{ interviewMode === 'online' ? 'Ghi âm lại Online (Meet + Mic)' : 'Ghi âm lại câu này' }}
+                              } @else {
+                                {{ interviewMode === 'online' ? 'Bắt đầu ghi âm Online (Meet + Mic)' : 'Bắt đầu ghi âm câu trả lời' }}
+                              }
                             </button>
                           } @else {
                             <button nz-button nzType="primary" nzDanger (click)="stopRecording(qState)">
@@ -296,7 +342,7 @@ interface QuestionState {
                               Dừng ghi âm ({{ formatSeconds(qState.recordingSeconds) }})
                             </button>
                             <span class="recording-pulse">
-                              <span class="dot"></span> Đang thu mic...
+                              <span class="dot"></span> {{ interviewMode === 'online' ? 'Đang thu Meet & Mic...' : 'Đang thu mic...' }}
                             </span>
                           }
 
@@ -771,6 +817,28 @@ interface QuestionState {
       .tab-body {
         padding-top: 8px;
       }
+      .interview-mode-banner {
+        background: #fbfdff;
+        border: 1px solid #d6e4ff;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .online-hint-box {
+        background: #e6f7ff;
+        border: 1px solid #91d5ff;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 12.5px;
+        color: #0958d9;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        line-height: 1.5;
+      }
       .room-action-bar {
         display: flex;
         justify-content: space-between;
@@ -1023,6 +1091,9 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
   recommendation = signal<string | null>(null);
   summarizing = false;
 
+  // Interview Mode: 'offline' (Mic only) or 'online' (Meet System Audio + Mic)
+  interviewMode: 'offline' | 'online' = 'offline';
+
   // Audio playback tracking
   playingIndex: number | null = null;
   activeAudioElement?: HTMLAudioElement;
@@ -1075,6 +1146,15 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
     });
   }
 
+  private cleanupActiveStreams(streams?: MediaStream[]): void {
+    if (!streams) return;
+    streams.forEach((stream) => {
+      try {
+        stream.getTracks().forEach((track) => track.stop());
+      } catch (_) {}
+    });
+  }
+
   private cleanupAudioResources(qState: QuestionState): void {
     if (qState.timerInterval) clearInterval(qState.timerInterval);
     if (qState.animFrameId) cancelAnimationFrame(qState.animFrameId);
@@ -1088,6 +1168,10 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
         qState.mediaRecorder.stop();
       } catch (_) {}
     }
+    if (qState.activeStreams) {
+      this.cleanupActiveStreams(qState.activeStreams);
+      qState.activeStreams = [];
+    }
     qState.volumeLevel = 0;
   }
 
@@ -1099,6 +1183,12 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
         this.overallScore.set(res.interview?.overall_score ?? null);
         this.overallFeedback.set(res.interview?.overall_feedback ?? null);
         this.recommendation.set(res.interview?.recommendation ?? null);
+
+        if (res.interview?.interview_type === 'online') {
+          this.interviewMode = 'online';
+        } else if (res.interview?.interview_type === 'offline') {
+          this.interviewMode = 'offline';
+        }
 
         const rawQuestions = res.questions && res.questions.length > 0
           ? res.questions
@@ -1216,7 +1306,117 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
 
   async startRecording(qState: QuestionState): Promise<void> {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      let finalStream: MediaStream;
+      let micStream: MediaStream | null = null;
+      let systemStream: MediaStream | null = null;
+      const activeStreams: MediaStream[] = [];
+      let audioCtx: AudioContext | null = null;
+      let analyser: AnalyserNode | null = null;
+
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+
+      if (this.interviewMode === 'online') {
+        // Step 1: Request screen/tab audio (Google Meet tab)
+        try {
+          systemStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: {
+              echoCancellation: false,
+              noiseSuppression: false,
+              autoGainControl: false,
+            },
+          });
+          activeStreams.push(systemStream);
+        } catch (dispErr: any) {
+          if (dispErr?.name === 'NotAllowedError' || dispErr?.name === 'AbortError') {
+            this.message.warning('Bạn đã hủy chia sẻ màn hình/tab Google Meet. Chưa bắt đầu ghi âm.');
+            return;
+          }
+          this.message.error('Không thể chia sẻ âm thanh máy tính: ' + (dispErr?.message || 'Lỗi không xác định'));
+          return;
+        }
+
+        const systemAudioTracks = systemStream.getAudioTracks();
+        if (systemAudioTracks.length === 0) {
+          this.message.warning('⚠️ Bạn chưa tích chọn "Chia sẻ âm thanh tab" (Share tab audio) khi chia sẻ màn hình. Bản ghi chỉ thu qua Microphone.');
+        }
+
+        // Step 2: Request interviewer microphone
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+            },
+          });
+          activeStreams.push(micStream);
+        } catch (micErr) {
+          console.warn('Microphone not accessible:', micErr);
+          this.message.warning('Không truy cập được microphone. Hệ thống sẽ chỉ ghi âm thanh tab máy tính.');
+        }
+
+        // Step 3: Mix streams via AudioContext
+        if (AudioCtx) {
+          audioCtx = new AudioCtx();
+          const destination = audioCtx.createMediaStreamDestination();
+          const mixGain = audioCtx.createGain();
+
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 256;
+
+          let hasAudioSource = false;
+
+          if (systemAudioTracks.length > 0) {
+            const sysSource = audioCtx.createMediaStreamSource(new MediaStream(systemAudioTracks));
+            sysSource.connect(mixGain);
+            hasAudioSource = true;
+          }
+
+          if (micStream && micStream.getAudioTracks().length > 0) {
+            const micSource = audioCtx.createMediaStreamSource(micStream);
+            micSource.connect(mixGain);
+            hasAudioSource = true;
+          }
+
+          if (!hasAudioSource) {
+            this.cleanupActiveStreams(activeStreams);
+            if (audioCtx.state !== 'closed') audioCtx.close();
+            this.message.error('Không phát hiện nguồn âm thanh nào để ghi âm (cần ít nhất Mic hoặc Âm thanh tab).');
+            return;
+          }
+
+          mixGain.connect(destination);
+          mixGain.connect(analyser);
+
+          finalStream = destination.stream;
+        } else {
+          finalStream = systemAudioTracks.length > 0 ? new MediaStream(systemAudioTracks) : micStream!;
+        }
+      } else {
+        // Offline mode: standard Microphone only
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+            },
+          });
+          activeStreams.push(micStream);
+          finalStream = micStream;
+
+          if (AudioCtx) {
+            audioCtx = new AudioCtx();
+            const source = audioCtx.createMediaStreamSource(micStream);
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+          }
+        } catch (micErr: any) {
+          this.message.error('Không thể truy cập microphone. Vui lòng cấp quyền mic trong trình duyệt.');
+          return;
+        }
+      }
+
       qState.audioChunks = [];
       qState.recording = true;
       qState.recordingSeconds = 0;
@@ -1225,23 +1425,16 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
       qState.rawAudioUrl = undefined;
       qState.audioUrl = undefined;
       qState.audioBlob = undefined;
+      qState.activeStreams = activeStreams;
+      qState.audioContext = audioCtx || undefined;
+      qState.analyser = analyser || undefined;
 
       // Setup Web Audio API real-time volume meter
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        const audioCtx = new AudioCtx();
-        const source = audioCtx.createMediaStreamSource(stream);
-        const analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 256;
-        source.connect(analyser);
-
-        qState.audioContext = audioCtx;
-        qState.analyser = analyser;
-
+      if (analyser) {
         const dataArray = new Uint8Array(analyser.frequencyBinCount);
         const updateVolume = () => {
           if (!qState.recording) return;
-          analyser.getByteFrequencyData(dataArray);
+          analyser!.getByteFrequencyData(dataArray);
           let sum = 0;
           for (let i = 0; i < dataArray.length; i++) {
             sum += dataArray[i];
@@ -1270,7 +1463,7 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
         }
       }
       const options = mimeType ? { mimeType } : undefined;
-      const mediaRecorder = new MediaRecorder(stream, options);
+      const mediaRecorder = new MediaRecorder(finalStream, options);
       qState.mediaRecorder = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
@@ -1289,7 +1482,8 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
           qState.rawAudioUrl = objectUrl;
           qState.audioUrl = objectUrl;
 
-          stream.getTracks().forEach((track) => track.stop());
+          this.cleanupActiveStreams(qState.activeStreams);
+          qState.activeStreams = [];
           this.message.success('Đã lưu bản ghi âm! Bạn có thể bấm Play nghe lại hoặc bấm Bóc băng/Chấm điểm.');
           this.cdr.detectChanges();
         });
@@ -1304,10 +1498,15 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
         });
       }, 1000);
 
-      this.message.info('Đang ghi âm microphone...');
+      if (this.interviewMode === 'online') {
+        this.message.info('Đang ghi âm Google Meet & Microphone...');
+      } else {
+        this.message.info('Đang ghi âm microphone...');
+      }
       this.cdr.detectChanges();
-    } catch (err) {
-      this.message.error('Không thể truy cập microphone. Vui lòng cấp quyền mic trong trình duyệt.');
+    } catch (err: any) {
+      console.error('Recording initialization error:', err);
+      this.message.error('Không thể bắt đầu ghi âm: ' + (err?.message || 'Vui lòng kiểm tra quyền truy cập'));
     }
   }
 
@@ -1326,6 +1525,10 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
         try {
           qState.audioContext.close();
         } catch (_) {}
+      }
+      if (qState.activeStreams) {
+        this.cleanupActiveStreams(qState.activeStreams);
+        qState.activeStreams = [];
       }
       qState.volumeLevel = 0;
       this.cdr.detectChanges();

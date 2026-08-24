@@ -50,13 +50,13 @@ class Settings(BaseSettings):
             keys.append(k_clean)
         return keys
 
-    # Database & Vector Store
-    database_url: str = "postgresql+asyncpg://irsa:272003@localhost:5432/irsa"
+    # Database & Vector Store (Supabase PostgreSQL Cloud)
+    database_url: str = ""
     chroma_persist_dir: str = "./data/chroma"
 
-    # Cache
+    # Cache (Upstash Redis Cloud)
     cache_backend: Literal["memory", "redis"] = "memory"
-    redis_url: str = "redis://localhost:6379/0"
+    redis_url: str = ""
 
     # Frontends
     frontend_admin_url: str = "http://localhost:4200"

@@ -13,11 +13,11 @@ class Settings(BaseSettings):
     # POSTGRES_PASSWORD: str
     # POSTGRES_DB: str
 
-    # Database
-    DATABASE_URL: str = "postgresql+asyncpg://irsa:irsa@localhost:5432/irsa"
+    # Database (Supabase PostgreSQL Cloud)
+    DATABASE_URL: str = ""
 
-    # Redis & Cache
-    REDIS_URL: str = "redis://localhost:6379/0"
+    # Redis & Cache (Upstash Redis Cloud)
+    REDIS_URL: str = ""
     CACHE_BACKEND: str = "memory"
 
     model_config = SettingsConfigDict(
@@ -32,14 +32,14 @@ class Settings(BaseSettings):
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     JWT_ALGORITHM: str = "HS256"
 
-    # MinIO
-    MINIO_ENDPOINT: str = "localhost:9000"
-    MINIO_ACCESS_KEY: str = "minioadmin"
-    MINIO_SECRET_KEY: str = "minioadmin"
+    # Storage (Supabase Storage Cloud S3-Compatible)
+    MINIO_ENDPOINT: str = ""
+    MINIO_ACCESS_KEY: str = ""
+    MINIO_SECRET_KEY: str = ""
     MINIO_BUCKET: str = "resumes"
     MINIO_REGION: str = "ap-south-1"
-    MINIO_SECURE: bool = False
-    MINIO_PUBLIC_URL: str = "http://localhost:9000"
+    MINIO_SECURE: bool = True
+    MINIO_PUBLIC_URL: str = ""
 
     # Email
     SMTP_HOST: str = "smtp.gmail.com"

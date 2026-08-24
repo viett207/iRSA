@@ -5,7 +5,8 @@ vào backend tại `/api/v1/agent`.
 
 ## 1. Cài đặt
 
-Yêu cầu: Python 3.11+, Node.js 20+, PostgreSQL, Redis và MinIO chạy trên máy.
+Yêu cầu: Python 3.11+, Node.js 20+.
+*(Cơ sở dữ liệu PostgreSQL và Storage đã được đẩy lên Supabase Cloud, Redis trên Upstash Cloud — không cần cài đặt hoặc chạy database/minio local trên máy).*
 
 ```powershell
 python -m venv .venv
@@ -14,7 +15,7 @@ pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Tạo database PostgreSQL theo thông tin trong `.env`, sau đó chạy migration:
+Cấu hình thông tin kết nối Supabase trong file `.env`, sau đó chạy migration đồng bộ schema lên Supabase:
 
 ```powershell
 Set-Location backend

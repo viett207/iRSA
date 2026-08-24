@@ -8,103 +8,63 @@
 
 ```mermaid
 graph TB
-    subgraph Frontend
-        UI[React/Next.js UI]
+    subgraph Local Environment
+        AdminUI[Frontend Admin - Angular 17]
+        PortalUI[Frontend Portal - Angular 17]
+        BE[FastAPI Backend & AI Agent]
+        EmbedNLP[Local NLP MiniLM-L12 Embedding]
+        ChromaLocal[Local ChromaDB Vector Cache]
     end
 
-    subgraph Backend[FastAPI Backend]
-        API[API Routes]
-        Agent[LangGraph Agent]
-        LLM[LLM Service]
-        Tools[Agent Tools]
+    subgraph Cloud Services
+        SupabaseDB[(Supabase PostgreSQL Cloud)]
+        SupabaseStorage[(Supabase S3 Storage)]
+        UpstashRedis[(Upstash Redis Cloud)]
+        GeminiAPI[Google Gemini Cloud AI]
+        GmailSMTP[Gmail SMTP Service]
+        PhoenixLog[Phoenix Observability Cloud]
     end
 
-    subgraph Data[Data Layer]
-        DB[(Database)]
-        Vector[Vector Store]
-    end
-
-    UI -->|HTTP/REST| API
-    API --> Agent
-    Agent --> LLM
-    Agent --> Tools
-    Agent --> Vector
-    Tools --> DB
-    API --> DB
+    AdminUI -->|HTTP/REST| BE
+    PortalUI -->|HTTP/REST| BE
+    BE --> EmbedNLP
+    BE --> ChromaLocal
+    BE --> SupabaseDB
+    BE --> SupabaseStorage
+    BE --> UpstashRedis
+    BE --> GeminiAPI
+    BE --> GmailSMTP
+    BE --> PhoenixLog
 ```
 
 ## Components
 
-### 1. Frontend (React/Next.js)
-- **Purpose:** [mô tả]
-- **Key Features:** [danh sách]
-- **State Management:** [approach]
+### 1. Frontend (Angular 17 + Ng-Zorro Antd)
+- **Admin App (Port 4200):** Dành cho HR/Recruiter quản lý jobs, CVs, ứng viên, phòng phỏng vấn trực tiếp/online, bóc băng và chấm điểm AI.
+- **Portal App (Port 4300):** Dành cho ứng viên tìm việc, nộp hồ sơ, upload CV.
 
-### 2. Backend (FastAPI)
-- **Purpose:** [mô tả]
-- **API Design:** RESTful
-- **Authentication:** [JWT/None]
+### 2. Backend & AI Agent (FastAPI / Python 3.11+)
+- **RESTful API:** Quản lý authentication (JWT), jobs, applications, screening pipeline, interview sessions.
+- **AI Agent Engine:** Bóc băng âm thanh (STT), phân tích CV/JD, sinh câu hỏi phỏng vấn, đánh giá câu trả lời và chấm điểm tự động.
 
-### 3. AI Agent (LangGraph)
-- **Agent Type:** [ReAct / Plan-and-Execute / Custom]
-- **State:** [mô tả state schema]
-- **Nodes:** [danh sách nodes]
-- **Tools:** [danh sách tools]
-- **Flow:**
-
-```mermaid
-graph LR
-    START --> A[Node A]
-    A --> B{Decision}
-    B -->|Yes| C[Node C]
-    B -->|No| D[Node D]
-    C --> E[END]
-    D --> E
-```
-
-### 4. Database
-- **Type:** [PostgreSQL / SQLite]
-- **Tables:** [danh sách]
-- **Migrations:** Alembic
-
-### 5. Vector Store
-- **Type:** [ChromaDB / FAISS / Pinecone]
-- **Embeddings:** [model]
-- **Purpose:** [RAG / similarity search]
-
-## Data Flow
-
-1. User gửi request từ Frontend
-2. API route nhận và validate input
-3. Agent xử lý qua LangGraph pipeline
-4. LLM generate response
-5. Tools thực thi actions (nếu cần)
-6. Response trả về Frontend
-
-## Local Development Architecture
-
-```mermaid
-graph LR
-    subgraph Local Machine
-        FE[Frontend]
-        BE[FastAPI Backend]
-        DB_C[Local Database]
-    end
-    FE --> BE --> DB_C
-```
+### 3. Data & Storage Layer (100% Cloud)
+- **Database:** Supabase PostgreSQL Cloud (kết nối qua connection pooler).
+- **Storage:** Supabase Storage (S3-compatible) lưu file CV (.pdf, .docx) và file audio ghi âm phỏng vấn (.webm, .mp3).
+- **Cache:** Upstash Redis Cloud phục vụ caching và rate limiting.
+- **Vector & NLP:** Local SentenceTransformers (`paraphrase-multilingual-MiniLM-L12-v2`) + ChromaDB.
 
 ## Security
-
-- API keys stored in `.env` (never commit)
-- Input validation via Pydantic
-- Rate limiting on API endpoints
-- CORS configured for frontend domain
+- Toàn bộ secret và connection strings lưu trong `.env` (không commit lên Git).
+- Input validation chặt chẽ với Pydantic v2.
+- JWT HttpOnly cookies CSRF/XSS protection.
 
 ## Design Decisions
 
 | Decision | Choice | Reason |
 |----------|--------|--------|
-| Framework | FastAPI | Async, auto-docs, type-safe |
-| Agent | LangGraph | Flexible state management |
-| Database | [choice] | [reason] |
-| Frontend | Next.js | [reason] |
+| Framework | FastAPI | Async, auto Swagger docs, type-safe |
+| Database | Supabase PostgreSQL Cloud | Cloud-managed, high availability, pooled connection |
+| Storage | Supabase S3 Storage | Cloud storage an toàn cho file CV và audio |
+| Cache | Upstash Redis Cloud | Serverless Redis cloud nhanh và tin cậy |
+| AI / STT | Google Gemini Flash | Đa phương tiện mạnh mẽ, bóc băng tiếng Việt chính xác, chi phí tối ưu |
+| Frontend | Angular 17 + Ng-Zorro | Enterprise-grade UI component system |
