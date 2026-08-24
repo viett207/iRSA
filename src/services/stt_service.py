@@ -28,9 +28,7 @@ async def transcribe_audio(
     settings = get_settings()
     gemini_keys = settings.parsed_gemini_api_keys
     openai_key = settings.openai_api_key or os.environ.get("OPENAI_API_KEY", "")
-    model_name = settings.model_name or "gemini-3.6-flash"
-    if model_name in ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]:
-        model_name = "gemini-3.6-flash"
+    model_name = settings.model_name or "gemini-1.5-flash"
 
     last_error = None
 

@@ -440,6 +440,7 @@ export class MatchDetailsModalComponent {
   highlightKeyword(text: string, keyword: string): string {
     if (!keyword) return this.escapeHtml(text);
     const escaped = this.escapeHtml(text);
+    const kwEscaped = this.escapeHtml(keyword);
     const escapedKw = kwEscaped.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`(?<![a-zA-Z0-9_#+])(${escapedKw})(?![a-zA-Z0-9_#+])`, 'gi');
     return escaped.replace(regex, '<mark style="background:#ffe58f;padding:1px 2px;border-radius:2px">$1</mark>');

@@ -216,9 +216,7 @@ def get_agent_llm(temperature: float | None = None) -> Any:
 
     # 1. Try Gemini with Key Rotation if keys are present
     if gemini_keys:
-        model_name = settings.model_name or "gemini-3.6-flash"
-        if model_name in ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]:
-            model_name = "gemini-3.6-flash"
+        model_name = settings.model_name or "gemini-1.5-flash"
         logger.info(f"Initializing RotatingGeminiLLM with {len(gemini_keys)} API key(s) (model: {model_name})...")
         return RotatingGeminiLLM(api_keys=gemini_keys, model_name=model_name, temperature=temp)
 

@@ -1,3 +1,4 @@
+
 """Span fidelity and evidence block validator.
 
 Validates character offsets, raw_text slicing fidelity, block_id, section validity,
