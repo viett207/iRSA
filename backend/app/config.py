@@ -1,8 +1,8 @@
-from pydantic import field_validator
-from pydantic_settings import BaseSettings,SettingsConfigDict
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -16,8 +16,9 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://irsa:irsa@localhost:5432/irsa"
 
-    # Redis
+    # Redis & Cache
     REDIS_URL: str = "redis://localhost:6379/0"
+    CACHE_BACKEND: str = "memory"
 
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",

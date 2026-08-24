@@ -41,11 +41,14 @@ class AiEvaluationOutput(BaseModel):
     strengths: List[str] = Field(default_factory=list, description="Candidate strengths in Vietnamese")
     concerns: List[str] = Field(default_factory=list, description="Points of concern in Vietnamese")
     interview_questions: List[InterviewQuestion] = Field(default_factory=list, description="8-10 generated interview questions")
+    audit_metadata: Optional[dict] = Field(default_factory=dict, description="Pipeline context audit and traceability metadata")
 
 
 class AgentEvaluationRequest(BaseModel):
     application_id: int = Field(description="Application ID to evaluate")
     force_reevaluate: bool = Field(default=False, description="Force re-evaluation if score exists")
+    scoring_timezone: Optional[str] = Field(default="Asia/Ho_Chi_Minh", description="Timezone to anchor local work date calculations")
+    as_of_date_override: Optional[str] = Field(default=None, description="Deterministic date override for tests / historical audit")
 
 
 class AgentEvaluationResponse(BaseModel):
@@ -57,3 +60,4 @@ class AgentEvaluationResponse(BaseModel):
     evaluation_result: AiEvaluationOutput
     email_notification_sent: bool
     evaluated_at: datetime
+    audit_metadata: Optional[dict] = None

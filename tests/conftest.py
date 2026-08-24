@@ -7,6 +7,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 # Set test environment flags before app imports
 os.environ["APP_ENV"] = "test"
 
+# Tests must never call real LLM APIs. Env vars take precedence over .env in
+# pydantic-settings, so blanking them here forces get_agent_llm() into fallback mode
+_BLOCKED_LLM_ENV_VARS = ("GEMINI_API_KEY", "GEMINI_API_KEYS", "OPENAI_API_KEY")
+for _var in _BLOCKED_LLM_ENV_VARS:
+    os.environ[_var] = ""
 
 # Add backend directory to sys.path so 'app' imports resolve
 BACKEND_DIR = Path(__file__).resolve().parent.parent / "backend"

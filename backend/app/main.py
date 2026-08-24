@@ -1,15 +1,17 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.config import get_settings
-from app.api.v1.router import api_router
 from app.api.public.router import public_router
-from app.core.startup import ensure_secure_startup
+from app.api.v1.router import api_router
+from app.config import get_settings
 from app.core.rate_limit import limiter
+from app.core.startup import ensure_secure_startup
 from src.api.routes import router as agent_router
+from src.cache import close_cache, init_cache
 
 settings = get_settings()
 
@@ -19,8 +21,12 @@ async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Validate environment on startup
     ensure_secure_startup()
+    cache_type = getattr(settings, "CACHE_BACKEND", "memory")
+    redis_url = getattr(settings, "REDIS_URL", "redis://localhost:6379/0")
+    await init_cache(backend_type=cache_type, redis_url=redis_url)
     yield
     # Shutdown
+    await close_cache()
 
 
 app = FastAPI(

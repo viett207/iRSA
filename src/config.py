@@ -1,5 +1,6 @@
 from functools import lru_cache
 from typing import Literal
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -49,6 +50,10 @@ class Settings(BaseSettings):
     # Database & Vector Store
     database_url: str = "postgresql+asyncpg://irsa:272003@localhost:5432/irsa"
     chroma_persist_dir: str = "./data/chroma"
+
+    # Cache
+    cache_backend: Literal["memory", "redis"] = "memory"
+    redis_url: str = "redis://localhost:6379/0"
 
     # Frontends
     frontend_admin_url: str = "http://localhost:4200"

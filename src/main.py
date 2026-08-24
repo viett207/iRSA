@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.routes import router
+from src.cache import close_cache, init_cache
 from src.config import get_settings
 
 
@@ -11,7 +12,9 @@ from src.config import get_settings
 async def lifespan(app: FastAPI):
     settings = get_settings()
     print(f"Starting {settings.app_name} in {settings.app_env} mode")
+    await init_cache(backend_type=settings.cache_backend, redis_url=settings.redis_url)
     yield
+    await close_cache()
     print("Shutting down...")
 
 
