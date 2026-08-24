@@ -366,7 +366,51 @@ class SectionDetector:
             "thành tích nổi bật", "khen thưởng & thành tích", "khen thưởng & danh hiệu",
             "giải thưởng & danh hiệu",
         ],
+        CVSection.PUBLICATIONS: [
+            # English
+            "publications", "research papers", "papers", "conference papers",
+            "journal articles", "scientific publications", "patents",
+            # Vietnamese
+            "công bố khoa học", "bài báo khoa học", "nghiên cứu khoa học",
+            "ấn phẩm", "bài báo", "công trình nghiên cứu", "sáng chế",
+        ],
+        CVSection.LANGUAGES: [
+            # English
+            "languages", "foreign languages", "language skills", "language proficiency",
+            # Vietnamese
+            "ngoại ngữ", "trình độ ngoại ngữ", "ngôn ngữ", "kỹ năng ngoại ngữ",
+        ],
+        CVSection.VOLUNTEERING: [
+            # English
+            "volunteering", "volunteer experience", "community service",
+            "volunteer work", "social activities", "volunteering & leadership",
+            # Vietnamese
+            "hoạt động tình nguyện", "tình nguyện", "công tác xã hội",
+            "hoạt động cộng đồng", "kinh nghiệm tình nguyện",
+        ],
+        CVSection.REFERENCES: [
+            # English
+            "references", "referees", "reference contacts", "professional references",
+            # Vietnamese
+            "người tham chiếu", "thông tin tham chiếu", "người giới thiệu",
+            "tham chiếu", "thông tin người tham chiếu",
+        ],
+        CVSection.INTERESTS: [
+            # English
+            "interests", "hobbies", "personal interests", "activities & interests",
+            # Vietnamese
+            "sở thích", "sở thích cá nhân", "quan tâm",
+        ],
+        CVSection.ACTIVITIES: [
+            # English
+            "activities", "extracurricular activities", "leadership activities",
+            "student activities", "club activities",
+            # Vietnamese
+            "hoạt động", "hoạt động ngoại khóa", "hoạt động đoàn thể",
+            "hoạt động xã hội", "hoạt động câu lạc bộ", "hoạt động sinh viên",
+        ],
     }
+
 
     # Common grammatical sentence indicators that identify descriptive text rather than a heading
     SENTENCE_INDICATORS: set[str] = {
@@ -632,21 +676,214 @@ class SectionDetector:
             match_type="none",
         )
 
+    def _detect_implicit_structural_sections(self, raw_text: str) -> list[DetectedSection]:
+        """Detect implicit structured sections (e.g. Experience, Education) from structural signals
+
+        when no explicit section headings exist in the document.
+
+        Guarantees:
+        - Pure conversational/narrative text without date ranges/company patterns is NEVER converted.
+        - Only activates when clear entity patterns (Date range + Company/Role/Edu keywords) are detected.
+        - Clamps confidence to 0.45 - 0.50 (low confidence tier) with explainable signals.
+        """
+        lines = list(re.finditer(r"[^\r\n]+", raw_text))
+        if not lines:
+            return []
+
+        # Regex for date intervals: (MM/YYYY - MM/YYYY) or (YYYY - Present)
+        date_pattern = re.compile(
+            r"(?:\b|\()(?:\d{1,2}[/\-.])?(?:19|20)\d{2}\s*[-–—tođến]+\s*(?:(?:\d{1,2}[/\-.])?(?:19|20)\d{2}|hiện\s*tại|nay|present|current|now)(?:\b|\))",
+            re.IGNORECASE,
+        )
+
+        company_pattern = re.compile(
+            r"\b(?:công\s+ty|tập\s+đoàn|doanh\s+nghiệp|tnhh|jsc|corp|corporation|inc|ltd|limited|technologies|solutions|software|bank|ngân\s+hàng|studio|agency|lab|labs)\b",
+            re.IGNORECASE,
+        )
+
+        role_pattern = re.compile(
+            r"\b(?:developer|engineer|kỹ\s+sư|lập\s+trình\s+viên|chuyên\s+viên|trưởng\s+phòng|lead|architect|manager|intern|thực\s+tập\s+sinh|quản\s+trị|consultant|tester|qa|qc|devops|data\s+scientist|data\s+analyst)\b",
+            re.IGNORECASE,
+        )
+
+        edu_pattern = re.compile(
+            r"\b(?:đại\s+học|trường\s+đại\s+học|học\s+viện|cao\s+đẳng|university|college|academy|institute|bách\s+khoa|quốc\s+gia)\b",
+            re.IGNORECASE,
+        )
+
+        candidate_blocks: list[tuple[int, CVSection, str]] = []
+
+        idx = 0
+        num_lines = len(lines)
+        while idx < num_lines:
+            m = lines[idx]
+            lt = m.group(0).strip()
+            if not lt or len(lt) < 4:
+                idx += 1
+                continue
+
+            words = lt.split()
+            if len(words) > 12 and any(lt.endswith(p) for p in (".", "...", ";")):
+                idx += 1
+                continue
+
+            has_date = bool(date_pattern.search(lt))
+            has_company = bool(company_pattern.search(lt))
+            has_role = bool(role_pattern.search(lt))
+            has_edu = bool(edu_pattern.search(lt))
+
+            # Case A: Date + Education marker on same line
+            if has_date and has_edu:
+                candidate_blocks.append((m.start(), CVSection.EDUCATION, lt))
+                idx += 1
+                continue
+
+            # Case B: Date + (Company or Role) marker on same line
+            if has_date and (has_company or has_role):
+                candidate_blocks.append((m.start(), CVSection.EXPERIENCE, lt))
+                idx += 1
+                continue
+
+            # Case C: Two consecutive lines forming a block header (e.g. Line 1: Company/Edu, Line 2: Role + Date)
+            if idx + 1 < num_lines:
+                next_lt = lines[idx + 1].group(0).strip()
+                next_has_date = bool(date_pattern.search(next_lt))
+                if has_company and next_has_date:
+                    candidate_blocks.append((m.start(), CVSection.EXPERIENCE, f"{lt} | {next_lt}"))
+                    idx += 2
+                    continue
+                if has_edu and next_has_date:
+                    candidate_blocks.append((m.start(), CVSection.EDUCATION, f"{lt} | {next_lt}"))
+                    idx += 2
+                    continue
+
+            idx += 1
+
+        if not candidate_blocks:
+            return []
+
+        # Deduplicate blocks that start at the same offset
+        seen_starts = set()
+        unique_blocks: list[tuple[int, CVSection, str]] = []
+        for start_pos, sec_type, hint in candidate_blocks:
+            if start_pos not in seen_starts:
+                seen_starts.add(start_pos)
+                unique_blocks.append((start_pos, sec_type, hint))
+
+        unique_blocks.sort(key=lambda b: b[0])
+
+        sections: list[DetectedSection] = []
+
+        # Pre-block introductory text as SUMMARY
+        first_start = unique_blocks[0][0]
+        if first_start > 0 and raw_text[:first_start].strip():
+            pre_breakdown = calculate_section_confidence(
+                raw_line=raw_text[:first_start].strip().split("\n")[0][:40],
+                norm_line="",
+                match_type="implicit",
+                is_implicit_header=True,
+            )
+            sections.append(
+                DetectedSection(
+                    section=CVSection.SUMMARY,
+                    confidence=0.45,
+                    heading_span=None,
+                    body_char_start=0,
+                    body_char_end=first_start,
+                    full_char_start=0,
+                    full_char_end=first_start,
+                    raw_heading=None,
+                    confidence_breakdown=pre_breakdown,
+                    confidence_signals={"implicit_structural": True, "base_match_score": 0.45},
+                )
+            )
+
+        for k, (b_start, b_sec, b_hint) in enumerate(unique_blocks):
+            next_start = unique_blocks[k + 1][0] if k + 1 < len(unique_blocks) else len(raw_text)
+            breakdown = calculate_section_confidence(
+                raw_line=b_hint[:50],
+                norm_line="",
+                match_type="implicit",
+                is_implicit_header=True,
+            )
+            sections.append(
+                DetectedSection(
+                    section=b_sec,
+                    confidence=0.50,
+                    heading_span=None,
+                    body_char_start=b_start,
+                    body_char_end=next_start,
+                    full_char_start=b_start,
+                    full_char_end=next_start,
+                    raw_heading=None,
+                    confidence_breakdown=breakdown,
+                    confidence_signals={"implicit_structural": True, "detected_hint": b_hint[:60], "base_match_score": 0.50},
+                )
+            )
+
+        return sections
     def detect_sections(self, raw_text: str) -> list[DetectedSection]:
-        """Segment raw CV text into structured sections based on detected headings."""
+        """Segment raw CV text into structured sections based on detected headings.
+
+        Supports single-line headings, multi-line split headings, and implicit structural block fallback.
+        """
         if not raw_text or not raw_text.strip():
             return []
 
-        # 1. Scan lines for section headings with exact offsets
+        # 1. Scan lines for section headings with exact offsets (supporting multi-line heading merge)
+        all_lines = list(re.finditer(r"[^\r\n]+", raw_text))
         line_matches: list[tuple[int, int, str, SectionDetectionResult]] = []
+        i = 0
+        num_lines = len(all_lines)
 
-        for m in re.finditer(r"[^\r\n]+", raw_text):
+        while i < num_lines:
+            m = all_lines[i]
             line_text = m.group(0)
             res = self.detect_heading(line_text, char_start=m.start(), char_end=m.end())
+
+            # Check if line i and line i+1 can be merged into a multi-line heading
+            if i + 1 < num_lines:
+                m_next = all_lines[i + 1]
+                next_text = m_next.group(0)
+                l1_clean = line_text.strip()
+                l2_clean = next_text.strip()
+
+                if (
+                    0 < len(l1_clean) <= 40
+                    and 0 < len(l2_clean) <= 40
+                    and len(l1_clean.split()) <= 4
+                    and len(l2_clean.split()) <= 4
+                    and not any(l1_clean.endswith(p) for p in (".", ";", "!"))
+                    and not any(l2_clean.endswith(p) for p in (".", ";", "!"))
+                ):
+                    gap = raw_text[m.end():m_next.start()]
+                    if len(gap) <= 4 and gap.strip() == "":
+                        merged_raw = raw_text[m.start():m_next.end()]
+                        merged_candidate = f"{l1_clean} {l2_clean}"
+                        res_merged = self.detect_heading(
+                            merged_candidate,
+                            char_start=m.start(),
+                            char_end=m_next.end(),
+                        )
+                        if res_merged.is_heading and res_merged.section != CVSection.UNKNOWN:
+                            if not res.is_heading or res_merged.confidence >= res.confidence:
+                                if res_merged.heading_span is not None:
+                                    res_merged.heading_span.matched_text = merged_raw
+                                line_matches.append((m.start(), m_next.end(), merged_raw, res_merged))
+                                i += 2
+                                continue
+
             if res.is_heading and res.section != CVSection.UNKNOWN:
                 line_matches.append((m.start(), m.end(), line_text, res))
 
+            i += 1
+
         if not line_matches:
+            # Try implicit structural block detection for heading-less CVs
+            implicit_secs = self._detect_implicit_structural_sections(raw_text)
+            if implicit_secs:
+                return implicit_secs
+
             # Fallback: single UNKNOWN section covering entire document
             none_breakdown = calculate_section_confidence(
                 raw_line="",

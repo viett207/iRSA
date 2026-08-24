@@ -2,6 +2,8 @@
 
 from src.models.cv_fingerprint import (
     PARSER_VERSION,
+    POLICY_VERSION,
+    TIMEZONE_ALIASES,
     AwardEntry,
     CandidateProfileHeader,
     CertificationEntry,
@@ -9,11 +11,18 @@ from src.models.cv_fingerprint import (
     EducationEntry,
     ExperienceEntry,
     FingerprintDiagnostics,
+    PipelineContext,
     ProjectEntry,
+    SkillAttachment,
+    SkillAttachmentStatus,
+    SkillDurationResult,
     SkillMention,
     compute_content_hash,
     generate_fingerprint_cache_key,
+    resolve_scoring_timezone,
 )
+
+
 from src.models.evidence import (
     ChunkLevel,
     ChunkLevelLiteral,
@@ -51,8 +60,17 @@ __all__ = [
     "AgentEvaluationRequest",
     "AgentEvaluationResponse",
     "PARSER_VERSION",
+    "POLICY_VERSION",
+    "TIMEZONE_ALIASES",
+    "resolve_scoring_timezone",
+    "PipelineContext",
     "CVFingerprint",
+
+
     "SkillMention",
+    "SkillAttachment",
+    "SkillAttachmentStatus",
+    "SkillDurationResult",
     "ExperienceEntry",
     "ProjectEntry",
     "EducationEntry",

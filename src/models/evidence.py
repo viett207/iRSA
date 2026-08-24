@@ -19,6 +19,12 @@ class CVSection(str, Enum):
     PROJECTS = "projects"
     CERTIFICATIONS = "certifications"
     AWARDS = "awards"
+    PUBLICATIONS = "publications"
+    LANGUAGES = "languages"
+    VOLUNTEERING = "volunteering"
+    REFERENCES = "references"
+    INTERESTS = "interests"
+    ACTIVITIES = "activities"
     OTHER = "other"
     UNKNOWN = "unknown"
 
@@ -32,9 +38,16 @@ CVSectionLiteral = Literal[
     "projects",
     "certifications",
     "awards",
+    "publications",
+    "languages",
+    "volunteering",
+    "references",
+    "interests",
+    "activities",
     "other",
     "unknown",
 ]
+
 
 
 class ChunkLevel(str, Enum):

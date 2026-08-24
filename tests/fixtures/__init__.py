@@ -11,6 +11,25 @@ from tests.fixtures.jd_fixtures import (
     list_jd_fixture_keys,
 )
 
+try:
+    from tests.fixtures.scoring_fixtures import (
+        FIXTURES,
+        JDSpec,
+        ScoringFixture,
+        as_agent_state,
+        as_criteria_kwargs,
+        as_job_criteria,
+        get_fixture,
+    )
+except ImportError:
+    FIXTURES = {}
+    JDSpec = None
+    ScoringFixture = None
+    as_agent_state = None
+    as_criteria_kwargs = None
+    as_job_criteria = None
+    get_fixture = None
+
 __all__ = [
     "CV_FIXTURES",
     "get_cv_fixture",
@@ -18,4 +37,11 @@ __all__ = [
     "JD_FIXTURES",
     "get_jd_fixture",
     "list_jd_fixture_keys",
+    "FIXTURES",
+    "JDSpec",
+    "ScoringFixture",
+    "as_agent_state",
+    "as_criteria_kwargs",
+    "as_job_criteria",
+    "get_fixture",
 ]

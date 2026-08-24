@@ -53,33 +53,59 @@ class TextChunker:
     ) -> tuple[CVSection, float, bool, str | None]:
         """Resolve the enclosing CV section, confidence, and heading status for a given text span.
 
+        Uses majority character overlap across section spans to resolve cross-boundary windows accurately.
+
         Returns:
             (section, section_confidence, is_heading, raw_heading)
         """
         if not sections:
             return CVSection.UNKNOWN, 0.0, False, None
 
+        # 1. Check if span is primarily or contained within a section heading
         for sec in sections:
-            # 1. Check if this span is the section heading itself
             if sec.heading_span is not None:
                 h_start = sec.heading_span.char_start
                 h_end = sec.heading_span.char_end
                 # Exact or contained within heading line
                 if h_start <= char_start and char_end <= h_end:
                     return sec.section, sec.confidence, True, sec.raw_heading
-                # Overlaps significantly with heading line
-                if max(char_start, h_start) < min(char_end, h_end):
+                # Overlaps predominantly with heading line (>= 50% of the chunk is heading)
+                h_overlap = max(0, min(char_end, h_end) - max(char_start, h_start))
+                span_len = max(1, char_end - char_start)
+                if h_overlap > 0 and (h_overlap / span_len >= 0.5):
                     return sec.section, sec.confidence, True, sec.raw_heading
 
-            # 2. Check if span falls into section body / full bounds [full_char_start, full_char_end)
-            if sec.full_char_start <= char_start < sec.full_char_end:
-                return sec.section, sec.confidence, False, sec.raw_heading
+
+        # 2. Majority Character Overlap across all sections
+        best_section: DetectedSection | None = None
+        max_overlap: int = -1
+
+        for sec in sections:
+            sec_start = sec.full_char_start
+            sec_end = sec.full_char_end
+            overlap = max(0, min(char_end, sec_end) - max(char_start, sec_start))
+            if overlap > max_overlap:
+                max_overlap = overlap
+                best_section = sec
+
+        if best_section is not None and max_overlap > 0:
+            is_heading = False
+            if best_section.heading_span is not None:
+                h_start = best_section.heading_span.char_start
+                h_end = best_section.heading_span.char_end
+                h_overlap = max(0, min(char_end, h_end) - max(char_start, h_start))
+                span_len = max(1, char_end - char_start)
+                if h_overlap > 0 and (h_overlap / span_len >= 0.5 or h_overlap == (h_end - h_start)):
+                    is_heading = True
+            return best_section.section, best_section.confidence, is_heading, best_section.raw_heading
+
 
         # 3. Fallback to last section if at document tail
         if sections and char_start >= sections[-1].full_char_start:
             return sections[-1].section, sections[-1].confidence, False, sections[-1].raw_heading
 
         return CVSection.UNKNOWN, 0.0, False, None
+
 
     @staticmethod
     def chunk_lines(
