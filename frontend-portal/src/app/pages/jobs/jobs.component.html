@@ -90,6 +90,23 @@
             </nz-select>
           </div>
 
+          <!-- Industry / Category Select -->
+          <div class="console-field field-category">
+            <span nz-icon nzType="appstore" nzTheme="outline" class="field-icon"></span>
+            <nz-select
+              [(ngModel)]="selectedCategory"
+              nzPlaceHolder="Tất cả ngành nghề"
+              nzAllowClear
+              nzShowSearch
+              (ngModelChange)="onFilterChange()"
+              class="console-select"
+            >
+              @for (cat of categories; track cat.value) {
+                <nz-option [nzValue]="cat.value" [nzLabel]="cat.label"></nz-option>
+              }
+            </nz-select>
+          </div>
+
           <!-- Action Button -->
           <button nz-button nzType="primary" nzSize="large" class="console-search-btn" (click)="onSearch()">
             <span nz-icon nzType="search" nzTheme="outline"></span>
