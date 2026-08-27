@@ -58,6 +58,7 @@
 .hero-badge-wrap {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   margin-bottom: 12px;
   flex-wrap: wrap;
@@ -108,21 +109,24 @@
   line-height: 1.25;
   margin-bottom: 8px;
   letter-spacing: -0.02em;
+  text-align: center;
 }
 
 .hero-subtitle {
   font-size: clamp(14px, 1.4vw, 17px);
   color: rgba(255, 255, 255, 0.9);
   max-width: 860px;
-  margin-bottom: 28px;
+  margin: 0 auto 28px;
   line-height: 1.55;
+  text-align: center;
 }
 
 /* ==========================================================================
    2. Integrated Multi-Criteria Search Console
    ========================================================================== */
 .search-console-wrapper {
-  margin-bottom: 20px;
+  max-width: 1200px;
+  margin: 0 auto 20px;
 }
 
 .search-console {
@@ -290,6 +294,7 @@
 .quick-chips-bar {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
 
@@ -303,6 +308,7 @@
   .chips-list {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 8px;
   }
 }
