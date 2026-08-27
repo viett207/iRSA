@@ -54,16 +54,14 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
     </div>
 
     <!-- Stats -->
-    <div style="display: flex; gap: 16px; margin-bottom: 20px">
-      <nz-card style="flex: 1; text-align: center" nzSize="small">
-        <nz-statistic
-          nzTitle="Ứng viên đang trong vòng phỏng vấn"
-          [nzValue]="total()"
-          [nzPrefix]="totalIcon"
-          [nzValueStyle]="{ color: '#722ed1' }"
-        ></nz-statistic>
-        <ng-template #totalIcon><span nz-icon nzType="team"></span></ng-template>
-      </nz-card>
+    <div class="static-kpi-grid static-kpi-grid--one">
+      <div class="static-display-card static-kpi-card static-kpi-card--primary">
+        <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="team"></span></span>
+        <div class="static-kpi-content">
+          <span class="static-kpi-label">Ứng viên đang trong vòng phỏng vấn</span>
+          <strong class="static-kpi-value">{{ total() }}</strong>
+        </div>
+      </div>
     </div>
 
     <!-- Sort toolbar -->
@@ -146,6 +144,7 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
               <button
                 nz-button
                 nzType="primary"
+                class="interview-room-button"
                 style="background: #722ed1; border-color: #722ed1; font-weight: 600"
                 (click)="openInterviewRoom(app)"
                 nz-tooltip
@@ -156,7 +155,7 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
               </button>
             </td>
             <td>
-              @if (isOwner(app)) {
+              @if (isOwner(app) && app.has_completed_interview) {
                 <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
                   <button nz-button nzSize="small" nzType="primary"
                     style="background: #52c41a; border-color: #52c41a; font-weight: 600"
@@ -186,6 +185,15 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
                     <span nz-icon nzType="rollback"></span>
                   </button>
                 </div>
+              } @else if (isOwner(app)) {
+                <span
+                  class="finalization-locked"
+                  nz-tooltip
+                  nzTooltipTitle="Hoàn thành buổi phỏng vấn trong Phòng PV trước khi chốt kết quả"
+                >
+                  <span nz-icon nzType="lock"></span>
+                  Chờ hoàn thành PV
+                </span>
               } @else {
                 <span style="color: #999">—</span>
               }
@@ -204,6 +212,38 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
       align-items: center;
     }
     :host ::ng-deep .ant-table-cell { vertical-align: middle; }
+
+    :host ::ng-deep .interview-room-button.ant-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #fff !important;
+      font-size: 13px !important;
+      font-weight: 700 !important;
+      line-height: 1 !important;
+      opacity: 1 !important;
+      text-shadow: 0 1px 1px hsl(220 35% 17% / 0.18);
+    }
+
+    :host ::ng-deep .interview-room-button.ant-btn > span,
+    :host ::ng-deep .interview-room-button.ant-btn .anticon {
+      color: #fff !important;
+      opacity: 1 !important;
+    }
+
+    .finalization-locked {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border: 1px dashed var(--color-border);
+      border-radius: 6px;
+      color: var(--color-text-tertiary);
+      background: var(--color-bg-tertiary);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
   `],
 })
 export class InterviewingComponent implements OnInit, OnDestroy {

@@ -315,6 +315,7 @@ export interface InterviewingApplicant {
   total_score: number | null;
   ai_score: number | null;
   has_ai_evaluation: boolean;
+  has_completed_interview: boolean;
   updated_at: string | null;
 }
 
@@ -507,4 +508,3 @@ export const APPLICATION_STATUS_COLORS: Record<string, string> = {
   hired: 'success',
   rejected: 'error',
 };
-

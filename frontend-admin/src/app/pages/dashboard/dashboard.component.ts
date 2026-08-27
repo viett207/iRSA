@@ -27,6 +27,7 @@ interface StatCard {
   suffix?: string;
   icon: string;
   iconColor: 'primary' | 'success' | 'warning' | 'error';
+  route: string;
 }
 
 interface FunnelStage {
@@ -70,12 +71,14 @@ interface RecentApplication {
       <!-- Page Header -->
       <div class="page-header">
         <div class="header-content">
+          <p class="dashboard-kicker">Bảng điều hành tuyển dụng</p>
           <h1 class="page-title">Xin chào, {{ userName() }}!</h1>
           <p class="page-subtitle">
             Đây là tổng quan hoạt động tuyển dụng của bạn hôm nay.
           </p>
         </div>
         <div class="header-actions">
+          <span class="today-chip"><i></i>Hôm nay</span>
           <button nz-button nzType="primary" routerLink="/jobs/new">
             <span nz-icon nzType="plus"></span>
             Tạo tin tuyển dụng
@@ -83,11 +86,23 @@ interface RecentApplication {
         </div>
       </div>
 
+      <section class="priority-card" aria-labelledby="priority-title">
+        <div class="priority-copy">
+          <span class="priority-kicker">Việc cần ưu tiên hôm nay</span>
+          <h2 id="priority-title">{{ recentApplications().length }} hồ sơ mới đang chờ đội tuyển dụng xem xét</h2>
+          <p>Xử lý sớm các hồ sơ phù hợp để giữ tiến độ tuyển dụng và phản hồi ứng viên đúng hạn.</p>
+        </div>
+        <div class="priority-actions">
+          <a nz-button class="priority-primary" routerLink="/applications">Xem hàng chờ <span nz-icon nzType="arrow-right"></span></a>
+          <a nz-button class="priority-secondary" routerLink="/jobs">Quản lý vị trí</a>
+        </div>
+      </section>
+
       <!-- KPI Stats Grid -->
       <div nz-row [nzGutter]="[24, 24]" class="stats-section">
         @for (stat of stats(); track stat.title) {
-          <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="6">
-            <div class="stat-card">
+          <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
+            <a class="stat-card" [routerLink]="stat.route" [attr.aria-label]="'Xem ' + stat.title">
               <div class="stat-icon" [class]="'stat-icon--' + stat.iconColor">
                 <span nz-icon [nzType]="stat.icon" nzTheme="outline"></span>
               </div>
@@ -101,7 +116,7 @@ interface RecentApplication {
                 </div>
                 
               </div>
-            </div>
+            </a>
           </div>
         }
       </div>
@@ -134,6 +149,42 @@ interface RecentApplication {
             </div>
           </nz-card>
         </div>
+
+        <div nz-col [nzXs]="24" [nzLg]="12">
+          <nz-card class="funnel-card">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Tiến độ tuyển dụng</h3>
+                <span class="card-subtitle">Tổng quan ứng viên trong quy trình hiện tại</span>
+              </div>
+              <a routerLink="/applications" class="view-all-link">
+                Xem hồ sơ
+                <span nz-icon nzType="arrow-right"></span>
+              </a>
+            </div>
+
+            @if (funnelStages().length) {
+              <div class="funnel-container">
+                @for (stage of funnelStages(); track stage.name; let index = $index) {
+                  <div class="funnel-stage" [class]="'funnel-stage funnel-stage--' + index">
+                    <span class="funnel-index">{{ index + 1 }}</span>
+                    <span class="funnel-name">{{ stage.name }}</span>
+                    <div class="funnel-bar-wrapper">
+                      <div class="funnel-bar" [style.width.%]="stage.percentage"></div>
+                    </div>
+                    <span class="funnel-count">{{ stage.count }}</span>
+                  </div>
+                }
+              </div>
+              <div class="funnel-footer">
+                <span class="funnel-dot"></span>
+                <span>Tỷ lệ chuyển đổi hiện tại: <strong>{{ conversionRate() }}%</strong></span>
+              </div>
+            } @else {
+              <nz-empty nzNotFoundContent="Chưa có dữ liệu ứng viên"></nz-empty>
+            }
+          </nz-card>
+        </div>
       </div>
 
       <!-- Recent Applications Table -->
@@ -163,7 +214,7 @@ interface RecentApplication {
               <th>Vị trí ứng tuyển</th>
               <th>Ngày nộp</th>
               <th>Trạng thái</th>
-              <th nzWidth="100px"></th>
+              <th nzWidth="124px"></th>
             </tr>
           </thead>
           <tbody>
@@ -215,7 +266,7 @@ interface RecentApplication {
                     nz-button
                     nzType="link"
                     nzSize="small"
-                    [routerLink]="['/applications', app.id]"
+                    [routerLink]="['/jobs', app.jobId]"
                     nz-tooltip
                     nzTooltipTitle="Xem chi tiết"
                   >
@@ -291,7 +342,7 @@ interface RecentApplication {
       <nz-modal
         [(nzVisible)]="resumeModalVisible"
         [nzTitle]="'CV: ' + resumeModalTitle"
-        (nzOnCancel)="resumeModalVisible = false"
+        (nzOnCancel)="closeResumeModal()"
         [nzFooter]="null"
         [nzWidth]="900"
         nzCentered
@@ -317,6 +368,39 @@ interface RecentApplication {
       animation: fadeIn 0.3s ease-out;
     }
 
+    /* Dashboard presentation: API calls, signals and actions remain unchanged. */
+    .dashboard { max-width: 1400px; margin: 0 auto; animation: dashboard-enter 0.42s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .page-header { align-items: flex-end; margin-bottom: 22px; }
+    .dashboard-kicker, .priority-kicker { display: block; margin: 0 0 6px; color: var(--color-primary); font-size: 10px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; }
+    .page-title { max-width: 18ch; font-size: clamp(28px, 3vw, 38px); line-height: 1.08; letter-spacing: -0.055em; text-wrap: balance; }
+    .page-subtitle { max-width: 62ch; font-size: 14px; line-height: 1.6; }
+    .header-actions { align-items: center; }
+    .today-chip { display: inline-flex; align-items: center; gap: 8px; margin-right: 4px; padding: 8px 10px; border: 1px solid var(--color-border-light); border-radius: 9px; color: var(--color-text-secondary); background: var(--color-bg-secondary); font-size: 12px; white-space: nowrap; }
+    .today-chip i, .funnel-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--color-success); box-shadow: 0 0 0 4px var(--color-success-bg); }
+    .priority-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; overflow: hidden; margin-bottom: 18px; padding: 23px 25px; border-radius: 18px; color: #fff; background: radial-gradient(circle at 87% -35%, hsl(209 86% 67% / 0.38), transparent 19rem), hsl(220 35% 17%); box-shadow: 0 16px 34px hsl(220 35% 17% / 0.18); }
+    .priority-card::after { position: absolute; top: -92px; right: -72px; width: 240px; height: 240px; border: 1px solid hsl(210 75% 77% / 0.24); border-radius: 50%; box-shadow: 0 0 0 30px hsl(210 75% 77% / 0.05); content: ''; pointer-events: none; }
+    .priority-copy, .priority-actions { position: relative; z-index: 1; }
+    .priority-kicker { color: hsl(207 86% 74%); }
+    .priority-copy h2 { max-width: 36ch; margin: 0; font-family: var(--font-heading); font-size: 20px; line-height: 1.25; letter-spacing: -0.035em; }
+    .priority-copy p { max-width: 65ch; margin: 6px 0 0; color: hsl(215 20% 78%); font-size: 12px; }
+    .priority-actions { display: flex; align-items: center; gap: 8px; }
+    .priority-actions a { display: inline-flex; align-items: center; gap: 7px; min-height: 38px; border-radius: 9px; font-size: 12px; font-weight: 700; transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease; }
+    .priority-actions a:hover { transform: translateY(-1px); }
+    .priority-primary { border-color: #fff !important; color: hsl(220 35% 17%) !important; background: #fff !important; }
+    .priority-secondary { border-color: hsl(215 26% 44%) !important; color: #fff !important; background: hsl(218 29% 25% / 0.78) !important; }
+    .stats-section { margin-bottom: 18px; }
+    .stat-card { align-items: center; min-height: 112px; padding: 18px; border-radius: 14px; box-shadow: 0 3px 10px hsl(220 30% 18% / 0.035); }
+    .stat-card:hover { border-color: var(--color-primary-200); box-shadow: 0 12px 26px hsl(220 30% 18% / 0.08); transform: translateY(-3px); }
+    .stat-icon { width: 44px; height: 44px; border-radius: 12px; }.stat-icon span { font-size: 20px; }.stat-label { margin-bottom: 5px; font-size: 12px; }.stat-value { font-size: 30px; font-variant-numeric: tabular-nums; letter-spacing: -0.065em; }
+    .main-content { margin-bottom: 18px; }
+    :host ::ng-deep .actions-card.ant-card, :host ::ng-deep .funnel-card.ant-card, :host ::ng-deep .table-card.ant-card, :host ::ng-deep .approvals-card.ant-card { overflow: hidden; border: 1px solid var(--color-border-light); border-radius: 18px; box-shadow: 0 10px 28px hsl(220 30% 18% / 0.055); }
+    :host ::ng-deep .actions-card .ant-card-body, :host ::ng-deep .funnel-card .ant-card-body, :host ::ng-deep .table-card .ant-card-body, :host ::ng-deep .approvals-card .ant-card-body { padding: 21px; }
+    .card-header { align-items: center; margin-bottom: 16px; }.card-title { font-size: 16px; letter-spacing: -0.035em; }.view-all-link { color: var(--color-primary); font-size: 12px; font-weight: 700; }
+    .quick-actions-grid { gap: 8px; }.action-item { gap: 13px; padding: 12px; border: 1px solid transparent; border-radius: 11px; background: var(--color-bg-tertiary); }.action-item:hover { border-color: var(--color-primary-200); background: var(--color-primary-50); transform: translateX(3px); }.action-icon { width: 40px; height: 40px; border-radius: 11px; }.action-icon span { font-size: 18px; }.action-label { font-size: 13px; }
+    .funnel-container { gap: 11px; }.funnel-stage { display: grid; grid-template-columns: 22px minmax(95px, 1fr) minmax(70px, 2.1fr) 36px; gap: 9px; align-items: center; }.funnel-index { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 7px; color: var(--color-primary); background: var(--color-primary-50); font-size: 10px; font-weight: 800; }.funnel-name { font-size: 12px; font-weight: 600; }.funnel-bar-wrapper { height: 7px; border-radius: 99px; background: var(--color-bg-tertiary); }.funnel-bar { min-width: 6px; padding: 0; border-radius: inherit; background: var(--color-primary); animation: fill-funnel 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }.funnel-stage--1 .funnel-bar { background: hsl(199 58% 42%); }.funnel-stage--2 .funnel-bar { background: hsl(165 41% 36%); }.funnel-stage--3 .funnel-bar { background: hsl(35 62% 43%); }.funnel-stage--4 .funnel-bar { background: hsl(219 26% 43%); }.funnel-count { color: var(--color-text-secondary); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }.funnel-footer { display: flex; align-items: center; gap: 9px; margin-top: 17px; padding: 11px 12px; border: 0; border-radius: 10px; color: var(--color-text-secondary); background: var(--color-primary-50); font-size: 11px; }.funnel-footer strong { color: var(--color-primary); font-variant-numeric: tabular-nums; }
+    .table-card { margin-bottom: 18px; }:host ::ng-deep .table-card .ant-table { background: transparent; }:host ::ng-deep .table-card .ant-table-thead > tr > th { padding-top: 10px; padding-bottom: 10px; color: var(--color-text-tertiary); background: var(--color-bg-tertiary); font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }:host ::ng-deep .table-card .ant-table-tbody > tr > td { padding-top: 13px; padding-bottom: 13px; }:host ::ng-deep .table-card .ant-table-tbody > tr:hover > td { background: var(--color-primary-50); }.candidate-avatar { color: var(--color-primary) !important; background: var(--color-primary-50) !important; }.candidate-name { font-size: 13px; font-weight: 600; }:host ::ng-deep .approvals-card.ant-card { border-left: 3px solid var(--color-warning); }
+    @keyframes dashboard-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } } @keyframes fill-funnel { from { transform: scaleX(0); transform-origin: left; } to { transform: scaleX(1); transform-origin: left; } }
+
     /* Page Header */
     .page-header {
       display: flex;
@@ -337,7 +421,8 @@ interface RecentApplication {
 
     .page-subtitle {
       font-size: 15px;
-      color: var(--color-text-secondary);
+      color: hsl(218 22% 29%);
+      font-weight: 500;
       margin: 0;
     }
 
@@ -348,7 +433,9 @@ interface RecentApplication {
 
     .stat-card {
       display: flex;
-      align-items: flex-start;
+      position: relative;
+      align-items: center;
+      justify-content: center;
       gap: 16px;
       padding: 24px;
       background: var(--color-bg-secondary);
@@ -357,14 +444,23 @@ interface RecentApplication {
       box-shadow: var(--shadow-card);
       transition: all 0.2s ease;
       height: 100%;
+      color: inherit;
+      text-decoration: none;
 
       &:hover {
         box-shadow: var(--shadow-card-hover);
         transform: translateY(-2px);
       }
+
+      &:focus-visible {
+        outline: 3px solid hsl(215 78% 48% / 0.32);
+        outline-offset: 3px;
+      }
     }
 
     .stat-icon {
+      position: absolute;
+      left: 16px;
       width: 52px;
       height: 52px;
       border-radius: 12px;
@@ -399,12 +495,15 @@ interface RecentApplication {
     }
 
     .stat-content {
-      flex: 1;
+      flex: 0 1 auto;
+      width: 100%;
       min-width: 0;
+      text-align: center;
     }
 
     .stat-label {
       display: block;
+      padding: 0;
       font-size: 13px;
       color: var(--color-text-secondary);
       margin-bottom: 8px;
@@ -413,6 +512,7 @@ interface RecentApplication {
     .stat-value-row {
       display: flex;
       align-items: baseline;
+      justify-content: center;
       gap: 4px;
     }
 
@@ -424,34 +524,10 @@ interface RecentApplication {
       line-height: 1;
     }
 
-    .stat-suffix {
-      font-size: 14px;
-      color: var(--color-text-secondary);
-    }
-
-    .stat-trend {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-top: 8px;
-      font-size: 12px;
-
-      span[nz-icon] {
-        font-size: 14px;
-      }
-
-      &--up {
-        color: var(--color-success);
-      }
-
-      &--down {
-        color: var(--color-error);
-      }
-    }
-
     /* Main Content */
     .main-content {
-      margin-bottom: 24px;
+      /* Tách nhẹ hai thẻ tổng quan khỏi bảng hồ sơ bên dưới. */
+      margin-bottom: 12px !important;
     }
 
     /* Card Styles */
@@ -473,7 +549,8 @@ interface RecentApplication {
     .card-subtitle {
       display: block;
       font-size: 13px;
-      color: var(--color-text-tertiary);
+      color: hsl(218 13% 41%);
+      font-weight: 500;
       margin-top: 4px;
     }
 
@@ -498,26 +575,27 @@ interface RecentApplication {
     .funnel-container {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
     .funnel-stage {
-      display: flex;
+      display: grid;
+      grid-template-columns: 22px 100px minmax(0, 1fr) 36px;
       align-items: center;
-      gap: 16px;
+      gap: 10px;
     }
 
     .funnel-bar-wrapper {
-      flex: 1;
-      height: 36px;
+      min-width: 0;
+      height: 30px;
       background: var(--color-bg-tertiary);
-      border-radius: 8px;
+      border-radius: 7px;
       overflow: hidden;
     }
 
     .funnel-bar {
       height: 100%;
-      border-radius: 8px;
+      border-radius: 7px;
       display: flex;
       align-items: center;
       justify-content: flex-end;
@@ -530,45 +608,6 @@ interface RecentApplication {
       font-size: 14px;
       font-weight: 600;
       color: #fff;
-    }
-
-    .funnel-label {
-      width: 120px;
-      flex-shrink: 0;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .funnel-name {
-      font-size: 13px;
-      color: var(--color-text-primary);
-    }
-
-    .funnel-percent {
-      font-size: 13px;
-      color: var(--color-text-tertiary);
-    }
-
-    .funnel-footer {
-      margin-top: 20px;
-      padding-top: 16px;
-      border-top: 1px solid var(--color-border-light);
-    }
-
-    .conversion-rate {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 14px;
-      color: var(--color-text-secondary);
-
-      span[nz-icon] {
-        color: var(--color-warning);
-      }
-
-      strong {
-        color: var(--color-text-primary);
-      }
     }
 
     /* Quick Actions */
@@ -663,6 +702,24 @@ interface RecentApplication {
       margin-bottom: 24px;
     }
 
+    :host ::ng-deep .table-card .ant-table-thead > tr > th {
+      text-align: center;
+    }
+
+    :host ::ng-deep .table-card .ant-table-tbody > tr > td:last-child {
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    :host ::ng-deep .table-card .ant-table-tbody > tr > td:last-child .ant-btn {
+      min-width: 32px;
+      padding-inline: 5px;
+    }
+
+    :host ::ng-deep .table-card .ant-table-tbody > tr > td:last-child .ant-btn .anticon {
+      font-size: 17px;
+    }
+
     .candidate-cell {
       display: flex;
       align-items: center;
@@ -684,7 +741,7 @@ interface RecentApplication {
     }
 
     .date-text {
-      color: var(--color-text-secondary);
+      color: hsl(218 15% 39%);
       font-size: 13px;
     }
 
@@ -723,7 +780,8 @@ interface RecentApplication {
 
     .approval-meta {
       font-size: 12px;
-      color: var(--color-text-tertiary);
+      color: hsl(218 13% 41%);
+      font-weight: 500;
     }
 
     .approval-actions {
@@ -778,6 +836,54 @@ interface RecentApplication {
       .action-item {
         padding: 12px;
       }
+
+      .priority-card {
+        grid-template-columns: 1fr;
+        padding: 20px;
+      }
+
+      .priority-actions {
+        flex-wrap: wrap;
+      }
+
+      .funnel-stage {
+        grid-template-columns: 22px minmax(80px, 1fr) minmax(42px, 1.3fr) 30px;
+        gap: 6px;
+      }
+
+      :host ::ng-deep .actions-card .ant-card-body,
+      :host ::ng-deep .funnel-card .ant-card-body,
+      :host ::ng-deep .table-card .ant-card-body,
+      :host ::ng-deep .approvals-card .ant-card-body {
+        padding: 16px;
+      }
+    }
+
+    /* Compact hierarchy for day-to-day HR use. */
+    .page-title { font-size: clamp(24px, 2.45vw, 30px); }
+    .priority-card { gap: 18px; padding: 18px 21px; }
+    .priority-kicker { font-size: 11px; }
+    .priority-copy h2 { color: #fff; font-size: 19px; font-weight: 700; }
+    .priority-copy p { max-width: none; color: hsl(215 25% 85%); font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .priority-actions a { min-height: 34px; font-size: 11px; }
+    .stat-card { min-height: 96px; padding: 14px 16px; gap: 12px; }
+    .stat-icon { width: 40px; height: 40px; }
+    .stat-icon span { font-size: 18px; }
+    .stat-value { font-size: 25px; }
+    .stat-label { font-weight: 700; }
+    .stat-card { align-items: center; min-height: 0; }
+    :host ::ng-deep .stats-section > .ant-col {
+      display: flex;
+    }
+    :host ::ng-deep .stats-section.ant-row { justify-content: flex-start; }
+    .stat-card { width: 100%; max-width: none; }
+
+    @media (max-width: 767px) {
+      .page-title { font-size: 24px; }
+      .priority-card { padding: 17px; }
+      .priority-copy p { white-space: normal; }
+      :host ::ng-deep .stats-section > .ant-col { flex-basis: 100%; width: 100% !important; }
+      .stat-card { width: 100%; }
     }
   `],
 })
@@ -806,6 +912,7 @@ export class DashboardComponent implements OnInit {
   resumeModalLoading = false;
   resumeModalUrl: SafeResourceUrl | null = null;
   resumeModalTitle = '';
+  private resumeObjectUrl: string | null = null;
 
   conversionRate = computed(() => {
     const stages = this.funnelStages();
@@ -866,18 +973,21 @@ export class DashboardComponent implements OnInit {
         value: data.stats.active_jobs,
         icon: 'solution',
         iconColor: 'primary',
+        route: '/jobs',
       },
       {
         title: 'Tổng hồ sơ ứng tuyển',
         value: data.stats.total_applications,
         icon: 'file-text',
         iconColor: 'success',
+        route: '/applications',
       },
       {
         title: 'Tổng ứng viên',
         value: data.stats.total_candidates,
         icon: 'team',
         iconColor: 'warning',
+        route: '/candidates',
       },
     ]);
   }
@@ -994,13 +1104,18 @@ export class DashboardComponent implements OnInit {
 
   viewResume(app: RecentApplication): void {
     this.resumeModalTitle = app.candidateName;
-    this.resumeModalLoading = true;
+    this.releaseResumeObjectUrl();
     this.resumeModalUrl = null;
+    this.resumeModalLoading = true;
     this.resumeModalVisible = true;
 
-    this.jobService.getResumeUrl(app.jobId, app.id).subscribe({
-      next: (res) => {
-        this.resumeModalUrl = this.sanitizer.bypassSecurityTrustResourceUrl(res.url);
+    // Tải qua HttpClient có Bearer token, rồi nhúng blob cùng origin vào iframe.
+    // Cách này không bị trình duyệt chặn vì chính sách frame của endpoint API.
+    this.jobService.downloadResume(app.jobId, app.id).subscribe({
+      next: (blob) => {
+        const pdfBlob = new Blob([blob], { type: blob.type || 'application/pdf' });
+        this.resumeObjectUrl = URL.createObjectURL(pdfBlob);
+        this.resumeModalUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.resumeObjectUrl);
         this.resumeModalLoading = false;
       },
       error: () => {
@@ -1009,6 +1124,19 @@ export class DashboardComponent implements OnInit {
         this.message.error('Không thể tải CV');
       },
     });
+  }
+
+  closeResumeModal(): void {
+    this.resumeModalVisible = false;
+    this.resumeModalUrl = null;
+    this.releaseResumeObjectUrl();
+  }
+
+  private releaseResumeObjectUrl(): void {
+    if (this.resumeObjectUrl) {
+      URL.revokeObjectURL(this.resumeObjectUrl);
+      this.resumeObjectUrl = null;
+    }
   }
 
 }

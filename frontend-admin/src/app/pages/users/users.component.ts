@@ -76,11 +76,14 @@ const ROLE_COLORS: Record<UserRole, string> = {
       </div>
 
       <!-- Stats Summary -->
-      <div class="stats-row">
+      <div class="stats-row static-kpi-grid static-kpi-grid--five">
         @for (stat of userStats; track stat.label) {
-          <div class="stat-item" [class]="'stat-item--' + stat.color">
-            <span class="stat-value">{{ stat.value }}</span>
-            <span class="stat-label">{{ stat.label }}</span>
+          <div class="stat-item static-display-card static-kpi-card" [class]="'stat-item stat-item--' + stat.color + ' static-display-card static-kpi-card static-kpi-card--' + stat.color">
+            <span class="static-kpi-icon" aria-hidden="true"><span nz-icon [nzType]="stat.icon"></span></span>
+            <div class="static-kpi-content">
+              <span class="stat-label static-kpi-label">{{ stat.label }}</span>
+              <span class="stat-value static-kpi-value">{{ stat.value }}</span>
+            </div>
           </div>
         }
       </div>
@@ -511,11 +514,11 @@ export class UsersComponent implements OnInit {
 
   // Stats summary - calculated from current page data
   userStats = [
-    { label: 'Tất cả', value: 0, color: 'primary' },
-    { label: 'Hoạt động', value: 0, color: 'success' },
-    { label: 'Ứng viên', value: 0, color: 'blue' },
-    { label: 'Tuyển dụng', value: 0, color: 'purple' },
-    { label: 'Quản lý', value: 0, color: 'orange' },
+    { label: 'Tất cả', value: 0, color: 'primary', icon: 'team' },
+    { label: 'Hoạt động', value: 0, color: 'success', icon: 'check-circle' },
+    { label: 'Ứng viên', value: 0, color: 'blue', icon: 'user' },
+    { label: 'Tuyển dụng', value: 0, color: 'purple', icon: 'solution' },
+    { label: 'Quản lý', value: 0, color: 'orange', icon: 'safety-certificate' },
   ];
 
   constructor(
@@ -557,11 +560,11 @@ export class UsersComponent implements OnInit {
     const managerCount = items.filter(u => u.role === 'leader' || u.role === 'admin').length;
 
     this.userStats = [
-      { label: 'Tất cả', value: items.length, color: 'primary' },
-      { label: 'Hoạt động', value: activeCount, color: 'success' },
-      { label: 'Ứng viên', value: candidateCount, color: 'blue' },
-      { label: 'Tuyển dụng', value: recruiterCount, color: 'purple' },
-      { label: 'Quản lý', value: managerCount, color: 'orange' },
+      { label: 'Tất cả', value: items.length, color: 'primary', icon: 'team' },
+      { label: 'Hoạt động', value: activeCount, color: 'success', icon: 'check-circle' },
+      { label: 'Ứng viên', value: candidateCount, color: 'blue', icon: 'user' },
+      { label: 'Tuyển dụng', value: recruiterCount, color: 'purple', icon: 'solution' },
+      { label: 'Quản lý', value: managerCount, color: 'orange', icon: 'safety-certificate' },
     ];
   }
 

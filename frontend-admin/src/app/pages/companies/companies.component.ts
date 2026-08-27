@@ -58,10 +58,13 @@ import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industr
       </div>
 
       <!-- Stats Summary -->
-      <div class="stats-row">
-        <div class="stat-item stat-item--primary">
-          <span class="stat-value">{{ total() }}</span>
-          <span class="stat-label">Tổng công ty</span>
+      <div class="stats-row static-kpi-grid static-kpi-grid--one">
+        <div class="stat-item stat-item--primary static-display-card static-kpi-card static-kpi-card--primary">
+          <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="bank"></span></span>
+          <div class="static-kpi-content">
+            <span class="stat-label static-kpi-label">Tổng công ty</span>
+            <span class="stat-value static-kpi-value">{{ total() }}</span>
+          </div>
         </div>
       </div>
 

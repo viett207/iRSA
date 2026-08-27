@@ -31,7 +31,6 @@ import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 
 import { JobService } from '../../services/job.service';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { environment } from '../../../../../environments/environment';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { MatchDetailsModalComponent } from '../../components/match-details-modal.component';
 import { InterviewScheduleModalComponent } from '../../components/interview-schedule-modal.component';
@@ -195,43 +194,31 @@ import {
         <!-- Stats -->
         <div nz-row [nzGutter]="16" style="margin-bottom: 16px">
           <div nz-col [nzSpan]="6">
-            <nz-card>
-              <nz-statistic
-                nzTitle="Ứng viên"
-                [nzValue]="job()!.applications_count"
-                [nzPrefix]="appIcon"
-              ></nz-statistic>
-              <ng-template #appIcon>
-                <span nz-icon nzType="team"></span>
-              </ng-template>
-            </nz-card>
+            <div class="static-display-card static-kpi-card static-kpi-card--primary">
+              <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="team"></span></span>
+              <div class="static-kpi-content"><span class="static-kpi-label">Ứng viên</span><strong class="static-kpi-value">{{ job()!.applications_count }}</strong></div>
+            </div>
           </div>
           <div nz-col [nzSpan]="6">
-            <nz-card>
-              <nz-statistic
-                nzTitle="Ngày tạo"
-                [nzValue]="formatDate(job()!.created_at)"
-              ></nz-statistic>
-            </nz-card>
+            <div class="static-display-card static-kpi-card static-kpi-card--neutral">
+              <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="calendar"></span></span>
+              <div class="static-kpi-content"><span class="static-kpi-label">Ngày tạo</span><strong class="static-kpi-value static-kpi-value--text">{{ formatDate(job()!.created_at) }}</strong></div>
+            </div>
           </div>
           @if (job()!.published_at) {
             <div nz-col [nzSpan]="6">
-              <nz-card>
-                <nz-statistic
-                  nzTitle="Ngày đăng"
-                  [nzValue]="formatDate(job()!.published_at)"
-                ></nz-statistic>
-              </nz-card>
+              <div class="static-display-card static-kpi-card static-kpi-card--success">
+                <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="global"></span></span>
+                <div class="static-kpi-content"><span class="static-kpi-label">Ngày đăng</span><strong class="static-kpi-value static-kpi-value--text">{{ formatDate(job()!.published_at) }}</strong></div>
+              </div>
             </div>
           }
           @if (job()!.application_deadline) {
             <div nz-col [nzSpan]="6">
-              <nz-card>
-                <nz-statistic
-                  nzTitle="Hạn nộp"
-                  [nzValue]="formatDate(job()!.application_deadline)"
-                ></nz-statistic>
-              </nz-card>
+              <div class="static-display-card static-kpi-card static-kpi-card--warning">
+                <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="clock-circle"></span></span>
+                <div class="static-kpi-content"><span class="static-kpi-label">Hạn nộp</span><strong class="static-kpi-value static-kpi-value--text">{{ formatDate(job()!.application_deadline) }}</strong></div>
+              </div>
             </div>
           }
         </div>
@@ -672,7 +659,7 @@ import {
     <nz-modal
       [(nzVisible)]="resumeModalVisible"
       [nzTitle]="'CV: ' + (resumeModalFilename || '')"
-      (nzOnCancel)="resumeModalVisible = false"
+      (nzOnCancel)="closeResumeModal()"
       [nzFooter]="null"
       [nzWidth]="900"
       nzCentered
@@ -684,16 +671,11 @@ import {
             <p style="margin-top: 12px; color: #888">Đang tải CV...</p>
           </div>
         } @else if (resumeModalUrl) {
-          <object
-            [data]="resumeModalUrl"
-            type="application/pdf"
+          <iframe
+            [src]="resumeModalUrl"
+            title="Xem trước CV PDF"
             style="width: 100%; height: 75vh; border: none; border-radius: 4px"
-          >
-            <p style="text-align: center; padding: 40px">
-              Trình duyệt không hỗ trợ xem PDF trực tiếp.
-              <a [href]="resumeModalUrl" target="_blank" style="color: #1890ff">Bấm để mở PDF</a>
-            </p>
-          </object>
+          ></iframe>
         }
       </ng-container>
     </nz-modal>
@@ -739,6 +721,7 @@ export class JobDetailComponent implements OnInit {
   resumeModalLoading = false;
   resumeModalUrl: SafeResourceUrl | null = null;
   resumeModalFilename = '';
+  private resumeObjectUrl: string | null = null;
 
   currentStep = computed(() => {
     const j = this.job();
@@ -1406,12 +1389,37 @@ export class JobDetailComponent implements OnInit {
     if (!j) return;
 
     this.resumeModalFilename = app.resume_filename;
-    // Use backend proxy to serve PDF inline (avoids MinIO CORS/X-Frame issues)
-    const token = localStorage.getItem('access_token');
-    const url = `${environment.apiUrl}/jobs/${j.id}/applications/${app.id}/resume-view?token=${token}`;
-    this.resumeModalUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-    this.resumeModalLoading = false;
+    this.releaseResumeObjectUrl();
+    this.resumeModalUrl = null;
+    this.resumeModalLoading = true;
     this.resumeModalVisible = true;
+
+    this.jobService.downloadResume(j.id, app.id).subscribe({
+      next: (blob) => {
+        const pdfBlob = new Blob([blob], { type: blob.type || 'application/pdf' });
+        this.resumeObjectUrl = URL.createObjectURL(pdfBlob);
+        this.resumeModalUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.resumeObjectUrl);
+        this.resumeModalLoading = false;
+      },
+      error: () => {
+        this.resumeModalLoading = false;
+        this.resumeModalVisible = false;
+        this.message.error('Không thể tải CV');
+      },
+    });
+  }
+
+  closeResumeModal(): void {
+    this.resumeModalVisible = false;
+    this.resumeModalUrl = null;
+    this.releaseResumeObjectUrl();
+  }
+
+  private releaseResumeObjectUrl(): void {
+    if (this.resumeObjectUrl) {
+      URL.revokeObjectURL(this.resumeObjectUrl);
+      this.resumeObjectUrl = null;
+    }
   }
 
   onBack(): void {

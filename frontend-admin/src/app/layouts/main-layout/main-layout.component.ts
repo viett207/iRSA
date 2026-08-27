@@ -1,6 +1,8 @@
-import { Component, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, computed, OnInit, OnDestroy, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { interval, startWith, switchMap } from 'rxjs';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -12,6 +14,7 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { DashboardService } from '../../core/services/dashboard.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -36,7 +39,7 @@ import { NotificationService } from '../../core/services/notification.service';
         class="sidebar"
         nzCollapsible
         [(nzCollapsed)]="isCollapsed"
-        [nzWidth]="240"
+        [nzWidth]="320"
         [nzCollapsedWidth]="64"
         nzBreakpoint="lg"
         [nzTrigger]="null"
@@ -78,7 +81,13 @@ import { NotificationService } from '../../core/services/notification.service';
           @if (!isCollapsed) {
             <li class="menu-section-header">QUẢN LÝ TUYỂN DỤNG</li>
           }
-          <li nz-submenu nzIcon="solution" nzTitle="Tin tuyển dụng" nzMatchRouter nzMatchRouterExact class="menu-item">
+          <ng-template #jobsSubmenuTitle>
+            <span class="jobs-submenu-title">
+              <span>Tin tuyển dụng</span>
+              @if (newApplicationCount() > 0) { <span class="menu-alert-dot" aria-hidden="true"></span> }
+            </span>
+          </ng-template>
+          <li nz-submenu nzIcon="solution" [nzTitle]="jobsSubmenuTitle" nzMatchRouter nzMatchRouterExact class="menu-item">
             <ul>
               <li nz-menu-item routerLink="/jobs" nzMatchRouter [nzMatchRouterExact]="true">
                 <span nz-icon nzType="unordered-list"></span>
@@ -87,6 +96,20 @@ import { NotificationService } from '../../core/services/notification.service';
               <li nz-menu-item routerLink="/jobs/new" nzMatchRouter>
                 <span nz-icon nzType="plus-circle"></span>
                 Tạo tin tuyển dụng mới
+              </li>
+              <li nz-menu-item routerLink="/applications" nzMatchRouter (click)="acknowledgeNewApplications()">
+                <span nz-icon nzType="file-text"></span>
+                Hồ sơ ứng tuyển
+                @if (newApplicationCount() > 0) {
+                  <span
+                    class="application-alert-count"
+                    [attr.aria-label]="'Có ' + newApplicationCount() + ' hồ sơ mới cần xử lý'"
+                  >{{ newApplicationCount() > 99 ? '99+' : newApplicationCount() }}</span>
+                }
+              </li>
+              <li nz-menu-item routerLink="/candidates" nzMatchRouter>
+                <span nz-icon nzType="team"></span>
+                Ứng viên
               </li>
             </ul>
           </li>
@@ -160,7 +183,8 @@ import { NotificationService } from '../../core/services/notification.service';
           <div class="header-right">
             <!-- Notifications -->
             <div
-              class="header-action"
+              class="header-action notification-trigger"
+              [class.has-unread]="notificationSvc.unreadCount() > 0"
               nz-dropdown
               [nzDropdownMenu]="notificationMenu"
               nzTrigger="click"
@@ -276,17 +300,17 @@ import { NotificationService } from '../../core/services/notification.service';
       z-index: 100;
       display: flex;
       flex-direction: column;
-      background: linear-gradient(180deg, #091326 0%, #0d1b38 100%) !important;
+      background: #17233a !important;
       border-right: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+      box-shadow: 2px 0 16px rgba(12, 27, 52, 0.14);
     }
 
     .sidebar-logo {
-      height: 68px;
+      height: 72px;
       display: flex;
       align-items: center;
       padding: 0 18px;
-      background: rgba(0, 0, 0, 0.25);
+      background: rgba(9, 19, 38, 0.22);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       gap: 12px;
       overflow: hidden;
@@ -336,18 +360,20 @@ import { NotificationService } from '../../core/services/notification.service';
     /* Menu Styling */
     .sidebar-menu {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 12px 0;
+      overscroll-behavior: contain;
+      padding: 9px 0 12px;
       background: transparent !important;
     }
 
     .menu-section-header {
-      padding: 16px 20px 6px;
-      font-size: 11px;
+      padding: 13px 22px 5px;
+      font-size: 10px;
       font-weight: 700;
-      color: rgba(255, 255, 255, 0.4);
-      letter-spacing: 1px;
+      color: rgba(222, 232, 248, 0.64);
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       list-style: none;
     }
@@ -355,11 +381,12 @@ import { NotificationService } from '../../core/services/notification.service';
     :host ::ng-deep .sidebar-menu {
       .ant-menu-item,
       .ant-menu-submenu-title {
-        margin: 3px 10px !important;
-        border-radius: 8px !important;
-        height: 42px !important;
-        line-height: 42px !important;
-        color: rgba(255, 255, 255, 0.72) !important;
+        margin: 2px 12px !important;
+        border-radius: 9px !important;
+        height: 36px !important;
+        line-height: 36px !important;
+        color: rgba(234, 241, 252, 0.84) !important;
+        font-weight: 600 !important;
         transition: all 0.2s ease !important;
 
         .anticon {
@@ -368,37 +395,109 @@ import { NotificationService } from '../../core/services/notification.service';
 
         &:hover {
           color: #ffffff !important;
-          background: rgba(255, 255, 255, 0.08) !important;
+          background: rgba(255, 255, 255, 0.09) !important;
         }
       }
 
       .ant-menu-item-selected {
-        background: linear-gradient(90deg, rgba(24, 144, 255, 0.25) 0%, rgba(24, 144, 255, 0.08) 100%) !important;
-        color: #38bdf8 !important;
+        background: #2d6dcc !important;
+        color: #ffffff !important;
         font-weight: 600 !important;
-        border-left: 3px solid #38bdf8 !important;
+        border-left: 0 !important;
 
         .anticon {
-          color: #38bdf8 !important;
+          color: #ffffff !important;
         }
       }
 
       .ant-menu-sub {
-        background: rgba(0, 0, 0, 0.2) !important;
-        border-radius: 8px;
-        margin: 4px 8px;
-        padding: 4px 0;
+        box-sizing: border-box;
+        width: calc(100% - 24px);
+        max-width: calc(100% - 24px);
+        max-height: min(31vh, 184px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        background: rgba(9, 19, 38, 0.32) !important;
+        border-radius: 9px;
+        margin: 2px 12px;
+        padding: 2px 0;
+
+        .ant-menu-item {
+          display: flex !important;
+          align-items: center;
+          width: auto !important;
+          margin: 2px 4px !important;
+          height: 34px !important;
+          padding-left: 16px !important;
+          padding-right: 10px !important;
+          line-height: 1 !important;
+          white-space: nowrap;
+          gap: 8px;
+
+          .anticon {
+            display: inline-flex;
+            flex: 0 0 18px;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            margin: 0 !important;
+            line-height: 1;
+          }
+
+          > span[nz-icon] {
+            display: inline-flex !important;
+            flex: 0 0 18px !important;
+            align-items: center;
+            justify-content: center;
+            width: 18px !important;
+            min-width: 18px !important;
+            margin: 0 !important;
+          }
+        }
       }
     }
 
     .status-icon--success {
-      color: #52c41a !important;
+      color: inherit !important;
     }
     .status-icon--primary {
-      color: #1890ff !important;
+      color: inherit !important;
     }
     .status-icon--warning {
-      color: #faad14 !important;
+      color: inherit !important;
+    }
+
+    .application-alert-count {
+      display: inline-grid;
+      min-width: 18px;
+      height: 18px;
+      place-items: center;
+      margin-left: 8px;
+      padding: 0 5px;
+      border: 2px solid #17233a;
+      border-radius: 999px;
+      color: #fff;
+      background: hsl(0 74% 54%);
+      box-shadow: 0 2px 7px hsl(0 74% 28% / 0.35);
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .jobs-submenu-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .menu-alert-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: hsl(0 74% 54%);
+      box-shadow: 0 0 0 3px hsl(0 74% 54% / 0.15);
     }
 
     .menu-text {
@@ -443,7 +542,7 @@ import { NotificationService } from '../../core/services/notification.service';
 
     /* ===== Main Area ===== */
     .main-area {
-      margin-left: 240px;
+      margin-left: 320px;
       transition: margin-left 0.2s ease;
       min-height: 100vh;
       display: flex;
@@ -527,6 +626,49 @@ import { NotificationService } from '../../core/services/notification.service';
       span {
         font-size: 18px;
       }
+    }
+
+    .notification-trigger {
+      position: relative;
+      border-color: hsl(215 78% 48% / 0.22);
+      color: var(--color-primary);
+      background: var(--color-primary-50);
+      box-shadow: 0 4px 12px hsl(215 78% 42% / 0.09);
+
+      &:hover {
+        border-color: hsl(215 78% 48% / 0.38);
+        color: var(--color-primary-dark);
+        background: var(--color-primary-100);
+        box-shadow: 0 6px 16px hsl(215 78% 42% / 0.14);
+        transform: translateY(-1px);
+      }
+
+      &.has-unread {
+        animation: notification-pulse 2.4s ease-in-out infinite;
+      }
+
+    }
+
+    :host ::ng-deep .notification-trigger .ant-badge-count {
+      top: 1px;
+      right: -5px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border: 2px solid #fff;
+      border-radius: 9px;
+      background: hsl(0 74% 54%);
+      box-shadow: 0 3px 8px hsl(0 74% 36% / 0.28);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @keyframes notification-pulse {
+      0%, 100% { box-shadow: 0 4px 12px hsl(215 78% 42% / 0.09); }
+      50% { box-shadow: 0 4px 0 5px hsl(215 78% 48% / 0.10), 0 8px 18px hsl(215 78% 42% / 0.14); }
     }
 
     .header-divider {
@@ -798,6 +940,11 @@ import { NotificationService } from '../../core/services/notification.service';
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
   isCollapsed = false;
+  readonly newApplicationCount = signal(0);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly dashboardService = inject(DashboardService);
+  private readonly acknowledgedApplicationIds = new Set<number>();
+  private applicationAlertSnapshotReady = false;
 
   userInitial = computed(() =>
     this.authService.user()?.full_name?.charAt(0).toUpperCase() || 'U'
@@ -810,10 +957,83 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.notificationSvc.connect();
+    interval(30_000)
+      .pipe(
+        startWith(0),
+        switchMap(() => this.dashboardService.getStats()),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (dashboard) => this.updateApplicationAlerts(dashboard.recent_applications),
+      });
   }
 
   ngOnDestroy(): void {
     this.notificationSvc.disconnect();
+  }
+
+  /** Marks only the currently visible new applications as read for this HR account. */
+  acknowledgeNewApplications(): void {
+    this.readCurrentSubmittedApplicationIds().forEach((id) => this.acknowledgedApplicationIds.add(id));
+    this.persistApplicationAlertState();
+    this.newApplicationCount.set(0);
+  }
+
+  private recentSubmittedApplicationIds: number[] = [];
+
+  private updateApplicationAlerts(recentApplications: Array<{ id: number; status: string }>): void {
+    this.recentSubmittedApplicationIds = recentApplications
+      .filter((application) => application.status === 'submitted')
+      .map((application) => application.id);
+
+    if (!this.applicationAlertSnapshotReady) {
+      const savedState = this.readApplicationAlertState();
+      savedState.ids.forEach((id) => this.acknowledgedApplicationIds.add(id));
+
+      // First use creates a baseline. Existing records are not incorrectly shown as a new alert.
+      if (!savedState.initialized) {
+        this.readCurrentSubmittedApplicationIds().forEach((id) => this.acknowledgedApplicationIds.add(id));
+        this.persistApplicationAlertState();
+      }
+      this.applicationAlertSnapshotReady = true;
+    }
+
+    this.newApplicationCount.set(
+      this.readCurrentSubmittedApplicationIds().filter((id) => !this.acknowledgedApplicationIds.has(id)).length
+    );
+  }
+
+  private readCurrentSubmittedApplicationIds(): number[] {
+    return this.recentSubmittedApplicationIds;
+  }
+
+  private readApplicationAlertState(): { initialized: boolean; ids: number[] } {
+    try {
+      const stored = localStorage.getItem(this.applicationAlertStorageKey());
+      if (!stored) return { initialized: false, ids: [] };
+      const parsed: unknown = JSON.parse(stored);
+      if (!parsed || typeof parsed !== 'object') return { initialized: false, ids: [] };
+      const state = parsed as { initialized?: unknown; ids?: unknown };
+      return {
+        initialized: state.initialized === true,
+        ids: Array.isArray(state.ids) ? state.ids.filter((id): id is number => typeof id === 'number') : [],
+      };
+    } catch {
+      return { initialized: false, ids: [] };
+    }
+  }
+
+  private persistApplicationAlertState(): void {
+    try {
+      const ids = [...this.acknowledgedApplicationIds].slice(-500);
+      localStorage.setItem(this.applicationAlertStorageKey(), JSON.stringify({ initialized: true, ids }));
+    } catch {
+      // Local storage can be unavailable in private browser contexts; alerts still work for this session.
+    }
+  }
+
+  private applicationAlertStorageKey(): string {
+    return `irsa:application-alerts:v1:${this.authService.user()?.id ?? 'anonymous'}`;
   }
 
   getRoleLabel(): string {

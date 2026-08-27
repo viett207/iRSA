@@ -5,6 +5,7 @@ export interface Company {
   company_name: string;
   location: string | null;
   industry: string | null;
+  description: string | null;
   created_at: string;
   updated_at: string | null;
 }
@@ -33,6 +34,7 @@ export interface CompanyCreate {
   company_name: string;
   location?: string;
   industry?: string;
+  description?: string | null;
 }
 
 // PUT body for updating company
@@ -40,4 +42,5 @@ export interface CompanyUpdate {
   company_name?: string;
   location?: string;
   industry?: string;
+  description?: string | null;
 }

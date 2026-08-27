@@ -76,9 +76,14 @@ import {
       <!-- Stats Summary (Accurate Live Counts) -->
       <div class="stats-row">
         @for (stat of jobStats; track stat.label) {
-          <div class="stat-item" [class]="'stat-item--' + stat.color">
-            <span class="stat-value">{{ stat.value }}</span>
-            <span class="stat-label">{{ stat.label }}</span>
+          <div class="stat-item static-display-card static-kpi-card" [class]="'stat-item stat-item--' + stat.color + ' static-display-card static-kpi-card'">
+            <div class="stat-icon static-kpi-icon" aria-hidden="true">
+              <span nz-icon [nzType]="stat.icon" nzTheme="outline"></span>
+            </div>
+            <div class="stat-content static-kpi-content">
+              <span class="stat-label static-kpi-label">{{ stat.label }}</span>
+              <span class="stat-value static-kpi-value">{{ stat.value }}</span>
+            </div>
           </div>
         }
       </div>
@@ -223,7 +228,7 @@ import {
                 <span nz-icon nzType="reload"></span>
                 Đặt lại
               </button>
-              <nz-tag nzColor="blue" style="font-size: 12px; padding: 2px 8px">
+              <nz-tag nzColor="blue" class="filter-result">
                 Tìm thấy <strong>{{ total() }}</strong> tin
               </nz-tag>
             </div>
@@ -511,50 +516,114 @@ import {
 
       /* Stats Row */
       .stats-row {
-        display: flex;
-        gap: 14px;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 18px;
         margin-bottom: 20px;
-        flex-wrap: wrap;
       }
 
       .stat-item {
-        flex: 1;
-        min-width: 140px;
-        padding: 14px 18px;
+        position: relative;
+        min-width: 0;
+        min-height: 108px;
+        padding: 16px 18px;
+        overflow: hidden;
         background: var(--color-bg-secondary);
-        border-radius: 8px;
-        border: 1px solid var(--color-border-light);
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
+        border: 1px solid var(--color-border-light) !important;
+        border-radius: var(--radius-xl) !important;
+        box-shadow: none !important;
+        display: grid;
+        place-items: center;
+
+        &::after {
+          position: absolute;
+          right: -88px;
+          bottom: -78px;
+          width: 126px;
+          height: 126px;
+          border: 1px solid var(--color-border-light);
+          border-radius: 50%;
+          box-shadow: 0 0 0 18px hsl(214 70% 96% / 0.58);
+          content: '';
+          opacity: 0.62;
+          pointer-events: none;
+        }
 
         &--primary {
-          border-left: 3px solid var(--color-primary);
+          .stat-icon {
+            color: var(--color-primary);
+            background: var(--color-primary-50);
+          }
         }
 
         &--success {
-          border-left: 3px solid var(--color-success);
+          .stat-icon {
+            color: var(--color-success);
+            background: var(--color-success-bg);
+          }
         }
 
         &--warning {
-          border-left: 3px solid var(--color-warning);
+          .stat-icon {
+            color: var(--color-warning);
+            background: var(--color-warning-bg);
+          }
         }
 
         &--default {
-          border-left: 3px solid var(--color-text-tertiary);
+          .stat-icon {
+            color: var(--color-text-secondary);
+            background: var(--color-bg-tertiary);
+          }
         }
+      }
+
+      .stat-icon {
+        position: absolute;
+        z-index: 1;
+        left: 18px;
+        top: 50%;
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 12px;
+        transform: translateY(-50%);
+
+        span {
+          font-size: 19px;
+        }
+      }
+
+      .stat-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        min-width: 0;
+        padding-inline: 48px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        text-align: center;
       }
 
       .stat-value {
         font-family: var(--font-heading);
-        font-size: 22px;
+        font-size: 28px;
         font-weight: 700;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.04em;
         color: var(--color-text-primary);
       }
 
       .stat-label {
         font-size: 12px;
+        font-weight: 700;
+        line-height: 1.3;
         color: var(--color-text-secondary);
+        text-wrap: balance;
       }
 
       /* Filter Card */
@@ -571,7 +640,7 @@ import {
       .filter-row {
         display: flex;
         gap: 10px;
-        align-items: center;
+        align-items: stretch;
         flex-wrap: wrap;
       }
 
@@ -582,9 +651,58 @@ import {
 
       .filter-actions {
         display: flex;
-        align-items: center;
+        align-items: stretch;
         gap: 10px;
         margin-left: auto;
+      }
+
+      :host ::ng-deep .filter-card .ant-input-affix-wrapper,
+      :host ::ng-deep .filter-card .ant-select-selector,
+      .filter-actions .ant-btn,
+      :host ::ng-deep .filter-result.ant-tag {
+        height: 44px !important;
+        border-radius: 8px !important;
+      }
+
+      :host ::ng-deep .filter-card .ant-input-affix-wrapper {
+        display: flex;
+        align-items: center;
+        padding-inline: 14px;
+      }
+
+      :host ::ng-deep .filter-card .ant-input-affix-wrapper > input.ant-input {
+        height: 42px;
+      }
+
+      :host ::ng-deep .filter-card .ant-select-selector {
+        display: flex;
+        align-items: center;
+        padding-inline: 13px !important;
+      }
+
+      :host ::ng-deep .filter-card .ant-select-selection-item,
+      :host ::ng-deep .filter-card .ant-select-selection-placeholder {
+        line-height: 42px !important;
+      }
+
+      .filter-actions .ant-btn,
+      :host ::ng-deep .filter-result.ant-tag {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .filter-actions .ant-btn {
+        gap: 7px;
+        padding-inline: 18px;
+        font-weight: 600;
+      }
+
+      :host ::ng-deep .filter-result.ant-tag {
+        margin: 0;
+        padding-inline: 13px;
+        font-size: 12px;
+        white-space: nowrap;
       }
 
       /* Table Card */
@@ -751,7 +869,7 @@ import {
         }
 
         .stats-row {
-          flex-direction: column;
+          grid-template-columns: 1fr;
         }
 
         .stat-item {
@@ -802,7 +920,7 @@ export class JobListComponent implements OnInit {
   hasApplicantsFilter: boolean | null = null;
   sortBy = 'newest';
 
-  jobStats: { label: string; value: number; color: string }[] = [];
+  jobStats: { label: string; value: number; color: string; icon: string }[] = [];
   allDepartments: string[] = VIETNAMESE_INDUSTRIES;
 
   statusOptions = [
@@ -941,11 +1059,11 @@ export class JobListComponent implements OnInit {
           const totalApps = data.stats.total_applications || 0;
 
           this.jobStats = [
-            { label: 'Tất cả tin', value: totalJobs, color: 'primary' },
-            { label: 'Đang tuyển', value: activeCount, color: 'success' },
-            { label: 'Chờ duyệt', value: pendingCount, color: 'warning' },
-            { label: 'Đã đóng', value: closedCount, color: 'default' },
-            { label: 'Tổng hồ sơ ứng tuyển', value: totalApps, color: 'primary' },
+            { label: 'Tất cả tin', value: totalJobs, color: 'primary', icon: 'solution' },
+            { label: 'Đang tuyển', value: activeCount, color: 'success', icon: 'thunderbolt' },
+            { label: 'Chờ duyệt', value: pendingCount, color: 'warning', icon: 'clock-circle' },
+            { label: 'Đã đóng', value: closedCount, color: 'default', icon: 'poweroff' },
+            { label: 'Tổng hồ sơ ứng tuyển', value: totalApps, color: 'primary', icon: 'file-text' },
           ];
         },
       });

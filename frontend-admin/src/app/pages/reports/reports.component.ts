@@ -1,4 +1,4 @@
-import { Component, signal, computed, OnInit, inject, DestroyRef } from '@angular/core';
+import { Component, signal, computed, OnInit, inject, DestroyRef, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -21,6 +21,15 @@ import {
   DailyCount,
   ScoreBucket,
 } from '../../core/services/report.service';
+
+const JOB_STATUS_ORDER = [
+  'draft',
+  'pending_approval',
+  'approved',
+  'rejected',
+  'active',
+  'closed',
+] as const;
 
 @Component({
   selector: 'app-reports',
@@ -74,13 +83,15 @@ import {
         <!-- KPI Summary Cards -->
         <div nz-row [nzGutter]="[20, 20]" class="kpi-section">
           @for (kpi of kpis(); track kpi.label) {
-            <div nz-col [nzXs]="12" [nzSm]="12" [nzMd]="8" [nzLg]="4">
-              <div class="kpi-card" [class]="'kpi-card--' + kpi.color">
-                <div class="kpi-icon">
+            <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
+              <div class="kpi-card static-display-card static-kpi-card" [class]="'kpi-card kpi-card--' + kpi.color + ' static-display-card static-kpi-card static-kpi-card--' + kpi.color">
+                <div class="kpi-icon static-kpi-icon">
                   <span nz-icon [nzType]="kpi.icon" nzTheme="outline"></span>
                 </div>
-                <div class="kpi-value">{{ kpi.value }}</div>
-                <div class="kpi-label">{{ kpi.label }}</div>
+                <div class="kpi-content static-kpi-content">
+                  <div class="kpi-label static-kpi-label">{{ kpi.label }}</div>
+                  <div class="kpi-value static-kpi-value">{{ kpi.value }}</div>
+                </div>
               </div>
             </div>
           }
@@ -114,17 +125,22 @@ import {
                         <div class="grid-line"></div>
                         <div class="grid-line"></div>
                       </div>
-                      <div class="trend-bars">
+                      <div class="trend-bars" [class.trend-bars--sparse]="trendActiveCount() <= 10">
                         @for (item of trendData(); track item.date) {
                           <div
                             class="trend-bar-col"
                             [nz-tooltip]="item.date + ': ' + item.count + ' hồ sơ'"
+                            [class.trend-bar-col--active]="item.count > 0"
                           >
                             <div
                               class="trend-bar"
                               [style.height.%]="trendMax() > 0 ? (item.count / trendMax()) * 100 : 0"
                               [class.trend-bar--zero]="item.count === 0"
-                            ></div>
+                            >
+                              @if (item.count > 0) {
+                                <span class="trend-value">{{ item.count }}</span>
+                              }
+                            </div>
                           </div>
                         }
                       </div>
@@ -255,8 +271,8 @@ import {
         <!-- Top Jobs & Department Tables -->
         <div nz-row [nzGutter]="[24, 24]" class="tables-section">
           <!-- Top Jobs -->
-          <div nz-col [nzXs]="24" [nzLg]="14">
-            <nz-card class="table-card">
+          <div nz-col [nzXs]="24" [nzLg]="12">
+            <nz-card #topJobsCard class="table-card">
               <div class="card-header">
                 <h3 class="card-title">
                   <span nz-icon nzType="trophy" nzTheme="outline"></span>
@@ -318,8 +334,8 @@ import {
           </div>
 
           <!-- Department Stats -->
-          <div nz-col [nzXs]="24" [nzLg]="10">
-            <nz-card class="table-card">
+          <div nz-col [nzXs]="24" [nzLg]="12">
+            <nz-card class="table-card department-card" [style.height.px]="topJobsHeight()">
               <div class="card-header">
                 <h3 class="card-title">
                   <span nz-icon nzType="bank" nzTheme="outline"></span>
@@ -384,7 +400,7 @@ import {
 
     .page-title {
       font-family: var(--font-heading);
-      font-size: 28px;
+      font-size: clamp(24px, 2.45vw, 30px);
       font-weight: 700;
       color: var(--color-text-primary);
       margin: 0 0 8px 0;
@@ -392,7 +408,8 @@ import {
 
     .page-subtitle {
       font-size: 15px;
-      color: var(--color-text-secondary);
+      color: hsl(218 22% 29%);
+      font-weight: 500;
       margin: 0;
     }
 
@@ -422,7 +439,12 @@ import {
     }
 
     .kpi-card {
-      padding: 20px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 96px;
+      padding: 14px 16px;
       background: var(--color-bg-secondary);
       border-radius: 12px;
       border: 1px solid var(--color-border-light);
@@ -438,14 +460,16 @@ import {
     }
 
     .kpi-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
+      position: absolute;
+      left: 16px;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 12px;
-      font-size: 22px;
+      margin: 0;
+      font-size: 18px;
 
       .kpi-card--primary & {
         background: var(--color-primary-50);
@@ -475,17 +499,32 @@ import {
 
     .kpi-value {
       font-family: var(--font-heading);
-      font-size: 26px;
+      font-size: 25px;
       font-weight: 700;
       color: var(--color-text-primary);
       line-height: 1;
-      margin-bottom: 6px;
+    }
+
+    .kpi-content {
+      width: 100%;
+      min-width: 0;
+      text-align: center;
     }
 
     .kpi-label {
       font-size: 13px;
       color: var(--color-text-secondary);
+      font-weight: 700;
       line-height: 1.3;
+      margin-bottom: 8px;
+    }
+
+    :host ::ng-deep .kpi-section > .ant-col {
+      display: flex;
+    }
+
+    .kpi-card {
+      width: 100%;
     }
 
     /* Card Styles */
@@ -493,8 +532,49 @@ import {
       margin-bottom: 24px;
     }
 
-    .chart-card, .table-card {
+    .chart-card {
       height: 100%;
+    }
+
+    :host ::ng-deep .charts-section > .ant-col {
+      display: flex;
+    }
+
+    :host ::ng-deep .charts-section .chart-card {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    :host ::ng-deep .charts-section .chart-card > .ant-card-body {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .table-card {
+      height: auto;
+    }
+
+    :host ::ng-deep .tables-section > .ant-col {
+      display: block;
+    }
+
+    :host ::ng-deep .tables-section nz-card.department-card,
+    :host ::ng-deep .tables-section .department-card.ant-card {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    :host ::ng-deep .tables-section nz-card.department-card > .ant-card-body,
+    :host ::ng-deep .tables-section .department-card.ant-card > .ant-card-body {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      flex-direction: column;
     }
 
     .card-header {
@@ -529,13 +609,23 @@ import {
     .trend-chart-container {
       display: flex;
       gap: 8px;
-      height: 240px;
+      width: 100%;
+      height: 100%;
+      min-height: 240px;
+    }
+
+    .trend-chart {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
     }
 
     .trend-y-axis {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      padding-top: 16px;
       padding-bottom: 28px;
       min-width: 32px;
       text-align: right;
@@ -549,12 +639,12 @@ import {
     .trend-bars-wrapper {
       flex: 1;
       position: relative;
-      padding-bottom: 28px;
+      padding: 16px 0 28px;
     }
 
     .trend-grid-lines {
       position: absolute;
-      top: 0;
+      top: 16px;
       left: 0;
       right: 0;
       bottom: 28px;
@@ -572,33 +662,74 @@ import {
     .trend-bars {
       display: flex;
       align-items: flex-end;
-      height: calc(100% - 28px);
-      gap: 1px;
+      justify-content: space-between;
+      height: calc(100% - 44px);
+      gap: clamp(4px, 0.8vw, 10px);
     }
 
     .trend-bar-col {
-      flex: 1;
+      flex: 1 1 0;
+      max-width: 22px;
       height: 100%;
       display: flex;
       align-items: flex-end;
+      justify-content: center;
       cursor: pointer;
-      min-width: 2px;
+      min-width: 4px;
+    }
+
+    .trend-bars--sparse .trend-bar-col--active {
+      flex: 0 0 clamp(22px, 2.7vw, 30px);
+      max-width: 30px;
+      min-width: 22px;
     }
 
     .trend-bar {
+      position: relative;
       width: 100%;
-      background: var(--color-primary-light);
-      border-radius: 2px 2px 0 0;
+      background: linear-gradient(180deg, hsl(208 82% 62%), hsl(214 78% 47%));
+      border-radius: 6px 6px 2px 2px;
       min-height: 0;
-      transition: height 0.3s ease, background 0.15s ease;
+      box-shadow: 0 5px 12px hsl(215 75% 45% / 0.2);
+      transform-origin: bottom;
+      animation: trend-bar-enter 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+      transition: height 0.3s ease, background 0.15s ease, transform 0.2s ease;
 
       .trend-bar-col:hover & {
-        background: var(--color-primary);
+        background: linear-gradient(180deg, hsl(207 88% 58%), hsl(220 80% 43%));
+        transform: scaleX(1.08);
       }
 
       &--zero {
-        min-height: 1px;
+        min-height: 2px;
         background: var(--color-border-light);
+        box-shadow: none;
+        animation: none;
+      }
+    }
+
+    .trend-value {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 5px);
+      transform: translateX(-50%);
+      color: hsl(218 35% 31%);
+      font-size: 10px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    @keyframes trend-bar-enter {
+      from {
+        opacity: 0;
+        transform: scaleY(0.12);
+      }
+
+      to {
+        opacity: 1;
+        transform: scaleY(1);
       }
     }
 
@@ -788,8 +919,29 @@ import {
     /* Department Stats */
     .dept-list {
       display: flex;
+      flex: 1;
+      min-height: 0;
       flex-direction: column;
       gap: 16px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+      padding-right: 6px;
+      scrollbar-color: hsl(214 25% 75%) transparent;
+      scrollbar-width: thin;
+    }
+
+    .dept-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .dept-list::-webkit-scrollbar-thumb {
+      border-radius: 999px;
+      background: hsl(214 25% 72%);
+    }
+
+    .dept-list::-webkit-scrollbar-track {
+      background: transparent;
     }
 
     .dept-item {
@@ -878,6 +1030,7 @@ import {
 
       .trend-chart-container {
         height: 180px;
+        min-height: 180px;
       }
 
       .status-item {
@@ -900,9 +1053,13 @@ export class ReportsComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private reportService = inject(ReportService);
   private message = inject(NzMessageService);
+  private topJobsResizeObserver?: ResizeObserver;
+
+  @ViewChild('topJobsCard', { read: ElementRef }) topJobsCard?: ElementRef<HTMLElement>;
 
   loading = signal(true);
   data = signal<ReportsOverview | null>(null);
+  topJobsHeight = signal<number | null>(null);
   selectedDays = 30;
 
   kpis = computed(() => {
@@ -924,9 +1081,13 @@ export class ReportsComponent implements OnInit {
     const max = items.reduce((m, i) => Math.max(m, i.count), 0);
     return max || 1;
   });
+  trendActiveCount = computed(() =>
+    this.trendData().filter(item => item.count > 0).length
+  );
   trendXLabels = computed(() => {
     const items = this.trendData();
     if (items.length === 0) return [];
+    const lastIndex = Math.max(1, items.length - 1);
     const step = Math.max(1, Math.floor(items.length / 6));
     const labels: { text: string; position: number; index: number }[] = [];
     for (let i = 0; i < items.length; i += step) {
@@ -934,7 +1095,7 @@ export class ReportsComponent implements OnInit {
       const parts = d.split('-');
       labels.push({
         text: `${parts[2]}/${parts[1]}`,
-        position: (i / (items.length - 1)) * 100,
+        position: (i / lastIndex) * 100,
         index: i,
       });
     }
@@ -952,8 +1113,15 @@ export class ReportsComponent implements OnInit {
   });
 
   jobStatusData = computed(() => {
-    const items = this.data()?.job_by_status ?? [];
-    return [...items].sort((a, b) => b.count - a.count);
+    const countsByStatus = new Map(
+      (this.data()?.job_by_status ?? []).map((item) => [item.status, item.count]),
+    );
+
+    // Luôn hiển thị đủ vòng đời tin tuyển dụng, kể cả khi trạng thái chưa có dữ liệu.
+    return JOB_STATUS_ORDER.map((status) => ({
+      status,
+      count: countsByStatus.get(status) ?? 0,
+    }));
   });
 
   topJobs = computed(() => this.data()?.top_jobs ?? []);
@@ -963,6 +1131,7 @@ export class ReportsComponent implements OnInit {
   );
 
   ngOnInit(): void {
+    this.destroyRef.onDestroy(() => this.topJobsResizeObserver?.disconnect());
     this.loadReport();
   }
 
@@ -980,12 +1149,26 @@ export class ReportsComponent implements OnInit {
         next: (data) => {
           this.data.set(data);
           this.loading.set(false);
+          this.syncDepartmentCardHeight();
         },
         error: () => {
           this.message.error('Không thể tải báo cáo. Vui lòng thử lại.');
           this.loading.set(false);
         },
       });
+  }
+
+  private syncDepartmentCardHeight(): void {
+    requestAnimationFrame(() => {
+      const element = this.topJobsCard?.nativeElement;
+      if (!element) return;
+
+      this.topJobsResizeObserver?.disconnect();
+      const updateHeight = () => this.topJobsHeight.set(Math.ceil(element.getBoundingClientRect().height));
+      updateHeight();
+      this.topJobsResizeObserver = new ResizeObserver(updateHeight);
+      this.topJobsResizeObserver.observe(element);
+    });
   }
 
   getScoreBarClass(range: string): string {

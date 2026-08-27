@@ -52,33 +52,19 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
     </div>
 
     <!-- Stats cards -->
-    <div style="display: flex; gap: 16px; margin-bottom: 20px">
-      <nz-card style="flex: 1; text-align: center" nzSize="small">
-        <nz-statistic
-          nzTitle="Tổng ứng viên đạt PV"
-          [nzValue]="total()"
-          [nzPrefix]="totalIcon"
-        ></nz-statistic>
-        <ng-template #totalIcon><span nz-icon nzType="team"></span></ng-template>
-      </nz-card>
-      <nz-card style="flex: 1; text-align: center" nzSize="small">
-        <nz-statistic
-          nzTitle="Đã đề xuất nhận việc (Offered)"
-          [nzValue]="offeredCount()"
-          [nzValueStyle]="{ color: '#faad14' }"
-          [nzPrefix]="offeredIcon"
-        ></nz-statistic>
-        <ng-template #offeredIcon><span nz-icon nzType="gift"></span></ng-template>
-      </nz-card>
-      <nz-card style="flex: 1; text-align: center" nzSize="small">
-        <nz-statistic
-          nzTitle="Chính thức trúng tuyển (Hired)"
-          [nzValue]="hiredCount()"
-          [nzValueStyle]="{ color: '#52c41a' }"
-          [nzPrefix]="hiredIcon"
-        ></nz-statistic>
-        <ng-template #hiredIcon><span nz-icon nzType="check-circle"></span></ng-template>
-      </nz-card>
+    <div class="static-kpi-grid static-kpi-grid--three">
+      <div class="static-display-card static-kpi-card static-kpi-card--primary">
+        <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="team"></span></span>
+        <div class="static-kpi-content"><span class="static-kpi-label">Tổng ứng viên đạt PV</span><strong class="static-kpi-value">{{ total() }}</strong></div>
+      </div>
+      <div class="static-display-card static-kpi-card static-kpi-card--warning">
+        <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="gift"></span></span>
+        <div class="static-kpi-content"><span class="static-kpi-label">Đã đề xuất nhận việc (Offered)</span><strong class="static-kpi-value">{{ offeredCount() }}</strong></div>
+      </div>
+      <div class="static-display-card static-kpi-card static-kpi-card--success">
+        <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="check-circle"></span></span>
+        <div class="static-kpi-content"><span class="static-kpi-label">Chính thức trúng tuyển (Hired)</span><strong class="static-kpi-value">{{ hiredCount() }}</strong></div>
+      </div>
     </div>
 
     <!-- Filter toolbar -->

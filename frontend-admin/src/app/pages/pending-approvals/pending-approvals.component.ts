@@ -53,11 +53,11 @@ import { User } from '../../shared/models/user.model';
           >
             <thead>
               <tr>
-                <th nzWidth="22%">Ho va ten</th>
+                <th nzWidth="22%">Họ và tên</th>
                 <th nzWidth="25%">Email</th>
-                <th nzWidth="15%">Ma cong ty</th>
-                <th nzWidth="18%">Ngay dang ky</th>
-                <th nzWidth="20%" nzAlign="center">Hanh dong</th>
+                <th nzWidth="15%">Mã công ty</th>
+                <th nzWidth="18%">Ngày đăng ký</th>
+                <th nzWidth="20%" nzAlign="center">Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -88,7 +88,7 @@ import { User } from '../../shared/models/user.model';
                         (click)="confirmApprove(user)"
                       >
                         <span nz-icon nzType="check"></span>
-                        Phe duyet
+                        Phê duyệt
                       </button>
                       <button
                         nz-button
@@ -98,7 +98,7 @@ import { User } from '../../shared/models/user.model';
                         (click)="confirmReject(user)"
                       >
                         <span nz-icon nzType="close"></span>
-                        Tu choi
+                        Từ chối
                       </button>
                     </div>
                   </td>
@@ -107,7 +107,7 @@ import { User } from '../../shared/models/user.model';
               @empty {
                 <tr>
                   <td colspan="5">
-                    <nz-empty nzNotFoundContent="Khong co tai khoan nao dang cho phe duyet"></nz-empty>
+                    <nz-empty nzNotFoundContent="Không có tài khoản nào đang chờ phê duyệt"></nz-empty>
                   </td>
                 </tr>
               }
@@ -200,7 +200,7 @@ export class PendingApprovalsComponent implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.message.error('Khong the tai danh sach phe duyet');
+        this.message.error('Không thể tải danh sách phê duyệt');
         this.loading = false;
       },
     });
@@ -219,23 +219,23 @@ export class PendingApprovalsComponent implements OnInit {
 
   confirmApprove(user: User): void {
     this.modal.confirm({
-      nzTitle: 'Xac nhan phe duyet',
-      nzContent: `Phe duyet tai khoan <strong>${user.full_name}</strong> (${user.email})?`,
-      nzOkText: 'Phe duyet',
+      nzTitle: 'Xác nhận phê duyệt',
+      nzContent: `Phê duyệt tài khoản <strong>${user.full_name}</strong> (${user.email})?`,
+      nzOkText: 'Phê duyệt',
       nzOkType: 'primary',
-      nzCancelText: 'Huy',
+      nzCancelText: 'Hủy',
       nzOnOk: () => this.doApprove(user),
     });
   }
 
   confirmReject(user: User): void {
     this.modal.confirm({
-      nzTitle: 'Xac nhan tu choi',
-      nzContent: `Tu choi tai khoan <strong>${user.full_name}</strong> (${user.email})?`,
-      nzOkText: 'Tu choi',
+      nzTitle: 'Xác nhận từ chối',
+      nzContent: `Từ chối tài khoản <strong>${user.full_name}</strong> (${user.email})?`,
+      nzOkText: 'Từ chối',
       nzOkType: 'primary',
       nzOkDanger: true,
-      nzCancelText: 'Huy',
+      nzCancelText: 'Hủy',
       nzOnOk: () => this.doReject(user),
     });
   }
@@ -244,12 +244,12 @@ export class PendingApprovalsComponent implements OnInit {
     this.processingId = user.id;
     this.userService.approveUser(user.id).subscribe({
       next: () => {
-        this.message.success(`Da phe duyet tai khoan ${user.full_name}`);
+        this.message.success(`Đã phê duyệt tài khoản ${user.full_name}`);
         this.processingId = null;
         this.loadData();
       },
       error: () => {
-        this.message.error('Phe duyet that bai');
+        this.message.error('Phê duyệt thất bại');
         this.processingId = null;
       },
     });
@@ -259,12 +259,12 @@ export class PendingApprovalsComponent implements OnInit {
     this.processingId = user.id;
     this.userService.rejectUser(user.id).subscribe({
       next: () => {
-        this.message.warning(`Da tu choi tai khoan ${user.full_name}`);
+        this.message.warning(`Đã từ chối tài khoản ${user.full_name}`);
         this.processingId = null;
         this.loadData();
       },
       error: () => {
-        this.message.error('Tu choi that bai');
+        this.message.error('Từ chối thất bại');
         this.processingId = null;
       },
     });

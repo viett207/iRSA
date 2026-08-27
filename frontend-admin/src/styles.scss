@@ -1,10 +1,10 @@
+@import 'ng-zorro-antd/ng-zorro-antd.min.css';
+
 /* ==========================================================================
    iRSA Admin - Global Styles & Design Tokens
    Version: 2.0
    Vietnamese-first HR Admin Dashboard
    ========================================================================== */
-
-@import 'ng-zorro-antd/ng-zorro-antd.min.css';
 
 /* ==========================================================================
    1. CSS Custom Properties (Design Tokens)
@@ -14,53 +14,55 @@
   /* --- Color Palette --- */
 
   /* Primary Colors (Professional Trust Blue) */
-  --color-primary: #0050B3;
-  --color-primary-light: #1890FF;
-  --color-primary-dark: #003A82;
-  --color-primary-50: #E6F4FF;
-  --color-primary-100: #BAE0FF;
-  --color-primary-200: #91CAFF;
-  --color-primary-300: #69B1FF;
-  --color-primary-400: #4096FF;
-  --color-primary-500: #1890FF;
-  --color-primary-600: #0958D9;
-  --color-primary-700: #003EB3;
-  --color-primary-800: #002C8C;
-  --color-primary-900: #001D66;
+  --color-primary: hsl(215 70% 42%);
+  --color-primary-light: hsl(215 76% 52%);
+  --color-primary-dark: hsl(218 72% 31%);
+  --color-primary-50: hsl(213 100% 96%);
+  --color-primary-100: hsl(212 94% 90%);
+  --color-primary-200: hsl(212 84% 82%);
+  --color-primary-300: hsl(213 79% 70%);
+  --color-primary-400: hsl(214 75% 58%);
+  --color-primary-500: hsl(215 76% 52%);
+  --color-primary-600: hsl(215 70% 42%);
+  --color-primary-700: hsl(218 72% 35%);
+  --color-primary-800: hsl(220 73% 28%);
+  --color-primary-900: hsl(222 73% 20%);
 
   /* Semantic Colors */
-  --color-success: #52C41A;
-  --color-success-light: #95DE64;
-  --color-success-dark: #389E0D;
-  --color-success-bg: #F6FFED;
+  --color-success: hsl(153 48% 34%);
+  --color-success-light: hsl(153 46% 54%);
+  --color-success-dark: hsl(153 54% 27%);
+  --color-success-bg: hsl(145 55% 96%);
 
-  --color-warning: #FA8C16;
-  --color-warning-light: #FFC069;
-  --color-warning-dark: #D46B08;
-  --color-warning-bg: #FFF7E6;
+  --color-warning: hsl(36 76% 43%);
+  --color-warning-light: hsl(38 82% 63%);
+  --color-warning-dark: hsl(31 78% 35%);
+  --color-warning-bg: hsl(39 100% 96%);
 
-  --color-error: #FF4D4F;
-  --color-error-light: #FF7875;
-  --color-error-dark: #CF1322;
-  --color-error-bg: #FFF1F0;
+  --color-error: hsl(0 67% 48%);
+  --color-error-light: hsl(0 76% 66%);
+  --color-error-dark: hsl(0 72% 39%);
+  --color-error-bg: hsl(0 100% 97%);
 
-  --color-info: #1890FF;
-  --color-info-bg: #E6F7FF;
+  --color-info: var(--color-primary-light);
+  --color-info-bg: var(--color-primary-50);
 
   /* Neutral Colors */
-  --color-bg-primary: #F5F7FA;
-  --color-bg-secondary: #FFFFFF;
-  --color-bg-tertiary: #F1F5F9;
-  --color-bg-dark: #001529;
+  --color-bg-primary: hsl(215 35% 97%);
+  --color-bg-secondary: hsl(0 0% 100%);
+  --color-bg-tertiary: hsl(214 32% 95%);
+  --color-bg-dark: hsl(220 35% 17%);
 
-  --color-text-primary: #1E293B;
-  --color-text-secondary: #64748B;
-  --color-text-tertiary: #94A3B8;
-  --color-text-inverse: #FFFFFF;
+  --color-text-primary: hsl(218 28% 19%);
+  --color-text-secondary: hsl(218 16% 39%);
+  --color-text-tertiary: hsl(218 14% 56%);
+  --color-text-inverse: hsl(0 0% 100%);
+  --color-text: var(--color-text-primary);
+  --color-bg-card: var(--color-bg-secondary);
 
-  --color-border: #E2E8F0;
-  --color-border-light: #F1F5F9;
-  --color-border-dark: #CBD5E1;
+  --color-border: hsl(214 25% 87%);
+  --color-border-light: hsl(214 30% 92%);
+  --color-border-dark: hsl(214 23% 79%);
 
   /* Sidebar Theme */
   --sidebar-bg: #001529;
@@ -71,7 +73,7 @@
 
   /* --- Typography --- */
   --font-heading: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-body: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   /* Font Sizes */
   --text-xs: 12px;
@@ -122,17 +124,17 @@
   --radius-full: 9999px;
 
   /* --- Shadows --- */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-xs: 0 1px 2px hsl(220 30% 18% / 0.04);
+  --shadow-sm: 0 2px 5px hsl(220 30% 18% / 0.06);
+  --shadow-md: 0 7px 18px hsl(220 30% 18% / 0.08);
+  --shadow-lg: 0 16px 32px hsl(220 30% 18% / 0.10);
+  --shadow-xl: 0 24px 44px hsl(220 30% 18% / 0.13);
+  --shadow-2xl: 0 32px 58px hsl(220 30% 18% / 0.16);
+  --shadow-inner: inset 0 1px 2px hsl(220 30% 18% / 0.05);
 
-  --shadow-header: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-header: 0 2px 12px hsl(220 30% 18% / 0.07);
+  --shadow-card: 0 3px 12px hsl(220 30% 18% / 0.045);
+  --shadow-card-hover: 0 12px 26px hsl(220 30% 18% / 0.09);
 
   /* --- Transitions --- */
   --transition-fast: 150ms ease;
@@ -673,8 +675,60 @@ a:hover {
 
 /* ----- Message ----- */
 .ant-message-notice-content {
+  display: inline-block;
+  min-width: min(420px, calc(100vw - 32px));
+  padding: 13px 18px !important;
+  border: 1px solid var(--color-border-light);
+  border-left: 4px solid var(--color-primary);
   border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow-lg) !important;
+  box-shadow: 0 14px 30px hsl(220 28% 18% / 0.16) !important;
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.ant-message-notice-content .anticon {
+  margin-right: 10px !important;
+  font-size: 20px;
+  vertical-align: -0.18em;
+}
+
+.ant-message-success .ant-message-notice-content {
+  border-color: hsl(143 60% 42% / 0.28);
+  border-left-color: var(--color-success);
+  background: hsl(143 64% 96%);
+}
+
+.ant-message-success .anticon {
+  color: var(--color-success) !important;
+}
+
+.ant-message-error .ant-message-notice-content {
+  border-color: hsl(0 74% 54% / 0.28);
+  border-left-color: var(--color-error);
+  background: hsl(0 76% 97%);
+}
+
+.ant-message-error .anticon {
+  color: var(--color-error) !important;
+}
+
+.ant-message-warning .ant-message-notice-content {
+  border-color: hsl(38 92% 45% / 0.30);
+  border-left-color: var(--color-warning);
+  background: hsl(42 100% 96%);
+}
+
+.ant-message-warning .anticon {
+  color: var(--color-warning) !important;
+}
+
+.ant-message-info .ant-message-notice-content {
+  border-color: hsl(215 78% 48% / 0.26);
+  border-left-color: var(--color-primary);
+  background: var(--color-primary-50);
 }
 
 /* ----- Tooltip ----- */
@@ -1043,5 +1097,672 @@ a:hover {
   .ant-card {
     box-shadow: none !important;
     border: 1px solid #ccc !important;
+  }
+}
+
+/* ==========================================================================
+   10. Frontend visual polish
+   Giữ nguyên component/API logic; lớp này chỉ chuẩn hóa bề mặt giao diện.
+   ========================================================================== */
+
+:root {
+  --color-primary: hsl(215 66% 39%);
+  --color-primary-light: hsl(211 78% 50%);
+  --color-primary-dark: hsl(216 70% 28%);
+  --color-primary-50: hsl(214 80% 96%);
+  --color-primary-100: hsl(213 69% 90%);
+  --color-primary-300: hsl(213 62% 72%);
+  --color-primary-500: hsl(211 78% 50%);
+  --color-bg-primary: hsl(218 28% 97%);
+  --color-bg-tertiary: hsl(218 24% 94%);
+  --color-text-primary: hsl(220 30% 17%);
+  --color-text-secondary: hsl(218 12% 45%);
+  --color-text-tertiary: hsl(218 11% 60%);
+  --color-border: hsl(218 20% 87%);
+  --color-border-light: hsl(218 25% 92%);
+  --sidebar-bg: hsl(220 36% 14%);
+  --shadow-card: 0 2px 8px hsl(220 30% 18% / .045);
+  --shadow-card-hover: 0 12px 28px hsl(220 30% 18% / .10);
+  --shadow-header: 0 1px 0 hsl(220 24% 18% / .07), 0 8px 22px hsl(220 24% 18% / .04);
+}
+
+body {
+  background:
+    linear-gradient(180deg, hsl(218 34% 98%) 0, var(--color-bg-primary) 260px);
+}
+
+button,
+a,
+.ant-card,
+.ant-btn,
+.ant-menu-item,
+.ant-menu-submenu-title,
+.header-action,
+.user-profile {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+.ant-btn:focus-visible,
+.ant-input:focus-visible {
+  outline: 3px solid hsl(211 78% 50% / .28);
+  outline-offset: 2px;
+}
+
+/* Keep page content airy and aligned across dashboard/jobs/reports. */
+.app-content {
+  background: transparent !important;
+}
+
+.content-wrapper {
+  min-height: calc(100vh - var(--header-height));
+  padding: clamp(20px, 3vw, 36px) clamp(16px, 3vw, 40px) 48px;
+}
+
+.admin-page,
+.dashboard {
+  width: min(100%, var(--content-max-width));
+  margin-inline: auto;
+}
+
+.page-header,
+.dashboard .page-header {
+  position: relative;
+  margin-bottom: 28px !important;
+}
+
+.page-header::before,
+.dashboard .page-header::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: -14px;
+  width: 4px;
+  height: 42px;
+  border-radius: 5px;
+  background: var(--color-primary);
+}
+
+.page-title,
+.dashboard .page-title {
+  letter-spacing: -.045em;
+  color: var(--color-text-primary) !important;
+}
+
+.page-subtitle,
+.dashboard .page-subtitle {
+  max-width: 66ch;
+  color: var(--color-text-secondary) !important;
+}
+
+/* Sidebar: calmer navy surface with a clear active rail. */
+.ant-layout-sider,
+.sidebar {
+  background: var(--sidebar-bg) !important;
+  box-shadow: 5px 0 22px hsl(220 36% 12% / .12) !important;
+}
+
+.sidebar-logo {
+  background: hsl(220 38% 11% / .72) !important;
+  border-bottom-color: hsl(0 0% 100% / .08) !important;
+}
+
+.logo-subtitle {
+  color: hsl(205 77% 69%) !important;
+}
+
+.sidebar-menu .ant-menu-item-selected,
+.sidebar-menu .ant-menu-submenu-selected > .ant-menu-submenu-title {
+  background: hsl(211 78% 50% / .18) !important;
+  border-left: 3px solid hsl(205 77% 69%) !important;
+  color: hsl(205 88% 80%) !important;
+}
+
+/* Header and user controls read as one premium toolbar. */
+.ant-layout-header,
+.app-header {
+  background: hsl(0 0% 100% / .88) !important;
+  border-bottom: 1px solid hsl(218 20% 87% / .8) !important;
+  box-shadow: var(--shadow-header) !important;
+  backdrop-filter: blur(14px);
+}
+
+.menu-toggle,
+.header-action,
+.user-profile {
+  border-color: var(--color-border) !important;
+  background: hsl(218 30% 97% / .8) !important;
+  transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast) !important;
+}
+
+.menu-toggle:hover,
+.header-action:hover,
+.user-profile:hover {
+  border-color: hsl(211 54% 67%) !important;
+  background: var(--color-primary-50) !important;
+  box-shadow: 0 5px 14px hsl(215 45% 35% / .10);
+  transform: translateY(-1px);
+}
+
+.user-avatar {
+  background: var(--color-primary) !important;
+}
+
+/* Cards use elevation sparingly and gain a quiet hover response. */
+.ant-card,
+.stats-card,
+.stat-card {
+  border-color: var(--color-border-light) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.ant-card:hover,
+.stats-card:hover,
+.stat-card:hover {
+  border-color: hsl(211 42% 78%) !important;
+  box-shadow: var(--shadow-card-hover) !important;
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #fff 0, hsl(218 32% 99%) 100%) !important;
+}
+
+.stat-card::after {
+  content: "";
+  position: absolute;
+  right: -26px;
+  bottom: -36px;
+  width: 100px;
+  height: 100px;
+  border: 1px solid hsl(211 48% 72% / .18);
+  border-radius: 50%;
+  box-shadow: 0 0 0 12px hsl(211 58% 90% / .16), 0 0 0 25px hsl(211 58% 90% / .10);
+  pointer-events: none;
+}
+
+.stat-value,
+.stats-card__value,
+.ant-statistic-content-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.055em;
+}
+
+.action-item {
+  border: 1px solid transparent;
+  transition: transform var(--transition-normal), background var(--transition-normal), border-color var(--transition-normal) !important;
+}
+
+.action-item:hover {
+  border-color: hsl(211 48% 80%);
+  transform: translateX(4px) !important;
+}
+
+/* Tables stay dense enough for HR, but have stronger row hierarchy. */
+.ant-table-wrapper {
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-card) !important;
+}
+
+.ant-table-thead > tr > th {
+  background: hsl(218 24% 95%) !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 11px !important;
+  letter-spacing: .045em !important;
+}
+
+.ant-table-tbody > tr > td {
+  transition: background var(--transition-fast);
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: var(--color-primary-50) !important;
+}
+
+/* Consistent action hierarchy. */
+.ant-btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+
+.ant-btn-primary {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 5px 12px hsl(215 62% 35% / .16);
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  background: var(--color-primary-dark) !important;
+  border-color: var(--color-primary-dark) !important;
+  box-shadow: 0 8px 18px hsl(215 62% 35% / .22);
+}
+
+/* ========================================================================
+   8. Cross-page format contract
+   Every admin screen inherits the same typography, hierarchy and controls.
+   Local styles may change layout, but not the visual language.
+   ======================================================================== */
+
+body,
+button,
+input,
+textarea,
+select,
+.ant-typography,
+.ant-menu,
+.ant-select,
+.ant-table,
+.ant-modal,
+.ant-dropdown-menu {
+  font-family: var(--font-body) !important;
+}
+
+.page-header > h1,
+.page-header > h2,
+.page-header .page-title,
+.page-header .ant-page-header-heading-title {
+  font-family: var(--font-heading) !important;
+  color: var(--color-text-primary) !important;
+  font-weight: var(--font-bold) !important;
+  letter-spacing: -0.035em;
+}
+
+.page-header > h2 {
+  font-size: var(--text-2xl) !important;
+  line-height: var(--leading-tight) !important;
+}
+
+.page-header > p,
+.page-header .page-subtitle,
+.page-header .ant-page-header-heading-sub-title {
+  color: var(--color-text-secondary) !important;
+  font-weight: var(--font-medium) !important;
+  line-height: var(--leading-relaxed) !important;
+}
+
+/* The previous screens used several low-contrast inline neutral grays. */
+[style*='color: #888'],
+[style*='color:#888'],
+[style*='color: #8c8c8c'],
+[style*='color:#8c8c8c'] {
+  color: var(--color-text-secondary) !important;
+}
+
+[style*='color: #999'],
+[style*='color:#999'] {
+  color: var(--color-text-tertiary) !important;
+}
+
+.ant-card,
+.ant-table-wrapper,
+.ant-modal-content,
+.ant-dropdown-menu {
+  border-color: var(--color-border-light) !important;
+}
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-picker {
+  font-family: var(--font-body) !important;
+  background: var(--color-bg-secondary) !important;
+}
+
+.ant-tag,
+.status-badge {
+  font-weight: var(--font-semibold) !important;
+  letter-spacing: 0.01em;
+}
+
+.ant-empty-description,
+.ant-result-subtitle {
+  color: var(--color-text-secondary) !important;
+}
+
+/* ========================================================================
+   9. Admin-wide visual contract
+   Screens may own their layout, but all of them share the same reading
+   hierarchy and component surface treatment.
+   ======================================================================== */
+
+:root {
+  --page-title-size: clamp(24px, 2.35vw, 30px);
+  --page-subtitle-size: 15px;
+  --section-title-size: 16px;
+  --surface-hover: hsl(214 70% 97%);
+  --focus-ring: 0 0 0 3px hsl(211 78% 50% / 0.15);
+}
+
+.page-header,
+.dashboard .page-header {
+  gap: var(--space-4) !important;
+}
+
+.page-header > h1,
+.page-header > h2,
+.page-header .page-title,
+.page-header .ant-page-header-heading-title {
+  margin-block: 0 5px !important;
+  color: var(--color-text-primary) !important;
+  font-family: var(--font-heading) !important;
+  font-size: var(--page-title-size) !important;
+  font-weight: var(--font-bold) !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.04em !important;
+  text-wrap: balance;
+}
+
+.page-header > p,
+.page-header .page-subtitle,
+.page-header .ant-page-header-heading-sub-title {
+  margin-block: 0 !important;
+  color: var(--color-text-secondary) !important;
+  font-size: var(--page-subtitle-size) !important;
+  font-weight: var(--font-medium) !important;
+  line-height: 1.55 !important;
+}
+
+.card-title,
+.section-title,
+.ant-card-head-title {
+  font-family: var(--font-heading) !important;
+  font-size: var(--section-title-size) !important;
+  font-weight: var(--font-semibold) !important;
+  line-height: 1.4 !important;
+  letter-spacing: -0.015em;
+}
+
+.stat-item,
+.kpi-card,
+.summary-strip,
+.directory-card,
+.table-card,
+.form-card,
+.progress-section {
+  border-color: var(--color-border-light) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.stat-item,
+.kpi-card,
+.progress-section {
+  border-radius: var(--radius-xl) !important;
+}
+
+.stat-item,
+.kpi-card {
+  color: var(--color-text-primary);
+}
+
+/* Read-only KPI surfaces must not suggest button behaviour. */
+.static-display-card,
+.static-display-card:hover {
+  box-shadow: none !important;
+  transform: none !important;
+  cursor: default !important;
+}
+
+.stat-item.static-display-card {
+  align-items: center;
+  justify-content: center;
+  border-left-width: 1px !important;
+  text-align: center;
+}
+
+/* Canonical read-only KPI used across Admin pages. */
+.static-kpi-grid {
+  display: grid !important;
+  gap: 18px !important;
+  margin-bottom: 20px;
+}
+
+.static-kpi-grid--one { grid-template-columns: minmax(220px, 280px) !important; }
+.static-kpi-grid--three { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+.static-kpi-grid--five { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+
+.static-kpi-card {
+  position: relative !important;
+  display: grid !important;
+  min-width: 0;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 108px !important;
+  padding: 16px 18px !important;
+  overflow: hidden !important;
+  place-items: center !important;
+  border: 1px solid var(--color-border-light) !important;
+  border-left-width: 1px !important;
+  border-radius: var(--radius-xl) !important;
+  background: var(--color-bg-secondary) !important;
+  box-shadow: none !important;
+  color: var(--color-text-primary);
+  cursor: default !important;
+  text-align: center !important;
+  transform: none !important;
+}
+
+.static-kpi-card:hover {
+  border-color: var(--color-border-light) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.static-kpi-card::after {
+  position: absolute;
+  right: -88px;
+  bottom: -78px;
+  width: 126px;
+  height: 126px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 50%;
+  box-shadow: 0 0 0 18px hsl(214 70% 96% / 0.58);
+  content: '';
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.static-kpi-icon {
+  position: absolute !important;
+  z-index: 1;
+  left: 18px !important;
+  top: 50% !important;
+  display: inline-flex !important;
+  width: 42px !important;
+  height: 42px !important;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px !important;
+  color: var(--color-primary);
+  background: var(--color-primary-50);
+  font-size: 19px !important;
+  line-height: 1;
+  transform: translateY(-50%) !important;
+}
+
+.static-kpi-icon > .anticon,
+.static-kpi-icon.anticon {
+  display: inline-flex !important;
+  font-size: 19px !important;
+}
+
+.static-kpi-card--success .static-kpi-icon,
+.stat-item--success.static-kpi-card .static-kpi-icon {
+  color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+.static-kpi-card--warning .static-kpi-icon,
+.static-kpi-card--orange .static-kpi-icon,
+.stat-item--warning.static-kpi-card .static-kpi-icon,
+.stat-item--orange.static-kpi-card .static-kpi-icon {
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+}
+
+.static-kpi-card--neutral .static-kpi-icon,
+.stat-item--default.static-kpi-card .static-kpi-icon {
+  color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary);
+}
+
+.static-kpi-card--error .static-kpi-icon {
+  color: var(--color-error);
+  background: var(--color-error-bg);
+}
+
+.static-kpi-content {
+  position: relative;
+  z-index: 1;
+  display: flex !important;
+  min-width: 0;
+  padding-inline: 48px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: transparent !important;
+  text-align: center;
+}
+
+.static-kpi-label {
+  display: block;
+  margin: 0 !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 12px !important;
+  font-weight: var(--font-bold) !important;
+  line-height: 1.3 !important;
+  text-wrap: balance;
+}
+
+.static-kpi-value {
+  display: block;
+  margin: 0 !important;
+  color: var(--color-text-primary) !important;
+  font-family: var(--font-heading) !important;
+  font-size: 28px !important;
+  font-weight: var(--font-bold) !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 1 !important;
+}
+
+.static-kpi-value--text {
+  font-size: 18px !important;
+  letter-spacing: -0.02em;
+}
+
+.summary-strip.static-kpi-grid {
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 1100px) {
+  .static-kpi-grid--five { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+@media (max-width: 700px) {
+  .static-kpi-grid--one,
+  .static-kpi-grid--three,
+  .static-kpi-grid--five { grid-template-columns: 1fr !important; }
+}
+
+.stat-item .stat-value,
+.kpi-card .kpi-value,
+.summary-strip strong,
+.ant-statistic-content-value {
+  color: var(--color-text-primary) !important;
+  font-family: var(--font-heading) !important;
+  font-weight: var(--font-bold) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.filter-row,
+.toolbar,
+.header-actions {
+  gap: var(--space-3) !important;
+}
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-picker {
+  min-height: 36px;
+  color: var(--color-text-primary) !important;
+}
+
+.ant-input::placeholder,
+.ant-select-selection-placeholder,
+.ant-picker-input > input::placeholder {
+  color: var(--color-text-tertiary) !important;
+}
+
+.ant-input:focus,
+.ant-input-affix-wrapper-focused,
+.ant-select-focused .ant-select-selector,
+.ant-picker-focused {
+  box-shadow: var(--focus-ring) !important;
+}
+
+.ant-table-tbody > tr > td,
+.ant-list-item,
+.ant-descriptions-item-content {
+  color: var(--color-text-secondary);
+}
+
+.ant-table-tbody > tr > td strong,
+.ant-list-item strong,
+.ant-descriptions-item-label {
+  color: var(--color-text-primary);
+  font-weight: var(--font-semibold);
+}
+
+/* Convert legacy inline neutral/brand values to the shared palette. */
+[style*='color: #222'],
+[style*='color:#222'],
+[style*='color: #333'],
+[style*='color:#333'] {
+  color: var(--color-text-primary) !important;
+}
+
+[style*='color: #444'],
+[style*='color:#444'],
+[style*='color: #555'],
+[style*='color:#555'],
+[style*='color: #595959'],
+[style*='color:#595959'],
+[style*='color: #666'],
+[style*='color:#666'] {
+  color: var(--color-text-secondary) !important;
+}
+
+[style*='color: #1890ff'],
+[style*='color:#1890ff'],
+[style*='color: #722ed1'],
+[style*='color:#722ed1'] {
+  color: var(--color-primary) !important;
+}
+
+[style*='background: #1890ff'],
+[style*='background:#1890ff'],
+[style*='background: #722ed1'],
+[style*='background:#722ed1'] {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+@media (max-width: 767px) {
+  .content-wrapper {
+    padding: 18px 14px 32px;
+  }
+
+  .page-header::before,
+  .dashboard .page-header::before {
+    left: -7px;
   }
 }

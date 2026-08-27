@@ -8,6 +8,8 @@ import { ReportsComponent } from './pages/reports/reports.component';
 import { UsersComponent } from './pages/users/users.component';
 import { CompaniesComponent } from './pages/companies/companies.component';
 import { PendingApprovalsComponent } from './pages/pending-approvals/pending-approvals.component';
+import { ApplicationsComponent } from './pages/applications/applications.component';
+import { CandidatesComponent } from './pages/candidates/candidates.component';
 
 
 export const routes: Routes = [
@@ -31,6 +33,8 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/jobs/jobs.routes').then((m) => m.JOB_ROUTES),
       },
+      { path: 'applications', component: ApplicationsComponent },
+      { path: 'candidates', component: CandidatesComponent },
       { path: 'reports', component: ReportsComponent },
       { path: 'users', component: UsersComponent, canActivate: [adminGuard] },
       { path: 'companies', component: CompaniesComponent, canActivate: [adminGuard] },
