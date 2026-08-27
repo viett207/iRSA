@@ -22,6 +22,10 @@ engine = create_async_engine(
     async_database_url,
     echo=settings.DEBUG,
     future=True,
+    pool_pre_ping=True,
+    pool_recycle=300,
+    pool_size=10,
+    max_overflow=20,
     connect_args={"statement_cache_size": 0} if "asyncpg" in async_database_url else {},
 )
 
@@ -33,8 +37,15 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
 )
 
-# Sync engine for Celery tasks
-sync_engine = create_engine(sync_database_url, echo=settings.DEBUG)
+# Sync engine for background tasks and worker utilities
+sync_engine = create_engine(
+    sync_database_url,
+    echo=settings.DEBUG,
+    pool_pre_ping=True,
+    pool_recycle=300,
+    pool_size=10,
+    max_overflow=20,
+)
 SyncSessionLocal = sessionmaker(bind=sync_engine, expire_on_commit=False)
 
 

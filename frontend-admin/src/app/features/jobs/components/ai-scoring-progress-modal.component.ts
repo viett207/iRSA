@@ -381,41 +381,41 @@ export class AiScoringProgressModalComponent implements OnInit, OnDestroy {
       elapsedSeconds += 1;
 
       // Update simulated progress stages according to typical execution time
-      if (elapsedSeconds >= 2 && elapsedSeconds < 4) {
+      if (elapsedSeconds >= 2 && elapsedSeconds < 6) {
         this.stages[0].status = 'done';
         this.stages[1].status = 'running';
         this.progressPercent = 35;
         this.currentStatusMessage = 'Bước 2: AI Agent đang phân tích năng lực chuyên sâu...';
-      } else if (elapsedSeconds >= 4 && elapsedSeconds < 7) {
+      } else if (elapsedSeconds >= 6 && elapsedSeconds < 12) {
         this.stages[0].status = 'done';
         this.stages[1].status = 'done';
         this.stages[2].status = 'running';
-        this.progressPercent = 65;
+        this.progressPercent = 60;
         this.currentStatusMessage = 'Bước 3: Đang kiểm chứng bằng chứng & Chống ảo giác...';
-      } else if (elapsedSeconds >= 7 && elapsedSeconds < 9) {
+      } else if (elapsedSeconds >= 12 && elapsedSeconds < 18) {
         this.stages[0].status = 'done';
         this.stages[1].status = 'done';
         this.stages[2].status = 'done';
         this.stages[3].status = 'running';
-        this.progressPercent = 85;
+        this.progressPercent = 80;
         this.currentStatusMessage = 'Bước 4: Đang sinh bộ câu hỏi & Cẩm nang đánh giá cho HR...';
-      } else if (elapsedSeconds >= 9) {
+      } else if (elapsedSeconds >= 18) {
         this.stages[0].status = 'done';
         this.stages[1].status = 'done';
         this.stages[2].status = 'done';
         this.stages[3].status = 'done';
         this.stages[4].status = 'running';
-        this.progressPercent = 95;
+        this.progressPercent = Math.min(95, 80 + Math.floor((elapsedSeconds - 18) / 2));
         this.currentStatusMessage = 'Bước 5: Đang tổng hợp và lưu kết quả đánh giá...';
       }
 
-      // Check backend result periodically
-      if (elapsedSeconds >= 3 && elapsedSeconds % 2 === 1 && !this.completed) {
+      // Check backend result periodically every 2 seconds
+      if (elapsedSeconds >= 2 && elapsedSeconds % 2 === 0 && !this.completed) {
         this.checkBackendResult();
       }
 
-      // Timeout after 25s
-      if (elapsedSeconds > 25 && !this.completed) {
+      // Timeout after 60s
+      if (elapsedSeconds > 60 && !this.completed) {
         clearInterval(this.timerRef);
         this.checkBackendResult(true);
       }

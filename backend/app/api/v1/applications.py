@@ -217,13 +217,11 @@ async def get_application_detail(
 
 
 async def _run_ai_eval_background(application_id: int):
-    """Execute AI evaluation agent directly in background without requiring Celery daemon."""
+    """Execute AI evaluation agent directly in background without requiring Celery daemon or holding DB session."""
     import logging
     try:
-        from app.core.database import get_sync_session
         from src.services.agent_service import run_evaluation_agent
-        with get_sync_session() as session:
-            await run_evaluation_agent(session, application_id)
+        await run_evaluation_agent(None, application_id)
     except Exception as e:
         logging.getLogger(__name__).exception(f"Background AI evaluation failed for app {application_id}: {e}")
 

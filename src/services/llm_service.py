@@ -81,37 +81,46 @@ class RotatingGeminiLLM:
         num_keys = len(self.api_keys)
         last_exception = None
         start_idx = self.current_index
+        candidate_models = [self.model_name]
+        for fallback_m in ["gemini-2.5-flash", "gemini-3.6-flash"]:
+            if fallback_m not in candidate_models:
+                candidate_models.append(fallback_m)
 
         for attempt in range(num_keys):
             idx = (start_idx + attempt) % num_keys
-            try:
-                if self._llms and idx < len(self._llms):
-                    logger.info(f"Invoking Gemini LLM (async) using API Key #{idx + 1}/{num_keys}...")
-                    res = await self._llms[idx].ainvoke(input, config=config, **kwargs)
-                    self.current_index = idx
-                    return res
-                else:
-                    import google.generativeai as genai
-                    genai.configure(api_key=self.api_keys[idx])
-                    model = genai.GenerativeModel(self.model_name)
-                    logger.info(f"Invoking direct google.generativeai using API Key #{idx + 1}/{num_keys}...")
-                    prompt = _format_input(input)
-                    res = await asyncio.to_thread(model.generate_content, prompt)
-                    text = res.text if hasattr(res, "text") else str(res)
-                    self.current_index = idx
-                    return LLMResponseWrapper(text)
-            except Exception as e:
-                last_exception = e
-                err_str = str(e)
-                logger.warning(
-                    f"Gemini API Key #{idx + 1} failed on attempt {attempt + 1}/{num_keys}: {e}"
-                )
-                if "429" in err_str or "Quota exceeded" in err_str:
-                    logger.info("429 Quota/RateLimit encountered. Waiting 3 seconds before key rotation/retry...")
-                    await asyncio.sleep(3)
-                self._rotate_key()
+            for m_name in candidate_models:
+                try:
+                    if self._llms and idx < len(self._llms):
+                        logger.info(f"Invoking Gemini LLM (async) using API Key #{idx + 1}/{num_keys} (model: {m_name})...")
+                        res = await self._llms[idx].ainvoke(input, config=config, **kwargs)
+                        self.current_index = idx
+                        return res
+                    else:
+                        import google.generativeai as genai
+                        genai.configure(api_key=self.api_keys[idx])
+                        model = genai.GenerativeModel(m_name)
+                        logger.info(f"Invoking direct google.generativeai using API Key #{idx + 1}/{num_keys} (model: {m_name})...")
+                        prompt = _format_input(input)
+                        res = await asyncio.to_thread(model.generate_content, prompt)
+                        text = res.text if hasattr(res, "text") else str(res)
+                        self.current_index = idx
+                        return LLMResponseWrapper(text)
+                except Exception as e:
+                    last_exception = e
+                    err_str = str(e)
+                    logger.warning(
+                        f"Gemini API Key #{idx + 1} (model {m_name}) failed on attempt {attempt + 1}/{num_keys}: {e}"
+                    )
+                    if "404" in err_str or "not found" in err_str.lower():
+                        # Try next candidate model
+                        continue
+                    if "429" in err_str or "Quota exceeded" in err_str:
+                        logger.info("429 Quota/RateLimit encountered. Waiting 2 seconds before key rotation/retry...")
+                        await asyncio.sleep(2)
+                    break
+            self._rotate_key()
 
-        logger.error("All Gemini API keys in rotation failed!")
+        logger.error("All Gemini API keys and candidate models in rotation failed!")
         if last_exception:
             raise last_exception
 

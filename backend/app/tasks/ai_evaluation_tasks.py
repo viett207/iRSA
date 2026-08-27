@@ -34,29 +34,26 @@ def ai_evaluate_application_task(self, application_id: int):
 
     try:
         from src.services.agent_service import run_evaluation_agent
+        res = _run_async(run_evaluation_agent(None, application_id))
 
-        with get_sync_session() as db:
-            res = _run_async(run_evaluation_agent(db, application_id))
-
-            if res and res.get("ai_score") is not None:
-                logger.info(
-                    f"AI Evaluation Agent complete for app {application_id}: "
-                    f"score={res.get('ai_score')}, email_sent={res.get('email_sent')}"
-                )
-                return {
-                    "status": "evaluated",
-                    "application_id": application_id,
-                    "ai_score": res.get("ai_score"),
-                    "email_sent": res.get("email_sent"),
-                }
-            else:
-                logger.warning(f"AI evaluation skipped or failed for app {application_id}")
-                return {
-                    "status": "skipped",
-                    "application_id": application_id,
-                    "reason": "missing_data_or_evaluation_failed",
-                }
-
+        if res and res.get("ai_score") is not None:
+            logger.info(
+                f"AI Evaluation Agent complete for app {application_id}: "
+                f"score={res.get('ai_score')}, email_sent={res.get('email_sent')}"
+            )
+            return {
+                "status": "evaluated",
+                "application_id": application_id,
+                "ai_score": res.get("ai_score"),
+                "email_sent": res.get("email_sent"),
+            }
+        else:
+            logger.warning(f"AI evaluation skipped or failed for app {application_id}")
+            return {
+                "status": "skipped",
+                "application_id": application_id,
+                "reason": "missing_data_or_evaluation_failed",
+            }
     except Exception as e:
         logger.exception(f"AI evaluation failed for app {application_id}: {e}")
         self.retry(exc=e)

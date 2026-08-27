@@ -12,19 +12,25 @@ from src.models.schemas import AiEvaluationOutput
 logger = logging.getLogger(__name__)
 
 
-async def run_evaluation_agent(db: Session, application_id: int) -> Optional[Dict[str, Any]]:
+async def run_evaluation_agent(db: Optional[Session], application_id: int) -> Optional[Dict[str, Any]]:
     """Execute the full AI Evaluation Agent for a given application ID.
     
     Flow:
-    1. Fetch Application + CV + Job Criteria from DB.
-    2. Invoke LangGraph Agent Graph (Extractor -> Evaluator -> QuestionGen -> Verifier).
-    3. Save final evaluation output to scoring_results table.
+    1. Fetch Application + CV + Job Criteria from DB (short-lived transaction).
+    2. Invoke LangGraph Agent Graph (Extractor -> Evaluator -> QuestionGen -> Verifier) without holding DB lock.
+    3. Save final evaluation output to scoring_results table (short-lived transaction).
     4. Send email notification to HR recruiter.
     """
     logger.info(f"Starting AI Evaluation Agent for Application ID: {application_id}")
 
-    # 1. Fetch DB data
-    input_data = fetch_application_data(db, application_id)
+    # 1. Fetch DB data with short-lived session
+    if db is not None:
+        input_data = fetch_application_data(db, application_id)
+    else:
+        from app.core.database import get_sync_session
+        with get_sync_session() as session:
+            input_data = fetch_application_data(session, application_id)
+
     if not input_data:
         logger.error(f"Cannot run Agent: Application {application_id} data missing or invalid.")
         return None
@@ -106,8 +112,13 @@ async def run_evaluation_agent(db: Session, application_id: int) -> Optional[Dic
     except Exception as e:
         logger.warning(f"Schema validation warning: {e}")
 
-    # 4. Save to Database
-    save_agent_evaluation(db, application_id, ai_score, evaluation_dict)
+    # 4. Save to Database with short-lived session
+    if db is not None:
+        save_agent_evaluation(db, application_id, ai_score, evaluation_dict)
+    else:
+        from app.core.database import get_sync_session
+        with get_sync_session() as session:
+            save_agent_evaluation(session, application_id, ai_score, evaluation_dict)
 
     # 5. Trigger HR Notification Tool
     recruiter_email = input_data.get("recruiter_email")
