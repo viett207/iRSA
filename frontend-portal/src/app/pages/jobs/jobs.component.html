@@ -2,13 +2,16 @@
   <!-- Hero Search Section -->
   <section class="jobs-hero">
     <div class="hero-container">
-      <div class="hero-badge-wrap">
-        <span class="hero-badge">
-          <span nz-icon nzType="thunderbolt" nzTheme="fill" class="bolt-icon"></span>
-          Cổng Tuyển Dụng Thông Minh iRSA
+      <!-- Hero Eyebrow Branding & Live Stats (Typography Branding, Non-button) -->
+      <div class="hero-eyebrow" aria-label="Thông tin nền tảng tuyển dụng">
+        <span class="eyebrow-tag">
+          <span nz-icon nzType="thunderbolt" nzTheme="fill" class="eyebrow-icon"></span>
+          CỔNG TUYỂN DỤNG THÔNG MINH iRSA
         </span>
         @if (totalJobs > 0) {
-          <span class="hero-stat-pill">
+          <span class="eyebrow-sep">·</span>
+          <span class="eyebrow-stat">
+            <span class="live-dot"></span>
             <strong>{{ totalJobs }}</strong> việc làm đang mở
           </span>
         }
@@ -28,10 +31,12 @@
             <input
               type="text"
               nz-input
-              placeholder="Chức danh, kỹ năng (vd: Python, React, AI...)"
+              [placeholder]="isKeywordFocused ? 'Ví dụ: AI Engineer, Python, React, Backend...' : 'Vị trí, kỹ năng hoặc từ khóa'"
               [(ngModel)]="searchQuery"
               (ngModelChange)="onSearchInput($event)"
               (keyup.enter)="onSearch()"
+              (focus)="isKeywordFocused = true"
+              (blur)="isKeywordFocused = false"
               [nzAutocomplete]="autoComplete"
               class="console-input"
             />
@@ -79,7 +84,7 @@
             <span nz-icon nzType="environment" nzTheme="outline" class="field-icon"></span>
             <nz-select
               [(ngModel)]="selectedLocation"
-              nzPlaceHolder="Tất cả địa điểm"
+              nzPlaceHolder="Địa điểm"
               nzAllowClear
               (ngModelChange)="onFilterChange()"
               class="console-select"
@@ -95,7 +100,7 @@
             <span nz-icon nzType="appstore" nzTheme="outline" class="field-icon"></span>
             <nz-select
               [(ngModel)]="selectedCategory"
-              nzPlaceHolder="Tất cả ngành nghề"
+              nzPlaceHolder="Ngành nghề"
               nzAllowClear
               nzShowSearch
               (ngModelChange)="onFilterChange()"
@@ -109,27 +114,26 @@
 
           <!-- Action Button -->
           <button nz-button nzType="primary" nzSize="large" class="console-search-btn" (click)="onSearch()">
-            <span nz-icon nzType="search" nzTheme="outline"></span>
             <span>Tìm việc ngay</span>
           </button>
         </div>
       </div>
 
-      <!-- Quick Filter Chips / Popular Tags -->
+      <!-- Quick Filter Chips -->
       <div class="quick-chips-bar">
-        <span class="chips-label">Gợi ý tìm nhanh:</span>
-        <div class="chips-list">
-          @for (chip of quickChips; track chip.id) {
-            <button
-              type="button"
-              class="quick-chip-btn"
-              [class.active]="chip.active"
-              (click)="toggleQuickChip(chip)"
-            >
-              {{ chip.label }}
-            </button>
-          }
-        </div>
+        @for (chip of quickChips; track chip.id) {
+          <button
+            type="button"
+            class="quick-chip-btn"
+            [class.active]="chip.active"
+            (click)="toggleQuickChip(chip)"
+          >
+            <span class="chip-text">{{ chip.label }}</span>
+            @if (chip.nzIcon) {
+              <span nz-icon [nzType]="chip.nzIcon" nzTheme="outline" class="chip-icon"></span>
+            }
+          </button>
+        }
       </div>
     </div>
   </section>
@@ -336,28 +340,33 @@
                   }
                 </button>
 
-                <!-- View Mode Toggle (Grid vs Split Mode) -->
-                <div class="view-mode-toggle hide-mobile" nz-tooltip nzTooltipTitle="Chuyển đổi kiểu hiển thị danh sách">
-                  <button
-                    type="button"
-                    class="view-mode-btn"
-                    [class.active]="viewMode === 'grid'"
-                    (click)="setViewMode('grid')"
-                    title="Chế độ lưới thẻ (Grid View)"
-                  >
-                    <span nz-icon nzType="appstore" nzTheme="outline"></span>
-                    <span class="btn-text">Lưới</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="view-mode-btn"
-                    [class.active]="viewMode === 'split'"
-                    (click)="setViewMode('split')"
-                    title="Chế độ chia đôi xem trực tiếp (Split View)"
-                  >
-                    <span nz-icon nzType="layout" nzTheme="outline"></span>
-                    <span class="btn-text">Chi tiết</span>
-                  </button>
+                <!-- View Mode Toggle (Grid vs Split Mode) - Clearly separated Display Control -->
+                <div class="display-mode-control hide-mobile">
+                  <span class="control-label">Hiển thị:</span>
+                  <div class="view-mode-toggle" role="group" aria-label="Kiểu hiển thị danh sách">
+                    <button
+                      type="button"
+                      class="view-mode-btn"
+                      [class.active]="viewMode === 'grid'"
+                      (click)="setViewMode('grid')"
+                      nz-tooltip
+                      nzTooltipTitle="Chế độ lưới thẻ (Grid View)"
+                    >
+                      <span nz-icon nzType="appstore" nzTheme="outline"></span>
+                      <span class="btn-text">Lưới</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-mode-btn"
+                      [class.active]="viewMode === 'split'"
+                      (click)="setViewMode('split')"
+                      nz-tooltip
+                      nzTooltipTitle="Chế độ chia đôi xem trực tiếp (Split View)"
+                    >
+                      <span nz-icon nzType="layout" nzTheme="outline"></span>
+                      <span class="btn-text">Chi tiết</span>
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Sort Dropdown -->

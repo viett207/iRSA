@@ -109,6 +109,7 @@ export class JobsComponent implements OnInit, OnDestroy {
 
   // Filter models
   searchQuery = '';
+  isKeywordFocused = false;
   selectedLocation = '';
   selectedCategory: string | null = null;
   selectedSalaryPreset: string = 'all';
@@ -170,14 +171,13 @@ export class JobsComponent implements OnInit, OnDestroy {
   }));
 
   quickChips = [
-    { id: 'hot', label: 'Tuyển gấp 🔥', active: false },
-    { id: 'new', label: 'Mới đăng 24h ✨', active: false },
-    { id: 'high_salary', label: 'Lương > 30 triệu 💰', active: false },
-    { id: 'hcm', label: 'TP. Hồ Chí Minh 📍', active: false },
-    { id: 'hanoi', label: 'Hà Nội 📍', active: false },
-    { id: 'fulltime', label: 'Toàn thời gian 💼', active: false },
-    { id: 'fresher', label: 'Fresher / Thực tập 🌱', active: false },
-    { id: 'senior', label: 'Senior (5+ năm) 🚀', active: false },
+    { id: 'hot', label: 'Tuyển gấp', nzIcon: 'fire', active: false },
+    { id: 'new', label: 'Mới đăng 24h', nzIcon: 'clock-circle', active: false },
+    { id: 'high_salary', label: 'Lương >30 triệu', nzIcon: 'dollar', active: false },
+    { id: 'hcm', label: 'TP. Hồ Chí Minh', nzIcon: 'environment', active: false },
+    { id: 'hanoi', label: 'Hà Nội', nzIcon: 'environment', active: false },
+    { id: 'fresher', label: 'Fresher / Thực tập', nzIcon: 'read', active: false },
+    { id: 'senior', label: 'Senior (5+ năm)', nzIcon: 'trophy', active: false },
   ];
 
   salaryPresets = [
@@ -203,10 +203,14 @@ export class JobsComponent implements OnInit, OnDestroy {
   ];
 
   get filteredJobs(): Job[] {
+    let result = this.jobs;
     if (this.onlySavedFilter) {
-      return this.jobs.filter((j) => this.savedJobIds.has(j.id));
+      result = result.filter((j) => this.savedJobIds.has(j.id));
     }
-    return this.jobs;
+    if (this.postedDateFilter === '24h') {
+      result = result.filter((j) => j.isNew);
+    }
+    return result;
   }
 
   get paginatedJobs(): Job[] {
@@ -285,6 +289,7 @@ export class JobsComponent implements OnInit, OnDestroy {
         const max = params['salary_max'] ? parseInt(params['salary_max'], 10) : 100;
         this.salaryRange = [min, max];
       }
+      this.syncQuickChipsState();
       this.loadJobs();
     });
   }
@@ -607,6 +612,7 @@ export class JobsComponent implements OnInit, OnDestroy {
         if (t.value !== selected.value) t.checked = false;
       });
     }
+    this.syncQuickChipsState();
     this.currentPage = 1;
     this.loadJobs();
   }
@@ -617,6 +623,7 @@ export class JobsComponent implements OnInit, OnDestroy {
         if (e.value !== selected.value) e.checked = false;
       });
     }
+    this.syncQuickChipsState();
     this.currentPage = 1;
     this.loadJobs();
   }
@@ -624,43 +631,113 @@ export class JobsComponent implements OnInit, OnDestroy {
   onSalaryPresetSelect(preset: { label: string; value: string; range: [number, number] }): void {
     this.selectedSalaryPreset = preset.value;
     this.salaryRange = [...preset.range];
+    this.syncQuickChipsState();
     this.currentPage = 1;
     this.loadJobs();
   }
 
   toggleQuickChip(chip: { id: string; label: string; active: boolean }): void {
-    chip.active = !chip.active;
+    const willBeActive = !chip.active;
     this.currentPage = 1;
 
     switch (chip.id) {
       case 'hot':
-        this.sortBy = chip.active ? 'popular' : 'newest';
+        this.sortBy = willBeActive ? 'popular' : 'newest';
         break;
       case 'new':
-        this.sortBy = 'newest';
+        this.postedDateFilter = willBeActive ? '24h' : 'all';
+        if (willBeActive) {
+          this.sortBy = 'newest';
+        }
         break;
       case 'high_salary':
-        this.salaryRange = chip.active ? [30, 100] : [0, 100];
+        this.salaryRange = willBeActive ? [30, 100] : [0, 100];
+        this.selectedSalaryPreset = willBeActive ? '30_50' : 'all';
         break;
       case 'hcm':
-        this.selectedLocation = chip.active ? 'Hồ Chí Minh' : '';
+        this.selectedLocation = willBeActive ? 'Hồ Chí Minh' : '';
         break;
       case 'hanoi':
-        this.selectedLocation = chip.active ? 'Hà Nội' : '';
-        break;
-      case 'fulltime':
-        const ft = this.jobTypes.find((t) => t.value === 'full_time');
-        if (ft) ft.checked = chip.active;
+        this.selectedLocation = willBeActive ? 'Hà Nội' : '';
         break;
       case 'fresher':
         const entry = this.experienceLevels.find((e) => e.value === 'entry');
-        if (entry) entry.checked = chip.active;
+        if (entry) {
+          entry.checked = willBeActive;
+          if (willBeActive) {
+            this.experienceLevels.forEach((e) => {
+              if (e.value !== 'entry') e.checked = false;
+            });
+          }
+        }
         break;
       case 'senior':
         const snr = this.experienceLevels.find((e) => e.value === 'senior');
-        if (snr) snr.checked = chip.active;
+        if (snr) {
+          snr.checked = willBeActive;
+          if (willBeActive) {
+            this.experienceLevels.forEach((e) => {
+              if (e.value !== 'senior') e.checked = false;
+            });
+          }
+        }
         break;
     }
+
+    this.syncQuickChipsState();
+    this.loadJobs();
+  }
+
+  syncQuickChipsState(): void {
+    for (const chip of this.quickChips) {
+      switch (chip.id) {
+        case 'hot':
+          chip.active = this.sortBy === 'popular';
+          break;
+        case 'new':
+          chip.active = this.postedDateFilter === '24h';
+          break;
+        case 'high_salary':
+          chip.active = this.salaryRange[0] >= 30;
+          break;
+        case 'hcm':
+          chip.active =
+            !!this.selectedLocation &&
+            (this.selectedLocation.toLowerCase().includes('hồ chí minh') ||
+              this.selectedLocation.toLowerCase().includes('hcm'));
+          break;
+        case 'hanoi':
+          chip.active =
+            !!this.selectedLocation &&
+            (this.selectedLocation.toLowerCase().includes('hà nội') ||
+              this.selectedLocation.toLowerCase().includes('ha noi'));
+          break;
+        case 'fresher':
+          chip.active = !!this.experienceLevels.find((e) => e.value === 'entry')?.checked;
+          break;
+        case 'senior':
+          chip.active = !!this.experienceLevels.find((e) => e.value === 'senior')?.checked;
+          break;
+      }
+    }
+  }
+
+  hasActiveQuickChips(): boolean {
+    return this.quickChips.some((c) => c.active);
+  }
+
+  clearQuickChips(): void {
+    this.sortBy = 'newest';
+    this.postedDateFilter = 'all';
+    this.salaryRange = [0, 100];
+    this.selectedSalaryPreset = 'all';
+    this.selectedLocation = '';
+    const entry = this.experienceLevels.find((e) => e.value === 'entry');
+    if (entry) entry.checked = false;
+    const snr = this.experienceLevels.find((e) => e.value === 'senior');
+    if (snr) snr.checked = false;
+    this.syncQuickChipsState();
+    this.currentPage = 1;
     this.loadJobs();
   }
 
@@ -703,6 +780,7 @@ export class JobsComponent implements OnInit, OnDestroy {
   }
 
   onFilterChange(): void {
+    this.syncQuickChipsState();
     this.currentPage = 1;
     this.loadJobs();
   }
@@ -727,13 +805,14 @@ export class JobsComponent implements OnInit, OnDestroy {
     this.companyCodeFilter = null;
     this.onlySavedFilter = false;
     this.postedDateFilter = 'all';
+    this.sortBy = 'newest';
     this.filteredCompanies = this.allActiveCompanies;
     this.salaryRange = [0, 100];
     this.jobTypes.forEach((t) => (t.checked = false));
     this.experienceLevels.forEach((e) => (e.checked = false));
     this.categories.forEach((c) => (c.checked = false));
-    this.quickChips.forEach((c) => (c.active = false));
     this.filterDrawerOpen = false;
+    this.syncQuickChipsState();
     this.currentPage = 1;
     this.loadJobs();
   }
@@ -750,6 +829,8 @@ export class JobsComponent implements OnInit, OnDestroy {
       !!this.selectedCategory ||
       !!this.companyCodeFilter ||
       this.onlySavedFilter ||
+      this.postedDateFilter !== 'all' ||
+      this.sortBy !== 'newest' ||
       this.salaryRange[0] > 0 ||
       this.salaryRange[1] < 100 ||
       this.jobTypes.some((t) => t.checked) ||
@@ -765,6 +846,8 @@ export class JobsComponent implements OnInit, OnDestroy {
     if (this.selectedCategory) count++;
     if (this.companyCodeFilter) count++;
     if (this.onlySavedFilter) count++;
+    if (this.postedDateFilter !== 'all') count++;
+    if (this.sortBy !== 'newest') count++;
     if (this.salaryRange[0] > 0 || this.salaryRange[1] < 100) count++;
     count += this.jobTypes.filter((t) => t.checked).length;
     count += this.experienceLevels.filter((e) => e.checked).length;
@@ -801,6 +884,16 @@ export class JobsComponent implements OnInit, OnDestroy {
     if (this.onlySavedFilter) {
       filters.push({ key: 'onlySaved', value: 'true', label: 'Việc đã lưu' });
     }
+    if (this.postedDateFilter === '24h') {
+      filters.push({ key: 'postedDate', value: '24h', label: 'Mới đăng 24h' });
+    }
+    if (this.sortBy === 'popular') {
+      filters.push({ key: 'sortBy', value: 'popular', label: 'Tuyển gấp / Phổ biến' });
+    } else if (this.sortBy === 'salary_desc') {
+      filters.push({ key: 'sortBy', value: 'salary_desc', label: 'Lương cao nhất' });
+    } else if (this.sortBy === 'salary_asc') {
+      filters.push({ key: 'sortBy', value: 'salary_asc', label: 'Lương thấp nhất' });
+    }
 
     this.jobTypes
       .filter((t) => t.checked)
@@ -827,6 +920,10 @@ export class JobsComponent implements OnInit, OnDestroy {
       this.selectedSalaryPreset = 'all';
     } else if (key === 'onlySaved') {
       this.onlySavedFilter = false;
+    } else if (key === 'postedDate') {
+      this.postedDateFilter = 'all';
+    } else if (key === 'sortBy') {
+      this.sortBy = 'newest';
     } else if (key === 'jobType') {
       const type = this.jobTypes.find((t) => t.value === value);
       if (type) type.checked = false;
@@ -834,6 +931,7 @@ export class JobsComponent implements OnInit, OnDestroy {
       const exp = this.experienceLevels.find((e) => e.value === value);
       if (exp) exp.checked = false;
     }
+    this.syncQuickChipsState();
     this.onFilterChange();
   }
 
