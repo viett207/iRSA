@@ -174,6 +174,7 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
       padding: var(--space-16) 0;
       margin: calc(-1 * var(--header-height)) 0 0 0;
       padding-top: calc(var(--header-height) + var(--space-16));
+      text-align: center;
       @media (max-width: 768px) {
         padding: var(--space-10) 0;
         padding-top: calc(var(--header-height) + var(--space-10));
@@ -185,16 +186,19 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
       opacity: 0.5; pointer-events: none;
     }
     .hero-container {
-      max-width: var(--container-max); margin: 0 auto;
+      max-width: var(--container-max); margin: 0 auto; width: 100%;
       padding: 0 var(--container-padding); position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
     .hero-content {
-      max-width: 720px; margin: 0 auto; text-align: center;
+      max-width: 720px; width: 100%; margin: 0 auto; text-align: center;
+      display: flex; flex-direction: column; align-items: center;
     }
     .hero-title {
       font-family: var(--font-heading); font-size: var(--text-5xl);
       font-weight: var(--font-extrabold); color: white;
       line-height: 1.1; margin-bottom: var(--space-6); letter-spacing: -0.02em;
+      text-align: center; width: 100%;
       @media (max-width: 768px) { font-size: var(--text-3xl); }
     }
     .hero-highlight {
@@ -206,7 +210,7 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
     .search-box {
       background: var(--color-bg-secondary); border-radius: var(--radius-2xl);
       padding: var(--space-2); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-      display: flex; gap: var(--space-2); max-width: 600px; margin: 0 auto var(--space-6);
+      display: flex; gap: var(--space-2); width: 100%; max-width: 600px; margin: 0 auto var(--space-6);
       @media (max-width: 640px) {
         flex-direction: column; padding: var(--space-4); border-radius: var(--radius-xl);
       }

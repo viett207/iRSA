@@ -293,16 +293,18 @@ import { Resume } from '../../shared/models/resume.model';
     }
     .page-header {
       margin-bottom: var(--space-6, 24px);
+      text-align: center;
       h1 {
         font-size: var(--text-2xl, 24px);
         font-weight: 700;
         color: var(--color-text-primary);
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
         margin-bottom: 8px;
       }
-      p { color: var(--color-text-secondary); }
+      p { color: var(--color-text-secondary); text-align: center; }
     }
     .search-card { margin-bottom: 24px; }
     .search-options {
