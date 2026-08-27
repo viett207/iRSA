@@ -131,50 +131,23 @@
    ========================================================================== */
 .search-console-wrapper {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto 20px;
+  max-width: 960px;
+  margin: 0 auto 24px;
 }
 
 .search-console {
   background: #FFFFFF;
-  border-radius: 18px;
+  border-radius: 16px;
   padding: 8px;
-  display: grid;
-  grid-template-columns: 2.2fr 1.3fr 1.3fr 1.1fr auto;
-  gap: 8px;
+  display: flex;
   align-items: center;
+  gap: 12px;
   box-shadow: 0 16px 36px -8px rgba(0, 30, 80, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
 
-  @media (max-width: 1200px) {
-    grid-template-columns: 2fr 1.2fr 1.2fr auto;
-    .field-salary {
-      display: none;
-    }
-  }
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr 1fr;
+  @media (max-width: 768px) {
+    flex-direction: column;
     padding: 12px;
     gap: 10px;
-
-    .field-keyword {
-      grid-column: span 2;
-    }
-    .field-location, .field-category {
-      grid-column: span 1;
-    }
-    .console-search-btn {
-      grid-column: span 2;
-    }
-  }
-
-  @media (max-width: 600px) {
-    grid-template-columns: 1fr;
-    padding: 12px;
-
-    .field-keyword, .field-location, .field-category, .console-search-btn {
-      grid-column: span 1;
-    }
   }
 }
 
@@ -182,11 +155,11 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 12px;
+  padding: 0 16px;
   background: #F8FAFC;
   border: 1px solid #E2E8F0;
   border-radius: 12px;
-  height: 48px;
+  height: 50px;
   transition: all 0.2s ease;
 
   &:focus-within {
@@ -199,6 +172,20 @@
     color: #64748B;
     font-size: 16px;
     flex-shrink: 0;
+  }
+
+  &.field-keyword {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &.field-location {
+    width: 260px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 768px) {
+    width: 100% !important;
   }
 }
 
@@ -243,8 +230,8 @@
 }
 
 .console-search-btn {
-  height: 48px !important;
-  padding: 0 24px !important;
+  height: 50px !important;
+  padding: 0 28px !important;
   border-radius: 12px !important;
   background: linear-gradient(135deg, #0050b3 0%, #1890ff 100%) !important;
   border: none !important;
@@ -254,12 +241,18 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
   box-shadow: 0 4px 14px rgba(0, 80, 179, 0.35) !important;
   transition: all 0.2s ease !important;
 
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 18px rgba(0, 80, 179, 0.45) !important;
+  }
+
+  @media (max-width: 768px) {
+    width: 100% !important;
   }
 }
 
