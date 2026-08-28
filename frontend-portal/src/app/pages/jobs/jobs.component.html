@@ -1,25 +1,119 @@
 <div class="jobs-page">
   <!-- Hero Search Section -->
   <section class="jobs-hero">
+    <div class="hero-decorations" aria-hidden="true">
+      <div class="glow-orb glow-orb-1"></div>
+      <div class="glow-orb glow-orb-2"></div>
+      <div class="glow-orb glow-orb-3"></div>
+      <svg class="hero-tech-pattern" width="100%" height="100%" viewBox="0 0 1440 380" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="jobs-net-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0284c7" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.08"/>
+          </linearGradient>
+          <linearGradient id="jobs-net-grad-rev" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#0284c7" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="#60a5fa" stop-opacity="0.08"/>
+          </linearGradient>
+          <filter id="jobs-glow-dot" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+
+        <!-- Left Side Network Lines -->
+        <path d="M 50 60 L 140 110 L 90 200 L 220 240 L 140 330 L 60 370" stroke="url(#jobs-net-grad)" stroke-width="1.2" stroke-dasharray="4 4"/>
+        <path d="M 140 110 L 280 80 L 370 150 L 460 90" stroke="url(#jobs-net-grad)" stroke-width="1.2"/>
+        <path d="M 220 240 L 340 220 L 420 290 L 480 370" stroke="url(#jobs-net-grad)" stroke-width="1.2" stroke-dasharray="6 6"/>
+        <path d="M 90 200 L 220 180 L 340 220 L 270 330 L 140 330" stroke="url(#jobs-net-grad)" stroke-width="1"/>
+
+        <!-- Left Side Light Points / Nodes -->
+        <circle cx="50" cy="60" r="3.5" fill="#0284c7" filter="url(#jobs-glow-dot)"/>
+        <circle cx="140" cy="110" r="4.5" fill="#3b82f6" filter="url(#jobs-glow-dot)"/>
+        <circle cx="280" cy="80" r="3" fill="#0284c7"/>
+        <circle cx="370" cy="150" r="4.5" fill="#60a5fa" filter="url(#jobs-glow-dot)"/>
+        <circle cx="90" cy="200" r="3.5" fill="#0284c7"/>
+        <circle cx="220" cy="180" r="4" fill="#3b82f6" filter="url(#jobs-glow-dot)"/>
+        <circle cx="220" cy="240" r="4.5" fill="#0284c7" filter="url(#jobs-glow-dot)"/>
+        <circle cx="340" cy="220" r="3.5" fill="#6366f1"/>
+        <circle cx="420" cy="290" r="4" fill="#0284c7" filter="url(#jobs-glow-dot)"/>
+        <circle cx="140" cy="330" r="3.5" fill="#3b82f6"/>
+        <circle cx="270" cy="330" r="4" fill="#0284c7" filter="url(#jobs-glow-dot)"/>
+        <circle cx="60" cy="370" r="4" fill="#60a5fa"/>
+        <circle cx="480" cy="370" r="3.5" fill="#6366f1"/>
+
+        <!-- Right Side Network Lines -->
+        <path d="M 1390 60 L 1300 110 L 1350 200 L 1220 240 L 1300 330 L 1380 370" stroke="url(#jobs-net-grad-rev)" stroke-width="1.2" stroke-dasharray="4 4"/>
+        <path d="M 1300 110 L 1160 80 L 1070 150 L 980 90" stroke="url(#jobs-net-grad-rev)" stroke-width="1.2"/>
+        <path d="M 1220 240 L 1100 220 L 1020 290 L 960 370" stroke="url(#jobs-net-grad-rev)" stroke-width="1.2" stroke-dasharray="6 6"/>
+        <path d="M 1350 200 L 1220 180 L 1100 220 L 1170 330 L 1300 330" stroke="url(#jobs-net-grad-rev)" stroke-width="1"/>
+
+        <!-- Right Side Light Points / Nodes -->
+        <circle cx="1390" cy="60" r="3.5" fill="#0284c7" filter="url(#jobs-glow-dot)"/>
+        <circle cx="1300" cy="110" r="4.5" fill="#3b82f6" filter="url(#jobs-glow-dot)"/>
+        <circle cx="1160" cy="80" r="3" fill="#0284c7"/>
+        <circle cx="1070" cy="150" r="4.5" fill="#60a5fa" filter="url(#jobs-glow-dot)"/>
+        <circle cx="1350" cy="200" r="3.5" fill="#0284c7"/>
+        <circle cx="1220" cy="180" r="4" fill="#3b82f6" filter="url(#jobs-glow-dot)"/>
+        <circle cx="1220" cy="240" r="4.5" fill="#0284c7" filter="url(#jobs-glow-dot)"/>
+        <circle cx="1100" cy="220" r="3.5" fill="#6366f1"/>
+        <circle cx="1020" cy="290" r="4" fill="#0284c7" filter="url(#jobs-glow-dot)"/>
+        <circle cx="1300" cy="330" r="3.5" fill="#3b82f6"/>
+        <circle cx="1170" cy="330" r="4" fill="#0284c7" filter="url(#jobs-glow-dot)"/>
+        <circle cx="1380" cy="370" r="4" fill="#60a5fa"/>
+        <circle cx="960" cy="370" r="3.5" fill="#6366f1"/>
+
+        <!-- Decorative Orbit Rings -->
+        <circle cx="160" cy="70" r="140" stroke="rgba(15, 82, 186, 0.05)" stroke-width="1.2" stroke-dasharray="6 6"/>
+        <circle cx="1280" cy="70" r="140" stroke="rgba(15, 82, 186, 0.05)" stroke-width="1.2" stroke-dasharray="6 6"/>
+        <circle cx="90" cy="350" r="100" stroke="rgba(2, 132, 199, 0.06)" stroke-width="1.2"/>
+        <circle cx="1350" cy="350" r="100" stroke="rgba(2, 132, 199, 0.06)" stroke-width="1.2"/>
+        <circle cx="720" cy="190" r="320" stroke="rgba(15, 82, 186, 0.03)" stroke-width="1" stroke-dasharray="6 6"/>
+
+        <!-- Subtle Outline Career & Tech Icons along margins -->
+        <g transform="translate(42, 120) scale(0.85)" stroke="rgba(15, 82, 186, 0.14)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          <path d="M12 12v.01"/>
+        </g>
+        <g transform="translate(46, 260) scale(0.85)" stroke="rgba(2, 132, 199, 0.15)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 18 22 12 16 6"/>
+          <polyline points="8 6 2 12 8 18"/>
+        </g>
+        <g transform="translate(1366, 130) scale(0.8)" stroke="rgba(15, 82, 186, 0.14)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </g>
+        <g transform="translate(1358, 270) scale(0.85)" stroke="rgba(2, 132, 199, 0.14)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </g>
+      </svg>
+    </div>
+
     <div class="hero-container">
-      <!-- Hero Eyebrow Branding & Live Stats (Typography Branding, Non-button) -->
-      <div class="hero-eyebrow" aria-label="Thông tin nền tảng tuyển dụng">
-        <span class="eyebrow-tag">
-          <span nz-icon nzType="thunderbolt" nzTheme="fill" class="eyebrow-icon"></span>
-          CỔNG TUYỂN DỤNG THÔNG MINH iRSA
+      <div class="hero-badge-wrap">
+        <span class="hero-badge">
+          <span nz-icon nzType="thunderbolt" nzTheme="fill" class="bolt-icon"></span>
+          Cổng thông tin việc làm iRSA
         </span>
         @if (totalJobs > 0) {
-          <span class="eyebrow-sep">·</span>
-          <span class="eyebrow-stat">
-            <span class="live-dot"></span>
-            <strong>{{ totalJobs }}</strong> việc làm đang mở
+          <span class="hero-stat-pill">
+            <span class="live-pulse-dot" aria-hidden="true">
+              <span class="pulse-ring"></span>
+              <span class="pulse-center"></span>
+            </span>
+            <strong class="stat-number">{{ animatedTotalJobs || totalJobs }}</strong>
+            <span class="stat-text">việc làm đang mở</span>
           </span>
         }
       </div>
 
-      <h1 class="hero-title">Tìm Kiếm Cơ Hội Nghề Nghiệp Đột Phá</h1>
+      <h1 class="hero-title">Khám phá cơ hội nghề nghiệp lý tưởng</h1>
       <p class="hero-subtitle">
-        Khám phá hàng ngàn vị trí việc làm chất lượng cao từ các doanh nghiệp hàng đầu với mức đãi ngộ hấp dẫn
+        Tìm kiếm vị trí phù hợp với năng lực và mục tiêu sự nghiệp của bạn từ hàng trăm doanh nghiệp uy tín.
       </p>
 
       <!-- Integrated Multi-Criteria Search Console -->
@@ -31,53 +125,14 @@
             <input
               type="text"
               nz-input
-              [placeholder]="isKeywordFocused ? 'Ví dụ: AI Engineer, Python, React, Backend...' : 'Vị trí, kỹ năng hoặc từ khóa'"
+              placeholder="Vị trí, chức danh, kỹ năng, công ty..."
               [(ngModel)]="searchQuery"
               (ngModelChange)="onSearchInput($event)"
               (keyup.enter)="onSearch()"
-              (focus)="isKeywordFocused = true"
-              (blur)="isKeywordFocused = false"
               [nzAutocomplete]="autoComplete"
               class="console-input"
             />
           </div>
-
-          <nz-autocomplete #autoComplete [nzWidth]="440">
-            @if (suggestionsLoading) {
-              <nz-auto-option disabled [nzValue]="searchQuery">
-                <div class="suggestion-loading">
-                  <span nz-icon nzType="loading" nzTheme="outline"></span>
-                  Đang tìm kiếm vị trí phù hợp...
-                </div>
-              </nz-auto-option>
-            } @else {
-              @for (suggestion of suggestions; track suggestion.id) {
-                <nz-auto-option
-                  [nzValue]="suggestion.title_vi"
-                  [nzLabel]="suggestion.title_vi"
-                  (click)="selectSuggestion(suggestion)"
-                >
-                  <div class="suggestion-item">
-                    <div class="suggestion-title">{{ suggestion.title_vi }}</div>
-                    <div class="suggestion-meta">
-                      <span>{{ suggestion.company_name || suggestion.department || 'iRSA Tech' }}</span>
-                      @if (suggestion.location) {
-                        <span> · {{ suggestion.location }}</span>
-                      }
-                      @if (suggestion.salary_max) {
-                        <span class="suggestion-salary"> · Tới {{ suggestion.salary_max }}tr</span>
-                      }
-                    </div>
-                  </div>
-                </nz-auto-option>
-              }
-              @if (suggestions.length === 0 && searchQuery.length >= 2) {
-                <nz-auto-option disabled [nzValue]="searchQuery">
-                  <div class="suggestion-empty">Không tìm thấy gợi ý phù hợp</div>
-                </nz-auto-option>
-              }
-            }
-          </nz-autocomplete>
 
           <!-- Location Select -->
           <div class="console-field field-location">
@@ -112,33 +167,73 @@
             </nz-select>
           </div>
 
+
           <!-- Action Button -->
-          <button nz-button nzType="primary" nzSize="large" class="console-search-btn" (click)="onSearch()">
+          <button nz-button nzType="primary" class="console-search-btn" (click)="onSearch()">
+            <span nz-icon nzType="search" nzTheme="outline"></span>
             <span>Tìm việc ngay</span>
           </button>
         </div>
+
+        <!-- Autocomplete Dropdown definition -->
+        <nz-autocomplete #autoComplete [nzWidth]="440">
+          @if (suggestionsLoading) {
+            <nz-auto-option disabled [nzValue]="searchQuery">
+              <div class="suggestion-loading">
+                <span nz-icon nzType="loading" nzTheme="outline"></span>
+                Đang tìm kiếm gợi ý...
+              </div>
+            </nz-auto-option>
+          } @else {
+            @for (suggestion of suggestions; track suggestion.id) {
+              <nz-auto-option
+                [nzValue]="suggestion.title_vi"
+                [nzLabel]="suggestion.title_vi"
+                (click)="selectSuggestion(suggestion)"
+              >
+                <div class="suggestion-item">
+                  <div class="suggestion-title">{{ suggestion.title_vi }}</div>
+                  <div class="suggestion-meta">
+                    <span>{{ suggestion.company_name || suggestion.department || 'iRSA Tech' }}</span>
+                    @if (suggestion.location) {
+                      <span> · {{ suggestion.location }}</span>
+                    }
+                    @if (suggestion.salary_max) {
+                      <span class="suggestion-salary"> · Tới {{ suggestion.salary_max }}tr</span>
+                    }
+                  </div>
+                </div>
+              </nz-auto-option>
+            }
+            @if (suggestions.length === 0 && searchQuery.length >= 2) {
+              <nz-auto-option disabled [nzValue]="searchQuery">
+                <div class="suggestion-empty">Không có gợi ý phù hợp</div>
+              </nz-auto-option>
+            }
+          }
+        </nz-autocomplete>
       </div>
 
-      <!-- Quick Filter Chips -->
+      <!-- Quick Filter Chips / Popular Tags -->
       <div class="quick-chips-bar">
-        @for (chip of quickChips; track chip.id) {
-          <button
-            type="button"
-            class="quick-chip-btn"
-            [class.active]="chip.active"
-            (click)="toggleQuickChip(chip)"
-          >
-            <span class="chip-text">{{ chip.label }}</span>
-            @if (chip.nzIcon) {
-              <span nz-icon [nzType]="chip.nzIcon" nzTheme="outline" class="chip-icon"></span>
-            }
-          </button>
-        }
+        <span class="chips-label">Gợi ý tìm nhanh:</span>
+        <div class="chips-list">
+          @for (chip of quickChips; track chip.id) {
+            <button
+              type="button"
+              class="quick-chip-btn"
+              [class.active]="chip.active"
+              (click)="toggleQuickChip(chip)"
+            >
+              {{ chip.label }}
+            </button>
+          }
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Main Content Layout (Full Widescreen Expansion) -->
+  <!-- Main Content Layout -->
   <section class="jobs-main-wrapper">
     <div class="widescreen-container">
       <div class="jobs-layout-grid" [class.split-layout-active]="viewMode === 'split'">
@@ -148,7 +243,7 @@
           <div class="filter-card">
             <div class="filter-card-header">
               <div class="header-left">
-                <span nz-icon nzType="filter" nzTheme="fill" class="filter-title-icon"></span>
+                <span nz-icon nzType="filter" nzTheme="outline" class="filter-title-icon"></span>
                 <h3>Bộ lọc nâng cao</h3>
                 @if (getActiveFiltersCount() > 0) {
                   <span class="filter-count-badge">{{ getActiveFiltersCount() }}</span>
@@ -171,7 +266,6 @@
               <div class="filter-facet saved-facet">
                 <label nz-checkbox [(ngModel)]="onlySavedFilter" (ngModelChange)="onFilterChange()">
                   <span class="saved-label">
-                    <span nz-icon nzType="heart" nzTheme="fill" class="heart-icon"></span>
                     Chỉ xem việc đã lưu ({{ savedJobIds.size }})
                   </span>
                 </label>
@@ -184,7 +278,7 @@
                 <div class="facet-header">
                   <h4 class="facet-title">
                     <span nz-icon nzType="dollar" nzTheme="outline"></span>
-                    Mức lương (triệu VNĐ)
+                    Mức lương (Triệu VNĐ)
                   </h4>
                   <span class="salary-dynamic-text">
                     {{ salaryRange[0] }}tr - {{ salaryRange[1] === 100 ? '100tr+' : salaryRange[1] + 'tr' }}
@@ -246,7 +340,7 @@
               <div class="filter-facet">
                 <h4 class="facet-title">
                   <span nz-icon nzType="trophy" nzTheme="outline"></span>
-                  Kinh nghiệm làm việc
+                  Kinh nghiệm
                 </h4>
                 <div class="facet-options-list">
                   @for (exp of experienceLevels; track exp.value) {
@@ -265,11 +359,11 @@
               <div class="filter-facet">
                 <h4 class="facet-title">
                   <span nz-icon nzType="appstore" nzTheme="outline"></span>
-                  Ngành nghề tuyển dụng
+                  Ngành nghề
                 </h4>
                 <nz-select
                   [(ngModel)]="selectedCategory"
-                  nzPlaceHolder="Chọn ngành nghề..."
+                  nzPlaceHolder="Chọn ngành nghề"
                   nzAllowClear
                   nzShowSearch
                   (ngModelChange)="onFilterChange()"
@@ -287,22 +381,20 @@
               <div class="filter-facet">
                 <h4 class="facet-title">
                   <span nz-icon nzType="bank" nzTheme="outline"></span>
-                  Công ty tuyển dụng
+                  Công ty
                 </h4>
                 <nz-select
                   [(ngModel)]="companyCodeFilter"
-                  nzPlaceHolder="Tìm theo công ty..."
+                  nzPlaceHolder="Tìm theo công ty"
                   nzAllowClear
                   nzShowSearch
-                  nzServerSearch
-                  (nzOnSearch)="onCompanySearch($event)"
                   (ngModelChange)="onFilterChange()"
                   class="full-select"
                 >
-                  @for (c of filteredCompanies; track c.company_code) {
+                  @for (c of allActiveCompanies; track c.company_code) {
                     <nz-option
                       [nzValue]="c.company_code"
-                      [nzLabel]="c.company_name + ' (' + c.job_count + ' việc)'"
+                      [nzLabel]="c.company_name + (c.job_count > 0 ? ' (' + c.job_count + ')' : '')"
                     ></nz-option>
                   }
                 </nz-select>
@@ -318,15 +410,17 @@
             <div class="toolbar-top-row">
               <div class="results-count-wrap">
                 <h2 class="results-headline">
-                  Tìm thấy <span class="highlight-count">{{ filteredJobs.length }}</span> vị trí phù hợp
+                  <span>Hiển thị</span>
+                  <span class="count-highlight">{{ filteredJobs.length }}</span>
+                  <span class="total-text">việc làm phù hợp</span>
+                  @if (totalJobs > filteredJobs.length) {
+                    <span class="total-note">(trong tổng số {{ totalJobs }})</span>
+                  }
                 </h2>
-                @if (totalJobs > filteredJobs.length) {
-                  <span class="total-note">trong tổng số {{ totalJobs }} tin tuyển dụng</span>
-                }
               </div>
 
               <!-- Toolbar Controls Right -->
-              <div class="toolbar-controls-right">
+              <div class="toolbar-controls-group">
                 <!-- Mobile Filter Button -->
                 <button
                   nz-button
@@ -340,33 +434,28 @@
                   }
                 </button>
 
-                <!-- View Mode Toggle (Grid vs Split Mode) - Clearly separated Display Control -->
-                <div class="display-mode-control hide-mobile">
-                  <span class="control-label">Hiển thị:</span>
-                  <div class="view-mode-toggle" role="group" aria-label="Kiểu hiển thị danh sách">
-                    <button
-                      type="button"
-                      class="view-mode-btn"
-                      [class.active]="viewMode === 'grid'"
-                      (click)="setViewMode('grid')"
-                      nz-tooltip
-                      nzTooltipTitle="Chế độ lưới thẻ (Grid View)"
-                    >
-                      <span nz-icon nzType="appstore" nzTheme="outline"></span>
-                      <span class="btn-text">Lưới</span>
-                    </button>
-                    <button
-                      type="button"
-                      class="view-mode-btn"
-                      [class.active]="viewMode === 'split'"
-                      (click)="setViewMode('split')"
-                      nz-tooltip
-                      nzTooltipTitle="Chế độ chia đôi xem trực tiếp (Split View)"
-                    >
-                      <span nz-icon nzType="layout" nzTheme="outline"></span>
-                      <span class="btn-text">Chi tiết</span>
-                    </button>
-                  </div>
+                <!-- View Mode Toggle (Grid vs Split Mode) -->
+                <div class="view-mode-toggle hide-mobile">
+                  <button
+                    type="button"
+                    class="view-mode-btn"
+                    [class.active]="viewMode === 'grid'"
+                    (click)="setViewMode('grid')"
+                    title="Chế độ xem dạng lưới"
+                  >
+                    <span nz-icon nzType="appstore" nzTheme="outline"></span>
+                    <span class="btn-text">Lưới</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="view-mode-btn"
+                    [class.active]="viewMode === 'split'"
+                    (click)="setViewMode('split')"
+                    title="Chế độ xem chi tiết"
+                  >
+                    <span nz-icon nzType="unordered-list" nzTheme="outline"></span>
+                    <span class="btn-text">Chi tiết</span>
+                  </button>
                 </div>
 
                 <!-- Sort Dropdown -->
@@ -380,7 +469,10 @@
                     <nz-option nzValue="newest" nzLabel="Mới nhất"></nz-option>
                     <nz-option nzValue="salary_desc" nzLabel="Lương cao nhất"></nz-option>
                     <nz-option nzValue="salary_asc" nzLabel="Lương thấp nhất"></nz-option>
-                    <nz-option nzValue="popular" nzLabel="Nhiều ứng viên"></nz-option>
+                    <nz-option nzValue="popular" nzLabel="Nhiều ứng viên nhất"></nz-option>
+                    <nz-option nzValue="least_applicants" nzLabel="Ít ứng viên nhất"></nz-option>
+                    <nz-option nzValue="full_time_first" nzLabel="Toàn thời gian"></nz-option>
+                    <nz-option nzValue="part_time_first" nzLabel="Bán thời gian"></nz-option>
                   </nz-select>
                 </div>
 
@@ -402,7 +494,7 @@
             <!-- Active Filter Badges Bar -->
             @if (hasActiveFilters()) {
               <div class="active-filter-tags-row">
-                <span class="active-filter-label">Đang lọc:</span>
+                <span class="active-filter-label">Đang lọc theo:</span>
                 <div class="tags-container">
                   @for (filter of getActiveFilters(); track filter.key + filter.value) {
                     <nz-tag
@@ -458,7 +550,7 @@
                   >
                     <!-- Card Top Header -->
                     <div class="card-header-row">
-                      <div class="company-avatar-box" [style.background]="job.companyGradient">
+                      <div class="company-avatar-box">
                         <span class="avatar-letter">{{ job.companyInitial }}</span>
                       </div>
 
@@ -475,9 +567,10 @@
                             [class.saved]="job.isSaved"
                             (click)="toggleSaveJob($event, job)"
                             nz-tooltip
-                            [nzTooltipTitle]="job.isSaved ? 'Bỏ lưu tin tuyển dụng' : 'Lưu tin tuyển dụng'"
+                            [nzTooltipTitle]="job.isSaved ? 'Bỏ lưu việc làm' : 'Lưu tin tuyển dụng'"
+                            [attr.aria-label]="job.isSaved ? 'Bỏ lưu việc làm' : 'Lưu tin tuyển dụng'"
                           >
-                            <span nz-icon [nzType]="job.isSaved ? 'heart' : 'heart'" [nzTheme]="job.isSaved ? 'fill' : 'outline'"></span>
+                            <span nz-icon nzType="bookmark" nzTheme="fill"></span>
                           </button>
                         </div>
 
@@ -489,23 +582,29 @@
                               class="company-link"
                             >
                               <span nz-icon nzType="bank" nzTheme="outline"></span>
-                              {{ job.company }}
+                              <span>{{ job.company }}</span>
                             </a>
                           } @else {
                             <span class="company-name-text">
                               <span nz-icon nzType="bank" nzTheme="outline"></span>
-                              {{ job.company }}
+                              <span>{{ job.company }}</span>
                             </span>
                           }
-                          <span class="verified-employer-tag" nz-tooltip nzTooltipTitle="Doanh nghiệp đã được xác thực trên hệ thống">
+                          @if (job.department) {
+                            <span class="industry-tag-pill">
+                              <span nz-icon nzType="appstore" nzTheme="outline"></span>
+                              <span>{{ job.department }}</span>
+                            </span>
+                          }
+                          <span class="verified-employer-tag" nz-tooltip nzTooltipTitle="Nhà tuyển dụng đã xác thực">
                             <span nz-icon nzType="check-circle" nzTheme="fill"></span>
-                            Xác thực
+                            <span class="verified-text">Đã xác thực</span>
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <!-- Badges Row: Hot, New, Applied, Salary -->
+                    <!-- Badges Row: Salary, Hot, New, Applied -->
                     <div class="card-badges-row">
                       @if (job.salaryFormatted) {
                         <div class="salary-pill-badge">
@@ -516,34 +615,34 @@
                       @if (job.isHot) {
                         <span class="status-badge hot-badge">
                           <span nz-icon nzType="fire" nzTheme="fill"></span>
-                          HOT
+                          Tuyển gấp
                         </span>
                       }
                       @if (job.isNew) {
                         <span class="status-badge new-badge">
                           <span nz-icon nzType="thunderbolt" nzTheme="fill"></span>
-                          MỚI ĐĂNG
+                          Mới
                         </span>
                       }
                       @if (job.isApplied) {
                         <span class="status-badge applied-badge">
                           <span nz-icon nzType="check-circle" nzTheme="fill"></span>
-                          ĐÃ ỨNG TUYỂN
+                          Đã ứng tuyển
                         </span>
                       }
                     </div>
 
                     <!-- Key Metadata Grid -->
                     <div class="card-meta-grid">
-                      <div class="meta-item" [title]="'Địa điểm: ' + job.location">
+                      <div class="meta-item">
                         <span nz-icon nzType="environment" nzTheme="outline" class="meta-icon"></span>
                         <span class="meta-text">{{ job.location }}</span>
                       </div>
-                      <div class="meta-item" [title]="'Hình thức: ' + job.type">
+                      <div class="meta-item">
                         <span nz-icon nzType="clock-circle" nzTheme="outline" class="meta-icon"></span>
                         <span class="meta-text">{{ job.type }}</span>
                       </div>
-                      <div class="meta-item" [title]="'Kinh nghiệm: ' + job.experience">
+                      <div class="meta-item">
                         <span nz-icon nzType="trophy" nzTheme="outline" class="meta-icon"></span>
                         <span class="meta-text">{{ job.experience }}</span>
                       </div>
@@ -580,22 +679,12 @@
                       </div>
 
                       <div class="card-action-buttons">
-                        <button
-                          type="button"
-                          class="quick-view-btn"
-                          (click)="openQuickPreview($event, job)"
-                          nz-tooltip
-                          nzTooltipTitle="Xem nhanh nội dung công việc"
-                        >
-                          <span nz-icon nzType="eye" nzTheme="outline"></span>
-                          Xem nhanh
-                        </button>
                         <a
                           [routerLink]="['/jobs', job.slug]"
                           (click)="$event.stopPropagation()"
                           class="card-primary-cta"
                         >
-                          <span>Xem chi tiết</span>
+                          <span>Ứng tuyển ngay</span>
                           <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
                         </a>
                       </div>
@@ -617,7 +706,7 @@
                       (click)="selectJobForLivePreview(job)"
                     >
                       <div class="split-item-header">
-                        <div class="company-mini-avatar" [style.background]="job.companyGradient">
+                        <div class="company-mini-avatar">
                           {{ job.companyInitial }}
                         </div>
                         <div class="split-item-info">
@@ -629,8 +718,9 @@
                           class="split-save-btn"
                           [class.saved]="job.isSaved"
                           (click)="toggleSaveJob($event, job)"
+                          [attr.aria-label]="job.isSaved ? 'Bỏ lưu' : 'Lưu tin'"
                         >
-                          <span nz-icon [nzType]="job.isSaved ? 'heart' : 'heart'" [nzTheme]="job.isSaved ? 'fill' : 'outline'"></span>
+                          <span nz-icon nzType="bookmark" nzTheme="fill"></span>
                         </button>
                       </div>
 
@@ -660,7 +750,7 @@
                       <!-- Live Preview Top Header -->
                       <div class="preview-header">
                         <div class="preview-brand-row">
-                          <div class="preview-avatar" [style.background]="selectedJobForPreview.companyGradient">
+                          <div class="preview-avatar">
                             {{ selectedJobForPreview.companyInitial }}
                           </div>
                           <div class="preview-title-info">
@@ -668,10 +758,20 @@
                             <div class="preview-company-row">
                               @if (selectedJobForPreview.companyCode) {
                                 <a [routerLink]="['/companies', selectedJobForPreview.companyCode]" class="preview-company-link">
+                                  <span nz-icon nzType="bank" nzTheme="outline"></span>
                                   {{ selectedJobForPreview.company }}
                                 </a>
                               } @else {
-                                <span class="preview-company-name">{{ selectedJobForPreview.company }}</span>
+                                <span class="preview-company-name">
+                                  <span nz-icon nzType="bank" nzTheme="outline"></span>
+                                  {{ selectedJobForPreview.company }}
+                                </span>
+                              }
+                              @if (selectedJobForPreview.department) {
+                                <span class="preview-loc-pill">
+                                  <span nz-icon nzType="appstore" nzTheme="outline"></span>
+                                  {{ selectedJobForPreview.department }}
+                                </span>
                               }
                               <span class="preview-loc-pill">
                                 <span nz-icon nzType="environment" nzTheme="outline"></span>
@@ -681,11 +781,11 @@
                           </div>
                         </div>
 
-                        <!-- Sticky Action Bar -->
+                        <!-- Action Bar -->
                         <div class="preview-actions-bar">
                           <a [routerLink]="['/jobs', selectedJobForPreview.slug]" class="preview-apply-btn">
                             <span nz-icon nzType="send" nzTheme="outline"></span>
-                            <span>Ứng tuyển & Xem đầy đủ</span>
+                            <span>Ứng tuyển ngay</span>
                           </a>
                           <button
                             type="button"
@@ -693,7 +793,7 @@
                             [class.saved]="selectedJobForPreview.isSaved"
                             (click)="toggleSaveJob($event, selectedJobForPreview)"
                           >
-                            <span nz-icon [nzType]="selectedJobForPreview.isSaved ? 'heart' : 'heart'" [nzTheme]="selectedJobForPreview.isSaved ? 'fill' : 'outline'"></span>
+                            <span nz-icon nzType="bookmark" nzTheme="fill"></span>
                             <span>{{ selectedJobForPreview.isSaved ? 'Đã lưu' : 'Lưu tin' }}</span>
                           </button>
                           <button type="button" class="preview-share-btn" (click)="copyJobLink(selectedJobForPreview)">
@@ -706,7 +806,7 @@
                       <div class="preview-body">
                         <!-- Key Highlights Grid -->
                         <div class="preview-highlights-grid">
-                          <div class="highlight-box">
+                          <div class="highlight-box highlight-salary">
                             <div class="highlight-icon green">
                               <span nz-icon nzType="dollar" nzTheme="outline"></span>
                             </div>
@@ -741,8 +841,8 @@
                               <span nz-icon nzType="team" nzTheme="outline"></span>
                             </div>
                             <div class="highlight-info">
-                              <span class="highlight-label">Số ứng viên</span>
-                              <strong class="highlight-val">{{ selectedJobForPreview.applicants }} người đã nộp</strong>
+                              <span class="highlight-label">Ứng viên</span>
+                              <strong class="highlight-val">{{ selectedJobForPreview.applicants }}</strong>
                             </div>
                           </div>
                         </div>
@@ -752,7 +852,7 @@
                           <div class="preview-section">
                             <h4 class="section-title">
                               <span nz-icon nzType="tags" nzTheme="outline"></span>
-                              Kỹ năng bắt buộc & công nghệ
+                              Kỹ năng yêu cầu
                             </h4>
                             <div class="preview-skills-wrap">
                               @for (s of selectedJobForPreview.skills; track s) {
@@ -765,7 +865,7 @@
                         <!-- Description & Requirements Section -->
                         @if (previewLoading) {
                           <div class="preview-loading-wrap">
-                            <nz-spin nzTip="Đang tải chi tiết công việc..."></nz-spin>
+                            <nz-spin nzTip="Đang tải thông tin chi tiết..."></nz-spin>
                           </div>
                         } @else if (previewJobDetail) {
                           @if (previewJobDetail.description_vi) {
@@ -789,7 +889,7 @@
                           }
                         } @else {
                           <div class="preview-section">
-                            <h4 class="section-title">Tổng quan công việc</h4>
+                            <h4 class="section-title">Thông tin công việc</h4>
                             <p class="preview-plain-desc">{{ selectedJobForPreview.descriptionSnippet }}</p>
                           </div>
                         }
@@ -802,12 +902,12 @@
                             </div>
                             <div>
                               <h4>{{ selectedJobForPreview.company }}</h4>
-                              <p>Doanh nghiệp tuyển dụng hàng đầu</p>
+                              <p>Nhà tuyển dụng uy tín trên iRSA</p>
                             </div>
                           </div>
                           @if (selectedJobForPreview.companyCode) {
                             <a [routerLink]="['/companies', selectedJobForPreview.companyCode]" class="comp-card-link">
-                              Xem trang thông tin công ty & các vị trí khác
+                              Xem trang công ty
                               <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
                             </a>
                           }
@@ -836,14 +936,14 @@
               <div class="empty-illustration">
                 <span nz-icon nzType="search" nzTheme="outline" class="big-empty-icon"></span>
               </div>
-              <h3 class="empty-title">Không tìm thấy vị trí việc làm phù hợp</h3>
+              <h3 class="empty-title">Không tìm thấy việc làm phù hợp</h3>
               <p class="empty-desc">
-                Thử thay đổi từ khóa tìm kiếm, điều chỉnh mức lương hoặc xóa các bộ lọc đang chọn để tìm thêm nhiều cơ hội hấp dẫn.
+                Thử thay đổi từ khóa tìm kiếm, mức lương hoặc giảm bớt các tiêu chí lọc để có thêm kết quả.
               </p>
               <div class="empty-actions">
                 <button nz-button nzType="primary" nzSize="large" (click)="clearFilters()">
                   <span nz-icon nzType="reload" nzTheme="outline"></span>
-                  Xóa tất cả bộ lọc & Tải lại
+                  Xóa tất cả bộ lọc
                 </button>
               </div>
             </div>
@@ -876,10 +976,10 @@
 
         <!-- Location -->
         <div class="mobile-facet">
-          <h4 class="mobile-facet-title">Địa điểm</h4>
+          <h4 class="mobile-facet-title">Địa điểm làm việc</h4>
           <nz-select
             [(ngModel)]="selectedLocation"
-            nzPlaceHolder="Tất cả địa điểm"
+            nzPlaceHolder="Chọn địa điểm"
             nzAllowClear
             class="full-select"
           >
@@ -936,7 +1036,7 @@
           <h4 class="mobile-facet-title">Ngành nghề</h4>
           <nz-select
             [(ngModel)]="selectedCategory"
-            nzPlaceHolder="Chọn ngành nghề..."
+            nzPlaceHolder="Chọn ngành nghề"
             nzAllowClear
             nzShowSearch
             class="full-select"
@@ -946,14 +1046,35 @@
             }
           </nz-select>
         </div>
+
+        <nz-divider></nz-divider>
+
+        <!-- Company -->
+        <div class="mobile-facet">
+          <h4 class="mobile-facet-title">Công ty</h4>
+          <nz-select
+            [(ngModel)]="companyCodeFilter"
+            nzPlaceHolder="Chọn công ty"
+            nzAllowClear
+            nzShowSearch
+            class="full-select"
+          >
+            @for (c of allActiveCompanies; track c.company_code) {
+              <nz-option
+                [nzValue]="c.company_code"
+                [nzLabel]="c.company_name + (c.job_count > 0 ? ' (' + c.job_count + ')' : '')"
+              ></nz-option>
+            }
+          </nz-select>
+        </div>
       </div>
     </ng-container>
 
     <ng-template #mobileFilterFooter>
       <div class="mobile-drawer-footer">
-        <button nz-button (click)="clearFilters()">Xóa tất cả</button>
+        <button nz-button (click)="clearFilters()">Xóa bộ lọc</button>
         <button nz-button nzType="primary" (click)="applyFilters()">
-          Áp dụng bộ lọc
+          Áp dụng
         </button>
       </div>
     </ng-template>
@@ -973,7 +1094,7 @@
       @if (quickPreviewJob) {
         <div class="drawer-preview-content">
           <div class="drawer-header-brand">
-            <div class="preview-avatar" [style.background]="quickPreviewJob.companyGradient">
+            <div class="preview-avatar">
               {{ quickPreviewJob.companyInitial }}
             </div>
             <div>
@@ -983,7 +1104,7 @@
           </div>
 
           <div class="preview-highlights-grid">
-            <div class="highlight-box">
+            <div class="highlight-box highlight-salary">
               <div class="highlight-icon green">
                 <span nz-icon nzType="dollar" nzTheme="outline"></span>
               </div>
@@ -1015,7 +1136,7 @@
           }
 
           <div class="drawer-section">
-            <h4>Mô tả công việc tóm tắt</h4>
+            <h4>Mô tả sơ lược</h4>
             <p class="drawer-desc">{{ quickPreviewJob.descriptionSnippet }}</p>
           </div>
         </div>
@@ -1026,7 +1147,7 @@
         <button nz-button (click)="quickPreviewDrawerOpen = false">Đóng</button>
         @if (quickPreviewJob) {
           <a [routerLink]="['/jobs', quickPreviewJob.slug]" nz-button nzType="primary" (click)="quickPreviewDrawerOpen = false">
-            Xem trang chi tiết & Ứng tuyển
+            Xem chi tiết & Ứng tuyển
             <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
           </a>
         }

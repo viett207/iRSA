@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
@@ -84,6 +84,31 @@ export class JobService {
       `${this.baseUrl}/search-by-cv`,
       formData,
       { params: httpParams },
+    );
+  }
+
+  searchByCVWithProgress(params: {
+    resume_id?: number;
+    file?: File;
+    page?: number;
+    size?: number;
+  }): Observable<HttpEvent<CVJobSearchResponse>> {
+    const formData = new FormData();
+    formData.append('resume_id', params.resume_id != null ? params.resume_id.toString() : '');
+    if (params.file) formData.append('file', params.file);
+
+    let httpParams = new HttpParams();
+    if (params.page) httpParams = httpParams.set('page', params.page.toString());
+    if (params.size) httpParams = httpParams.set('size', params.size.toString());
+
+    return this.http.post<CVJobSearchResponse>(
+      `${this.baseUrl}/search-by-cv`,
+      formData,
+      {
+        params: httpParams,
+        observe: 'events',
+        reportProgress: true,
+      },
     );
   }
 }

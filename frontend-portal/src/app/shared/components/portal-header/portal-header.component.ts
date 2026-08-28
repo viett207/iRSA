@@ -38,18 +38,6 @@ import { NotificationService, AppNotification } from '../../../core/services/not
           <span class="logo-text">iRSA</span>
         </a>
 
-        <!-- Desktop Nav -->
-        <nav class="nav hide-mobile">
-          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">
-            <span nz-icon nzType="home" nzTheme="outline"></span>
-            Trang chủ
-          </a>
-          <a routerLink="/jobs" routerLinkActive="active" class="nav-link">
-            <span nz-icon nzType="search" nzTheme="outline"></span>
-            Tìm việc
-          </a>
-        </nav>
-
         <!-- Right Section -->
         <div class="header-right">
           @if (authService.isAuthenticated()) {
@@ -67,23 +55,25 @@ import { NotificationService, AppNotification } from '../../../core/services/not
             </div>
             <nz-dropdown-menu #notifMenu>
               <div class="notif-dropdown">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f0f0f0;">
-                  <strong>Thông báo</strong>
-                  <a (click)="notificationSvc.markAllAsRead()" style="font-size: 12px;">Đã đọc tất cả</a>
+                <div class="notif-header">
+                  <strong class="notif-title">Thông báo</strong>
+                  <button type="button" class="notif-read-all-btn" (click)="notificationSvc.markAllAsRead()">
+                    Đã đọc tất cả
+                  </button>
                 </div>
-                <div style="max-height: 320px; overflow-y: auto;">
+                <div class="notif-list">
                   @for (n of notificationSvc.notifications(); track n.id) {
                     <div
+                      class="notif-item"
+                      [class.unread]="!n.is_read"
                       (click)="onNotifClick(n)"
-                      style="padding: 10px 16px; cursor: pointer; border-bottom: 1px solid #fafafa;"
-                      [style.background]="n.is_read ? 'transparent' : '#e6f7ff'"
                     >
-                      <div style="font-size: 13px;">{{ n.message }}</div>
-                      <div style="font-size: 11px; color: #999; margin-top: 2px;">{{ formatTime(n.created_at) }}</div>
+                      <div class="notif-msg">{{ n.message }}</div>
+                      <div class="notif-time">{{ formatTime(n.created_at) }}</div>
                     </div>
                   }
                   @if (notificationSvc.notifications().length === 0) {
-                    <div style="padding: 24px; text-align: center; color: #999;">Không có thông báo</div>
+                    <div class="notif-empty">Không có thông báo mới</div>
                   }
                 </div>
               </div>
@@ -98,7 +88,7 @@ import { NotificationService, AppNotification } from '../../../core/services/not
             >
               <nz-avatar
                 [nzText]="getInitials()"
-                nzSize="small"
+                nzSize="default"
                 class="user-avatar"
               ></nz-avatar>
               <span class="user-name">{{ authService.user()?.full_name }}</span>
@@ -107,13 +97,19 @@ import { NotificationService, AppNotification } from '../../../core/services/not
             <nz-dropdown-menu #userMenu>
               <ul nz-menu class="user-dropdown">
                 <li nz-menu-item disabled class="dropdown-header">
-                  <strong>{{ authService.user()?.full_name }}</strong>
-                  <small>{{ authService.user()?.email }}</small>
+                  <div class="user-info">
+                    <strong class="dropdown-user-name">{{ authService.user()?.full_name }}</strong>
+                    <small class="dropdown-user-email">{{ authService.user()?.email }}</small>
+                  </div>
                 </li>
                 <li nz-menu-divider></li>
                 <li nz-menu-item routerLink="/dashboard/profile">
                   <span nz-icon nzType="user" nzTheme="outline"></span>
                   Hồ sơ cá nhân
+                </li>
+                <li nz-menu-item routerLink="/dashboard/interview-invitations">
+                  <span nz-icon nzType="calendar" nzTheme="outline"></span>
+                  Lời mời phỏng vấn
                 </li>
                 <li nz-menu-item routerLink="/dashboard/applications">
                   <span nz-icon nzType="file-text" nzTheme="outline"></span>
@@ -132,29 +128,38 @@ import { NotificationService, AppNotification } from '../../../core/services/not
             </nz-dropdown-menu>
 
             <!-- Notification Bell (Mobile) -->
-            <div class="notif-bell show-mobile-only"
-              nz-dropdown [nzDropdownMenu]="notifMenuMobile" nzTrigger="click" nzPlacement="bottomRight">
+            <div
+              class="notif-bell show-mobile-only"
+              nz-dropdown
+              [nzDropdownMenu]="notifMenuMobile"
+              nzTrigger="click"
+              nzPlacement="bottomRight"
+            >
               <nz-badge [nzCount]="notificationSvc.unreadCount()" [nzOverflowCount]="9" nzSize="small">
                 <span nz-icon nzType="bell" nzTheme="outline"></span>
               </nz-badge>
             </div>
             <nz-dropdown-menu #notifMenuMobile>
               <div class="notif-dropdown">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #f0f0f0;">
-                  <strong style="font-size: 13px;">Thông báo</strong>
-                  <a (click)="notificationSvc.markAllAsRead()" style="font-size: 11px;">Đã đọc tất cả</a>
+                <div class="notif-header">
+                  <strong class="notif-title">Thông báo</strong>
+                  <button type="button" class="notif-read-all-btn" (click)="notificationSvc.markAllAsRead()">
+                    Đã đọc tất cả
+                  </button>
                 </div>
-                <div style="max-height: 280px; overflow-y: auto;">
+                <div class="notif-list mobile-notif-list">
                   @for (n of notificationSvc.notifications(); track n.id) {
-                    <div (click)="onNotifClick(n)"
-                      style="padding: 8px 14px; cursor: pointer; border-bottom: 1px solid #fafafa;"
-                      [style.background]="n.is_read ? 'transparent' : '#e6f7ff'">
-                      <div style="font-size: 12px;">{{ n.message }}</div>
-                      <div style="font-size: 10px; color: #999; margin-top: 2px;">{{ formatTime(n.created_at) }}</div>
+                    <div
+                      class="notif-item"
+                      [class.unread]="!n.is_read"
+                      (click)="onNotifClick(n)"
+                    >
+                      <div class="notif-msg">{{ n.message }}</div>
+                      <div class="notif-time">{{ formatTime(n.created_at) }}</div>
                     </div>
                   }
                   @if (notificationSvc.notifications().length === 0) {
-                    <div style="padding: 20px; text-align: center; color: #999; font-size: 12px;">Không có thông báo</div>
+                    <div class="notif-empty">Không có thông báo mới</div>
                   }
                 </div>
               </div>
@@ -162,33 +167,35 @@ import { NotificationService, AppNotification } from '../../../core/services/not
 
             <!-- Avatar only (Mobile) -->
             <nz-avatar
-              class="show-mobile-only user-avatar"
+              class="show-mobile-only user-avatar mobile-avatar-btn"
               [nzText]="getInitials()"
               nzSize="small"
               (click)="mobileMenuOpen = true"
-              style="cursor: pointer;"
             ></nz-avatar>
           } @else {
-            <!-- Auth Buttons (Desktop) -->
-            <div class="auth-buttons hide-mobile">
+            <!-- Auth Buttons -->
+            <div class="auth-buttons">
               <button nz-button nzType="text" routerLink="/login" class="login-btn">
                 Đăng nhập
               </button>
-              <button nz-button nzType="primary" routerLink="/register">
+              <button nz-button nzType="primary" routerLink="/register" class="register-btn">
                 Đăng ký
               </button>
             </div>
           }
 
-          <!-- Mobile Menu Toggle -->
-          <button
-            nz-button
-            nzType="text"
-            class="mobile-toggle show-mobile-only"
-            (click)="mobileMenuOpen = true"
-          >
-            <span nz-icon nzType="menu" nzTheme="outline" style="font-size: 22px;"></span>
-          </button>
+          @if (authService.isAuthenticated()) {
+            <!-- Mobile Menu Toggle -->
+            <button
+              nz-button
+              nzType="text"
+              class="mobile-toggle show-mobile-only"
+              (click)="mobileMenuOpen = true"
+              aria-label="Mở menu"
+            >
+              <span nz-icon nzType="menu" nzTheme="outline" style="font-size: 20px;"></span>
+            </button>
+          }
         </div>
       </div>
     </header>
@@ -197,9 +204,9 @@ import { NotificationService, AppNotification } from '../../../core/services/not
     <nz-drawer
       [nzVisible]="mobileMenuOpen"
       nzPlacement="right"
-      nzTitle="Menu"
+      nzTitle="Menu tài khoản"
       (nzOnClose)="mobileMenuOpen = false"
-      [nzWidth]="280"
+      [nzWidth]="300"
       nzClosable
     >
       <ng-container *nzDrawerContent>
@@ -207,36 +214,22 @@ import { NotificationService, AppNotification } from '../../../core/services/not
           @if (authService.isAuthenticated()) {
             <div class="mobile-user">
               <nz-avatar [nzText]="getInitials()" [nzSize]="48" class="user-avatar"></nz-avatar>
-              <div>
-                <strong>{{ authService.user()?.full_name }}</strong>
-                <small>{{ authService.user()?.email }}</small>
+              <div class="mobile-user-details">
+                <strong class="mobile-user-name">{{ authService.user()?.full_name }}</strong>
+                <small class="mobile-user-email">{{ authService.user()?.email }}</small>
               </div>
-            </div>
-          } @else {
-            <div class="mobile-auth">
-              <button nz-button nzType="primary" nzBlock routerLink="/login" (click)="mobileMenuOpen = false">
-                Đăng nhập
-              </button>
-              <button nz-button nzBlock routerLink="/register" (click)="mobileMenuOpen = false">
-                Đăng ký
-              </button>
             </div>
           }
 
           <ul nz-menu nzMode="vertical" class="mobile-nav">
-            <li nz-menu-item routerLink="/" (click)="mobileMenuOpen = false">
-              <span nz-icon nzType="home" nzTheme="outline"></span>
-              Trang chủ
-            </li>
-            <li nz-menu-item routerLink="/jobs" (click)="mobileMenuOpen = false">
-              <span nz-icon nzType="search" nzTheme="outline"></span>
-              Tìm việc
-            </li>
             @if (authService.isAuthenticated()) {
-              <li nz-menu-divider></li>
               <li nz-menu-item routerLink="/dashboard/profile" (click)="mobileMenuOpen = false">
                 <span nz-icon nzType="user" nzTheme="outline"></span>
                 Hồ sơ cá nhân
+              </li>
+              <li nz-menu-item routerLink="/dashboard/interview-invitations" (click)="mobileMenuOpen = false">
+                <span nz-icon nzType="calendar" nzTheme="outline"></span>
+                Lời mời phỏng vấn
               </li>
               <li nz-menu-item routerLink="/dashboard/applications" (click)="mobileMenuOpen = false">
                 <span nz-icon nzType="file-text" nzTheme="outline"></span>
@@ -277,12 +270,25 @@ export class PortalHeaderComponent implements OnInit, OnDestroy {
 
   getInitials(): string {
     const name = this.authService.user()?.full_name || 'U';
-    return name.split(' ').map(n => n.charAt(0)).slice(0, 2).join('').toUpperCase();
+    return name.split(' ').map((n) => n.charAt(0)).slice(0, 2).join('').toUpperCase();
   }
 
   onNotifClick(n: AppNotification): void {
     if (!n.is_read) {
       this.notificationSvc.markAsRead(n.id);
+    }
+    if (n.type === 'interview') {
+      const rawId = n.data ? n.data['interview_id'] : null;
+      const interviewId =
+        rawId !== null && rawId !== undefined ? String(rawId) : undefined;
+
+      if (interviewId) {
+        this.router.navigate(['/dashboard/interview-invitations'], {
+          queryParams: { highlight: interviewId },
+        });
+      } else {
+        this.router.navigate(['/dashboard/interview-invitations']);
+      }
     }
   }
 
