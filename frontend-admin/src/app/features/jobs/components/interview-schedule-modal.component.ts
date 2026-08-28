@@ -259,7 +259,23 @@ export class InterviewScheduleModalComponent implements OnInit {
   loadInterviews(): void {
     this.loading = true;
     this.jobService.getInterviews(this.jobId, this.appId).subscribe({
-      next: (data) => { this.interviews = data; this.loading = false; },
+      next: (data) => {
+        this.interviews = data;
+        this.loading = false;
+        const active = data.find((i) => i.status === 'scheduled');
+        if (active) {
+          this.form.interview_type = active.interview_type || 'online';
+          this.form.location = active.location || '';
+          if (active.candidate_response === 'reschedule_requested' && active.candidate_proposed_date) {
+            this.form.interview_date = new Date(active.candidate_proposed_date) as any;
+          } else if (active.interview_date) {
+            this.form.interview_date = new Date(active.interview_date) as any;
+          }
+          if (active.notes) {
+            this.form.notes = active.notes;
+          }
+        }
+      },
       error: () => { this.loading = false; },
     });
   }
@@ -273,17 +289,33 @@ export class InterviewScheduleModalComponent implements OnInit {
       interview_date: new Date(this.form.interview_date).toISOString(),
     };
 
-    this.jobService.scheduleInterview(this.jobId, this.appId, body).subscribe({
-      next: (iv) => {
-        this.message.success('Đã lưu và cập nhật lịch phỏng vấn');
-        this.submitting = false;
-        this.modalRef.close(iv);
-      },
-      error: (err) => {
-        this.message.error(err.error?.detail || 'Không thể đặt lịch');
-        this.submitting = false;
-      },
-    });
+    const activeInterview = this.interviews.find((i) => i.status === 'scheduled');
+
+    if (activeInterview) {
+      this.jobService.updateInterview(this.jobId, this.appId, activeInterview.id, body).subscribe({
+        next: (iv) => {
+          this.message.success('Đã cập nhật lịch phỏng vấn và gửi thông báo cho ứng viên');
+          this.submitting = false;
+          this.modalRef.close(iv);
+        },
+        error: (err) => {
+          this.message.error(err.error?.detail || 'Không thể cập nhật lịch');
+          this.submitting = false;
+        },
+      });
+    } else {
+      this.jobService.scheduleInterview(this.jobId, this.appId, body).subscribe({
+        next: (iv) => {
+          this.message.success('Đã đặt lịch phỏng vấn và gửi thông báo cho ứng viên');
+          this.submitting = false;
+          this.modalRef.close(iv);
+        },
+        error: (err) => {
+          this.message.error(err.error?.detail || 'Không thể đặt lịch');
+          this.submitting = false;
+        },
+      });
+    }
   }
 
   markCompleted(iv: Interview): void {
