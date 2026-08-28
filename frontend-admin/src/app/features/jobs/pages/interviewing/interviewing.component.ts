@@ -186,14 +186,21 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
                   </button>
                 </div>
               } @else if (isOwner(app)) {
-                <span
-                  class="finalization-locked"
-                  nz-tooltip
-                  nzTooltipTitle="Hoàn thành buổi phỏng vấn trong Phòng PV trước khi chốt kết quả"
-                >
-                  <span nz-icon nzType="lock"></span>
-                  Chờ hoàn thành PV
-                </span>
+                <div style="display: flex; gap: 6px; align-items: center">
+                  <span
+                    class="finalization-locked"
+                    nz-tooltip
+                    nzTooltipTitle="Hoàn thành buổi phỏng vấn trong Phòng PV trước khi chốt kết quả"
+                  >
+                    <span nz-icon nzType="lock"></span>
+                    Chờ PV
+                  </span>
+                  <button nz-button nzSize="small" nzType="default"
+                    (click)="openScheduleInterview(app)"
+                    nz-tooltip nzTooltipTitle="Xem / Đổi lịch phỏng vấn">
+                    <span nz-icon nzType="calendar"></span>
+                  </button>
+                </div>
               } @else {
                 <span style="color: #999">—</span>
               }

@@ -1074,7 +1074,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       this.notificationSvc.markAsRead(notif.id);
     }
     if (notif.type?.startsWith('interview')) {
-      this.router.navigate(['/jobs/shortlisted']);
+      this.router.navigate(['/jobs/interviewing']);
     } else if (notif.data?.application_id) {
       this.router.navigate(['/applications']);
     } else if (notif.data?.job_id) {
