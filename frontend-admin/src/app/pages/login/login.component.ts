@@ -425,6 +425,7 @@ import { environment } from '../../../environments/environment';
 
     nz-form-item {
       margin-bottom: 20px;
+      width: 100%;
     }
 
     nz-form-label {
@@ -432,18 +433,64 @@ import { environment } from '../../../environments/environment';
       padding-bottom: 6px !important;
     }
 
-    nz-input-group {
-      ::ng-deep .ant-input-affix-wrapper {
-        border-radius: 12px !important;
+    nz-form-control {
+      width: 100%;
+    }
 
-        &:focus,
-        &.ant-input-affix-wrapper-focused {
-          box-shadow: 0 0 0 2px var(--color-primary-100, #BAE0FF) !important;
+    ::ng-deep {
+      .login-form {
+        .ant-form-item-control-input-content {
+          display: block;
+          width: 100%;
         }
-      }
 
-      ::ng-deep .ant-input {
-        border-radius: 12px !important;
+        .ant-input-affix-wrapper-lg {
+          width: 100%;
+          min-height: 48px;
+          padding: 10px 16px !important;
+          border-radius: 12px !important;
+          display: flex;
+          align-items: center;
+          border: 1px solid var(--color-border, #d9d9d9);
+          box-shadow: none;
+          transition: all 0.2s ease;
+
+          &:hover {
+            border-color: var(--color-primary-300, #69b1ff);
+          }
+
+          &:focus,
+          &.ant-input-affix-wrapper-focused {
+            border-color: var(--color-primary, #0050b3) !important;
+            box-shadow: 0 0 0 2px var(--color-primary-100, #BAE0FF) !important;
+          }
+        }
+
+        .ant-input-prefix {
+          margin-right: 12px !important;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--color-text-tertiary, #8c8c8c);
+          font-size: 18px;
+        }
+
+        .ant-input-suffix {
+          margin-left: 12px !important;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .ant-input-lg {
+          height: auto !important;
+          padding: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
+          background: transparent !important;
+          font-size: 15px;
+          line-height: 1.5;
+        }
       }
     }
 
