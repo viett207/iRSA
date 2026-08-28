@@ -165,6 +165,24 @@ import { AuthService } from '../../core/auth/auth.service';
               Chưa có tài khoản?
               <a routerLink="/register">Đăng ký ngay</a>
             </div>
+
+            <nz-divider nzText="Tài khoản Ứng viên mặc định"></nz-divider>
+
+            <div class="help-section">
+              <div class="credentials" (click)="fillCandidateAccount()" style="cursor: pointer;" title="Nhấn để tự động điền">
+                <div class="credential-item">
+                  <span class="credential-label">Tài khoản:</span>
+                  <code>nguyenviet2k72k3&#64;gmail.com</code>
+                </div>
+                <div class="credential-item">
+                  <span class="credential-label">Mật khẩu:</span>
+                  <code>12345abcde</code>
+                </div>
+              </div>
+              <p class="help-hint">
+                (Nhấp vào khung để tự động điền tài khoản)
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -518,6 +536,55 @@ import { AuthService } from '../../core/auth/auth.service';
         color: var(--color-text-tertiary);
         margin: 0;
       }
+
+      /* Help Section */
+      .help-section {
+        text-align: center;
+      }
+
+      .credentials {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background: var(--color-bg-tertiary, #f5f5f5);
+        padding: 14px 16px;
+        border-radius: 10px;
+        border: 1px dashed var(--color-border, #d9d9d9);
+        transition: all 0.2s ease;
+      }
+
+      .credentials:hover {
+        border-color: var(--color-primary, #0072e5);
+        background: var(--color-bg-secondary, #fafafa);
+      }
+
+      .credential-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 13px;
+      }
+
+      .credential-label {
+        color: var(--color-text-secondary);
+      }
+
+      code {
+        background: var(--color-bg-secondary, #fff);
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-family: 'SF Mono', Consolas, monospace;
+        font-size: 12px;
+        color: var(--color-primary);
+        border: 1px solid var(--color-border, #d9d9d9);
+      }
+
+      .help-hint {
+        margin-top: 8px;
+        margin-bottom: 0;
+        font-size: 12px;
+        color: var(--color-text-tertiary);
+      }
     `,
   ],
 })
@@ -540,10 +607,18 @@ export class LoginComponent {
     private message: NzMessageService
   ) {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
+      email: ['nguyenviet2k72k3@gmail.com', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
+      password: ['12345abcde', [Validators.required, Validators.minLength(8)]],
       remember: [true],
     });
+  }
+
+  fillCandidateAccount(): void {
+    this.loginForm.patchValue({
+      email: 'nguyenviet2k72k3@gmail.com',
+      password: '12345abcde',
+    });
+    this.message.info('Đã tự động điền tài khoản Ứng viên');
   }
 
   onSubmit(): void {

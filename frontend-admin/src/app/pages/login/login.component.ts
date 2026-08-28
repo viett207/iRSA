@@ -12,6 +12,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -201,6 +202,13 @@ import { AuthService } from '../../core/auth/auth.service';
             <p class="help-hint" style="margin-top: 8px; margin-bottom: 0; font-size: 12px; color: var(--color-text-tertiary);">
               (Nhấp vào khung để tự động điền tài khoản)
             </p>
+          </div>
+
+          <div class="portal-switch-section">
+            <a [href]="portalUrl" class="portal-switch-btn">
+              <span nz-icon nzType="swap" nzTheme="outline"></span>
+              <span>Chuyển sang Cổng ứng viên (Portal)</span>
+            </a>
           </div>
 
         </div>
@@ -537,6 +545,35 @@ import { AuthService } from '../../core/auth/auth.service';
       border: 1px solid var(--color-border);
     }
 
+    .portal-switch-section {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .portal-switch-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      height: 42px;
+      border-radius: 10px;
+      background: var(--color-bg-secondary);
+      color: var(--color-primary);
+      font-weight: 500;
+      font-size: 14px;
+      border: 1px solid var(--color-border);
+      transition: all 0.2s ease;
+      text-decoration: none;
+
+      &:hover {
+        background: var(--color-primary);
+        color: #ffffff;
+        border-color: var(--color-primary);
+        box-shadow: 0 4px 12px rgba(0, 80, 179, 0.2);
+      }
+    }
+
     /* Responsive */
     @media (max-width: 1024px) {
       .branding-panel {
@@ -581,6 +618,7 @@ export class LoginComponent {
   loginForm: FormGroup;
   loading = false;
   showPassword = false;
+  portalUrl = environment.portalUrl || 'http://localhost:4300';
 
   constructor(
     private fb: FormBuilder,
