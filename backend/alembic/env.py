@@ -55,6 +55,7 @@ async def run_async_migrations() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args={"statement_cache_size": 0} if "asyncpg" in database_url else {},
     )
 
     async with connectable.connect() as connection:

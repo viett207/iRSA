@@ -15,23 +15,34 @@ depends_on: Union[str, None] = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "interviews",
-        sa.Column("candidate_response", sa.String(30), nullable=False, server_default="pending"),
-    )
-    op.add_column(
-        "interviews",
-        sa.Column("candidate_response_note", sa.Text(), nullable=True),
-    )
-    op.add_column(
-        "interviews",
-        sa.Column("candidate_proposed_date", sa.DateTime(timezone=True), nullable=True),
-    )
-    op.add_column(
-        "interviews",
-        sa.Column("candidate_responded_at", sa.DateTime(timezone=True), nullable=True),
-    )
-    op.create_index("ix_interviews_candidate_response", "interviews", ["candidate_response"])
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    existing_cols = {c["name"] for c in inspector.get_columns("interviews")}
+
+    if "candidate_response" not in existing_cols:
+        op.add_column(
+            "interviews",
+            sa.Column("candidate_response", sa.String(30), nullable=False, server_default="pending"),
+        )
+    if "candidate_response_note" not in existing_cols:
+        op.add_column(
+            "interviews",
+            sa.Column("candidate_response_note", sa.Text(), nullable=True),
+        )
+    if "candidate_proposed_date" not in existing_cols:
+        op.add_column(
+            "interviews",
+            sa.Column("candidate_proposed_date", sa.DateTime(timezone=True), nullable=True),
+        )
+    if "candidate_responded_at" not in existing_cols:
+        op.add_column(
+            "interviews",
+            sa.Column("candidate_responded_at", sa.DateTime(timezone=True), nullable=True),
+        )
+
+    existing_indices = {i["name"] for i in inspector.get_indexes("interviews")}
+    if "ix_interviews_candidate_response" not in existing_indices:
+        op.create_index("ix_interviews_candidate_response", "interviews", ["candidate_response"])
 
 
 def downgrade() -> None:
