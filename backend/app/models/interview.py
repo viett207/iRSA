@@ -35,6 +35,14 @@ class Interview(Base, TimestampMixin):
         String(20), default="scheduled", index=True
     )
 
+    # Candidate response: pending|accepted|declined|reschedule_requested
+    candidate_response: Mapped[str] = mapped_column(
+        String(30), default="pending", server_default="pending", nullable=False, index=True
+    )
+    candidate_response_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    candidate_proposed_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    candidate_responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     # Question set & Live recording evaluations (Stored in JSONB)
     questions: Mapped[list | None] = mapped_column(JSONB, default=list, nullable=True)
     answers: Mapped[dict | None] = mapped_column(JSONB, default=dict, nullable=True)
