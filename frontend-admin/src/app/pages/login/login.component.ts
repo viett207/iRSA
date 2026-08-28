@@ -185,6 +185,24 @@ import { AuthService } from '../../core/auth/auth.service';
             <a routerLink="/register-hr">Đăng ký tài khoản HR</a>
           </div>
 
+          <nz-divider nzText="Tài khoản Admin mặc định"></nz-divider>
+
+          <div class="help-section">
+            <div class="credentials" (click)="fillAdminAccount()" style="cursor: pointer;" title="Nhấn để tự động điền">
+              <div class="credential-item">
+                <span class="credential-label">Tài khoản:</span>
+                <code>admin&#64;example.com</code>
+              </div>
+              <div class="credential-item">
+                <span class="credential-label">Mật khẩu:</span>
+                <code>Admin&#64;123456</code>
+              </div>
+            </div>
+            <p class="help-hint" style="margin-top: 8px; margin-bottom: 0; font-size: 12px; color: var(--color-text-tertiary);">
+              (Nhấp vào khung để tự động điền tài khoản)
+            </p>
+          </div>
+
         </div>
       </div>
     </div>
@@ -571,8 +589,8 @@ export class LoginComponent {
     private message: NzMessageService
   ) {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
+      email: ['admin@example.com', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
+      password: ['Admin@123456', [Validators.required, Validators.minLength(8)]],
       remember: [true],
     });
 
@@ -580,6 +598,14 @@ export class LoginComponent {
     if (this.authService.isAuthenticated()) {
       this.router.navigate(['/dashboard']);
     }
+  }
+
+  fillAdminAccount(): void {
+    this.loginForm.patchValue({
+      email: 'admin@example.com',
+      password: 'Admin@123456',
+    });
+    this.message.info('Đã tự động điền tài khoản Admin');
   }
 
   onSubmit(): void {
