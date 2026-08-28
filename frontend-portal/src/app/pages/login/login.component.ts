@@ -18,6 +18,7 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { AuthService } from '../../core/auth/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -182,6 +183,13 @@ import { AuthService } from '../../core/auth/auth.service';
               <p class="help-hint">
                 (Nhấp vào khung để tự động điền tài khoản)
               </p>
+            </div>
+
+            <div class="admin-switch-section">
+              <a [href]="adminUrl" class="admin-switch-btn">
+                <span nz-icon nzType="swap" nzTheme="outline"></span>
+                <span>Chuyển sang Cổng quản trị (Admin)</span>
+              </a>
             </div>
           </div>
         </div>
@@ -585,6 +593,35 @@ import { AuthService } from '../../core/auth/auth.service';
         font-size: 12px;
         color: var(--color-text-tertiary);
       }
+
+      .admin-switch-section {
+        margin-top: 16px;
+        text-align: center;
+      }
+
+      .admin-switch-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        height: 42px;
+        border-radius: var(--radius-lg);
+        background: var(--color-bg-secondary);
+        color: var(--color-primary);
+        font-weight: var(--font-medium);
+        font-size: var(--text-sm);
+        border: 1px solid var(--color-border);
+        transition: all var(--transition-fast);
+        text-decoration: none;
+
+        &:hover {
+          background: var(--color-primary);
+          color: #ffffff;
+          border-color: var(--color-primary);
+          box-shadow: 0 4px 12px rgba(0, 114, 229, 0.2);
+        }
+      }
     `,
   ],
 })
@@ -592,6 +629,7 @@ export class LoginComponent {
   loginForm: FormGroup;
   loading = false;
   showPassword = false;
+  adminUrl = environment.adminUrl || 'http://localhost:4200';
 
   // Verification modal
   showVerifyModal = false;
