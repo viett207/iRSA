@@ -1,5 +1,7 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://irsa-backend-mwz7.onrender.com/api/v1',
-  publicApiUrl: 'https://irsa-backend-mwz7.onrender.com/pub',
+  apiUrl: '/api/v1',
+  publicApiUrl: '/pub',
+  // TODO: Thay bằng Google OAuth Client ID thực từ Google Cloud Console của dự án
+  googleClientId: '',
 };
