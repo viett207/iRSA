@@ -217,13 +217,30 @@ async def get_application_detail(
 
 
 async def _run_ai_eval_background(application_id: int):
-    """Execute AI evaluation agent directly in background without requiring Celery daemon or holding DB session."""
+    """Execute match scoring and AI evaluation agent directly in background without requiring Celery daemon."""
+    import asyncio
     import logging
+    _logger = logging.getLogger(__name__)
+
+    # Match scoring first
+    try:
+        from app.core.database import get_sync_session
+        from app.services.scoring import score_application_sync
+
+        def _run_scoring():
+            with get_sync_session() as sync_db:
+                return score_application_sync(sync_db, application_id)
+
+        await asyncio.to_thread(_run_scoring)
+    except Exception as e:
+        _logger.warning(f"Background match scoring error for app {application_id}: {e}")
+
+    # AI evaluation agent
     try:
         from src.services.agent_service import run_evaluation_agent
         await run_evaluation_agent(None, application_id)
     except Exception as e:
-        logging.getLogger(__name__).exception(f"Background AI evaluation failed for app {application_id}: {e}")
+        _logger.exception(f"Background AI evaluation failed for app {application_id}: {e}")
 
 
 @router.patch(

@@ -1,6 +1,6 @@
 """Public job endpoints for job portal."""
 
-from fastapi import APIRouter, Query, UploadFile, File, Form
+from fastapi import APIRouter, Query, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from pydantic import BaseModel
@@ -486,11 +486,106 @@ async def get_job_by_slug(slug: str, db: DBSession):
     )
 
 
+async def _process_new_application_ai(application_id: int):
+    """Automatically execute Match Scoring and AI Evaluation Agent for a newly submitted application."""
+    import asyncio
+    import logging
+    _logger = logging.getLogger(__name__)
+
+    # 1. Match Scoring (Skills, Experience, Education matching)
+    try:
+        from app.core.database import get_sync_session
+        from app.services.scoring import score_application_sync
+
+        def _run_scoring():
+            with get_sync_session() as sync_db:
+                return score_application_sync(sync_db, application_id)
+
+        scored = await asyncio.to_thread(_run_scoring)
+        if scored:
+            _logger.info(
+                f"[Auto-Scoring] Match score computed for application {application_id}: total={scored.total_score}"
+            )
+        else:
+            _logger.warning(
+                f"[Auto-Scoring] Match score returned None for application {application_id}"
+            )
+    except Exception as e:
+        _logger.exception(f"[Auto-Scoring] Match scoring failed for application {application_id}: {e}")
+
+    # 2. AI Evaluation Agent (Deep LLM Evaluation & Interview Question Generation)
+    try:
+        from src.services.agent_service import run_evaluation_agent
+        agent_res = await run_evaluation_agent(None, application_id)
+        if agent_res:
+            _logger.info(
+                f"[Auto-AI] AI Evaluation Agent completed for application {application_id}: score={agent_res.get('ai_score')}"
+            )
+        else:
+            _logger.warning(
+                f"[Auto-AI] AI Evaluation Agent skipped or failed for application {application_id}"
+            )
+    except Exception as e:
+        _logger.exception(f"[Auto-AI] AI Evaluation Agent failed for application {application_id}: {e}")
+
+    # 3. Notify HR via WebSocket & DB notification that AI evaluation has completed
+    try:
+        from app.core.database import get_sync_session, AsyncSessionLocal
+        from app.models import Application
+        from app.services.notification_service import notify_hr_ai_evaluation_completed
+
+        hr_id = None
+        cand_name = "Ứng viên"
+        job_t = "N/A"
+        job_i = 0
+        ai_sc = None
+        rec_val = None
+
+        with get_sync_session() as sync_db:
+            stmt = (
+                select(Application)
+                .options(
+                    selectinload(Application.job),
+                    selectinload(Application.candidate),
+                    selectinload(Application.scoring_result),
+                )
+                .where(Application.id == application_id)
+            )
+            app_rec = sync_db.execute(stmt).scalar_one_or_none()
+            if app_rec and app_rec.job:
+                hr_id = app_rec.job.created_by
+                job_t = app_rec.job.title_vi or "N/A"
+                job_i = app_rec.job_id
+                if app_rec.candidate:
+                    cand_name = app_rec.candidate.full_name
+                if app_rec.scoring_result:
+                    ai_sc = app_rec.scoring_result.ai_score
+                    if app_rec.scoring_result.ai_evaluation:
+                        rec_val = app_rec.scoring_result.ai_evaluation.get("recommendation")
+
+        if hr_id:
+            async with AsyncSessionLocal() as async_db:
+                await notify_hr_ai_evaluation_completed(
+                    async_db,
+                    hr_user_id=hr_id,
+                    candidate_name=cand_name,
+                    job_title=job_t,
+                    job_id=job_i,
+                    application_id=application_id,
+                    ai_score=ai_sc,
+                    recommendation=rec_val,
+                )
+                await async_db.commit()
+    except Exception as notif_err:
+        _logger.warning(f"[Auto-AI] Failed to send HR completion notification for app {application_id}: {notif_err}")
+
+
 @router.post("/{slug}/apply", response_model=ApplicationResponse)
 async def apply_to_job(
     slug: str,
     db: DBSession,
     user: CandidateUser,
+    background_tasks: BackgroundTasks,
     resume_id: int | None = Form(None),
     cover_letter: str | None = Form(None),
     file: UploadFile | None = File(None),
@@ -520,9 +615,12 @@ async def apply_to_job(
         submitted_at=application.submitted_at,
     )
 
-    # The application is already committed. Failures in optional notifications
-    # must not turn a successful submission into a misleading HTTP 500.
+    # Auto-trigger immediate background AI scoring & evaluation (FastAPI background task)
+    background_tasks.add_task(_process_new_application_ai, application.id)
+
+    # Celery tasks (optional / async worker fallback)
     try:
+        from app.tasks.notification_tasks import send_application_received_notification
         send_application_received_notification.delay(
             email=user.email,
             full_name=user.full_name,
@@ -532,10 +630,18 @@ async def apply_to_job(
         logger.exception("Unable to enqueue application receipt for application %s", application.id)
 
     try:
+        from app.tasks.scoring_tasks import score_application_task
         score_application_task.delay(application.id)
     except Exception:
         logger.exception("Unable to enqueue scoring for application %s", application.id)
 
+    try:
+        from app.tasks.ai_evaluation_tasks import ai_evaluate_application_task
+        ai_evaluate_application_task.delay(application.id)
+    except Exception:
+        logger.exception("Unable to enqueue AI evaluation for application %s", application.id)
+
+    # Notify HR about new submission
     try:
         from app.services.notification_service import notify_hr_for_new_application
         await notify_hr_for_new_application(
@@ -551,3 +657,4 @@ async def apply_to_job(
         await db.rollback()
 
     return application_response
+

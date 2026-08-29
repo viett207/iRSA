@@ -149,3 +149,39 @@ async def notify_interview_scheduled(
         message=f"Bạn có lịch phỏng vấn {type_label} cho vị trí {job_title} vào {interview_date}",
         data={"job_id": job_id, "application_id": application_id},
     )
+
+
+async def notify_hr_ai_evaluation_completed(
+    db: AsyncSession,
+    hr_user_id: int,
+    candidate_name: str,
+    job_title: str,
+    job_id: int,
+    application_id: int,
+    ai_score: float | None = None,
+    recommendation: str | None = None,
+):
+    """Notify HR when AI evaluation and scoring has completed for an application."""
+    score_str = f" - Điểm AI: {ai_score}/100" if ai_score is not None else ""
+    rec_labels = {
+        "STRONG_FIT": "Rất phù hợp",
+        "GOOD_FIT": "Phù hợp",
+        "PARTIAL_FIT": "Phù hợp 1 phần",
+        "WEAK_FIT": "Ít phù hợp",
+        "NOT_FIT": "Không phù hợp",
+    }
+    rec_label = rec_labels.get(recommendation, recommendation) if recommendation else None
+    rec_str = f" ({rec_label})" if rec_label else ""
+    await create_and_push(
+        db, hr_user_id,
+        type="application",
+        title="AI đã chấm xong hồ sơ",
+        message=f"AI đã hoàn tất chấm điểm hồ sơ của {candidate_name} cho vị trí {job_title}{score_str}{rec_str}",
+        data={
+            "job_id": job_id,
+            "application_id": application_id,
+            "ai_score": ai_score,
+            "recommendation": recommendation,
+        },
+    )
+
