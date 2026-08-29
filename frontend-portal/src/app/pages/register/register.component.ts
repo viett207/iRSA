@@ -470,8 +470,30 @@ import { AuthService } from '../../core/auth/auth.service';
         }
 
         .ant-input-affix-wrapper-lg {
-          padding: 12px 16px !important;
+          display: flex;
+          align-items: center;
+          padding: 10px 16px !important;
           border-radius: var(--radius-lg) !important;
+        }
+
+        .ant-input-prefix {
+          margin-right: 12px !important;
+          display: inline-flex;
+          align-items: center;
+        }
+
+        .ant-input-suffix {
+          margin-left: 12px !important;
+          display: inline-flex;
+          align-items: center;
+        }
+
+        .ant-input-lg {
+          height: auto !important;
+          padding: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
+          background: transparent !important;
         }
       }
 

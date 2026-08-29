@@ -89,8 +89,15 @@ interface RecentApplication {
       <section class="priority-card" aria-labelledby="priority-title">
         <div class="priority-copy">
           <span class="priority-kicker">Việc cần ưu tiên hôm nay</span>
-          <h2 id="priority-title">{{ recentApplications().length }} hồ sơ mới đang chờ đội tuyển dụng xem xét</h2>
-          <p>Xử lý sớm các hồ sơ phù hợp để giữ tiến độ tuyển dụng và phản hồi ứng viên đúng hạn.</p>
+          @if (loading()) {
+            <div class="priority-loading">
+              <nz-spin nzSimple [nzSpinning]="true"></nz-spin>
+              <span>Đang tải thông tin ưu tiên...</span>
+            </div>
+          } @else {
+            <h2 id="priority-title">{{ recentApplications().length }} hồ sơ mới đang chờ đội tuyển dụng xem xét</h2>
+            <p>Xử lý sớm các hồ sơ phù hợp để giữ tiến độ tuyển dụng và phản hồi ứng viên đúng hạn.</p>
+          }
         </div>
         <div class="priority-actions">
           <a nz-button class="priority-primary" routerLink="/applications">Xem hàng chờ <span nz-icon nzType="arrow-right"></span></a>
@@ -100,24 +107,33 @@ interface RecentApplication {
 
       <!-- KPI Stats Grid -->
       <div nz-row [nzGutter]="[24, 24]" class="stats-section">
-        @for (stat of stats(); track stat.title) {
-          <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
-            <a class="stat-card" [routerLink]="stat.route" [attr.aria-label]="'Xem ' + stat.title">
-              <div class="stat-icon" [class]="'stat-icon--' + stat.iconColor">
-                <span nz-icon [nzType]="stat.icon" nzTheme="outline"></span>
+        @if (loading()) {
+          @for (i of [1, 2, 3]; track i) {
+            <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
+              <div class="stat-card stat-card--loading">
+                <nz-skeleton [nzActive]="true" [nzAvatar]="{ size: 40, shape: 'square' }" [nzParagraph]="{ rows: 1 }"></nz-skeleton>
               </div>
-              <div class="stat-content">
-                <span class="stat-label">{{ stat.title }}</span>
-                <div class="stat-value-row">
-                  <span class="stat-value">{{ stat.value }}</span>
-                  @if (stat.suffix) {
-                    <span class="stat-suffix">{{ stat.suffix }}</span>
-                  }
+            </div>
+          }
+        } @else {
+          @for (stat of stats(); track stat.title) {
+            <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
+              <a class="stat-card" [routerLink]="stat.route" [attr.aria-label]="'Xem ' + stat.title">
+                <div class="stat-icon" [class]="'stat-icon--' + stat.iconColor">
+                  <span nz-icon [nzType]="stat.icon" nzTheme="outline"></span>
                 </div>
-                
-              </div>
-            </a>
-          </div>
+                <div class="stat-content">
+                  <span class="stat-label">{{ stat.title }}</span>
+                  <div class="stat-value-row">
+                    <span class="stat-value">{{ stat.value }}</span>
+                    @if (stat.suffix) {
+                      <span class="stat-suffix">{{ stat.suffix }}</span>
+                    }
+                  </div>
+                </div>
+              </a>
+            </div>
+          }
         }
       </div>
 
@@ -163,7 +179,12 @@ interface RecentApplication {
               </a>
             </div>
 
-            @if (funnelStages().length) {
+            @if (loading()) {
+              <div class="card-loading-container">
+                <nz-spin nzSimple [nzSpinning]="true"></nz-spin>
+                <span class="loading-hint">Đang tải tiến độ tuyển dụng...</span>
+              </div>
+            } @else if (funnelStages().length) {
               <div class="funnel-container">
                 @for (stage of funnelStages(); track stage.name; let index = $index) {
                   <div class="funnel-stage" [class]="'funnel-stage funnel-stage--' + index">
@@ -203,6 +224,7 @@ interface RecentApplication {
         <nz-table
           #applicationTable
           [nzData]="recentApplications()"
+          [nzLoading]="loading()"
           [nzShowPagination]="false"
           [nzFrontPagination]="false"
           nzSize="middle"
@@ -456,6 +478,47 @@ interface RecentApplication {
         outline: 3px solid hsl(215 78% 48% / 0.32);
         outline-offset: 3px;
       }
+    }
+
+    .stat-card--loading {
+      cursor: default;
+      pointer-events: none;
+      padding: 16px 20px;
+      min-height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      nz-skeleton {
+        width: 100%;
+      }
+    }
+
+    .priority-loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 12px 0;
+      color: hsl(210 75% 85%);
+      font-size: 13px;
+
+      ::ng-deep .ant-spin-dot-item {
+        background-color: #fff !important;
+      }
+    }
+
+    .card-loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 180px;
+      gap: 12px;
+    }
+
+    .loading-hint {
+      font-size: 13px;
+      color: var(--color-text-tertiary);
     }
 
     .stat-icon {

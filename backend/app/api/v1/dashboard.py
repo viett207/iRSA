@@ -4,12 +4,14 @@ HR users only see dashboard data for their own company (filtered by company_code
 Admin users without company_code see all data.
 """
 
+import time
 from datetime import datetime
+from typing import Tuple
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.core.database import get_db
 from app.api.deps import CurrentUser
@@ -49,6 +51,11 @@ class DashboardResponse(BaseModel):
     pending_approvals: list[PendingApproval]
 
 
+# --- In-memory Short TTL Cache ---
+_DASHBOARD_CACHE: dict[Tuple[int, str | None], Tuple[float, DashboardResponse]] = {}
+CACHE_TTL_SECONDS = 15.0
+
+
 # --- Endpoint ---
 
 router = APIRouter()
@@ -59,7 +66,13 @@ async def get_dashboard_stats(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
 ):
-    """Aggregate dashboard statistics scoped to user's company."""
+    """Aggregate dashboard statistics scoped to user's company (cached for 15s)."""
+    cache_key = (current_user.id, current_user.company_code)
+    now = time.time()
+    if cache_key in _DASHBOARD_CACHE:
+        cached_time, cached_data = _DASHBOARD_CACHE[cache_key]
+        if now - cached_time < CACHE_TTL_SECONDS:
+            return cached_data
 
     cc = current_user.company_code  # None for admin without company
 
@@ -99,18 +112,18 @@ async def get_dashboard_stats(
     ).all()
     status_counts = {row[0]: row[1] for row in status_rows}
 
-    # Recent applications (last 10, company-scoped)
+    # Recent applications (last 10, company-scoped) - use joinedload for 1 roundtrip
     recent_result = await db.execute(
         select(Application)
         .options(
-            selectinload(Application.candidate),
-            selectinload(Application.job),
+            joinedload(Application.candidate),
+            joinedload(Application.job),
         )
         .where(Application.job_id.in_(company_jobs_sq))
         .order_by(Application.submitted_at.desc())
         .limit(10)
     )
-    recent_apps = recent_result.scalars().all()
+    recent_apps = recent_result.scalars().unique().all()
 
     recent_items = [
         RecentApplication(
@@ -124,10 +137,10 @@ async def get_dashboard_stats(
         for app in recent_apps
     ]
 
-    # Pending approval jobs (company-scoped)
+    # Pending approval jobs (company-scoped) - use joinedload for 1 roundtrip
     pending_result = await db.execute(
         select(Job)
-        .options(selectinload(Job.creator))
+        .options(joinedload(Job.creator))
         .where(
             Job.status == "pending_approval",
             Job.id.in_(company_jobs_sq),
@@ -135,7 +148,7 @@ async def get_dashboard_stats(
         .order_by(Job.updated_at.desc())
         .limit(10)
     )
-    pending_jobs = pending_result.scalars().all()
+    pending_jobs = pending_result.scalars().unique().all()
 
     pending_items = [
         PendingApproval(
@@ -157,7 +170,7 @@ async def get_dashboard_stats(
     ).all()
     job_status_counts = {row[0]: row[1] for row in job_status_rows}
 
-    return DashboardResponse(
+    response = DashboardResponse(
         stats=DashboardStats(
             active_jobs=active_jobs,
             total_applications=total_applications,
@@ -168,3 +181,10 @@ async def get_dashboard_stats(
         recent_applications=recent_items,
         pending_approvals=pending_items,
     )
+
+    # Save to short-term cache
+    _DASHBOARD_CACHE[cache_key] = (now, response)
+    if len(_DASHBOARD_CACHE) > 100:
+        _DASHBOARD_CACHE.clear()
+
+    return response
