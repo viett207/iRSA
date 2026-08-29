@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
@@ -39,6 +40,7 @@ import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industr
     NzEmptyModule,
     NzToolTipModule,
     NzSelectModule,
+    RouterLink,
     CompanyFormModalComponent,
   ],
   template: `
@@ -154,7 +156,7 @@ import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industr
                   <nz-tag nzColor="blue">{{ company.company_code }}</nz-tag>
                 </td>
                 <td>
-                  <span class="company-name">{{ company.company_name }}</span>
+                  <a class="company-name" [routerLink]="['/companies', company.id]">{{ company.company_name }}</a>
                 </td>
                 <td>
                   <span class="text-secondary">{{ company.location || '-' }}</span>
@@ -175,7 +177,7 @@ import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industr
                       nz-tooltip
                       nzTooltipTitle="Chỉnh sửa"
                     >
-                      <span nz-icon nzType="edit"></span>
+                      <span nz-icon nzType="edit"></span> Sửa
                     </button>
                     <button
                       nz-button
@@ -186,7 +188,7 @@ import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industr
                       nz-tooltip
                       nzTooltipTitle="Thao tác khác"
                     >
-                      <span nz-icon nzType="more"></span>
+                      <span nz-icon nzType="more"></span> Thao tác
                     </button>
                     <nz-dropdown-menu #actionMenu="nzDropdownMenu">
                       <ul nz-menu class="action-dropdown">
@@ -344,10 +346,13 @@ import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industr
       display: flex;
       gap: 4px;
       align-items: center;
+      justify-content: center;
 
       button {
-        width: 36px;
+        width: auto;
+        min-width: 36px;
         height: 36px;
+        padding-inline: 8px;
         display: inline-flex;
         align-items: center;
         justify-content: center;

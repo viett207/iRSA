@@ -23,6 +23,12 @@ class Job(Base, TimestampMixin):
 
     # Common fields
     slug: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    company_code: Mapped[str | None] = mapped_column(
+        String(50),
+        ForeignKey("companies.company_code", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     department: Mapped[str | None] = mapped_column(String(255), nullable=True)
     location: Mapped[str | None] = mapped_column(String(255), nullable=True)
     employment_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
@@ -48,6 +54,7 @@ class Job(Base, TimestampMixin):
     # Relationships
     creator: Mapped["User"] = relationship("User", foreign_keys=[created_by])
     approver: Mapped["User | None"] = relationship("User", foreign_keys=[approved_by])
+    company: Mapped["Company | None"] = relationship("Company", foreign_keys=[company_code])
     criteria: Mapped["JobCriteria | None"] = relationship(
         "JobCriteria", back_populates="job", uselist=False, cascade="all, delete-orphan"
     )

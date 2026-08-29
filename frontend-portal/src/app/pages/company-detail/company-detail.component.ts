@@ -53,6 +53,42 @@ import { CompanyDetail, PublicJobListItem } from '../../shared/models/job.model'
           </div>
         </section>
 
+        <section class="company-overview-section">
+          <div class="container">
+            <div class="company-overview-card">
+              <div class="overview-main">
+                <p class="section-eyebrow">Về doanh nghiệp</p>
+                <h2>Giới thiệu về {{ company.company_name }}</h2>
+                @if (company.description) {
+                  <p class="company-description">{{ company.description }}</p>
+                } @else {
+                  <p class="company-description company-description-muted">
+                    Công ty đang cập nhật phần giới thiệu. Bạn có thể xem các vị trí tuyển dụng bên dưới.
+                  </p>
+                }
+              </div>
+              <div class="overview-facts">
+                @if (company.industry) {
+                  <div class="overview-fact">
+                    <span nz-icon nzType="bank" nzTheme="outline"></span>
+                    <span><small>Lĩnh vực</small><strong>{{ company.industry }}</strong></span>
+                  </div>
+                }
+                @if (company.location) {
+                  <div class="overview-fact">
+                    <span nz-icon nzType="environment" nzTheme="outline"></span>
+                    <span><small>Địa điểm</small><strong>{{ company.location }}</strong></span>
+                  </div>
+                }
+                <div class="overview-fact">
+                  <span nz-icon nzType="file-text" nzTheme="outline"></span>
+                  <span><small>Đang tuyển</small><strong>{{ company.total_jobs }} vị trí</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- Jobs List -->
         <section class="jobs-section">
           <div class="container">
@@ -158,6 +194,70 @@ import { CompanyDetail, PublicJobListItem } from '../../shared/models/job.model'
       gap: 6px;
       font-size: 15px;
       opacity: 0.9;
+    }
+
+    .company-overview-section {
+      padding: 32px 0 0;
+    }
+    .company-overview-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(270px, 0.8fr);
+      gap: 36px;
+      padding: 30px 32px;
+      border: 1px solid #e8edf5;
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 8px 26px rgba(17, 57, 102, 0.05);
+    }
+    .section-eyebrow {
+      margin: 0 0 6px;
+      color: var(--color-primary, #1890ff);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .overview-main h2 {
+      margin: 0 0 12px;
+      color: #1b2b48;
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .company-description {
+      max-width: 720px;
+      margin: 0;
+      color: #52627a;
+      font-size: 15px;
+      line-height: 1.75;
+      white-space: pre-line;
+    }
+    .company-description-muted { font-style: italic; }
+    .overview-facts {
+      display: grid;
+      align-content: center;
+      gap: 16px;
+      padding-left: 30px;
+      border-left: 1px solid #edf0f5;
+    }
+    .overview-fact {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--color-primary, #1890ff);
+    }
+    .overview-fact > span:last-child {
+      display: grid;
+      gap: 2px;
+      color: #52627a;
+    }
+    .overview-fact small {
+      color: #8b97aa;
+      font-size: 12px;
+    }
+    .overview-fact strong {
+      color: #24334d;
+      font-size: 14px;
+      font-weight: 600;
     }
 
     .jobs-section {

@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
@@ -212,7 +212,7 @@ import {
             <nz-select
               [(ngModel)]="sortBy"
               nzPlaceHolder="Sắp xếp theo"
-              style="width: 180px"
+              style="width: 220px"
               (ngModelChange)="onFilterChange()"
             >
               <nz-option nzValue="newest" nzLabel="Mới nhất"></nz-option>
@@ -366,6 +366,7 @@ import {
                       nzPlacement="bottomRight"
                     >
                       <span nz-icon nzType="ellipsis"></span>
+                      Thao tác
                     </button>
                     <nz-dropdown-menu #menu="nzDropdownMenu">
                       <ul nz-menu class="action-dropdown">
@@ -656,6 +657,10 @@ import {
         margin-left: auto;
       }
 
+      .secondary-row .filter-actions {
+        margin-left: 0;
+      }
+
       :host ::ng-deep .filter-card .ant-input-affix-wrapper,
       :host ::ng-deep .filter-card .ant-select-selector,
       .filter-actions .ant-btn,
@@ -900,6 +905,7 @@ export class JobListComponent implements OnInit {
   private message = inject(NzMessageService);
   private modal = inject(NzModalService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private notificationSvc = inject(NotificationService);
 
   jobs = signal<Job[]>([]);
@@ -983,7 +989,16 @@ export class JobListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadJobs();
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const requestedStatus = params.get('status') as JobStatus | null;
+        if (requestedStatus && this.statusOptions.some((status) => status.value === requestedStatus)) {
+          this.statusFilter = requestedStatus;
+          this.pageIndex = 1;
+        }
+        this.loadJobs();
+      });
     this.loadStats();
 
     // Auto-reload when new notification arrives

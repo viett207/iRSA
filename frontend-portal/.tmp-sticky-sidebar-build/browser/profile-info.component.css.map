@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["profile-info.component.ts"],
+  "sourcesContent": ["\n    .section-card {\n      margin-bottom: var(--space-6);\n    }\n\n    .form-actions {\n      margin-top: var(--space-6);\n      padding-top: var(--space-6);\n      border-top: 1px solid var(--color-border);\n    }\n  "],
+  "mappings": ";AACI,CAAA;AACE,iBAAA,IAAA;;AAGF,CAAA;AACE,cAAA,IAAA;AACA,eAAA,IAAA;AACA,cAAA,IAAA,MAAA,IAAA;;",
+  "names": []
+}

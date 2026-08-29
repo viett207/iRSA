@@ -12,6 +12,7 @@ from app.core.exceptions import BadRequestException, NotFoundException, Forbidde
 from app.models.job import Job, JobCriteria
 from app.models.application import Application
 from app.models.audit import AuditLog
+from app.models.company import Company
 from app.models.user import User
 from app.schemas.job import (
     JobCreate,
@@ -42,6 +43,22 @@ class JobService:
         base_slug = slugify(title, lowercase=True, max_length=200)
         unique_suffix = uuid.uuid4().hex[:6]
         return f"{base_slug}-{unique_suffix}"
+
+    async def _resolve_company_code(
+        self, requested_company_code: str | None, user: User
+    ) -> str:
+        """Return the company that owns a job, without allowing HR to cross-post."""
+        if user.role in {"recruiter", "leader"} and user.company_code:
+            company_code = user.company_code
+        else:
+            company_code = requested_company_code or "IRSA"
+
+        company = (await self.db.execute(
+            select(Company).where(Company.company_code == company_code)
+        )).scalar_one_or_none()
+        if not company:
+            raise BadRequestException("Selected company does not exist")
+        return company.company_code
 
     async def _log_action(
         self,
@@ -110,6 +127,8 @@ class JobService:
             description_vi=job.description_vi,
             requirements_vi=job.requirements_vi,
             slug=job.slug,
+            company_code=job.company_code,
+            company_name=job.company.company_name if job.company else None,
             department=job.department,
             location=job.location,
             employment_type=job.employment_type,
@@ -152,6 +171,7 @@ class JobService:
         query = select(Job).options(
             selectinload(Job.creator),
             selectinload(Job.approver),
+            selectinload(Job.company),
             selectinload(Job.criteria),
         )
 
@@ -195,9 +215,7 @@ class JobService:
                 | Job.location.ilike(search_term)
             )
         if company_code:
-            query = query.join(User, Job.created_by == User.id).where(
-                User.company_code == company_code
-            )
+            query = query.where(Job.company_code == company_code)
 
         # Subquery to count applications per job
         app_count_sub = (
@@ -253,6 +271,7 @@ class JobService:
             .options(
                 selectinload(Job.creator),
                 selectinload(Job.approver),
+                selectinload(Job.company),
                 selectinload(Job.criteria),
             )
             .where(Job.id == job_id)
@@ -273,15 +292,17 @@ class JobService:
         app_count = count_res.scalar() or 0
         return self._build_job_response(job, applications_count=app_count)
 
-    async def create_job(self, data: JobCreate, user_id: int) -> JobResponse:
+    async def create_job(self, data: JobCreate, user: User) -> JobResponse:
         """Create a new job in draft status."""
         slug = self._generate_slug(data.title_vi)
+        company_code = await self._resolve_company_code(data.company_code, user)
 
         job = Job(
             title_vi=data.title_vi,
             description_vi=data.description_vi,
             requirements_vi=data.requirements_vi,
             slug=slug,
+            company_code=company_code,
             department=data.department,
             location=data.location,
             employment_type=data.employment_type,
@@ -289,7 +310,7 @@ class JobService:
             salary_max=data.salary_max,
             application_deadline=data.application_deadline,
             status="draft",
-            created_by=user_id,
+            created_by=user.id,
         )
         self.db.add(job)
         await self.db.flush()
@@ -305,7 +326,7 @@ class JobService:
             )
             self.db.add(criteria)
 
-        await self._log_action("job", job.id, "create", user_id)
+        await self._log_action("job", job.id, "create", user.id, {"company_code": company_code})
         await self.db.commit()
 
         return await self.get_job_response(job.id)
@@ -323,6 +344,10 @@ class JobService:
             raise BadRequestException("Can only edit jobs in draft or rejected status")
 
         update_data = data.model_dump(exclude_unset=True, exclude={"criteria"})
+        if "company_code" in update_data:
+            update_data["company_code"] = await self._resolve_company_code(
+                update_data["company_code"], user
+            )
         for field, value in update_data.items():
             setattr(job, field, value)
 

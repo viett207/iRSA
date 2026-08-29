@@ -4,8 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictException, NotFoundException
 from app.models.company import Company
+from app.models.application import Application
+from app.models.job import Job
+from app.models.user import User
 from app.schemas.company import (
     CompanyCreate, CompanyUpdate, CompanyResponse, CompanyList,
+    CompanyOverview, CompanyOverviewStats, CompanyJobSummary,
 )
 
 
@@ -67,6 +71,90 @@ class CompanyService:
             raise NotFoundException(f"Company with ID {company_id} not found")
         return company
 
+    async def get_company_overview(self, company_id: int) -> CompanyOverview:
+        """Get a company's recruitment metrics and its newest job postings."""
+        company = await self.get_company(company_id)
+
+        company_jobs = (
+            select(Job.id)
+            .where(Job.company_code == company.company_code)
+        )
+
+        total_jobs = (await self.db.execute(
+            select(func.count()).select_from(company_jobs.subquery())
+        )).scalar() or 0
+        active_jobs = (await self.db.execute(
+            select(func.count())
+            .select_from(Job)
+            .where(
+                Job.company_code == company.company_code,
+                Job.status == "active",
+            )
+        )).scalar() or 0
+        total_applications = (await self.db.execute(
+            select(func.count(Application.id))
+            .select_from(Application)
+            .join(Job, Application.job_id == Job.id)
+            .where(Job.company_code == company.company_code)
+        )).scalar() or 0
+        in_progress_applications = (await self.db.execute(
+            select(func.count(Application.id))
+            .select_from(Application)
+            .join(Job, Application.job_id == Job.id)
+            .where(
+                Job.company_code == company.company_code,
+                Application.status.in_([
+                    "submitted", "reviewing", "shortlisted", "interviewing", "offered",
+                ]),
+            )
+        )).scalar() or 0
+        hr_members = (await self.db.execute(
+            select(func.count(User.id)).where(
+                User.company_code == company.company_code,
+                User.role.in_(["recruiter", "leader"]),
+                User.is_active.is_(True),
+            )
+        )).scalar() or 0
+
+        application_count = (
+            select(func.count(Application.id))
+            .where(Application.job_id == Job.id)
+            .correlate(Job)
+            .scalar_subquery()
+        )
+        jobs_result = await self.db.execute(
+            select(Job, application_count.label("applications_count"))
+            .where(Job.company_code == company.company_code)
+            .order_by(Job.created_at.desc())
+            .limit(12)
+        )
+        jobs = [
+            CompanyJobSummary(
+                id=job.id,
+                title_vi=job.title_vi,
+                department=job.department,
+                location=job.location,
+                employment_type=job.employment_type,
+                status=job.status,
+                applications_count=applications_count,
+                created_at=job.created_at,
+                application_deadline=job.application_deadline,
+            )
+            for job, applications_count in jobs_result.all()
+        ]
+
+        return CompanyOverview(
+            company=CompanyResponse.model_validate(company),
+            stats=CompanyOverviewStats(
+                total_jobs=total_jobs,
+                active_jobs=active_jobs,
+                total_applications=total_applications,
+                in_progress_applications=in_progress_applications,
+                hr_members=hr_members,
+            ),
+            jobs=jobs,
+        )
+
     async def create_company(self, data: CompanyCreate) -> Company:
         """Create a new company."""
         # Check company_code uniqueness
@@ -83,6 +171,7 @@ class CompanyService:
             company_name=data.company_name,
             location=data.location,
             industry=data.industry,
+            description=data.description,
         )
         self.db.add(company)
         await self.db.commit()

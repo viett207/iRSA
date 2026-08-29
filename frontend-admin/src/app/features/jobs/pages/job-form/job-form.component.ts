@@ -35,6 +35,9 @@ import {
   VIETNAM_LOCATIONS,
 } from '../../models/job.model';
 import { VIETNAMESE_INDUSTRIES } from '../../../../shared/constants/vietnamese-industries';
+import { CompanyService } from '../../../../core/services/company.service';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { Company } from '../../../../pages/companies/models/company-api.model';
 
 @Component({
   selector: 'app-job-form',
@@ -66,7 +69,7 @@ import { VIETNAMESE_INDUSTRIES } from '../../../../shared/constants/vietnamese-i
         <div class="page-header">
           <div class="header-left">
             <button nz-button nzType="text" (click)="onBack()" class="back-btn">
-              <span nz-icon nzType="arrow-left"></span>
+              <span nz-icon nzType="arrow-left"></span> Quay lại
             </button>
             <div class="header-content">
               <h1 class="page-title">
@@ -99,7 +102,6 @@ import { VIETNAMESE_INDUSTRIES } from '../../../../shared/constants/vietnamese-i
             <nz-steps [nzCurrent]="currentStep" nzSize="small">
               <nz-step nzTitle="Thông tin cơ bản"></nz-step>
               <nz-step nzTitle="Tiêu chí sàng lọc"></nz-step>
-              <nz-step nzTitle="Xác nhận"></nz-step>
             </nz-steps>
           </div>
         </div>
@@ -173,6 +175,25 @@ import { VIETNAMESE_INDUSTRIES } from '../../../../shared/constants/vietnamese-i
                     </div>
 
                     <div nz-row [nzGutter]="[24, 16]">
+                      <div nz-col [nzXs]="24" [nzLg]="24">
+                        <nz-form-item>
+                          <nz-form-label nzRequired>Công ty đăng tuyển</nz-form-label>
+                          <nz-form-control nzErrorTip="Vui lòng chọn công ty đăng tuyển">
+                            <nz-select
+                              formControlName="company_code"
+                              nzShowSearch
+                              nzPlaceHolder="Chọn công ty cho JD này"
+                            >
+                              @for (company of companyList(); track company.company_code) {
+                                <nz-option
+                                  [nzValue]="company.company_code"
+                                  [nzLabel]="company.company_name + ' (' + company.company_code + ')'"
+                                ></nz-option>
+                              }
+                            </nz-select>
+                          </nz-form-control>
+                        </nz-form-item>
+                      </div>
                       <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
                         <nz-form-item>
                           <nz-form-label>Lĩnh vực</nz-form-label>
@@ -634,6 +655,7 @@ export class JobFormComponent implements OnInit {
 
   jobId: number | null = null;
   job: Job | null = null;
+  companyList = signal<Company[]>([]);
 
   isEditMode = computed(() => !!this.jobId);
 
@@ -652,6 +674,8 @@ export class JobFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private jobService: JobService,
+    private companyService: CompanyService,
+    private authService: AuthService,
     private message: NzMessageService,
     private router: Router,
     private route: ActivatedRoute
@@ -659,6 +683,8 @@ export class JobFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+    this.loadCompanies();
+    this.prefillCompany();
     this.route.params.subscribe((params) => {
       if (params['id']) {
         this.jobId = +params['id'];
@@ -672,6 +698,7 @@ export class JobFormComponent implements OnInit {
       title_vi: ['', [Validators.required, Validators.maxLength(255)]],
       description_vi: [''],
       requirements_vi: [''],
+      company_code: [null, Validators.required],
       department: [null],
       location: [null],
       employment_type: [null],
@@ -687,6 +714,21 @@ export class JobFormComponent implements OnInit {
       weight_experience: [30],
       weight_education: [10],
     });
+  }
+
+  private loadCompanies(): void {
+    this.companyService.list({ page_size: 100 }).subscribe({
+      next: (response) => this.companyList.set(response.items),
+      error: () => this.companyList.set([]),
+    });
+  }
+
+  private prefillCompany(): void {
+    const currentUser = this.authService.user();
+    if (currentUser?.role !== 'admin' && currentUser?.company_code) {
+      this.form.patchValue({ company_code: currentUser.company_code });
+      this.form.get('company_code')?.disable();
+    }
   }
 
   private loadJob(): void {
@@ -711,6 +753,7 @@ export class JobFormComponent implements OnInit {
       title_vi: job.title_vi,
       description_vi: job.description_vi,
       requirements_vi: job.requirements_vi,
+      company_code: job.company_code ?? null,
       department: job.department,
       location: job.location,
       employment_type: job.employment_type,
@@ -734,11 +777,12 @@ export class JobFormComponent implements OnInit {
   }
 
   private buildPayload(): JobCreate | JobUpdate {
-    const v = this.form.value;
+    const v = this.form.getRawValue();
     return {
       title_vi: v.title_vi,
       description_vi: v.description_vi || undefined,
       requirements_vi: v.requirements_vi || undefined,
+      company_code: v.company_code || undefined,
       department: v.department || undefined,
       location: v.location || undefined,
       employment_type: v.employment_type || undefined,
@@ -791,6 +835,11 @@ export class JobFormComponent implements OnInit {
       this.message.warning('Vui lòng nhập tiêu đề');
       return;
     }
+    if (this.form.get('company_code')?.invalid) {
+      this.form.get('company_code')?.markAsTouched();
+      this.message.warning('Vui lòng chọn công ty đăng tuyển');
+      return;
+    }
     this.saving.set(true);
     const payload = this.buildPayload();
     const request$ = this.isEditMode()
@@ -814,6 +863,16 @@ export class JobFormComponent implements OnInit {
     if (this.form.get('title_vi')?.invalid) {
       this.form.get('title_vi')?.markAsTouched();
       this.message.warning('Vui lòng nhập tiêu đề');
+      return;
+    }
+    if (this.form.get('company_code')?.invalid) {
+      this.form.get('company_code')?.markAsTouched();
+      this.message.warning('Vui lòng chọn công ty đăng tuyển');
+      return;
+    }
+    if (this.getWeightsTotal() !== 100) {
+      this.currentStep = 1;
+      this.message.warning('Tổng trọng số sàng lọc phải bằng 100%');
       return;
     }
     this.saving.set(true);

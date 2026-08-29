@@ -34,6 +34,8 @@ export interface Job {
 
   // Common fields
   slug: string;
+  company_code?: string;
+  company_name?: string;
   department?: string;
   location?: string;
   employment_type?: EmploymentType;
@@ -73,6 +75,7 @@ export interface JobCreate {
   title_vi: string;
   description_vi?: string;
   requirements_vi?: string;
+  company_code?: string;
   department?: string;
   location?: string;
   employment_type?: EmploymentType;

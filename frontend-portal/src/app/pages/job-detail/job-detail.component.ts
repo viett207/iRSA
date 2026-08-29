@@ -110,6 +110,25 @@ import { Resume } from '../../shared/models/resume.model';
                       {{ formatSalary(job.salary_min, job.salary_max) }}
                     </div>
                   }
+
+                  @if (job.company_code) {
+                    <a class="job-company-link" [routerLink]="['/companies', job.company_code]">
+                      <span class="company-monogram">{{ (job.company_name || 'iRSA').charAt(0) }}</span>
+                      <span class="company-link-copy">
+                        <small>Đơn vị tuyển dụng</small>
+                        <strong>{{ job.company_name || 'iRSA' }}</strong>
+                      </span>
+                      <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
+                    </a>
+                  } @else if (job.company_name) {
+                    <div class="job-company-link job-company-static">
+                      <span class="company-monogram">{{ job.company_name.charAt(0) }}</span>
+                      <span class="company-link-copy">
+                        <small>Đơn vị tuyển dụng</small>
+                        <strong>{{ job.company_name }}</strong>
+                      </span>
+                    </div>
+                  }
                 </div>
               </nz-card>
 
@@ -159,6 +178,7 @@ import { Resume } from '../../shared/models/resume.model';
 
             <!-- Sidebar -->
             <div nz-col [nzXs]="24" [nzLg]="8">
+              <aside class="job-sidebar-sticky">
               <nz-card class="apply-card">
                 <h3>Ứng tuyển ngay</h3>
 
@@ -225,6 +245,33 @@ import { Resume } from '../../shared/models/resume.model';
                   }
                 </nz-descriptions>
               </nz-card>
+
+              @if (job.company_code) {
+                <nz-card class="company-card">
+                  <div class="company-card-heading">
+                    <span nz-icon nzType="bank" nzTheme="outline"></span>
+                    Thông tin công ty
+                  </div>
+                  <a class="company-profile-cta" [routerLink]="['/companies', job.company_code]">
+                    <span class="company-card-avatar">{{ (job.company_name || 'iRSA').charAt(0) }}</span>
+                    <span>
+                      <strong>{{ job.company_name || 'iRSA' }}</strong>
+                      <small>Xem giới thiệu và các vị trí đang tuyển</small>
+                    </span>
+                    <span nz-icon nzType="right" nzTheme="outline"></span>
+                  </a>
+                  <a
+                    nz-button
+                    nzBlock
+                    class="company-info-button"
+                    [routerLink]="['/companies', job.company_code]"
+                  >
+                    <span nz-icon nzType="bank" nzTheme="outline"></span>
+                    Xem thông tin công ty
+                  </a>
+                </nz-card>
+              }
+              </aside>
             </div>
           </div>
         </div>
@@ -387,6 +434,70 @@ import { Resume } from '../../shared/models/resume.model';
           font-weight: var(--font-semibold);
           font-size: var(--text-lg);
         }
+
+        .job-company-link {
+          display: inline-flex;
+          align-items: center;
+          gap: var(--space-3);
+          margin-top: var(--space-5);
+          padding: var(--space-3) var(--space-4);
+          color: var(--color-text-primary);
+          background: var(--color-bg-secondary, #f7f9fc);
+          border: 1px solid var(--color-border, #e4e9f2);
+          border-radius: var(--radius-lg);
+          text-decoration: none;
+          transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+
+          &:hover {
+            color: var(--color-text-primary);
+            border-color: var(--color-primary);
+            box-shadow: 0 5px 14px rgba(24, 144, 255, 0.12);
+            transform: translateY(-1px);
+          }
+
+          > [nz-icon] {
+            margin-left: var(--space-4);
+            color: var(--color-primary);
+          }
+        }
+
+        .job-company-static {
+          cursor: default;
+
+          &:hover {
+            border-color: var(--color-border, #e4e9f2);
+            box-shadow: none;
+            transform: none;
+          }
+        }
+
+        .company-monogram,
+        .company-card-avatar {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          background: linear-gradient(135deg, var(--color-primary), #6f9dff);
+          color: #fff;
+          font-weight: var(--font-bold);
+          flex: 0 0 auto;
+        }
+
+        .company-link-copy {
+          display: grid;
+          gap: 2px;
+
+          small {
+            color: var(--color-text-tertiary);
+            font-size: var(--text-xs);
+          }
+
+          strong {
+            font-size: var(--text-sm);
+          }
+        }
       }
 
       .content-card {
@@ -427,9 +538,12 @@ import { Resume } from '../../shared/models/resume.model';
         }
       }
 
-      .apply-card {
+      .job-sidebar-sticky {
         position: sticky;
         top: calc(var(--header-height) + var(--space-4));
+      }
+
+      .apply-card {
 
         h3 {
           font-family: var(--font-heading);
@@ -449,6 +563,65 @@ import { Resume } from '../../shared/models/resume.model';
           cursor: default;
           color: var(--color-success) !important;
           border-color: var(--color-success) !important;
+        }
+      }
+
+      .company-card {
+        margin-top: var(--space-5);
+
+        .company-card-heading {
+          display: flex;
+          align-items: center;
+          gap: var(--space-2);
+          margin-bottom: var(--space-3);
+          color: var(--color-text-secondary);
+          font-size: var(--text-sm);
+          font-weight: var(--font-semibold);
+        }
+
+        .company-profile-cta {
+          display: flex;
+          align-items: center;
+          gap: var(--space-3);
+          color: var(--color-text-primary);
+          text-decoration: none;
+
+          > span:nth-child(2) {
+            display: grid;
+            gap: 3px;
+            flex: 1;
+            min-width: 0;
+          }
+
+          strong {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          small {
+            color: var(--color-text-tertiary);
+            font-size: var(--text-xs);
+          }
+
+          > [nz-icon] {
+            color: var(--color-primary);
+          }
+
+          &:hover strong {
+            color: var(--color-primary);
+          }
+        }
+
+        .company-info-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: var(--space-2);
+          margin-top: var(--space-4);
+          border-color: var(--color-primary);
+          color: var(--color-primary);
+          font-weight: var(--font-semibold);
         }
       }
 

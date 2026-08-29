@@ -15,6 +15,8 @@ export interface PublicJob {
   salary_max?: number;
   application_deadline?: string;
   published_at?: string;
+  company_name?: string;
+  company_code?: string;
   must_have_skills: string[];
   nice_to_have_skills: string[];
   min_experience_years: number;
@@ -83,6 +85,7 @@ export interface CompanyDetail {
   company_name: string;
   location: string | null;
   industry: string | null;
+  description: string | null;
   jobs: PublicJobListItem[];
   total_jobs: number;
 }

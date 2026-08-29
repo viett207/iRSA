@@ -196,13 +196,12 @@ async def list_active_companies(
     # Subquery: get company_code + job count + latest published_at for published jobs
     stmt = (
         select(
-            User.company_code,
+            Job.company_code,
             func.count(Job.id).label("job_count"),
             func.max(Job.published_at).label("latest_published_at"),
         )
-        .join(User, Job.created_by == User.id)
-        .where(((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"]))), User.company_code.isnot(None))
-        .group_by(User.company_code)
+        .where(((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"]))), Job.company_code.isnot(None))
+        .group_by(Job.company_code)
         .order_by(func.max(Job.published_at).desc())
         .limit(limit)
     )
@@ -241,6 +240,7 @@ class CompanyDetailResponse(BaseModel):
     company_name: str
     location: str | None = None
     industry: str | None = None
+    description: str | None = None
     jobs: list[PublicJobListItem]
     total_jobs: int
 
@@ -269,8 +269,7 @@ async def get_company_detail(company_code: str, db: DBSession):
     stmt = (
         select(Job, app_count_subquery.label("app_count"))
         .options(selectinload(Job.criteria))
-        .join(User, Job.created_by == User.id)
-        .where(((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"]))), User.company_code == company_code)
+        .where(((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"]))), Job.company_code == company_code)
         .order_by(Job.published_at.desc())
     )
     jobs_result = await db.execute(stmt)
@@ -304,6 +303,7 @@ async def get_company_detail(company_code: str, db: DBSession):
         company_name=company.company_name,
         location=company.location,
         industry=company.industry,
+        description=company.description,
         jobs=job_items,
         total_jobs=len(job_items),
     )
@@ -330,16 +330,14 @@ async def list_published_jobs(
         select(Job)
         .options(
             selectinload(Job.criteria),
-            selectinload(Job.creator).selectinload(User.company),
+            selectinload(Job.company),
         )
         .where((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"])))
     )
 
     if company_code:
         # Filter jobs by creator's company_code
-        query = query.join(User, Job.created_by == User.id).where(
-            User.company_code == company_code
-        )
+        query = query.where(Job.company_code == company_code)
 
     if q:
         search_pattern = f"%{q}%"
@@ -412,14 +410,8 @@ async def list_published_jobs(
 
     items = []
     for job, app_count in rows:
-        company_name = None
-        company_code_val = None
-        if job.creator:
-            company_code_val = job.creator.company_code
-            if job.creator.company:
-                company_name = job.creator.company.company_name
-        if not company_name:
-            company_name = job.department or "iRSA"
+        company_name = job.company.company_name if job.company else "iRSA"
+        company_code_val = job.company_code
 
         items.append(
             PublicJobListItem(
@@ -456,7 +448,10 @@ async def get_job_by_slug(slug: str, db: DBSession):
     """Get job details by slug."""
     result = await db.execute(
         select(Job)
-        .options(selectinload(Job.criteria))
+        .options(
+            selectinload(Job.criteria),
+            selectinload(Job.company),
+        )
         .where(Job.slug == slug, (Job.is_published == True) | (Job.status.in_(["published", "active", "approved"])))
     )
     job = result.scalar_one_or_none()
@@ -465,6 +460,8 @@ async def get_job_by_slug(slug: str, db: DBSession):
         raise NotFoundException("Job not found")
 
     criteria = job.criteria
+    company_code = job.company_code
+    company_name = job.company.company_name if job.company else "iRSA"
     return PublicJobResponse(
         id=job.id,
         slug=job.slug,
@@ -478,6 +475,8 @@ async def get_job_by_slug(slug: str, db: DBSession):
         salary_max=job.salary_max,
         application_deadline=job.application_deadline,
         published_at=job.published_at,
+        company_name=company_name,
+        company_code=company_code,
         must_have_skills=criteria.must_have_skills if criteria else [],
         nice_to_have_skills=criteria.nice_to_have_skills if criteria else [],
         min_experience_years=criteria.min_experience_years if criteria else 0,

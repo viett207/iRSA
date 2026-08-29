@@ -68,7 +68,7 @@ async def list_jobs(
 async def create_job(data: JobCreate, db: DBSession, current_user: HRUser):
     """Create a new job (recruiter/admin only)."""
     service = JobService(db)
-    return await service.create_job(data, current_user.id)
+    return await service.create_job(data, current_user)
 
 
 @router.get("/{job_id}", response_model=JobResponse)

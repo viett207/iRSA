@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["dashboard-layout.component.ts"],
+  "sourcesContent": ["\n    .dashboard-layout {\n      min-height: 100vh;\n    }\n\n    .dashboard-content {\n      background: var(--color-bg-primary);\n      min-height: calc(100vh - var(--header-height));\n      padding-top: var(--header-height);\n    }\n  "],
+  "mappings": ";AACI,CAAA;AACE,cAAA;;AAGF,CAAA;AACE,cAAA,IAAA;AACA,cAAA,KAAA,MAAA,EAAA,IAAA;AACA,eAAA,IAAA;;",
+  "names": []
+}

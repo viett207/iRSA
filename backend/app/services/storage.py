@@ -3,6 +3,8 @@
 import asyncio
 import uuid
 from io import BytesIO
+from urllib.parse import quote
+from urllib.request import urlopen
 from fastapi import UploadFile, HTTPException
 import boto3
 from botocore.exceptions import ClientError
@@ -186,6 +188,17 @@ class StorageService:
 
     def download(self, path: str) -> bytes:
         """Download a file from storage as bytes."""
+        # A public Supabase bucket can serve existing files even when a legacy
+        # deployment no longer has the original S3 access key. Prefer this
+        # stable read path when configured, then retain the S3 path for normal
+        # private-bucket deployments and uploads.
+        if self.public_url_base:
+            public_url = f"{self.public_url_base}/{quote(path, safe='/')}"
+            try:
+                with urlopen(public_url, timeout=20) as response:
+                    return response.read()
+            except Exception:
+                pass
         try:
             response = self.s3_client.get_object(Bucket=self.bucket, Key=path)
             return response["Body"].read()

@@ -62,6 +62,7 @@ class JobCreate(BaseModel):
     requirements_vi: str | None = Field(None, max_length=50000)
 
     # Common fields
+    company_code: str | None = Field(None, min_length=2, max_length=50)
     department: str | None = Field(None, max_length=255)
     location: str | None = Field(None, max_length=255)
     employment_type: str | None = Field(
@@ -84,6 +85,7 @@ class JobUpdate(BaseModel):
     requirements_vi: str | None = Field(None, max_length=50000)
 
     # Common fields
+    company_code: str | None = Field(None, min_length=2, max_length=50)
     department: str | None = Field(None, max_length=255)
     location: str | None = Field(None, max_length=255)
     employment_type: str | None = Field(
@@ -109,6 +111,8 @@ class JobResponse(BaseModel):
 
     # Common fields
     slug: str
+    company_code: str | None = None
+    company_name: str | None = None
     department: str | None = None
     location: str | None = None
     employment_type: str | None = None
@@ -182,6 +186,10 @@ class PublicJobResponse(BaseModel):
     salary_max: int | None = None
     application_deadline: date | None = None
     published_at: datetime | None = None
+
+    # Hiring company — exposed so candidates can view the company profile
+    company_name: str | None = None
+    company_code: str | None = None
 
     # Simplified criteria
     must_have_skills: list[str] = []

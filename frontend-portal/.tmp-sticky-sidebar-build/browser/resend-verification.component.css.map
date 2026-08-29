@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["resend-verification.component.ts"],
+  "sourcesContent": ["\n    .resend-container {\n      display: flex;\n      justify-content: center;\n      align-items: center;\n      min-height: calc(100vh - 200px);\n      padding: 24px;\n    }\n    .resend-card {\n      background: var(--color-bg-secondary, #fff);\n      border-radius: 12px;\n      padding: 40px;\n      max-width: 420px;\n      width: 100%;\n      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);\n      border: 1px solid var(--color-border, #f0f0f0);\n    }\n    h2 {\n      text-align: center;\n      margin-bottom: 8px;\n    }\n    .subtitle {\n      text-align: center;\n      color: var(--color-text-secondary, #666);\n      margin-bottom: 24px;\n    }\n    .back-link {\n      text-align: center;\n      margin-top: 16px;\n      a {\n        display: inline-flex;\n        align-items: center;\n        gap: 4px;\n      }\n    }\n  "],
+  "mappings": ";AACI,CAAA;AACE,WAAA;AACA,mBAAA;AACA,eAAA;AACA,cAAA,KAAA,MAAA,EAAA;AACA,WAAA;;AAEF,CAAA;AACE,cAAA,IAAA,oBAAA,EAAA;AACA,iBAAA;AACA,WAAA;AACA,aAAA;AACA,SAAA;AACA,cAAA,EAAA,IAAA,IAAA,KAAA,CAAA,EAAA,CAAA,EAAA,CAAA,EAAA;AACA,UAAA,IAAA,MAAA,IAAA,cAAA,EAAA;;AAEF;AACE,cAAA;AACA,iBAAA;;AAEF,CAAA;AACE,cAAA;AACA,SAAA,IAAA,sBAAA,EAAA;AACA,iBAAA;;AAEF,CAAA;AACE,cAAA;AACA,cAAA;;AACA,CAHF,UAGE;AACE,WAAA;AACA,eAAA;AACA,OAAA;;",
+  "names": []
+}

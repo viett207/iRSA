@@ -8,6 +8,7 @@ import {
   CompanyListResponse,
   CompanyCreate,
   CompanyUpdate,
+  CompanyOverview,
 } from '../../pages/companies/models/company-api.model';
 
 @Injectable({
@@ -31,6 +32,10 @@ export class CompanyService {
 
   get(id: number): Observable<Company> {
     return this.http.get<Company>(`${this.baseUrl}/${id}`);
+  }
+
+  getOverview(id: number): Observable<CompanyOverview> {
+    return this.http.get<CompanyOverview>(`${this.baseUrl}/${id}/overview`);
   }
 
   create(data: CompanyCreate): Observable<Company> {
