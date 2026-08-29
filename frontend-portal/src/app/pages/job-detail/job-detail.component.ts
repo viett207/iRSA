@@ -83,6 +83,22 @@ import { Resume } from '../../shared/models/resume.model';
                 <div class="job-header">
                   <h1 class="job-title">{{ job.title_vi }}</h1>
 
+                  <div class="company-sub-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+                    <span nz-icon nzType="bank" nzTheme="outline" style="color: #1890ff; font-size: 16px;"></span>
+                    @if (job.company_code) {
+                      <a [routerLink]="['/companies', job.company_code]" style="font-size: 16px; font-weight: 600; color: #1890ff;">
+                        {{ job.company_name || 'FBT Telecom' }}
+                      </a>
+                    } @else {
+                      <span style="font-size: 16px; font-weight: 600; color: #262626;">
+                        {{ job.company_name || job.department || 'iRSA Tech' }}
+                      </span>
+                    }
+                    <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #52c41a; background: #f6ffed; border: 1px solid #b7eb8f; padding: 1px 8px; border-radius: 12px;">
+                      <span nz-icon nzType="check-circle" nzTheme="fill"></span> Đã xác thực
+                    </span>
+                  </div>
+
                   <div class="job-meta">
                     @if (job.department) {
                       <span class="meta-item">
@@ -224,6 +240,38 @@ import { Resume } from '../../shared/models/resume.model';
                     </nz-descriptions-item>
                   }
                 </nz-descriptions>
+              </nz-card>
+
+              <!-- Company Overview Card -->
+              <nz-card class="company-sidebar-card" style="margin-top: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                  <div style="width: 44px; height: 44px; border-radius: 8px; background: linear-gradient(135deg, #1890ff, #722ed1); color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700;">
+                    {{ ((job.company_name || 'F').trim()[0] || 'F').toUpperCase() }}
+                  </div>
+                  <div>
+                    <h4 style="margin: 0; font-size: 15px; font-weight: 600;">
+                      @if (job.company_code) {
+                        <a [routerLink]="['/companies', job.company_code]" style="color: #1890ff;">
+                          {{ job.company_name || 'FBT Telecom' }}
+                        </a>
+                      } @else {
+                        {{ job.company_name || 'FBT Telecom' }}
+                      }
+                    </h4>
+                    <span style="font-size: 12px; color: #8c8c8c;">{{ job.company_industry || 'Công nghệ thông tin' }}</span>
+                  </div>
+                </div>
+                @if (job.company_location || job.location) {
+                  <p style="margin: 0 0 10px 0; font-size: 13px; color: #595959;">
+                    <span nz-icon nzType="environment" nzTheme="outline" style="margin-right: 6px; color: #8c8c8c;"></span>
+                    {{ job.company_location || job.location }}
+                  </p>
+                }
+                @if (job.company_code) {
+                  <a [routerLink]="['/companies', job.company_code]" nz-button nzType="default" nzBlock nzSize="small" style="margin-top: 8px; border-radius: 6px;">
+                    <span nz-icon nzType="shop" nzTheme="outline"></span> Xem tất cả việc làm công ty
+                  </a>
+                }
               </nz-card>
             </div>
           </div>

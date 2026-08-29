@@ -1021,9 +1021,19 @@ def main() -> None:
     with SyncSessionLocal() as db:
         owner = db.scalar(
             select(User)
-            .where(User.role.in_(["hr", "admin"]), User.is_active.is_(True))
-            .order_by(User.role.desc(), User.id)
+            .where(
+                User.company_code.isnot(None),
+                User.role.in_(["recruiter", "hr", "manager", "leader", "admin"]),
+                User.is_active.is_(True),
+            )
+            .order_by(User.id.desc())
         )
+        if owner is None:
+            owner = db.scalar(
+                select(User)
+                .where(User.role.in_(["hr", "recruiter", "admin"]), User.is_active.is_(True))
+                .order_by(User.role.desc(), User.id)
+            )
         if owner is None:
             owner = db.scalar(select(User).where(User.email == "hr.admin@irsa.vn"))
         if owner is None:

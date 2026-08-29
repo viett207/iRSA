@@ -104,6 +104,15 @@ class JobService:
             else:
                 applications_count = 0
 
+        company_name = None
+        company_code = None
+        if job.creator:
+            company_code = job.creator.company_code
+            if hasattr(job.creator, "company") and job.creator.company:
+                company_name = job.creator.company.company_name
+        if not company_name and job.creator and job.creator.company_code:
+            company_name = job.department or "iRSA"
+
         return JobResponse(
             id=job.id,
             title_vi=job.title_vi,
@@ -124,6 +133,8 @@ class JobService:
             approved_by=job.approved_by,
             approver_name=job.approver.full_name if job.approver else None,
             approved_at=job.approved_at,
+            company_name=company_name,
+            company_code=company_code,
             criteria=criteria_response,
             applications_count=applications_count,
             created_at=job.created_at,
@@ -150,7 +161,7 @@ class JobService:
     ) -> JobListResponse:
         """Get paginated list of jobs with comprehensive filters and sorting."""
         query = select(Job).options(
-            selectinload(Job.creator),
+            selectinload(Job.creator).selectinload(User.company),
             selectinload(Job.approver),
             selectinload(Job.criteria),
         )
@@ -251,7 +262,7 @@ class JobService:
         result = await self.db.execute(
             select(Job)
             .options(
-                selectinload(Job.creator),
+                selectinload(Job.creator).selectinload(User.company),
                 selectinload(Job.approver),
                 selectinload(Job.criteria),
             )

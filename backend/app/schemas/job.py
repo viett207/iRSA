@@ -127,6 +127,8 @@ class JobResponse(BaseModel):
     approved_by: int | None = None
     approver_name: str | None = None
     approved_at: datetime | None = None
+    company_name: str | None = None
+    company_code: str | None = None
 
     # Related
     criteria: JobCriteriaResponse | None = None
@@ -189,6 +191,12 @@ class PublicJobResponse(BaseModel):
     min_experience_years: int = 0
     max_experience_years: int | None = None
     min_education: str | None = None
+
+    # Company info
+    company_name: str | None = None
+    company_code: str | None = None
+    company_location: str | None = None
+    company_industry: str | None = None
 
     class Config:
         from_attributes = True

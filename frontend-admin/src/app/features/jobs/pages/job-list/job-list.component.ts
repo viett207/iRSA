@@ -270,6 +270,12 @@ import {
                     <a [routerLink]="['/jobs', job.id]" class="job-title">
                       {{ job.title_vi }}
                     </a>
+                    @if (job.company_name) {
+                      <div class="company-badge-row" style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #1890ff; font-weight: 500; margin: 2px 0;">
+                        <span nz-icon nzType="bank" nzTheme="outline"></span>
+                        {{ job.company_name }}
+                      </div>
+                    }
                     <div class="job-meta">
                       @if (job.location) {
                         <span class="meta-item">

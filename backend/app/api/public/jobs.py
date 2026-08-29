@@ -58,6 +58,8 @@ class CVJobMatchItem(BaseModel):
     experience_score: float
     education_score: float
     matched_skills: list[str]
+    company_name: str | None = None
+    company_code: str | None = None
 
     class Config:
         from_attributes = True
@@ -115,10 +117,13 @@ async def search_jobs_by_cv(
     if not resume_text:
         raise BadRequestException("Không thể trích xuất nội dung CV")
 
-    # 2. Get all published jobs with criteria
+    # 2. Get all published jobs with criteria and company info
     jobs_result = await db.execute(
         select(Job)
-        .options(selectinload(Job.criteria))
+        .options(
+            selectinload(Job.criteria),
+            selectinload(Job.creator).selectinload(User.company),
+        )
         .where((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"])))
     )
     jobs = jobs_result.scalars().all()
@@ -146,6 +151,15 @@ async def search_jobs_by_cv(
             + edu_res["score"] * weights["education"]
         )
 
+        company_name = None
+        company_code = None
+        if job.creator:
+            company_code = job.creator.company_code
+            if job.creator.company:
+                company_name = job.creator.company.company_name
+        if not company_name:
+            company_name = job.department or "iRSA"
+
         scored_jobs.append({
             "job": job,
             "total_score": round(total, 2),
@@ -153,6 +167,8 @@ async def search_jobs_by_cv(
             "experience_score": round(exp_res["score"], 2),
             "education_score": round(edu_res["score"], 2),
             "matched_skills": skill_res.get("matched_must", []) + skill_res.get("matched_nice", []),
+            "company_name": company_name,
+            "company_code": company_code,
         })
 
     # 4. Sort by score descending
@@ -180,6 +196,8 @@ async def search_jobs_by_cv(
             experience_score=entry["experience_score"],
             education_score=entry["education_score"],
             matched_skills=entry["matched_skills"],
+            company_name=entry["company_name"],
+            company_code=entry["company_code"],
         )
         for entry in page_items
     ]
@@ -456,13 +474,30 @@ async def get_job_by_slug(slug: str, db: DBSession):
     """Get job details by slug."""
     result = await db.execute(
         select(Job)
-        .options(selectinload(Job.criteria))
+        .options(
+            selectinload(Job.criteria),
+            selectinload(Job.creator).selectinload(User.company),
+        )
         .where(Job.slug == slug, (Job.is_published == True) | (Job.status.in_(["published", "active", "approved"])))
     )
     job = result.scalar_one_or_none()
 
     if not job:
         raise NotFoundException("Job not found")
+
+    company_name = None
+    company_code = None
+    company_location = None
+    company_industry = None
+    if job.creator:
+        company_code = job.creator.company_code
+        if job.creator.company:
+            company_name = job.creator.company.company_name
+            company_location = job.creator.company.location
+            company_industry = job.creator.company.industry
+
+    if not company_name:
+        company_name = job.department or "iRSA"
 
     criteria = job.criteria
     return PublicJobResponse(
@@ -483,6 +518,10 @@ async def get_job_by_slug(slug: str, db: DBSession):
         min_experience_years=criteria.min_experience_years if criteria else 0,
         max_experience_years=criteria.max_experience_years if criteria else None,
         min_education=criteria.min_education if criteria else None,
+        company_name=company_name,
+        company_code=company_code,
+        company_location=company_location,
+        company_industry=company_industry,
     )
 
 

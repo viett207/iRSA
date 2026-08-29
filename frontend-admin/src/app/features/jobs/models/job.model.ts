@@ -52,6 +52,8 @@ export interface Job {
   approved_by?: number;
   approver_name?: string;
   approved_at?: string;
+  company_name?: string;
+  company_code?: string;
   // Related
   criteria?: JobCriteria;
   applications_count: number;

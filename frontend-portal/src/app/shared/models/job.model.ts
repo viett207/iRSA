@@ -20,6 +20,10 @@ export interface PublicJob {
   min_experience_years: number;
   max_experience_years?: number;
   min_education?: string;
+  company_name?: string;
+  company_code?: string;
+  company_location?: string;
+  company_industry?: string;
 }
 
 export interface PublicJobListItem {
@@ -102,6 +106,8 @@ export interface CVJobMatchItem {
   experience_score: number;
   education_score: number;
   matched_skills: string[];
+  company_name?: string;
+  company_code?: string;
 }
 
 export interface CVJobSearchResponse {

@@ -229,6 +229,12 @@ import {
           <nz-tab nzTitle="Thông tin">
             <nz-card nzTitle="Thông tin cơ bản">
               <nz-descriptions nzBordered [nzColumn]="2">
+                <nz-descriptions-item nzTitle="Công ty">
+                  <span style="color: #1890ff; font-weight: 600;">
+                    <span nz-icon nzType="bank" nzTheme="outline" style="margin-right: 4px;"></span>
+                    {{ job()!.company_name || 'FBT Telecom' }}
+                  </span>
+                </nz-descriptions-item>
                 <nz-descriptions-item nzTitle="Ngành nghề">
                   {{ job()!.department || '-' }}
                 </nz-descriptions-item>
