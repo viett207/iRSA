@@ -214,7 +214,7 @@ const ROLE_COLORS: Record<UserRole, string> = {
                       nz-tooltip
                       nzTooltipTitle="Chỉnh sửa"
                     >
-                      <span nz-icon nzType="edit"></span>
+                      <span nz-icon nzType="edit"></span> Sửa
                     </button>
                     <button
                       nz-button
@@ -225,7 +225,7 @@ const ROLE_COLORS: Record<UserRole, string> = {
                       nz-tooltip
                       nzTooltipTitle="Thao tác khác"
                     >
-                      <span nz-icon nzType="more"></span>
+                      <span nz-icon nzType="more"></span> Thao tác
                     </button>
                     <nz-dropdown-menu #actionMenu="nzDropdownMenu">
                       <ul nz-menu class="action-dropdown">
@@ -427,10 +427,13 @@ const ROLE_COLORS: Record<UserRole, string> = {
       display: flex;
       gap: 4px;
       align-items: center;
+      justify-content: center;
 
       button {
-        width: 36px;
+        width: auto;
+        min-width: 36px;
         height: 36px;
+        padding-inline: 8px;
         display: inline-flex;
         align-items: center;
         justify-content: center;

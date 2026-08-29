@@ -445,7 +445,7 @@ import {
                                   nzTooltipTitle="Chấm lại AI"
                                   style="padding: 0; color: #fa8c16; height: 20px"
                                 >
-                                  <span nz-icon nzType="reload"></span>
+                                  <span nz-icon nzType="reload"></span> Chấm lại AI
                                 </button>
                               }
                             </div>
@@ -512,6 +512,7 @@ import {
                           nzTooltipTitle="Tải CV"
                         >
                           <span nz-icon nzType="download"></span>
+                          Tải CV
                         </button>
                         <button
                           nz-button
@@ -530,6 +531,9 @@ import {
                     <td>
                       @if (isOwner()) {
                         <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+                          @if (transitioningApplicationId() === app.id) {
+                            <span class="status-updating" aria-live="polite"><span nz-icon nzType="loading"></span> Đang cập nhật</span>
+                          }
                           <!-- Status = submitted / reviewing: Quick Approve to Shortlisted -->
                           @if (app.status === 'submitted' || app.status === 'reviewing') {
                             @if (app.ai_score != null || app.has_ai_evaluation) {
@@ -541,6 +545,7 @@ import {
                                 nz-popconfirm
                                 nzPopconfirmTitle="Duyệt ứng viên này ĐẠT sơ loại CV và chuyển sang Vòng 1: Hẹn lịch phỏng vấn?"
                                 (nzOnConfirm)="approveToShortlist(app)"
+                                [disabled]="transitioningApplicationId() !== null"
                                 nz-tooltip
                                 nzTooltipTitle="Duyệt đạt sơ loại CV ➔ Đi đến Hẹn lịch PV"
                               >
@@ -605,8 +610,10 @@ import {
                               nz-dropdown
                               [nzDropdownMenu]="statusMenu"
                               nzPlacement="bottomRight"
+                              [disabled]="transitioningApplicationId() !== null"
                             >
                               <span nz-icon nzType="ellipsis"></span>
+                              Thao tác
                             </button>
                             <nz-dropdown-menu #statusMenu="nzDropdownMenu">
                               <ul nz-menu>
@@ -705,6 +712,7 @@ export class JobDetailComponent implements OnInit {
   applicants = signal<Applicant[]>([]);
   applicantsTotal = signal(0);
   applicantsLoading = signal(false);
+  transitioningApplicationId = signal<number | null>(null);
   applicantsPage = 1;
   private applicantsLoaded = false;
 
@@ -1323,10 +1331,12 @@ export class JobDetailComponent implements OnInit {
 
   approveToShortlist(app: Applicant): void {
     const j = this.job();
-    if (!j) return;
+    if (!j || this.transitioningApplicationId() !== null) return;
 
+    this.transitioningApplicationId.set(app.id);
     this.jobService.updateApplicationStatus(j.id, app.id, 'shortlisted').subscribe({
       next: (updated) => {
+        this.transitioningApplicationId.set(null);
         this.applicants.update((list) =>
           list.map((a) => (a.id === app.id ? { ...a, status: updated.status, public_status: updated.public_status, updated_at: updated.updated_at } : a))
         );
@@ -1336,6 +1346,7 @@ export class JobDetailComponent implements OnInit {
         );
       },
       error: (err) => {
+        this.transitioningApplicationId.set(null);
         const detail = err?.error?.detail || 'Không thể duyệt sơ loại ứng viên';
         this.message.error(detail);
       },
@@ -1344,16 +1355,19 @@ export class JobDetailComponent implements OnInit {
 
   updateStatus(app: Applicant, newStatus: ApplicationStatus): void {
     const j = this.job();
-    if (!j) return;
+    if (!j || this.transitioningApplicationId() !== null) return;
 
+    this.transitioningApplicationId.set(app.id);
     this.jobService.updateApplicationStatus(j.id, app.id, newStatus).subscribe({
       next: (updated) => {
+        this.transitioningApplicationId.set(null);
         this.applicants.update((list) =>
           list.map((a) => (a.id === app.id ? { ...a, status: updated.status, public_status: updated.public_status, updated_at: updated.updated_at } : a))
         );
         this.message.success(`Đã chuyển trạng thái sang "${this.getAppStatusLabel(newStatus)}"`);
       },
       error: (err) => {
+        this.transitioningApplicationId.set(null);
         const detail = err?.error?.detail || 'Không thể cập nhật trạng thái';
         this.message.error(detail);
       },

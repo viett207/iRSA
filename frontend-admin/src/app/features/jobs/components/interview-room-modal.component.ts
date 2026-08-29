@@ -580,7 +580,7 @@ interface QuestionState {
                       <div style="font-size: 12px; color: #666; margin-top: 2px">Mục đích: {{ qState.question.purpose }}</div>
                     </div>
                     <button nz-button nzType="text" nzDanger (click)="removeQuestion(i)" nz-tooltip nzTooltipTitle="Xóa câu hỏi này">
-                      <span nz-icon nzType="delete"></span>
+                      <span nz-icon nzType="delete"></span> Xóa
                     </button>
                   </div>
                 }

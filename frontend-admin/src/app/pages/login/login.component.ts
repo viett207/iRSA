@@ -9,7 +9,6 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { environment } from '../../../environments/environment';
@@ -25,11 +24,10 @@ import { environment } from '../../../environments/environment';
     NzButtonModule,
     NzCheckboxModule,
     NzIconModule,
-    NzDividerModule,
     RouterModule,
   ],
   template: `
-    <div class="login-page">
+    <main class="login-page" aria-label="Đăng nhập quản trị iRSA">
       <!-- Left Panel: Branding -->
       <div class="branding-panel">
         <div class="branding-content">
@@ -91,6 +89,48 @@ import { environment } from '../../../environments/environment';
           </div>
         </div>
 
+        <div class="workflow-visual" aria-hidden="true">
+          <svg viewBox="0 0 520 230" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle class="workflow-halo workflow-halo--large" cx="296" cy="108" r="88" />
+            <circle class="workflow-halo workflow-halo--small" cx="108" cy="150" r="46" />
+
+            <path class="workflow-route" d="M132 154C182 154 178 102 240 102" />
+            <path class="workflow-route" d="M300 102C340 102 346 70 390 70" />
+            <path class="workflow-route workflow-route--muted" d="M302 112C334 126 350 159 390 159" />
+
+            <g class="workflow-card workflow-card--candidate">
+              <rect x="20" y="122" width="118" height="64" rx="14" />
+              <rect class="workflow-card-line" x="40" y="144" width="47" height="6" rx="3" />
+              <rect class="workflow-card-line workflow-card-line--short" x="40" y="158" width="68" height="5" rx="2.5" />
+              <circle class="workflow-card-dot" cx="112" cy="151" r="8" />
+            </g>
+            <text class="workflow-label" x="20" y="210">Hồ sơ ứng viên</text>
+
+            <g class="workflow-core">
+              <circle cx="270" cy="104" r="34" />
+              <path d="M256 97H267V111H256V97ZM274 97H285V111H274V97Z" />
+              <path class="workflow-core-line" d="M259 118H281" />
+            </g>
+            <text class="workflow-label workflow-label--center" x="270" y="160">AI phân tích</text>
+
+            <g class="workflow-card workflow-card--signal">
+              <rect x="390" y="38" width="110" height="64" rx="14" />
+              <path class="workflow-chart" d="M412 82L428 67L441 76L468 52" />
+              <circle class="workflow-chart-dot" cx="468" cy="52" r="4" />
+            </g>
+            <text class="workflow-label" x="390" y="126">Đánh giá phù hợp</text>
+
+            <g class="workflow-card workflow-card--shortlist">
+              <rect x="390" y="128" width="110" height="58" rx="14" />
+              <circle class="workflow-check-ring" cx="416" cy="157" r="11" />
+              <path class="workflow-check" d="M410 157L414 161L422 152" />
+              <rect class="workflow-card-line" x="438" y="151" width="38" height="6" rx="3" />
+              <rect class="workflow-card-line workflow-card-line--short" x="438" y="164" width="27" height="5" rx="2.5" />
+            </g>
+            <text class="workflow-label" x="390" y="210">Ưu tiên phỏng vấn</text>
+          </svg>
+        </div>
+
         <!-- Footer -->
         <div class="branding-footer">
           <p>2024 iRSA. All rights reserved.</p>
@@ -128,6 +168,8 @@ import { environment } from '../../../environments/environment';
                     type="email"
                     nz-input
                     formControlName="email"
+                    autocomplete="email"
+                    (input)="clearLoginError()"
                     placeholder="admin&#64;irsa.local"
                   />
                 </nz-input-group>
@@ -146,6 +188,8 @@ import { environment } from '../../../environments/environment';
                     [type]="showPassword ? 'text' : 'password'"
                     nz-input
                     formControlName="password"
+                    autocomplete="current-password"
+                    (input)="clearLoginError()"
                     placeholder="Nhập mật khẩu"
                   />
                 </nz-input-group>
@@ -153,19 +197,27 @@ import { environment } from '../../../environments/environment';
                   <span nz-icon nzType="lock" nzTheme="outline"></span>
                 </ng-template>
                 <ng-template #passwordSuffix>
-                  <span
-                    nz-icon
+                  <button
+                    type="button"
                     class="password-toggle"
-                    [nzType]="showPassword ? 'eye-invisible' : 'eye'"
+                    [attr.aria-label]="showPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'"
+                    [attr.aria-pressed]="showPassword"
                     (click)="showPassword = !showPassword"
-                  ></span>
+                  >
+                    <span nz-icon [nzType]="showPassword ? 'eye-invisible' : 'eye'" aria-hidden="true"></span>
+                  </button>
                 </ng-template>
               </nz-form-control>
             </nz-form-item>
 
             <div class="form-options">
               <label nz-checkbox formControlName="remember">Ghi nhớ đăng nhập</label>
-              <a class="forgot-link">Quên mật khẩu?</a>
+              <a [href]="portalUrl + '/forgot-password'" class="forgot-link">Quên mật khẩu?</a>
+            </div>
+
+            <div *ngIf="loginError" class="login-error" role="alert" aria-live="assertive">
+              <span nz-icon nzType="close-circle" nzTheme="fill" aria-hidden="true"></span>
+              <span>{{ loginError }}</span>
             </div>
 
             <button
@@ -174,6 +226,7 @@ import { environment } from '../../../environments/environment';
               nzSize="large"
               nzBlock
               [nzLoading]="loading"
+              [disabled]="loading"
               type="submit"
               class="login-btn"
             >
@@ -186,24 +239,6 @@ import { environment } from '../../../environments/environment';
             <a routerLink="/register-hr">Đăng ký tài khoản HR</a>
           </div>
 
-          <nz-divider nzText="Tài khoản Admin mặc định"></nz-divider>
-
-          <div class="help-section">
-            <div class="credentials" (click)="fillAdminAccount()" style="cursor: pointer;" title="Nhấn để tự động điền">
-              <div class="credential-item">
-                <span class="credential-label">Tài khoản:</span>
-                <code>admin&#64;example.com</code>
-              </div>
-              <div class="credential-item">
-                <span class="credential-label">Mật khẩu:</span>
-                <code>Admin&#64;123456</code>
-              </div>
-            </div>
-            <p class="help-hint" style="margin-top: 8px; margin-bottom: 0; font-size: 12px; color: var(--color-text-tertiary);">
-              (Nhấp vào khung để tự động điền tài khoản)
-            </p>
-          </div>
-
           <div class="portal-switch-section">
             <a [href]="portalUrl" class="portal-switch-btn">
               <span nz-icon nzType="swap" nzTheme="outline"></span>
@@ -213,34 +248,38 @@ import { environment } from '../../../environments/environment';
 
         </div>
       </div>
-    </div>
+    </main>
   `,
   styles: [`
     .login-page {
       display: flex;
-      min-height: 100vh;
+      min-height: 100dvh;
     }
 
     /* Left Panel - Branding */
     .branding-panel {
       flex: 1;
-      background: linear-gradient(135deg, #0050B3 0%, #003A82 50%, #001D66 100%);
+      background:
+        radial-gradient(ellipse 72% 58% at 90% 4%, hsl(211 84% 54% / 0.44), transparent 72%),
+        radial-gradient(ellipse 64% 62% at -8% 100%, hsl(224 78% 32% / 0.88), transparent 75%),
+        hsl(217 82% 29%);
       color: #fff;
-      padding: 48px;
+      padding: clamp(2.75rem, 4.6vw, 5.5rem);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       position: relative;
       overflow: hidden;
+      isolation: isolate;
 
       &::before {
         content: '';
         position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        inset: 0;
+        background-image: radial-gradient(hsl(0 0% 100% / 0.14) 0.75px, transparent 0.75px);
+        background-size: 18px 18px;
+        mask-image: linear-gradient(to bottom, hsl(0 0% 0% / 0.42), transparent 60%);
+        opacity: 0.32;
         pointer-events: none;
       }
     }
@@ -289,21 +328,24 @@ import { environment } from '../../../environments/environment';
 
     .hero-title {
       font-family: var(--font-heading);
-      font-size: 42px;
-      font-weight: 700;
-      line-height: 1.2;
+      font-size: clamp(2.5rem, 3.1vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.045em;
+      color: hsl(0 0% 100%);
+      text-wrap: balance;
       margin: 0 0 24px 0;
 
       .highlight {
-        color: #69B1FF;
+        color: hsl(211 100% 78%);
       }
     }
 
     .hero-description {
       font-size: 16px;
       line-height: 1.7;
-      opacity: 0.85;
-      max-width: 440px;
+      color: hsl(214 100% 93% / 0.9);
+      max-width: 34rem;
       margin: 0;
     }
 
@@ -351,6 +393,123 @@ import { environment } from '../../../environments/environment';
       }
     }
 
+    .workflow-visual {
+      position: absolute;
+      z-index: 0;
+      right: clamp(1.5rem, 4vw, 5rem);
+      bottom: clamp(4.5rem, 10vh, 7rem);
+      width: min(31rem, 55%);
+      pointer-events: none;
+      filter: drop-shadow(0 18px 30px hsl(221 76% 18% / 0.2));
+
+      svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+      }
+    }
+
+    .workflow-halo {
+      fill: hsl(211 100% 78% / 0.025);
+      stroke: hsl(211 100% 82% / 0.18);
+      stroke-width: 1;
+      stroke-dasharray: 3 7;
+    }
+
+    .workflow-halo--small {
+      fill: none;
+      stroke-opacity: 0.1;
+    }
+
+    .workflow-route {
+      stroke: hsl(211 100% 82% / 0.54);
+      stroke-width: 1.5;
+      stroke-dasharray: 4 6;
+      stroke-linecap: round;
+    }
+
+    .workflow-route--muted {
+      stroke-opacity: 0.42;
+    }
+
+    .workflow-card > rect:first-child {
+      fill: hsl(0 0% 100% / 0.11);
+      stroke: hsl(211 100% 89% / 0.26);
+      stroke-width: 1;
+    }
+
+    .workflow-card--candidate > rect:first-child {
+      fill: hsl(211 100% 84% / 0.14);
+    }
+
+    .workflow-card--shortlist > rect:first-child {
+      fill: hsl(0 0% 100% / 0.15);
+    }
+
+    .workflow-card-line {
+      fill: hsl(0 0% 100% / 0.78);
+    }
+
+    .workflow-card-line--short {
+      fill: hsl(211 100% 84% / 0.52);
+    }
+
+    .workflow-card-dot {
+      fill: hsl(211 100% 78%);
+    }
+
+    .workflow-core circle {
+      fill: hsl(211 100% 84% / 0.22);
+      stroke: hsl(211 100% 89% / 0.48);
+      stroke-width: 1.25;
+    }
+
+    .workflow-core path:not(.workflow-core-line) {
+      fill: hsl(0 0% 100% / 0.94);
+    }
+
+    .workflow-core-line {
+      stroke: hsl(211 100% 84% / 0.72);
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .workflow-chart {
+      stroke: hsl(211 100% 84% / 0.94);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .workflow-chart-dot {
+      fill: hsl(0 0% 100% / 0.95);
+    }
+
+    .workflow-check-ring {
+      fill: hsl(211 100% 84% / 0.18);
+      stroke: hsl(211 100% 84% / 0.74);
+    }
+
+    .workflow-check {
+      stroke: hsl(0 0% 100% / 0.95);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .workflow-label {
+      fill: hsl(211 100% 92% / 0.78);
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.015em;
+    }
+
+    .workflow-label--center {
+      text-anchor: middle;
+    }
+
     /* Branding Footer */
     .branding-footer {
       position: relative;
@@ -365,17 +524,23 @@ import { environment } from '../../../environments/environment';
 
     /* Right Panel - Form */
     .form-panel {
-      flex: 0 0 520px;
-      background: var(--color-bg-secondary);
+      flex: 0 0 clamp(32rem, 34vw, 40rem);
+      background:
+        radial-gradient(circle at 96% 8%, hsl(212 94% 90% / 0.7), transparent 18rem),
+        var(--color-bg-secondary);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 48px;
+      padding: clamp(2.5rem, 4.6vw, 5.5rem);
+      position: relative;
+      overflow: hidden;
     }
 
     .form-container {
       width: 100%;
-      max-width: 380px;
+      max-width: 24.5rem;
+      position: relative;
+      z-index: 1;
     }
 
     /* Mobile Logo */
@@ -405,8 +570,9 @@ import { environment } from '../../../environments/environment';
 
     .form-title {
       font-family: var(--font-heading);
-      font-size: 28px;
-      font-weight: 700;
+      font-size: clamp(1.85rem, 2.2vw, 2.25rem);
+      font-weight: 800;
+      letter-spacing: -0.035em;
       color: var(--color-text-primary);
       margin: 0 0 8px 0;
     }
@@ -425,7 +591,6 @@ import { environment } from '../../../environments/environment';
 
     nz-form-item {
       margin-bottom: 20px;
-      width: 100%;
     }
 
     nz-form-label {
@@ -433,74 +598,63 @@ import { environment } from '../../../environments/environment';
       padding-bottom: 6px !important;
     }
 
-    nz-form-control {
-      width: 100%;
+    :host ::ng-deep nz-input-group.ant-input-affix-wrapper {
+      border-radius: 12px !important;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+
+      &:hover {
+        border-color: var(--color-primary-300) !important;
+      }
+
+      &:focus-within,
+      &.ant-input-affix-wrapper-focused {
+        border-color: var(--color-primary) !important;
+        box-shadow: 0 0 0 3px hsl(212 94% 90% / 0.9) !important;
+      }
     }
 
-    ::ng-deep {
-      .login-form {
-        .ant-form-item-control-input-content {
-          display: block;
-          width: 100%;
-        }
+    /* Global tokens also target the native input inside this wrapper. The
+       wrapper owns the only border and focus ring on login fields. */
+    :host ::ng-deep nz-input-group.ant-input-affix-wrapper > input.ant-input {
+      min-height: 0 !important;
+      height: auto !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      outline: 0 !important;
+      box-shadow: none !important;
+      background: transparent !important;
 
-        .ant-input-affix-wrapper-lg {
-          width: 100%;
-          min-height: 48px;
-          padding: 10px 16px !important;
-          border-radius: 12px !important;
-          display: flex;
-          align-items: center;
-          border: 1px solid var(--color-border, #d9d9d9);
-          box-shadow: none;
-          transition: all 0.2s ease;
-
-          &:hover {
-            border-color: var(--color-primary-300, #69b1ff);
-          }
-
-          &:focus,
-          &.ant-input-affix-wrapper-focused {
-            border-color: var(--color-primary, #0050b3) !important;
-            box-shadow: 0 0 0 2px var(--color-primary-100, #BAE0FF) !important;
-          }
-        }
-
-        .ant-input-prefix {
-          margin-right: 12px !important;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--color-text-tertiary, #8c8c8c);
-          font-size: 18px;
-        }
-
-        .ant-input-suffix {
-          margin-left: 12px !important;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .ant-input-lg {
-          height: auto !important;
-          padding: 0 !important;
-          border: none !important;
-          box-shadow: none !important;
-          background: transparent !important;
-          font-size: 15px;
-          line-height: 1.5;
-        }
+      &:focus {
+        border: 0 !important;
+        box-shadow: none !important;
       }
     }
 
     .password-toggle {
       cursor: pointer;
       color: var(--color-text-tertiary);
-      transition: color 0.2s ease;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      transition: color var(--transition-fast), background-color var(--transition-fast), transform var(--transition-fast);
 
       &:hover {
         color: var(--color-text-primary);
+        background: var(--color-bg-tertiary);
+      }
+
+      &:active {
+        transform: scale(0.94);
+      }
+
+      &:focus-visible {
+        outline: 3px solid var(--color-primary-100);
+        outline-offset: 1px;
       }
     }
 
@@ -515,10 +669,34 @@ import { environment } from '../../../environments/environment';
     .forgot-link {
       font-size: 14px;
       color: var(--color-primary-light);
-      cursor: pointer;
+      font-weight: var(--font-medium);
 
       &:hover {
         color: var(--color-primary);
+      }
+
+      &:focus-visible {
+        outline: 3px solid var(--color-primary-100);
+        outline-offset: 3px;
+        border-radius: var(--radius-sm);
+      }
+    }
+
+    .login-error {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      margin: -6px 0 18px;
+      padding: 10px 12px;
+      border: 1px solid hsl(0 67% 48% / 0.18);
+      border-radius: var(--radius-lg);
+      background: var(--color-error-bg);
+      color: var(--color-error-dark);
+      font-size: var(--text-sm);
+      line-height: var(--leading-normal);
+
+      > span:first-child {
+        margin-top: 2px;
       }
     }
 
@@ -535,14 +713,19 @@ import { environment } from '../../../environments/environment';
       }
 
       &:active:not(:disabled) {
-        transform: translateY(0);
+        transform: translateY(1px) scale(0.99);
+      }
+
+      &:focus-visible {
+        outline: 3px solid var(--color-primary-100);
+        outline-offset: 3px;
       }
     }
 
     /* Register HR Link */
     .register-hr-link {
       text-align: center;
-      margin-top: 12px;
+      margin-top: 20px;
       font-size: 14px;
 
       a {
@@ -551,49 +734,8 @@ import { environment } from '../../../environments/environment';
       }
     }
 
-    /* Help Section */
-    .help-section {
-      text-align: center;
-    }
-
-    .help-text {
-      font-size: 13px;
-      color: var(--color-text-tertiary);
-      margin: 0 0 12px 0;
-    }
-
-    .credentials {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      background: var(--color-bg-tertiary);
-      padding: 16px;
-      border-radius: 10px;
-    }
-
-    .credential-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 13px;
-    }
-
-    .credential-label {
-      color: var(--color-text-secondary);
-    }
-
-    code {
-      background: var(--color-bg-secondary);
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-family: 'SF Mono', Consolas, monospace;
-      font-size: 12px;
-      color: var(--color-primary);
-      border: 1px solid var(--color-border);
-    }
-
     .portal-switch-section {
-      margin-top: 20px;
+      margin-top: 24px;
       text-align: center;
     }
 
@@ -619,6 +761,11 @@ import { environment } from '../../../environments/environment';
         border-color: var(--color-primary);
         box-shadow: 0 4px 12px rgba(0, 80, 179, 0.2);
       }
+
+      &:focus-visible {
+        outline: 3px solid var(--color-primary-100);
+        outline-offset: 3px;
+      }
     }
 
     /* Responsive */
@@ -635,6 +782,7 @@ import { environment } from '../../../environments/environment';
       .form-panel {
         flex: 1;
       }
+
     }
 
     @media (max-width: 768px) {
@@ -648,6 +796,7 @@ import { environment } from '../../../environments/environment';
 
       .form-panel {
         flex: 1;
+        min-height: 100dvh;
         padding: 24px;
       }
 
@@ -664,6 +813,7 @@ import { environment } from '../../../environments/environment';
 export class LoginComponent {
   loginForm: FormGroup;
   loading = false;
+  loginError: string | null = null;
   showPassword = false;
   portalUrl = environment.portalUrl || 'http://localhost:4300';
 
@@ -674,8 +824,8 @@ export class LoginComponent {
     private message: NzMessageService
   ) {
     this.loginForm = this.fb.group({
-      email: ['admin@example.com', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
-      password: ['Admin@123456', [Validators.required, Validators.minLength(8)]],
+      email: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
+      password: ['', [Validators.required, Validators.minLength(8)]],
       remember: [true],
     });
 
@@ -685,15 +835,13 @@ export class LoginComponent {
     }
   }
 
-  fillAdminAccount(): void {
-    this.loginForm.patchValue({
-      email: 'admin@example.com',
-      password: 'Admin@123456',
-    });
-    this.message.info('Đã tự động điền tài khoản Admin');
+  clearLoginError(): void {
+    this.loginError = null;
   }
 
   onSubmit(): void {
+    this.clearLoginError();
+
     if (this.loginForm.invalid) {
       Object.values(this.loginForm.controls).forEach((control) => {
         if (control.invalid) {
@@ -714,7 +862,7 @@ export class LoginComponent {
       },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
-        this.message.error(this.getLoginErrorMessage(err));
+        this.loginError = this.getLoginErrorMessage(err);
       },
     });
   }

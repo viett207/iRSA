@@ -44,3 +44,29 @@ export interface CompanyUpdate {
   industry?: string;
   description?: string | null;
 }
+
+export interface CompanyOverviewStats {
+  total_jobs: number;
+  active_jobs: number;
+  total_applications: number;
+  in_progress_applications: number;
+  hr_members: number;
+}
+
+export interface CompanyJobSummary {
+  id: number;
+  title_vi: string;
+  department: string | null;
+  location: string | null;
+  employment_type: string | null;
+  status: string;
+  applications_count: number;
+  created_at: string;
+  application_deadline: string | null;
+}
+
+export interface CompanyOverview {
+  company: Company;
+  stats: CompanyOverviewStats;
+  jobs: CompanyJobSummary[];
+}

@@ -19,7 +19,8 @@ import { AuthService } from '../../core/auth/auth.service';
 import { DashboardService, DashboardStats } from '../../core/services/dashboard.service';
 import { JobService } from '../../features/jobs/services/job.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
+import { firstValueFrom } from 'rxjs';
 
 interface StatCard {
   title: string;
@@ -86,18 +87,22 @@ interface RecentApplication {
         </div>
       </div>
 
+      @if (loadError()) {
+        <div class="dashboard-error" role="alert">
+          <span nz-icon nzType="exclamation-circle" aria-hidden="true"></span>
+          <span>Không thể cập nhật dữ liệu tổng quan. Vui lòng thử lại.</span>
+          <button nz-button nzSize="small" (click)="loadDashboard()" [disabled]="loading()">
+            <span nz-icon nzType="reload"></span>
+            Thử lại
+          </button>
+        </div>
+      }
+
       <section class="priority-card" aria-labelledby="priority-title">
         <div class="priority-copy">
           <span class="priority-kicker">Việc cần ưu tiên hôm nay</span>
-          @if (loading()) {
-            <div class="priority-loading">
-              <nz-spin nzSimple [nzSpinning]="true"></nz-spin>
-              <span>Đang tải thông tin ưu tiên...</span>
-            </div>
-          } @else {
-            <h2 id="priority-title">{{ recentApplications().length }} hồ sơ mới đang chờ đội tuyển dụng xem xét</h2>
-            <p>Xử lý sớm các hồ sơ phù hợp để giữ tiến độ tuyển dụng và phản hồi ứng viên đúng hạn.</p>
-          }
+          <h2 id="priority-title">{{ recentApplications().length }} hồ sơ mới đang chờ đội tuyển dụng xem xét</h2>
+          <p>Xử lý sớm các hồ sơ phù hợp để giữ tiến độ tuyển dụng và phản hồi ứng viên đúng hạn.</p>
         </div>
         <div class="priority-actions">
           <a nz-button class="priority-primary" routerLink="/applications">Xem hàng chờ <span nz-icon nzType="arrow-right"></span></a>
@@ -107,33 +112,24 @@ interface RecentApplication {
 
       <!-- KPI Stats Grid -->
       <div nz-row [nzGutter]="[24, 24]" class="stats-section">
-        @if (loading()) {
-          @for (i of [1, 2, 3]; track i) {
-            <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
-              <div class="stat-card stat-card--loading">
-                <nz-skeleton [nzActive]="true" [nzAvatar]="{ size: 40, shape: 'square' }" [nzParagraph]="{ rows: 1 }"></nz-skeleton>
+        @for (stat of stats(); track stat.title) {
+          <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
+            <a class="stat-card" [routerLink]="stat.route" [attr.aria-label]="'Xem ' + stat.title">
+              <div class="stat-icon" [class]="'stat-icon--' + stat.iconColor">
+                <span nz-icon [nzType]="stat.icon" nzTheme="outline"></span>
               </div>
-            </div>
-          }
-        } @else {
-          @for (stat of stats(); track stat.title) {
-            <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
-              <a class="stat-card" [routerLink]="stat.route" [attr.aria-label]="'Xem ' + stat.title">
-                <div class="stat-icon" [class]="'stat-icon--' + stat.iconColor">
-                  <span nz-icon [nzType]="stat.icon" nzTheme="outline"></span>
+              <div class="stat-content">
+                <span class="stat-label">{{ stat.title }}</span>
+                <div class="stat-value-row">
+                  <span class="stat-value">{{ stat.value }}</span>
+                  @if (stat.suffix) {
+                    <span class="stat-suffix">{{ stat.suffix }}</span>
+                  }
                 </div>
-                <div class="stat-content">
-                  <span class="stat-label">{{ stat.title }}</span>
-                  <div class="stat-value-row">
-                    <span class="stat-value">{{ stat.value }}</span>
-                    @if (stat.suffix) {
-                      <span class="stat-suffix">{{ stat.suffix }}</span>
-                    }
-                  </div>
-                </div>
-              </a>
-            </div>
-          }
+                
+              </div>
+            </a>
+          </div>
         }
       </div>
 
@@ -147,6 +143,7 @@ interface RecentApplication {
             </div>
             <div class="quick-actions-grid">
               @for (action of quickActions; track action.label) {
+                @if (!action.adminOnly || authService.hasRole('admin')) {
                 <a
                   class="action-item"
                   [routerLink]="action.route"
@@ -161,6 +158,7 @@ interface RecentApplication {
                   </div>
                   <span nz-icon nzType="right" class="action-arrow"></span>
                 </a>
+                }
               }
             </div>
           </nz-card>
@@ -179,12 +177,7 @@ interface RecentApplication {
               </a>
             </div>
 
-            @if (loading()) {
-              <div class="card-loading-container">
-                <nz-spin nzSimple [nzSpinning]="true"></nz-spin>
-                <span class="loading-hint">Đang tải tiến độ tuyển dụng...</span>
-              </div>
-            } @else if (funnelStages().length) {
+            @if (funnelStages().length) {
               <div class="funnel-container">
                 @for (stage of funnelStages(); track stage.name; let index = $index) {
                   <div class="funnel-stage" [class]="'funnel-stage funnel-stage--' + index">
@@ -213,18 +206,23 @@ interface RecentApplication {
         <div class="card-header">
           <div>
             <h3 class="card-title">Hồ sơ ứng tuyển gần đây</h3>
-            <span class="card-subtitle">Cập nhật 5 phút trước</span>
+            <span class="card-subtitle">Dữ liệu cập nhật gần nhất</span>
           </div>
-          <a routerLink="/applications" class="view-all-link">
-            Xem tất cả
-            <span nz-icon nzType="arrow-right"></span>
-          </a>
+          <div class="card-header-actions">
+            <button nz-button nzType="link" nzSize="small" (click)="loadDashboard()" [disabled]="loading()">
+              <span nz-icon nzType="reload"></span>
+              Làm mới
+            </button>
+            <a routerLink="/applications" class="view-all-link">
+              Xem tất cả
+              <span nz-icon nzType="arrow-right"></span>
+            </a>
+          </div>
         </div>
 
         <nz-table
           #applicationTable
           [nzData]="recentApplications()"
-          [nzLoading]="loading()"
           [nzShowPagination]="false"
           [nzFrontPagination]="false"
           nzSize="middle"
@@ -236,7 +234,7 @@ interface RecentApplication {
               <th>Vị trí ứng tuyển</th>
               <th>Ngày nộp</th>
               <th>Trạng thái</th>
-              <th nzWidth="124px"></th>
+              <th nzWidth="245px">Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -272,7 +270,7 @@ interface RecentApplication {
                     nz-tooltip
                     nzTooltipTitle="Xem CV"
                   >
-                    <span nz-icon nzType="file-pdf"></span>
+                    <span nz-icon nzType="file-pdf"></span> Xem CV
                   </button>
                   <button
                     nz-button
@@ -282,7 +280,7 @@ interface RecentApplication {
                     nz-tooltip
                     nzTooltipTitle="Tải CV"
                   >
-                    <span nz-icon nzType="download"></span>
+                    <span nz-icon nzType="download"></span> Tải CV
                   </button>
                   <button
                     nz-button
@@ -292,7 +290,7 @@ interface RecentApplication {
                     nz-tooltip
                     nzTooltipTitle="Xem chi tiết"
                   >
-                    <span nz-icon nzType="eye"></span>
+                    <span nz-icon nzType="eye"></span> Chi tiết
                   </button>
                 </td>
               </tr>
@@ -341,8 +339,11 @@ interface RecentApplication {
                     nzSize="small"
                     nz-tooltip
                     nzTooltipTitle="Phê duyệt"
+                    (click)="approvePendingJob(job)"
+                    [nzLoading]="approvalProcessingId === job.id"
+                    [disabled]="approvalProcessingId !== null"
                   >
-                    <span nz-icon nzType="check"></span>
+                    <span nz-icon nzType="check"></span> Phê duyệt
                   </button>
                   <button
                     nz-button
@@ -350,8 +351,10 @@ interface RecentApplication {
                     nzSize="small"
                     nz-tooltip
                     nzTooltipTitle="Từ chối"
+                    (click)="rejectPendingJob(job)"
+                    [disabled]="approvalProcessingId !== null"
                   >
-                    <span nz-icon nzType="close"></span>
+                    <span nz-icon nzType="close"></span> Từ chối
                   </button>
                 </div>
               </div>
@@ -420,7 +423,7 @@ interface RecentApplication {
     .card-header { align-items: center; margin-bottom: 16px; }.card-title { font-size: 16px; letter-spacing: -0.035em; }.view-all-link { color: var(--color-primary); font-size: 12px; font-weight: 700; }
     .quick-actions-grid { gap: 8px; }.action-item { gap: 13px; padding: 12px; border: 1px solid transparent; border-radius: 11px; background: var(--color-bg-tertiary); }.action-item:hover { border-color: var(--color-primary-200); background: var(--color-primary-50); transform: translateX(3px); }.action-icon { width: 40px; height: 40px; border-radius: 11px; }.action-icon span { font-size: 18px; }.action-label { font-size: 13px; }
     .funnel-container { gap: 11px; }.funnel-stage { display: grid; grid-template-columns: 22px minmax(95px, 1fr) minmax(70px, 2.1fr) 36px; gap: 9px; align-items: center; }.funnel-index { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 7px; color: var(--color-primary); background: var(--color-primary-50); font-size: 10px; font-weight: 800; }.funnel-name { font-size: 12px; font-weight: 600; }.funnel-bar-wrapper { height: 7px; border-radius: 99px; background: var(--color-bg-tertiary); }.funnel-bar { min-width: 6px; padding: 0; border-radius: inherit; background: var(--color-primary); animation: fill-funnel 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }.funnel-stage--1 .funnel-bar { background: hsl(199 58% 42%); }.funnel-stage--2 .funnel-bar { background: hsl(165 41% 36%); }.funnel-stage--3 .funnel-bar { background: hsl(35 62% 43%); }.funnel-stage--4 .funnel-bar { background: hsl(219 26% 43%); }.funnel-count { color: var(--color-text-secondary); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }.funnel-footer { display: flex; align-items: center; gap: 9px; margin-top: 17px; padding: 11px 12px; border: 0; border-radius: 10px; color: var(--color-text-secondary); background: var(--color-primary-50); font-size: 11px; }.funnel-footer strong { color: var(--color-primary); font-variant-numeric: tabular-nums; }
-    .table-card { margin-bottom: 18px; }:host ::ng-deep .table-card .ant-table { background: transparent; }:host ::ng-deep .table-card .ant-table-thead > tr > th { padding-top: 10px; padding-bottom: 10px; color: var(--color-text-tertiary); background: var(--color-bg-tertiary); font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }:host ::ng-deep .table-card .ant-table-tbody > tr > td { padding-top: 13px; padding-bottom: 13px; }:host ::ng-deep .table-card .ant-table-tbody > tr:hover > td { background: var(--color-primary-50); }.candidate-avatar { color: var(--color-primary) !important; background: var(--color-primary-50) !important; }.candidate-name { font-size: 13px; font-weight: 600; }:host ::ng-deep .approvals-card.ant-card { border-left: 3px solid var(--color-warning); }
+    .table-card { margin-bottom: 18px; }.card-header-actions { display: inline-flex; align-items: center; gap: 10px; }.dashboard-error { display: flex; align-items: center; gap: 10px; margin: -6px 0 18px; padding: 11px 13px; border: 1px solid hsl(0 70% 82%); border-radius: 10px; color: var(--color-error); background: var(--color-error-bg); font-size: 13px; }.dashboard-error button { margin-left: auto; }.dashboard-error .anticon { font-size: 16px; }:host ::ng-deep .table-card .ant-table { background: transparent; }:host ::ng-deep .table-card .ant-table-thead > tr > th { padding-top: 10px; padding-bottom: 10px; color: var(--color-text-tertiary); background: var(--color-bg-tertiary); font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }:host ::ng-deep .table-card .ant-table-tbody > tr > td { padding-top: 13px; padding-bottom: 13px; }:host ::ng-deep .table-card .ant-table-tbody > tr:hover > td { background: var(--color-primary-50); }.candidate-avatar { color: var(--color-primary) !important; background: var(--color-primary-50) !important; }.candidate-name { font-size: 13px; font-weight: 600; }:host ::ng-deep .approvals-card.ant-card { border-left: 3px solid var(--color-warning); }
     @keyframes dashboard-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } } @keyframes fill-funnel { from { transform: scaleX(0); transform-origin: left; } to { transform: scaleX(1); transform-origin: left; } }
 
     /* Page Header */
@@ -478,47 +481,6 @@ interface RecentApplication {
         outline: 3px solid hsl(215 78% 48% / 0.32);
         outline-offset: 3px;
       }
-    }
-
-    .stat-card--loading {
-      cursor: default;
-      pointer-events: none;
-      padding: 16px 20px;
-      min-height: 96px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      nz-skeleton {
-        width: 100%;
-      }
-    }
-
-    .priority-loading {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 12px 0;
-      color: hsl(210 75% 85%);
-      font-size: 13px;
-
-      ::ng-deep .ant-spin-dot-item {
-        background-color: #fff !important;
-      }
-    }
-
-    .card-loading-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 180px;
-      gap: 12px;
-    }
-
-    .loading-hint {
-      font-size: 13px;
-      color: var(--color-text-tertiary);
     }
 
     .stat-icon {
@@ -955,10 +917,12 @@ export class DashboardComponent implements OnInit {
   private dashboardService = inject(DashboardService);
   private jobService = inject(JobService);
   private message = inject(NzMessageService);
+  private modal = inject(NzModalService);
   private sanitizer = inject(DomSanitizer);
   authService = inject(AuthService);
 
   loading = signal(true);
+  loadError = signal(false);
 
   userName = computed(() => {
     const fullName = this.authService.user()?.full_name || 'Người dùng';
@@ -969,6 +933,7 @@ export class DashboardComponent implements OnInit {
   funnelStages = signal<FunnelStage[]>([]);
   recentApplications = signal<RecentApplication[]>([]);
   pendingApprovals = signal<{ id: number; title: string; creator: string; createdAt: string }[]>([]);
+  approvalProcessingId: number | null = null;
 
   // Resume viewer modal state
   resumeModalVisible = false;
@@ -1004,6 +969,7 @@ export class DashboardComponent implements OnInit {
       description: 'Quản lý tài khoản hệ thống',
       route: '/users',
       color: 'warning',
+      adminOnly: true,
     },
   ];
 
@@ -1013,6 +979,7 @@ export class DashboardComponent implements OnInit {
 
   loadDashboard(): void {
     this.loading.set(true);
+    this.loadError.set(false);
     this.dashboardService.getStats()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -1025,8 +992,66 @@ export class DashboardComponent implements OnInit {
         },
         error: () => {
           this.loading.set(false);
+          this.loadError.set(true);
         },
       });
+  }
+
+  approvePendingJob(job: { id: number }): void {
+    this.modal.confirm({
+      nzTitle: 'Phê duyệt tin tuyển dụng?',
+      nzContent: 'Tin tuyển dụng sẽ chuyển sang trạng thái đã phê duyệt.',
+      nzOkText: 'Phê duyệt',
+      nzCancelText: 'Hủy',
+      nzOnOk: () => {
+        this.approvalProcessingId = job.id;
+        return firstValueFrom(this.jobService.approve(job.id, {}))
+          .then(() => {
+            this.message.success('Đã phê duyệt tin tuyển dụng');
+            this.loadDashboard();
+          })
+          .catch(() => {
+            this.message.error('Không thể phê duyệt tin tuyển dụng');
+            return Promise.reject();
+          })
+          .finally(() => {
+            this.approvalProcessingId = null;
+          });
+      },
+    });
+  }
+
+  rejectPendingJob(job: { id: number }): void {
+    this.modal.confirm({
+      nzTitle: 'Từ chối tin tuyển dụng?',
+      nzContent: `
+        <div style="margin-top: 12px">
+          <p style="margin-bottom: 8px">Tin tuyển dụng sẽ được trả lại để người tạo chỉnh sửa.</p>
+          <label for="dashboard-reject-reason" style="display:block;margin-bottom:6px;font-weight:500">Lý do từ chối</label>
+          <textarea id="dashboard-reject-reason" class="ant-input" rows="3" placeholder="Nêu rõ nội dung cần chỉnh sửa..."></textarea>
+        </div>
+      `,
+      nzOkText: 'Từ chối',
+      nzOkDanger: true,
+      nzCancelText: 'Hủy',
+      nzOnOk: () => {
+        this.approvalProcessingId = job.id;
+        const reason = (document.getElementById('dashboard-reject-reason') as HTMLTextAreaElement | null)?.value.trim()
+          || 'Cần chỉnh sửa trước khi phê duyệt.';
+        return firstValueFrom(this.jobService.reject(job.id, { reason }))
+          .then(() => {
+            this.message.success('Đã từ chối tin tuyển dụng');
+            this.loadDashboard();
+          })
+          .catch(() => {
+            this.message.error('Không thể từ chối tin tuyển dụng');
+            return Promise.reject();
+          })
+          .finally(() => {
+            this.approvalProcessingId = null;
+          });
+      },
+    });
   }
 
   private buildStats(data: DashboardStats): void {

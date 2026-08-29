@@ -157,10 +157,14 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
             <td>
               @if (isOwner(app) && app.has_completed_interview) {
                 <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+                  @if (transitioningApplicationId() === app.id) {
+                    <span class="status-updating" aria-live="polite"><span nz-icon nzType="loading"></span> Đang cập nhật</span>
+                  }
                   <button nz-button nzSize="small" nzType="primary"
                     style="background: #52c41a; border-color: #52c41a; font-weight: 600"
                     nz-popconfirm nzPopconfirmTitle="Phỏng vấn ĐẠT - Chuyển sang Vòng 3: Đã Pass phỏng vấn (Đề xuất tuyển dụng)?"
                     (nzOnConfirm)="updateStatus(app, 'offered')"
+                    [disabled]="transitioningApplicationId() !== null"
                     nz-tooltip nzTooltipTitle="Đạt PV ➔ Chuyển sang Vòng 3: Đã Pass phỏng vấn">
                     <span nz-icon nzType="like"></span> Đạt PV
                   </button>
@@ -168,21 +172,23 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
                   <button nz-button nzSize="small" nzDanger
                     nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên này KHÔNG ĐẠT phỏng vấn?"
                     (nzOnConfirm)="updateStatus(app, 'rejected')"
+                    [disabled]="transitioningApplicationId() !== null"
                     nz-tooltip nzTooltipTitle="Không đạt">
-                    <span nz-icon nzType="dislike"></span>
+                    <span nz-icon nzType="dislike"></span> Không đạt
                   </button>
 
                   <button nz-button nzSize="small" nzType="default"
                     (click)="openScheduleInterview(app)"
                     nz-tooltip nzTooltipTitle="Xem / Đổi lịch phỏng vấn">
-                    <span nz-icon nzType="calendar"></span>
+                    <span nz-icon nzType="calendar"></span> Đổi lịch
                   </button>
 
                   <button nz-button nzSize="small"
                     nz-popconfirm nzPopconfirmTitle="Đưa ứng viên quay lại Vòng 1: Hẹn lịch phỏng vấn?"
                     (nzOnConfirm)="updateStatus(app, 'shortlisted')"
+                    [disabled]="transitioningApplicationId() !== null"
                     nz-tooltip nzTooltipTitle="Quay lại Hẹn lịch">
-                    <span nz-icon nzType="rollback"></span>
+                    <span nz-icon nzType="rollback"></span> Quay lại vòng 1
                   </button>
                 </div>
               } @else if (isOwner(app)) {
@@ -250,6 +256,7 @@ export class InterviewingComponent implements OnInit, OnDestroy {
   applicants = signal<InterviewingApplicant[]>([]);
   total = signal(0);
   loading = signal(false);
+  transitioningApplicationId = signal<number | null>(null);
   page = 1;
   sortBy = 'date';
   compareSelected = new Set<number>();
@@ -308,8 +315,11 @@ export class InterviewingComponent implements OnInit, OnDestroy {
   }
 
   updateStatus(app: InterviewingApplicant, newStatus: string): void {
+    if (this.transitioningApplicationId() !== null) return;
+    this.transitioningApplicationId.set(app.id);
     this.jobService.updateApplicationStatus(app.job_id, app.id, newStatus).subscribe({
       next: () => {
+        this.transitioningApplicationId.set(null);
         const labels: Record<string, string> = {
           offered: 'Đề xuất tuyển dụng',
           rejected: 'Không đạt',
@@ -321,6 +331,7 @@ export class InterviewingComponent implements OnInit, OnDestroy {
         this.compareSelected.delete(app.id);
       },
       error: (err) => {
+        this.transitioningApplicationId.set(null);
         this.message.error(err.error?.detail || 'Lỗi cập nhật trạng thái');
       },
     });

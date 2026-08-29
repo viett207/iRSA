@@ -129,6 +129,9 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
             <td>{{ formatDate(app.updated_at) }}</td>
             <td>
               <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+                @if (transitioningApplicationId() === app.id) {
+                  <span class="status-updating" aria-live="polite"><span nz-icon nzType="loading"></span> Đang cập nhật</span>
+                }
                 <!-- View interview room report -->
                 <button
                   nz-button
@@ -147,6 +150,7 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
                     style="background: #52c41a; border-color: #52c41a; font-weight: 600"
                     nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên này CHÍNH THỨC TRÚNG TUYỂN (Hired)?"
                     (nzOnConfirm)="updateStatus(app, 'hired')"
+                    [disabled]="transitioningApplicationId() !== null"
                     nz-tooltip nzTooltipTitle="Chốt trúng tuyển">
                     <span nz-icon nzType="check"></span> Tuyển
                   </button>
@@ -154,15 +158,17 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
                   <button nz-button nzSize="small" nzDanger
                     nz-popconfirm nzPopconfirmTitle="Từ chối ứng viên này?"
                     (nzOnConfirm)="updateStatus(app, 'rejected')"
+                    [disabled]="transitioningApplicationId() !== null"
                     nz-tooltip nzTooltipTitle="Không đạt">
-                    <span nz-icon nzType="close"></span>
+                    <span nz-icon nzType="close"></span> Không đạt
                   </button>
 
                   <button nz-button nzSize="small"
                     nz-popconfirm nzPopconfirmTitle="Đưa ứng viên quay lại Vòng 2: Phỏng vấn?"
                     (nzOnConfirm)="updateStatus(app, 'interviewing')"
+                    [disabled]="transitioningApplicationId() !== null"
                     nz-tooltip nzTooltipTitle="Quay lại phỏng vấn">
-                    <span nz-icon nzType="rollback"></span>
+                    <span nz-icon nzType="rollback"></span> Quay lại PV
                   </button>
                 } @else {
                   <nz-tag nzColor="success">
@@ -192,6 +198,7 @@ export class InterviewPassedComponent implements OnInit {
   applicants = signal<InterviewPassedApplicant[]>([]);
   total = signal(0);
   loading = signal(false);
+  transitioningApplicationId = signal<number | null>(null);
   page = 1;
   statusFilter = 'all';
 
@@ -263,8 +270,11 @@ export class InterviewPassedComponent implements OnInit {
   }
 
   updateStatus(app: InterviewPassedApplicant, newStatus: string): void {
+    if (this.transitioningApplicationId() !== null) return;
+    this.transitioningApplicationId.set(app.id);
     this.jobService.updateApplicationStatus(app.job_id, app.id, newStatus).subscribe({
       next: () => {
+        this.transitioningApplicationId.set(null);
         const labels: Record<string, string> = {
           hired: 'Chính thức trúng tuyển',
           rejected: 'Không đạt',
@@ -274,6 +284,7 @@ export class InterviewPassedComponent implements OnInit {
         this.loadPassed();
       },
       error: (err) => {
+        this.transitioningApplicationId.set(null);
         this.message.error(err.error?.detail || 'Lỗi cập nhật trạng thái');
       },
     });

@@ -183,6 +183,9 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
             <td>
               @if (isOwner(app)) {
                 <div style="display: flex; gap: 4px; align-items: center">
+                  @if (transitioningApplicationId() === app.id) {
+                    <span class="status-updating" aria-live="polite"><span nz-icon nzType="loading"></span> Đang cập nhật</span>
+                  }
                   <button
                     nz-button
                     nzSize="small"
@@ -191,6 +194,7 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
                     nz-popconfirm
                     nzPopconfirmTitle="Xác nhận chuyển ứng viên này sang Vòng 2: Phỏng vấn?"
                     (nzOnConfirm)="updateStatus(app, 'interviewing')"
+                    [disabled]="transitioningApplicationId() !== null"
                     nz-tooltip
                     nzTooltipTitle="Chuyển sang Vòng 2: Phòng phỏng vấn AI"
                   >
@@ -198,8 +202,8 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
                     Sang PV
                   </button>
 
-                  <button nz-button nzSize="small" nz-dropdown [nzDropdownMenu]="statusMenu" nzTrigger="click">
-                    <span nz-icon nzType="ellipsis"></span>
+                  <button nz-button nzSize="small" nz-dropdown [nzDropdownMenu]="statusMenu" nzTrigger="click" [disabled]="transitioningApplicationId() !== null">
+                    <span nz-icon nzType="ellipsis"></span> Thao tác
                   </button>
                   <nz-dropdown-menu #statusMenu="nzDropdownMenu">
                     <ul nz-menu>
@@ -246,6 +250,7 @@ export class ShortlistedComponent implements OnInit {
   applicants = signal<ShortlistedApplicant[]>([]);
   total = signal(0);
   loading = signal(false);
+  transitioningApplicationId = signal<number | null>(null);
   page = 1;
   sortBy = 'date';
   compareSelected = new Set<number>();
@@ -309,8 +314,11 @@ export class ShortlistedComponent implements OnInit {
   }
 
   updateStatus(app: ShortlistedApplicant, newStatus: string): void {
+    if (this.transitioningApplicationId() !== null) return;
+    this.transitioningApplicationId.set(app.id);
     this.jobService.updateApplicationStatus(app.job_id, app.id, newStatus).subscribe({
       next: () => {
+        this.transitioningApplicationId.set(null);
         const labels: Record<string, string> = {
           interviewing: 'Vòng 2: Phỏng vấn',
           rejected: 'Không đạt',
@@ -322,6 +330,7 @@ export class ShortlistedComponent implements OnInit {
         this.compareSelected.delete(app.id);
       },
       error: (err) => {
+        this.transitioningApplicationId.set(null);
         this.message.error(err.error?.detail || 'Lỗi cập nhật trạng thái');
       },
     });
