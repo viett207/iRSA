@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>iRSA — Intelligent Resume Screening Automation</title>
+  <meta name="description" content="Slide thuyết trình iRSA trong 5 phút">
+  <style>
+    :root {
+      --ink: #0b1526;
+      --muted: #60708a;
+      --paper: #f6f8fc;
+      --white: #fff;
+      --blue: #3456f1;
+      --blue-2: #6a7cff;
+      --cyan: #24c7c5;
+      --lime: #b8f34c;
+      --orange: #ff8b5c;
+      --line: #dce3ef;
+      --shadow: 0 24px 70px rgba(20, 37, 70, .14);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: #dfe5ef;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, a { font: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    .deck { position: relative; width: 100%; height: 100%; }
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 2.5vh;
+      padding: 5.2vh 5.2vw 3.4vh;
+      background:
+        radial-gradient(circle at 90% 10%, rgba(106,124,255,.10), transparent 24%),
+        radial-gradient(circle at 5% 90%, rgba(36,199,197,.08), transparent 24%),
+        var(--paper);
+      opacity: 0;
+      transform: translateX(30px) scale(.992);
+      pointer-events: none;
+      transition: opacity .34s ease, transform .34s ease;
+    }
+    .slide.active { opacity: 1; transform: none; pointer-events: auto; z-index: 2; }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      top: 4.8vh;
+      left: 2.2vw;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 18px 0 var(--cyan), 0 36px 0 var(--lime);
+    }
+
+    .topbar, .footer { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 850; letter-spacing: -.03em; }
+    .brand-mark {
+      display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px;
+      color: white; font-size: 13px; background: var(--blue); box-shadow: 0 9px 18px rgba(52,86,241,.24);
+    }
+    .eyebrow { color: var(--blue); font-size: clamp(11px, 1vw, 16px); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .time-pill, .criterion {
+      display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 999px;
+      padding: 7px 11px; background: rgba(255,255,255,.68); color: var(--muted); font-size: clamp(10px, .82vw, 14px); font-weight: 700;
+    }
+    .time-pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); }
+
+    h1, h2, h3, p { margin: 0; }
+    h1 { max-width: 11ch; font-size: clamp(48px, 6.5vw, 108px); line-height: .91; letter-spacing: -.07em; }
+    h2 { font-size: clamp(35px, 4.2vw, 70px); line-height: .98; letter-spacing: -.055em; }
+    h3 { font-size: clamp(17px, 1.55vw, 26px); line-height: 1.1; letter-spacing: -.025em; }
+    .lead { max-width: 62ch; color: var(--muted); font-size: clamp(15px, 1.4vw, 23px); line-height: 1.55; }
+    .accent { color: var(--blue); }
+    .marker { position: relative; white-space: nowrap; }
+    .marker::after { content: ""; position: absolute; left: 0; right: 0; bottom: -.06em; height: .12em; border-radius: 9px; background: var(--lime); z-index: -1; transform: rotate(-1deg); }
+
+    .hero { align-self: center; display: grid; grid-template-columns: 1.15fr .85fr; align-items: center; gap: 5vw; }
+    .hero-copy { display: grid; gap: 2.8vh; }
+    .hero-tag { display: flex; align-items: center; gap: 10px; font-size: clamp(12px, 1vw, 16px); font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--blue); }
+    .hero-tag::before { content: ""; width: 34px; height: 2px; background: var(--blue); }
+    .hero-orbit { position: relative; width: min(34vw, 520px); aspect-ratio: 1; justify-self: end; }
+    .orbit-ring { position: absolute; inset: 8%; border: 1px solid rgba(52,86,241,.22); border-radius: 50%; animation: spin 28s linear infinite; }
+    .orbit-ring::before, .orbit-ring::after { content: ""; position: absolute; width: 17px; height: 17px; border-radius: 50%; background: var(--cyan); top: 12%; left: 12%; box-shadow: 0 0 0 8px rgba(36,199,197,.12); }
+    .orbit-ring::after { background: var(--lime); top: auto; left: auto; right: 5%; bottom: 18%; box-shadow: 0 0 0 8px rgba(184,243,76,.16); }
+    .ai-card { position: absolute; inset: 20%; display: grid; place-items: center; border-radius: 32%; background: linear-gradient(145deg, #4663f7, #243fc8); color: white; box-shadow: 0 35px 65px rgba(52,86,241,.33); transform: rotate(7deg); }
+    .ai-card-inner { transform: rotate(-7deg); text-align: center; }
+    .ai-card strong { display: block; font-size: clamp(42px, 6vw, 88px); letter-spacing: -.08em; }
+    .ai-card span { font-size: clamp(11px, 1vw, 15px); letter-spacing: .15em; text-transform: uppercase; opacity: .8; }
+    .float-card { position: absolute; min-width: 135px; padding: 15px 17px; border: 1px solid rgba(255,255,255,.7); border-radius: 16px; background: rgba(255,255,255,.88); backdrop-filter: blur(9px); box-shadow: var(--shadow); }
+    .float-card b { display: block; font-size: clamp(13px, 1.1vw, 18px); }
+    .float-card small { color: var(--muted); }
+    .float-card.one { top: 3%; right: 0; }
+    .float-card.two { bottom: 4%; left: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .content { align-self: center; min-height: 0; }
+    .split { display: grid; grid-template-columns: .92fr 1.08fr; align-items: center; gap: 4vw; }
+    .stack { display: grid; gap: 2vh; }
+    .cards-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.3vw; }
+    .card {
+      position: relative; overflow: hidden; min-height: 25vh; padding: 2.2vw; border: 1px solid var(--line); border-radius: 24px; background: rgba(255,255,255,.78); box-shadow: 0 15px 35px rgba(25,42,74,.07);
+    }
+    .card-num { display: block; margin-bottom: 3.5vh; color: var(--blue); font-size: clamp(24px, 3vw, 48px); font-weight: 900; letter-spacing: -.06em; }
+    .card p { margin-top: 1.3vh; color: var(--muted); font-size: clamp(12px, 1vw, 17px); line-height: 1.45; }
+    .card .corner { position: absolute; width: 80px; height: 80px; right: -35px; bottom: -35px; border-radius: 50%; background: var(--lime); opacity: .7; }
+
+    .pain-layout { display: grid; grid-template-columns: .82fr 1.18fr; gap: 3vw; align-items: stretch; }
+    .pain-statement { display: grid; align-content: center; padding: 2.7vw; border-radius: 28px; color: white; background: linear-gradient(150deg,#111d3b,#263b7e); box-shadow: var(--shadow); }
+    .pain-statement .eyebrow { color: var(--orange); }
+    .pain-statement strong { display: block; margin: 2.2vh 0 1.5vh; font-size: clamp(36px,4.4vw,72px); line-height: .95; letter-spacing: -.06em; }
+    .pain-statement p { max-width: 38ch; color: #c8d2e8; font-size: clamp(12px,1vw,17px); line-height: 1.55; }
+    .pain-board { display: grid; gap: 1.2vh; }
+    .pain-row { display: grid; grid-template-columns: 56px 1fr auto; gap: 1.2vw; align-items: center; padding: 1.35vw 1.5vw; border: 1px solid var(--line); border-radius: 18px; background: white; }
+    .pain-board.two .pain-row { min-height: 21vh; padding: 1.8vw; }
+    .pain-icon { display: grid; place-items: center; width: 50px; height: 50px; border-radius: 15px; color: var(--blue); background: #edf0ff; font-size: 22px; }
+    .pain-row h3 { margin-bottom: .5vh; }
+    .pain-row p { color: var(--muted); font-size: clamp(10px,.8vw,14px); line-height: 1.4; }
+    .pain-signals { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 1.4vh; }
+    .pain-signals span { padding: 6px 9px; border-radius: 999px; color: #53647f; background: #f1f4f9; font-size: clamp(9px,.67vw,11px); font-weight: 750; }
+    .pain-effect { padding: 7px 10px; border-radius: 999px; color: #a14527; background: #fff0e9; font-size: clamp(9px,.7vw,12px); font-weight: 850; white-space: nowrap; }
+
+    .journey { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2vw; }
+    .journey-step { position: relative; min-height: 28vh; padding: 1.8vw; border-radius: 22px; border: 1px solid var(--line); background: white; }
+    .journey-step:not(:last-child)::after { content: "→"; position: absolute; z-index: 2; right: -1.05vw; top: 46%; width: 1.7vw; height: 1.7vw; display: grid; place-items: center; border-radius: 50%; color: white; background: var(--blue); font-weight: 900; }
+    .step-icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 3vh; border-radius: 15px; color: var(--blue); background: #edf0ff; font-size: 22px; font-weight: 900; }
+    .journey-step p { margin-top: 1vh; color: var(--muted); font-size: clamp(12px, .95vw, 16px); line-height: 1.45; }
+    .live-action { margin-top: 2.4vh; padding: 12px 16px; border-left: 4px solid var(--lime); border-radius: 0 12px 12px 0; background: #f1f8df; font-size: clamp(11px, .9vw, 15px); font-weight: 750; }
+
+    .mock { border-radius: 24px; overflow: hidden; border: 1px solid #cfd8e8; background: white; box-shadow: var(--shadow); }
+    .mock-bar { display: flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; background: #eef2f8; }
+    .mock-bar i { width: 8px; height: 8px; border-radius: 50%; background: #aab5c6; }
+    .mock-body { display: grid; grid-template-columns: 23% 1fr; min-height: 37vh; }
+    .mock-nav { padding: 18px 12px; background: #182343; color: #ccd4e9; }
+    .nav-logo { margin: 2px 8px 22px; color: white; font-weight: 900; }
+    .nav-item { margin: 5px 0; padding: 8px 10px; border-radius: 8px; font-size: clamp(9px, .75vw, 12px); }
+    .nav-item.active { color: white; background: var(--blue); }
+    .mock-main { padding: 1.4vw; }
+    .mock-title { font-size: clamp(14px, 1.2vw, 20px); font-weight: 850; }
+    .kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; margin: 15px 0; }
+    .kpi { padding: 11px; border-radius: 10px; background: #f2f5fa; }
+    .kpi strong { display: block; font-size: clamp(16px, 1.6vw, 26px); }
+    .kpi span { color: var(--muted); font-size: clamp(8px, .65vw, 11px); }
+    .rows { display: grid; gap: 8px; }
+    .row { display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; align-items: center; padding: 9px; border: 1px solid #e5eaf2; border-radius: 9px; }
+    .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg,var(--blue-2),var(--cyan)); }
+    .row b { display: block; font-size: clamp(9px, .72vw, 12px); }
+    .row small { color: var(--muted); font-size: clamp(7px, .6vw, 10px); }
+    .score { color: var(--blue); font-weight: 900; }
+
+    .score-layout { display: grid; grid-template-columns: .76fr 1.24fr; gap: 2vw; }
+    .score-panel, .evidence-panel { padding: 2vw; border: 1px solid var(--line); border-radius: 24px; background: white; }
+    .score-ring { width: min(16vw, 225px); aspect-ratio: 1; margin: 0 auto 2vh; padding: 18px; border-radius: 50%; background: conic-gradient(var(--blue) 0 86%, #e8edf5 86%); }
+    .score-ring > div { width: 100%; height: 100%; display: grid; place-items: center; border-radius: 50%; background: white; text-align: center; }
+    .score-ring strong { display: block; font-size: clamp(38px, 4vw, 66px); line-height: .85; letter-spacing: -.07em; }
+    .score-ring small { color: var(--muted); }
+    .recommend { text-align: center; color: #16745b; font-weight: 850; }
+    .evidence-list { display: grid; gap: 1.4vh; margin-top: 2vh; }
+    .evidence { padding: 1.1vw 1.3vw; border-radius: 14px; background: #f5f7fb; border-left: 4px solid var(--cyan); }
+    .evidence-head { display: flex; justify-content: space-between; gap: 20px; font-size: clamp(11px, .9vw, 15px); font-weight: 850; }
+    .evidence p { margin-top: 6px; color: var(--muted); font-size: clamp(10px, .82vw, 14px); line-height: 1.35; }
+    .confidence { color: #16836a; white-space: nowrap; }
+
+    .formula-layout { display: grid; grid-template-columns: .9fr 1.1fr; gap: 2vw; align-items: stretch; }
+    .formula-card { display: grid; align-content: center; justify-items: center; padding: 2.6vw; border-radius: 28px; color: white; text-align: center; background: linear-gradient(145deg,#172655,#3456f1); box-shadow: 0 24px 55px rgba(52,86,241,.24); }
+    .equation { margin: 2.5vh 0 1.5vh; font-size: clamp(25px, 3vw, 50px); font-weight: 900; letter-spacing: -.045em; white-space: nowrap; }
+    .equation .must { color: var(--lime); }
+    .equation .nice { color: #87e9e7; }
+    .equation .exp { color: #ffbc9e; }
+    .equation .edu { color: #cbd3ff; }
+    .formula-card p { max-width: 43ch; color: #d6def4; font-size: clamp(11px,.88vw,15px); line-height: 1.5; }
+    .weight-list { display: grid; grid-template-columns: 1fr 1fr; gap: 1vw; }
+    .weight { position: relative; min-height: 15vh; padding: 1.5vw; border: 1px solid var(--line); border-radius: 18px; background: white; }
+    .weight-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .weight strong { color: var(--blue); font-size: clamp(22px,2.3vw,38px); letter-spacing: -.05em; }
+    .weight p { margin-top: .8vh; color: var(--muted); font-size: clamp(10px,.78vw,13px); line-height: 1.4; }
+    .formula-guard { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 1.1vw 1.4vw; border-radius: 16px; color: #603c00; background: #fff2cf; font-size: clamp(10px,.8vw,14px); font-weight: 750; }
+    .formula-guard b { color: #9b5f00; }
+
+    .agent-flow { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.5vw; align-items: stretch; margin-top: 4vh; }
+    .agent { position: relative; min-height: 28vh; padding: 2vw; border: 1px solid var(--line); border-radius: 24px; background: white; }
+    .agent:not(:last-child)::after { content: ""; position: absolute; top: 50%; right: -1.52vw; width: 1.52vw; border-top: 2px dashed var(--blue-2); }
+    .agent-index { display: grid; place-items: center; width: 36px; height: 36px; margin-bottom: 2.5vh; border-radius: 12px; color: white; background: var(--blue); font-weight: 900; }
+    .agent p { margin-top: 1.2vh; color: var(--muted); font-size: clamp(11px, .9vw, 15px); line-height: 1.45; }
+    .agent.verifier { color: white; border: none; background: linear-gradient(145deg,#293fb5,#3456f1); box-shadow: 0 20px 40px rgba(52,86,241,.24); }
+    .agent.verifier p { color: #d9e0ff; }
+    .agent.verifier .agent-index { color: var(--ink); background: var(--lime); }
+    .loop { display: inline-flex; align-items: center; gap: 9px; margin-top: 1.8vh; padding: 9px 13px; border-radius: 999px; color: var(--ink); background: var(--lime); font-size: clamp(10px, .78vw, 13px); font-weight: 900; }
+
+    .interview-flow { display: grid; grid-template-columns: repeat(5,1fr); gap: 1vw; margin-top: 3vh; }
+    .interview-step { position: relative; min-height: 29vh; padding: 1.55vw; border: 1px solid var(--line); border-radius: 20px; background: white; }
+    .interview-step:not(:last-child)::after { content: "→"; position: absolute; z-index: 2; right: -.82vw; top: 47%; display: grid; place-items: center; width: 1.55vw; height: 1.55vw; border-radius: 50%; color: white; background: var(--blue); font-size: clamp(9px,.7vw,12px); font-weight: 900; }
+    .interview-step:last-child { color: white; border: none; background: linear-gradient(145deg,#1b2d68,#3456f1); box-shadow: 0 18px 36px rgba(52,86,241,.2); }
+    .interview-step:last-child p { color: #d8e0fb; }
+    .interview-icon { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 2.4vh; border-radius: 13px; color: var(--blue); background: #edf0ff; font-size: 18px; font-weight: 900; }
+    .interview-step:last-child .interview-icon { color: var(--ink); background: var(--lime); }
+    .interview-step p { margin-top: 1vh; color: var(--muted); font-size: clamp(10px,.78vw,13px); line-height: 1.45; }
+
+    .architecture { display: grid; grid-template-columns: 1fr 1.35fr 1fr; gap: 2.2vw; align-items: center; }
+    .arch-col { display: grid; gap: 1.2vh; }
+    .arch-node { padding: 1.2vw 1.4vw; border: 1px solid var(--line); border-radius: 16px; background: white; }
+    .arch-node b { font-size: clamp(12px, 1vw, 17px); }
+    .arch-node span { display: block; margin-top: 4px; color: var(--muted); font-size: clamp(9px, .72vw, 12px); }
+    .arch-core { position: relative; padding: 3vw 2.5vw; border-radius: 28px; color: white; text-align: center; background: linear-gradient(145deg,#1a2854,#263b7e); box-shadow: var(--shadow); }
+    .arch-core strong { display: block; margin: 1vh 0; font-size: clamp(22px, 2.2vw, 36px); }
+    .arch-core p { color: #cbd5f0; font-size: clamp(11px, .85vw, 14px); line-height: 1.5; }
+    .arch-core::before, .arch-core::after { content: ""; position: absolute; top: 50%; width: 2.2vw; border-top: 2px solid var(--blue-2); }
+    .arch-core::before { left: -2.2vw; } .arch-core::after { right: -2.2vw; }
+    .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; margin-top: 2vh; }
+    .chip { padding: 6px 9px; border-radius: 999px; color: white; background: rgba(255,255,255,.12); font-size: clamp(8px, .65vw, 11px); font-weight: 700; }
+    .guardrails { display: grid; grid-template-columns: repeat(4,1fr); gap: 1vw; margin-top: 2.3vh; }
+    .guard { padding: 1vw; border-radius: 14px; background: #edf1f8; font-size: clamp(9px, .76vw, 13px); font-weight: 800; text-align: center; }
+
+    .quality-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: .9vw; }
+    .quality { position: relative; min-height: 34vh; padding: 1.5vw; border: 1px solid var(--line); border-radius: 20px; background: white; }
+    .quality::before { content: attr(data-n); display: block; margin-bottom: 2.6vh; color: var(--blue); font-size: clamp(28px, 3vw, 48px); font-weight: 950; letter-spacing: -.07em; }
+    .quality p { margin-top: 1.2vh; color: var(--muted); font-size: clamp(10px, .78vw, 13px); line-height: 1.45; }
+    .quality:nth-child(5) { color: white; border: none; background: var(--blue); }
+    .quality:nth-child(5)::before { color: var(--lime); }
+    .quality:nth-child(5) p { color: #dce2ff; }
+
+    .closing { display: grid; grid-template-columns: 1.3fr .7fr; align-items: center; gap: 4vw; }
+    .closing h2 { max-width: 13ch; font-size: clamp(43px, 5.5vw, 90px); }
+    .closing-points { display: grid; gap: 1.2vh; margin-top: 3vh; }
+    .closing-point { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: clamp(13px, 1.05vw, 18px); }
+    .tick { display: grid; place-items: center; flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; color: var(--ink); background: var(--lime); font-weight: 950; }
+    .next-card { padding: 2.5vw; border-radius: 28px; color: white; background: #101b35; box-shadow: var(--shadow); }
+    .next-card .eyebrow { color: var(--lime); }
+    .next-card h3 { margin: 2vh 0 2.5vh; font-size: clamp(22px, 2.2vw, 36px); }
+    .next-card p { color: #afbbd3; line-height: 1.55; font-size: clamp(12px, .9vw, 15px); }
+
+    .footer { color: var(--muted); font-size: clamp(9px, .75vw, 13px); }
+    .criterion-set { display: none; }
+    .criterion.on { color: var(--blue); border-color: rgba(52,86,241,.3); background: #eef1ff; }
+    .slide-no { display: none; }
+
+    .controls { position: fixed; z-index: 30; right: 18px; bottom: 16px; display: flex; align-items: center; gap: 8px; padding: 7px; border-radius: 999px; color: white; background: rgba(11,21,38,.86); backdrop-filter: blur(10px); opacity: .14; transition: opacity .2s ease; }
+    .controls:hover, .controls:focus-within { opacity: 1; }
+    .controls button { width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; color: white; background: transparent; cursor: pointer; }
+    .controls button:hover { background: rgba(255,255,255,.15); }
+    #timer { min-width: 51px; text-align: center; font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 800; }
+    .progress { position: fixed; z-index: 31; left: 0; bottom: 0; height: 4px; background: var(--blue); transition: width .3s ease; }
+
+    .notes { position: fixed; z-index: 40; left: 2vw; right: 2vw; bottom: 2vh; display: none; max-height: 38vh; overflow: auto; padding: 20px 24px; border-radius: 18px; color: #eaf0ff; background: rgba(9,16,31,.95); box-shadow: 0 20px 60px rgba(0,0,0,.3); font-size: 15px; line-height: 1.55; }
+    .notes.show { display: block; }
+    .notes b { color: var(--lime); }
+    .speaker-note { display: none; }
+
+    @media (max-width: 900px) {
+      .slide { padding: 4vh 6vw 3vh; }
+      .hero, .split, .closing { grid-template-columns: 1fr; }
+      .hero-orbit { display: none; }
+      .cards-3, .journey, .agent-flow { grid-template-columns: repeat(2,1fr); }
+      .score-layout { grid-template-columns: .85fr 1.15fr; }
+      .quality-grid { grid-template-columns: repeat(3,1fr); }
+      .quality { min-height: auto; }
+    }
+
+    @media print {
+      @page { size: 16in 9in; margin: 0; }
+      html, body { overflow: visible; background: white; }
+      .deck { height: auto; }
+      .slide { position: relative; width: 16in; height: 9in; page-break-after: always; opacity: 1 !important; transform: none !important; pointer-events: auto; }
+      .controls, .progress, .notes { display: none !important; }
+    }
+
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-label="Slide deck iRSA">
+    <section class="slide active" data-title="Mở đầu">
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark">iR</span> iRSA</div>
+        <span class="time-pill">00:00 — 00:15</span>
+      </header>
+      <div class="hero">
+        <div class="hero-copy">
+          <div class="hero-tag">Intelligent Resume Screening Automation</div>
+          <h1>Tuyển đúng người.<br><span class="accent">Có bằng chứng.</span></h1>
+          <p class="lead">Nền tảng tuyển dụng tích hợp AI giúp doanh nghiệp sàng lọc CV, giải thích mức độ phù hợp và chuẩn bị phỏng vấn riêng cho từng ứng viên.</p>
+        </div>
+        <div class="hero-orbit" aria-hidden="true">
+          <div class="orbit-ring"></div>
+          <div class="ai-card"><div class="ai-card-inner"><strong>iRSA</strong><span>Evidence-first AI</span></div></div>
+          <div class="float-card one"><b>CV → Insight</b><small>Phân tích đa bước</small></div>
+          <div class="float-card two"><b>JD ↔ Candidate</b><small>Matching theo ngữ nghĩa</small></div>
+        </div>
+      </div>
+      <footer class="footer"><div class="criterion-set"><span class="criterion on">01 · Giải quyết vấn đề</span></div><span class="slide-no">01 / 10</span></footer>
+      <aside class="speaker-note"><b>Lời thoại 15 giây:</b> Xin chào mọi người, nhóm chúng em xin giới thiệu iRSA – Intelligent Resume Screening Automation. Đây là nền tảng tuyển dụng tích hợp AI, giúp biến mỗi hồ sơ thành một quyết định có căn cứ.</aside>
+    </section>
+
+    <section class="slide" data-title="Pain point">
+      <header class="topbar"><span class="eyebrow">Bài toán thực tế · Recruitment bottleneck</span><span class="time-pill">00:15 — 00:40</span></header>
+      <div class="content pain-layout">
+        <div class="pain-statement"><span class="eyebrow">Hai điểm nghẽn cốt lõi</span><strong>Thời gian & tính nhất quán.</strong><p>Khi số hồ sơ tăng nhưng nguồn lực HR không tăng tương ứng, quy trình thủ công trở thành nút thắt và chất lượng đánh giá khó được duy trì đồng đều.</p></div>
+        <div class="pain-board two">
+          <article class="pain-row"><span class="pain-icon">⌛</span><div><h3>Đọc CV thủ công tốn thời gian</h3><p>Với mỗi hồ sơ, HR phải mở, đọc, đối chiếu với JD và ghi chú lại từ đầu. Khối lượng thao tác lặp tăng theo số ứng viên, làm kéo dài thời gian sàng lọc và dễ bỏ qua tín hiệu quan trọng.</p><div class="pain-signals"><span>Nguyên nhân · thao tác lặp</span><span>Hệ quả · tồn đọng hồ sơ</span><span>Nhu cầu · tự động đối chiếu</span></div></div><span class="pain-effect">Chậm sàng lọc</span></article>
+          <article class="pain-row"><span class="pain-icon">≠</span><div><h3>Đánh giá dễ thiếu nhất quán</h3><p>Cùng một CV có thể nhận kết luận khác nhau khi người đánh giá sử dụng cách hiểu và mức ưu tiên riêng. Nếu thiếu rubric và bằng chứng chung, quyết định khó được giải thích hoặc kiểm tra lại.</p><div class="pain-signals"><span>Nguyên nhân · tiêu chí phân tán</span><span>Hệ quả · kết quả chủ quan</span><span>Nhu cầu · rubric + bằng chứng</span></div></div><span class="pain-effect">Khó giải thích</span></article>
+        </div>
+      </div>
+      <footer class="footer"><div class="criterion-set"><span class="criterion on">01 · Pain point rõ ràng</span><span class="criterion on">Human decision</span></div><span class="slide-no">02 / 10</span></footer>
+      <aside class="speaker-note"><b>Lời thoại 25 giây:</b> Bài toán tập trung vào hai điểm nghẽn. Thứ nhất, với mỗi hồ sơ, HR phải lặp lại việc đọc và đối chiếu với JD nên thời gian xử lý tăng theo số ứng viên. Thứ hai, cùng một CV có thể nhận kết luận khác nhau khi thiếu rubric và bằng chứng chung. Vì vậy, nhu cầu không chỉ là xử lý nhanh hơn mà còn phải chuẩn hóa được cách đánh giá.</aside>
+    </section>
+
+    <section class="slide" data-title="Mục tiêu dự án">
+      <header class="topbar"><span class="eyebrow">Project north star · Closed-loop recruitment</span><span class="time-pill">00:40 — 01:00</span></header>
+      <div class="content stack">
+        <div class="split"><div><h2>Mục tiêu: một quy trình <span class="accent">tuyển dụng khép kín.</span></h2></div><p class="lead">Bắt đầu từ nộp CV và chấm điểm có bằng chứng; sau đó nối tiếp bằng phỏng vấn để HR xác minh nhận định ngay trong cùng hệ thống.</p></div>
+        <div class="cards-3">
+          <article class="card"><span class="card-num">01</span><h3>Giảm tải sàng lọc</h3><p>Tự động hóa phần đọc, trích xuất và đối chiếu để HR tập trung vào hồ sơ cần chú ý.</p><span class="corner"></span></article>
+          <article class="card"><span class="card-num">02</span><h3>Chuẩn hóa đánh giá</h3><p>Dùng cùng rubric, cùng bằng chứng và cùng quy tắc kiểm định cho mọi ứng viên.</p><span class="corner"></span></article>
+          <article class="card"><span class="card-num">03</span><h3>Khép kín xác minh</h3><p>Biến kết quả screening thành câu hỏi, câu trả lời và đánh giá sau phỏng vấn.</p><span class="corner"></span></article>
+        </div>
+      </div>
+      <footer class="footer"><div class="criterion-set"><span class="criterion on">01 · Mục tiêu đo được bằng workflow</span><span class="criterion">03 · UX end-to-end</span></div><span class="slide-no">03 / 10</span></footer>
+      <aside class="speaker-note"><b>Lời thoại 20 giây:</b> Mục tiêu ban đầu của iRSA là giảm tải và chuẩn hóa khâu chấm CV. Tuy nhiên, một điểm số vẫn cần được xác minh. Vì vậy nhóm mở rộng sản phẩm thành quy trình khép kín: từ hồ sơ, bằng chứng, chấm điểm đến câu hỏi, phỏng vấn và đánh giá câu trả lời; HR vẫn là người quyết định cuối cùng.</aside>
+    </section>
+
+    <section class="slide" data-title="Candidate Portal">
+      <header class="topbar"><span class="eyebrow">Bước 1 · Tiếp nhận hồ sơ</span><span class="time-pill">01:00 — 01:40</span></header>
+      <div class="content stack">
+        <div class="split"><h2>Từ CV nộp vào đến <span class="marker">hồ sơ sẵn sàng chấm.</span></h2><p class="lead">Ứng viên nộp CV một lần; hệ thống tiếp nhận, trích xuất nội dung và tạo điểm matching ban đầu mà chưa gọi LLM.</p></div>
+        <div class="journey">
+          <article class="journey-step"><span class="step-icon">⌕</span><h3>Chọn vị trí</h3><p>Ứng viên xem JD, kỹ năng và yêu cầu kinh nghiệm.</p><div class="live-action">Demo: mở job detail</div></article>
+          <article class="journey-step"><span class="step-icon">↗</span><h3>Nộp CV</h3><p>Chọn hồ sơ có sẵn hoặc tải CV mới lên hệ thống.</p><div class="live-action">Demo: submit application</div></article>
+          <article class="journey-step"><span class="step-icon">⌘</span><h3>Chuẩn hóa</h3><p>Trích xuất nội dung và liên kết hồ sơ với tiêu chí của JD.</p><div class="live-action">CV → structured input</div></article>
+          <article class="journey-step"><span class="step-icon">≈</span><h3>Quick Matching</h3><p>Tạo tín hiệu phù hợp ban đầu mà chưa cần gọi LLM.</p><div class="live-action">Đầu vào cho HR</div></article>
+        </div>
+      </div>
+      <footer class="footer"><div class="criterion-set"><span class="criterion on">01 · Giá trị người dùng</span><span class="criterion on">03 · UI/UX</span></div><span class="slide-no">04 / 10</span></footer>
+      <aside class="speaker-note"><b>Thao tác:</b> Mở Candidate Portal → chọn job → nhấn Ứng tuyển → chọn CV → xác nhận. <b>Lời thoại 40 giây:</b> Đầu tiên, ứng viên chọn vị trí, xem yêu cầu và nộp CV. Hệ thống tiếp nhận, trích xuất nội dung và liên kết hồ sơ với tiêu chí của JD. Sau đó iRSA tạo Quick Matching để HR có tín hiệu phù hợp ban đầu. Ở bước này hệ thống chưa gọi LLM, vì vậy mọi CV đều có thể được sàng lọc với chi phí thấp.</aside>
+    </section>
+
+    <section class="slide" data-title="HR Portal">
+      <header class="topbar"><span class="eyebrow">Bước 2 · Cost-aware scoring gateway</span><span class="time-pill">01:40 — 02:10</span></header>
+      <div class="content split">
+        <div class="stack"><h2>HR quyết định khi nào <span class="accent">cần dùng AI.</span></h2><p class="lead">Dashboard hiển thị điểm matching để sàng lọc trước; HR chỉ kích hoạt AI Evaluation cho những hồ sơ cần phân tích sâu.</p><div class="live-action">Demo live: Applications → xem matching → bấm Chấm điểm AI</div></div>
+        <div class="mock" aria-label="Mô phỏng giao diện HR Dashboard">
+          <div class="mock-bar"><i></i><i></i><i></i></div>
+          <div class="mock-body">
+            <nav class="mock-nav"><div class="nav-logo">iRSA Admin</div><div class="nav-item active">Overview</div><div class="nav-item">Jobs</div><div class="nav-item">Candidates</div><div class="nav-item">Applications</div><div class="nav-item">Interviews</div></nav>
+            <div class="mock-main"><div class="topbar"><div class="mock-title">Recruitment overview</div><small style="color:var(--muted)">Quick matching · dữ liệu minh họa</small></div><div class="kpis"><div class="kpi"><strong>24</strong><span>Open positions</span></div><div class="kpi"><strong>148</strong><span>Applications</span></div><div class="kpi"><strong>12</strong><span>Need review</span></div></div><div class="rows"><div class="row"><span class="avatar"></span><span><b>Nguyễn Minh Anh</b><small>Backend Engineer</small></span><span class="score">86%</span></div><div class="row"><span class="avatar"></span><span><b>Trần Hoàng Nam</b><small>Product Designer</small></span><span class="score">79%</span></div><div class="row"><span class="avatar"></span><span><b>Lê Phương Linh</b><small>Data Analyst</small></span><span class="score">74%</span></div></div></div>
+          </div>
+        </div>
+      </div>
+      <footer class="footer"><div class="criterion-set"><span class="criterion on">01 · Workflow HR</span><span class="criterion on">03 · Information hierarchy</span></div><span class="slide-no">05 / 10</span></footer>
+      <aside class="speaker-note"><b>Thao tác:</b> Chuyển sang Admin Portal → Applications/Candidates → chỉ vào điểm matching → bấm Chấm điểm AI hoặc mở một kết quả đã chuẩn bị sẵn. <b>Lời thoại:</b> Đây là điểm khác biệt về chi phí. Quick Matching giúp HR ưu tiên hồ sơ mà chưa cần gọi LLM. Khi muốn xem phân tích chuyên sâu, HR mới chủ động bấm Chấm điểm AI. <b>Lưu ý:</b> Các con số trong mockup chỉ để minh họa bố cục.</aside>
+    </section>
+
+    <section class="slide" data-title="AI Evaluation">
+      <header class="topbar"><span class="eyebrow">Bước 3 · AI scoring pipeline</span><span class="time-pill">02:10 — 03:00</span></header>
+      <div class="content stack">
+        <div class="split"><h2>Chấm điểm AI theo <span class="accent">bốn bước kiểm soát.</span></h2><p class="lead">Chỉ sau khi HR yêu cầu, pipeline mới dùng LLM để tìm bằng chứng, đánh giá theo rubric và kiểm định lại kết quả.</p></div>
+        <div class="agent-flow">
+          <article class="agent"><span class="agent-index">1</span><h3>Extractor</h3><p>Chia CV theo section và nhiều cấp độ chunk có vị trí truy vết.</p></article>
+          <article class="agent"><span class="agent-index">2</span><h3>Evidence Retrieval</h3><p>Vector pre-search tìm các đoạn liên quan nhất cho từng yêu cầu của JD.</p></article>
+          <article class="agent"><span class="agent-index">3</span><h3>Evaluator</h3><p>Áp dụng rubric kỹ năng, kinh nghiệm và học vấn để tạo đánh giá.</p></article>
+          <article class="agent verifier"><span class="agent-index">4</span><h3>Verifier</h3><p>Đối chiếu trích dẫn, điểm số và khuyến nghị; chưa đạt thì đánh giá lại.</p><span class="loop">↻ Self-reflection</span></article>
+        </div>
+      </div>
+      <footer class="footer"><div class="criterion-set"><span class="criterion on">01 · Quyết định có giải thích</span><span class="criterion on">02 · Semantic matching</span></div><span class="slide-no">06 / 10</span></footer>
+      <aside class="speaker-note"><b>Lời thoại 50 giây:</b> Khi HR bấm Chấm điểm AI, pipeline chạy qua bốn bước. Extractor chia CV theo cấu trúc và giữ vị trí từng đoạn. Evidence Retrieval dùng vector search tìm nội dung liên quan cho mỗi yêu cầu. Evaluator áp dụng rubric để đánh giá kỹ năng, kinh nghiệm và học vấn. Cuối cùng, Verifier kiểm tra bằng chứng có thực sự nằm trong CV hay không, đồng thời đối chiếu điểm với khuyến nghị. Nếu chưa nhất quán, kết quả được yêu cầu đánh giá lại.</aside>
+    </section>
+
+    <section class="slide" data-title="Công thức chấm điểm">
+      <header class="topbar"><span class="eyebrow">Bước 4 · Explainable result</span><span class="time-pill">03:00 — 03:35</span></header>
+      <div class="content stack">
+        <div class="split"><h2>Một điểm số — <span class="accent">đầy đủ lý do.</span></h2><p class="lead">Kết quả kết hợp rubric minh bạch với bằng chứng trích trực tiếp từ hồ sơ.</p></div>
+        <div class="score-layout">
+          <div class="formula-card">
+            <span class="eyebrow" style="color:var(--cyan)">Scoring rubric</span>
+            <div class="equation"><span class="must">0.5M</span> + <span class="nice">0.2N</span> + <span class="exp">0.2E</span> + <span class="edu">0.1D</span></div>
+            <div class="chips"><span class="chip">Must-have 50%</span><span class="chip">Nice-to-have 20%</span><span class="chip">Experience 20%</span><span class="chip">Education 10%</span></div>
+            <p style="margin-top:2vh">Điểm hỗ trợ ưu tiên hồ sơ, không thay thế quyết định của HR.</p>
+          </div>
+          <div class="evidence-panel"><div class="topbar"><h3>Kỹ năng & bằng chứng</h3><span class="confidence">Grounded in CV</span></div><div class="evidence-list"><article class="evidence"><div class="evidence-head"><span>Python / FastAPI · Phù hợp cao</span><span class="confidence">Tin cậy 94%</span></div><p>“Xây dựng REST API bằng FastAPI, xử lý bất đồng bộ và tối ưu truy vấn...”</p></article><article class="evidence"><div class="evidence-head"><span>System Design · Cần xác minh</span><span class="confidence">Tin cậy 72%</span></div><p>Có kinh nghiệm backend nhưng chưa đủ bằng chứng về thiết kế ở quy mô lớn.</p></article><div class="formula-guard"><span>🛡️</span><span><b>Guardrail:</b> không có bằng chứng → confidence = 0; thiếu must-have → giới hạn điểm.</span></div></div></div>
+        </div>
+      </div>
+      <footer class="footer"><div class="criterion-set"><span class="criterion on">02 · Logic minh bạch</span><span class="criterion on">05 · Quy tắc kiểm chứng được</span></div><span class="slide-no">07 / 10</span></footer>
+      <aside class="speaker-note"><b>Lời thoại 35 giây:</b> Kết quả không chỉ là một con số. Điểm được tính theo rubric 50 phần trăm kỹ năng bắt buộc, 20 phần trăm kỹ năng ưu tiên, 20 phần trăm kinh nghiệm và 10 phần trăm học vấn. Với từng kỹ năng, HR thấy được confidence và đoạn bằng chứng tương ứng. Không có bằng chứng thì confidence bằng 0; thiếu must-have thì điểm bị giới hạn. Nhờ vậy HR hiểu được vì sao hồ sơ phù hợp hoặc cần xác minh thêm.</aside>
+    </section>
+
+    <section class="slide" data-title="Interview Intelligence">
+      <header class="topbar"><span class="eyebrow">Bước 5 · Close the recruitment loop</span><span class="time-pill">03:35 — 04:15</span></header>
+      <div class="content stack">
+        <div class="split"><h2>Từ chấm CV đến một quy trình <span class="accent">phỏng vấn khép kín.</span></h2><p class="lead">Nhóm mở rộng sản phẩm để HR có thể xác minh chính những nhận định mà AI phát hiện trong hồ sơ.</p></div>
+        <div class="interview-flow">
+          <article class="interview-step"><span class="interview-icon">?</span><h3>Sinh câu hỏi</h3><p>Cá nhân hóa theo bằng chứng, điểm mạnh và khoảng trống của CV.</p></article>
+          <article class="interview-step"><span class="interview-icon">✓</span><h3>HR duyệt</h3><p>Chọn câu hỏi chính thức, bổ sung câu hỏi và lập lịch.</p></article>
+          <article class="interview-step"><span class="interview-icon">●</span><h3>Ghi âm</h3><p>Lưu câu trả lời audio theo từng câu hỏi trong interview room.</p></article>
+          <article class="interview-step"><span class="interview-icon">Aa</span><h3>Speech-to-Text</h3><p>Bóc băng tiếng Việt để tạo transcript có thể kiểm tra.</p></article>
+          <article class="interview-step"><span class="interview-icon">AI</span><h3>Đánh giá</h3><p>Chấm từng câu trả lời, tổng hợp buổi phỏng vấn và khuyến nghị.</p></article>
+        </div>
+      </div>
+      <footer class="footer"><div class="criterion-set"><span class="criterion on">02 · Kiến trúc AI</span><span class="criterion on">05 · Tách trách nhiệm</span></div><span class="slide-no">08 / 10</span></footer>
+      <aside class="speaker-note"><b>Lời thoại 40 giây:</b> Sau khi hoàn thiện luồng chấm CV, nhóm nhận thấy một điểm số vẫn cần được xác minh trong thực tế. Vì vậy iRSA được mở rộng thành quy trình khép kín. Hệ thống biến điểm mạnh và khoảng trống trong CV thành câu hỏi cá nhân hóa; HR duyệt và lập lịch; interview room ghi âm câu trả lời; Speech-to-Text tạo transcript; sau đó AI đánh giá từng câu trả lời và tổng hợp toàn bộ buổi phỏng vấn. Như vậy dữ liệu từ screening được sử dụng tiếp, thay vì dừng lại ở một điểm số.</aside>
+    </section>
+
+    <section class="slide" data-title="Kỹ thuật & triển khai">
+      <header class="topbar"><span class="eyebrow">Nền tảng vận hành · Production-minded architecture</span><span class="time-pill">04:15 — 04:40</span></header>
+      <div class="content stack">
+        <div class="architecture">
+          <div class="arch-col"><div class="arch-node"><b>Candidate Portal</b><span>Angular 17 · :4300</span></div><div class="arch-node"><b>Admin Portal</b><span>Angular 17 · :4200</span></div></div>
+          <div class="arch-core"><span class="eyebrow" style="color:var(--cyan)">API + AI orchestration</span><strong>FastAPI Backend</strong><p>REST API · Async workflow · Agent pipeline · OpenAPI docs</p><div class="chips"><span class="chip">Pydantic v2</span><span class="chip">LangGraph</span><span class="chip">JWT</span><span class="chip">Rate limit</span></div></div>
+          <div class="arch-col"><div class="arch-node"><b>Supabase</b><span>PostgreSQL + S3 Storage</span></div><div class="arch-node"><b>Redis + Vector</b><span>Cache · Rate limit · ChromaDB</span></div><div class="arch-node"><b>Gemini + Observability</b><span>AI service · Tracing/logs</span></div></div>
+        </div>
+        <div class="guardrails"><div class="guard">🔐 JWT + HttpOnly Cookie</div><div class="guard">🛡 SameSite + Validation</div><div class="guard">⚡ Cache + Async API</div><div class="guard">📖 Swagger + Docs + Tests</div></div>
+      </div>
+      <footer class="footer"><div class="criterion-set"><span class="criterion on">02 · Kỹ thuật & kiến trúc</span><span class="criterion on">04 · Hiệu năng & bảo mật</span><span class="criterion on">05 · Tài liệu kỹ thuật</span></div><span class="slide-no">09 / 10</span></footer>
+      <aside class="speaker-note"><b>Lời thoại:</b> Hai frontend Angular tách theo nhóm người dùng, FastAPI điều phối API và AI Agent. Dữ liệu dùng PostgreSQL, file dùng object storage, Redis phục vụ cache/rate limit. Hệ thống có JWT HttpOnly cookie, SameSite, Pydantic validation, Swagger và test suite. Chỉ dành 20–25 giây cho slide này.</aside>
+    </section>
+
+    <section class="slide" data-title="Kết luận">
+      <header class="topbar"><span class="eyebrow">Tóm tắt theo 5 tiêu chí</span><span class="time-pill">04:40 — 05:00</span></header>
+      <div class="content stack">
+        <div class="quality-grid">
+          <article class="quality" data-n="01"><h3>Giải quyết vấn đề</h3><p>Rút ngắn sàng lọc, chuẩn hóa đánh giá, cung cấp bằng chứng.</p></article>
+          <article class="quality" data-n="02"><h3>Kỹ thuật & kiến trúc</h3><p>Portal tách biệt, API typed, AI Agent đa bước và tự kiểm định.</p></article>
+          <article class="quality" data-n="03"><h3>UI/UX</h3><p>Hành trình rõ theo vai trò, xử lý nền, trạng thái minh bạch.</p></article>
+          <article class="quality" data-n="04"><h3>Triển khai</h3><p>Cloud data/storage, cache, rate limit, authentication và validation.</p></article>
+          <article class="quality" data-n="05"><h3>Code quality</h3><p>Phân lớp trách nhiệm, type-safe schemas, tests, Swagger và tài liệu kiến trúc.</p></article>
+        </div>
+        <div class="split" style="margin-top:1vh"><h2 style="font-size:clamp(30px,3.2vw,52px)">Từ CV đến quyết định — <span class="marker">khép kín và có căn cứ.</span></h2><p class="lead">Quick Matching tối ưu chi phí. AI Scoring giải thích được. Interview giúp HR xác minh.</p></div>
+      </div>
+      <footer class="footer"><div class="criterion-set"><span class="criterion on">Human-in-the-loop</span><span class="criterion on">Explainable by design</span></div><span class="slide-no">10 / 10</span></footer>
+      <aside class="speaker-note"><b>Lời thoại 20 giây:</b> Tóm lại, iRSA giải quyết hai điểm nghẽn là thời gian sàng lọc và sự thiếu nhất quán. Sản phẩm dùng Quick Matching để tối ưu chi phí, AI Agent để chấm điểm có bằng chứng, sau đó nối kết quả screening với phỏng vấn để tạo thành quy trình tuyển dụng khép kín. HR luôn giữ quyền quyết định cuối cùng.</aside>
+    </section>
+  </main>
+
+  <div class="controls" aria-label="Điều khiển slide">
+    <button id="prev" title="Slide trước (←)" aria-label="Slide trước">←</button>
+    <span id="timer" title="Bấm để bắt đầu / tạm dừng đồng hồ">05:00</span>
+    <button id="next" title="Slide sau (→)" aria-label="Slide sau">→</button>
+    <button id="noteBtn" title="Presenter notes (N)" aria-label="Presenter notes">N</button>
+    <button id="fullBtn" title="Toàn màn hình (F)" aria-label="Toàn màn hình">⛶</button>
+  </div>
+  <div class="progress" id="progress"></div>
+  <div class="notes" id="notes"></div>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const notes = document.getElementById('notes');
+      const progress = document.getElementById('progress');
+      const timerEl = document.getElementById('timer');
+      let current = Math.max(0, Math.min(slides.length - 1, Number(location.hash.slice(1)) - 1 || 0));
+      let remaining = 300;
+      let running = false;
+      let timerId;
+
+      function show(index) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+        location.hash = String(current + 1);
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        notes.innerHTML = slides[current].querySelector('.speaker-note')?.innerHTML || 'Không có ghi chú.';
+        document.title = `${current + 1}/${slides.length} · ${slides[current].dataset.title} — iRSA`;
+      }
+
+      function drawTimer() {
+        const min = Math.floor(remaining / 60);
+        const sec = remaining % 60;
+        timerEl.textContent = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+        timerEl.style.color = remaining <= 30 ? '#ff9b76' : remaining <= 60 ? '#b8f34c' : 'white';
+      }
+
+      function toggleTimer() {
+        running = !running;
+        clearInterval(timerId);
+        if (running) timerId = setInterval(() => {
+          remaining = Math.max(0, remaining - 1);
+          drawTimer();
+          if (!remaining) { running = false; clearInterval(timerId); }
+        }, 1000);
+      }
+
+      function fullscreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      }
+
+      document.getElementById('prev').onclick = () => show(current - 1);
+      document.getElementById('next').onclick = () => show(current + 1);
+      document.getElementById('noteBtn').onclick = () => notes.classList.toggle('show');
+      document.getElementById('fullBtn').onclick = fullscreen;
+      timerEl.onclick = toggleTimer;
+      document.addEventListener('keydown', (event) => {
+        if (['ArrowRight','PageDown',' '].includes(event.key)) { event.preventDefault(); show(current + 1); }
+        if (['ArrowLeft','PageUp'].includes(event.key)) { event.preventDefault(); show(current - 1); }
+        if (event.key.toLowerCase() === 'n') notes.classList.toggle('show');
+        if (event.key.toLowerCase() === 'f') fullscreen();
+        if (event.key.toLowerCase() === 't') toggleTimer();
+        if (event.key === 'Home') show(0);
+        if (event.key === 'End') show(slides.length - 1);
+      });
+      window.addEventListener('hashchange', () => {
+        const index = Number(location.hash.slice(1)) - 1;
+        if (Number.isFinite(index) && index !== current) show(index);
+      });
+      show(current);
+      drawTimer();
+    })();
+  </script>
+</body>
+</html>

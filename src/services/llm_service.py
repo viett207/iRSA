@@ -1,9 +1,9 @@
 """LLM Factory service for initializing Gemini & OpenAI models with key rotation."""
 
-import asyncio
-import os
 import logging
-from typing import Any, List
+import os
+from typing import Any
+
 from src.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -41,26 +41,18 @@ def _format_input(input_val: Any) -> str:
 class RotatingGeminiLLM:
     """LLM wrapper that automatically rotates through a list of Gemini API keys when quota/token limits or rate limits are reached."""
 
-    def __init__(self, api_keys: List[str], model_name: str = "gemini-3.6-flash", temperature: float = 0.2):
+    def __init__(self, api_keys: list[str], model_name: str = "gemini-3.6-flash", temperature: float = 0.2):
         self.api_keys = [k.strip() for k in api_keys if k.strip()]
         self.model_name = model_name
         self.temperature = temperature
         self.current_index = 0
-        self._llms = []
+        self._clients = []
 
         try:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            for idx, key in enumerate(self.api_keys):
-                self._llms.append(
-                    ChatGoogleGenerativeAI(
-                        model=self.model_name,
-                        google_api_key=key,
-                        temperature=self.temperature,
-                        max_retries=1,
-                    )
-                )
+            from google import genai
+            self._clients = [genai.Client(api_key=key) for key in self.api_keys]
         except Exception as e:
-            logger.warning(f"Could not pre-initialize ChatGoogleGenerativeAI instances: {e}")
+            logger.warning(f"Could not pre-initialize Google Gen AI clients: {e}")
 
     @property
     def current_key(self) -> str:
@@ -81,43 +73,30 @@ class RotatingGeminiLLM:
         num_keys = len(self.api_keys)
         last_exception = None
         start_idx = self.current_index
-        candidate_models = [self.model_name]
-        for fallback_m in ["gemini-2.5-flash", "gemini-3.6-flash"]:
-            if fallback_m not in candidate_models:
-                candidate_models.append(fallback_m)
 
         for attempt in range(num_keys):
             idx = (start_idx + attempt) % num_keys
-            for m_name in candidate_models:
-                try:
-                    if self._llms and idx < len(self._llms):
-                        logger.info(f"Invoking Gemini LLM (async) using API Key #{idx + 1}/{num_keys} (model: {m_name})...")
-                        res = await self._llms[idx].ainvoke(input, config=config, **kwargs)
-                        self.current_index = idx
-                        return res
-                    else:
-                        import google.generativeai as genai
-                        genai.configure(api_key=self.api_keys[idx])
-                        model = genai.GenerativeModel(m_name)
-                        logger.info(f"Invoking direct google.generativeai using API Key #{idx + 1}/{num_keys} (model: {m_name})...")
-                        prompt = _format_input(input)
-                        res = await asyncio.to_thread(model.generate_content, prompt)
-                        text = res.text if hasattr(res, "text") else str(res)
-                        self.current_index = idx
-                        return LLMResponseWrapper(text)
-                except Exception as e:
-                    last_exception = e
-                    err_str = str(e)
-                    logger.warning(
-                        f"Gemini API Key #{idx + 1} (model {m_name}) failed on attempt {attempt + 1}/{num_keys}: {e}"
-                    )
-                    if "404" in err_str or "not found" in err_str.lower():
-                        # Try next candidate model
-                        continue
-                    if "429" in err_str or "Quota exceeded" in err_str:
-                        logger.info("429 Quota/RateLimit encountered. Waiting 2 seconds before key rotation/retry...")
-                        await asyncio.sleep(2)
-                    break
+            try:
+                client = self._client_for_index(idx)
+                logger.info(
+                    f"Invoking Gemini LLM (async) using API Key #{idx + 1}/{num_keys} "
+                    f"(model: {self.model_name})..."
+                )
+                res = await client.aio.models.generate_content(
+                    model=self.model_name,
+                    contents=_format_input(input),
+                    config={"temperature": self.temperature},
+                )
+                self.current_index = idx
+                return LLMResponseWrapper(res.text if hasattr(res, "text") else str(res))
+            except Exception as e:
+                last_exception = e
+                err_str = str(e)
+                logger.warning(
+                    f"Gemini API Key #{idx + 1} failed on attempt {attempt + 1}/{num_keys}: {e}"
+                )
+                if "429" in err_str or "Quota exceeded" in err_str:
+                    logger.info("429 Quota/RateLimit encountered; rotating to the next key.")
             self._rotate_key()
 
         logger.error("All Gemini API keys and candidate models in rotation failed!")
@@ -132,21 +111,18 @@ class RotatingGeminiLLM:
         for attempt in range(num_keys):
             idx = (start_idx + attempt) % num_keys
             try:
-                if self._llms and idx < len(self._llms):
-                    logger.info(f"Invoking Gemini LLM (sync) using API Key #{idx + 1}/{num_keys}...")
-                    res = self._llms[idx].invoke(input, config=config, **kwargs)
-                    self.current_index = idx
-                    return res
-                else:
-                    import google.generativeai as genai
-                    genai.configure(api_key=self.api_keys[idx])
-                    model = genai.GenerativeModel(self.model_name)
-                    logger.info(f"Invoking direct google.generativeai (sync) using API Key #{idx + 1}/{num_keys}...")
-                    prompt = _format_input(input)
-                    res = model.generate_content(prompt)
-                    text = res.text if hasattr(res, "text") else str(res)
-                    self.current_index = idx
-                    return LLMResponseWrapper(text)
+                client = self._client_for_index(idx)
+                logger.info(
+                    f"Invoking Gemini LLM (sync) using API Key #{idx + 1}/{num_keys} "
+                    f"(model: {self.model_name})..."
+                )
+                res = client.models.generate_content(
+                    model=self.model_name,
+                    contents=_format_input(input),
+                    config={"temperature": self.temperature},
+                )
+                self.current_index = idx
+                return LLMResponseWrapper(res.text if hasattr(res, "text") else str(res))
             except Exception as e:
                 last_exception = e
                 logger.warning(
@@ -159,9 +135,7 @@ class RotatingGeminiLLM:
             raise last_exception
 
     async def generate_content_async(self, prompt: str, **kwargs) -> Any:
-        """Async fallback interface matching google.generativeai GenerativeModel."""
-        import google.generativeai as genai
-
+        """Async content-generation interface backed by the Google Gen AI SDK."""
         num_keys = len(self.api_keys)
         last_exception = None
         start_idx = self.current_index
@@ -169,13 +143,14 @@ class RotatingGeminiLLM:
         for attempt in range(num_keys):
             idx = (start_idx + attempt) % num_keys
             try:
-                genai.configure(api_key=self.api_keys[idx])
-                model = genai.GenerativeModel(self.model_name)
-                logger.info(f"Generating content (async) with google.generativeai using API Key #{idx + 1}/{num_keys}...")
-                if hasattr(model, "generate_content_async"):
-                    res = await model.generate_content_async(prompt, **kwargs)
-                else:
-                    res = await asyncio.to_thread(model.generate_content, prompt, **kwargs)
+                client = self._client_for_index(idx)
+                logger.info(f"Generating content (async) with Google Gen AI using API Key #{idx + 1}/{num_keys}...")
+                res = await client.aio.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt,
+                    config={"temperature": self.temperature},
+                    **kwargs,
+                )
                 self.current_index = idx
                 return res
             except Exception as e:
@@ -189,9 +164,7 @@ class RotatingGeminiLLM:
             raise last_exception
 
     def generate_content(self, prompt: str, **kwargs) -> Any:
-        """Fallback interface matching google.generativeai GenerativeModel."""
-        import google.generativeai as genai
-
+        """Synchronous content-generation interface backed by Google Gen AI."""
         num_keys = len(self.api_keys)
         last_exception = None
         start_idx = self.current_index
@@ -199,10 +172,14 @@ class RotatingGeminiLLM:
         for attempt in range(num_keys):
             idx = (start_idx + attempt) % num_keys
             try:
-                genai.configure(api_key=self.api_keys[idx])
-                model = genai.GenerativeModel(self.model_name)
-                logger.info(f"Generating content with google.generativeai using API Key #{idx + 1}/{num_keys}...")
-                res = model.generate_content(prompt, **kwargs)
+                client = self._client_for_index(idx)
+                logger.info(f"Generating content with Google Gen AI using API Key #{idx + 1}/{num_keys}...")
+                res = client.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt,
+                    config={"temperature": self.temperature},
+                    **kwargs,
+                )
                 self.current_index = idx
                 return res
             except Exception as e:
@@ -215,6 +192,12 @@ class RotatingGeminiLLM:
         if last_exception:
             raise last_exception
 
+    def _client_for_index(self, idx: int):
+        if idx < len(self._clients):
+            return self._clients[idx]
+        from google import genai
+        return genai.Client(api_key=self.api_keys[idx])
+
 
 def get_agent_llm(temperature: float | None = None) -> Any:
     """Initialize LLM (Gemini with key rotation or OpenAI) for AI Agent."""
@@ -225,7 +208,7 @@ def get_agent_llm(temperature: float | None = None) -> Any:
 
     # 1. Try Gemini with Key Rotation if keys are present
     if gemini_keys:
-        model_name = settings.model_name or "gemini-1.5-flash"
+        model_name = settings.model_name or "gemini-3.6-flash"
         logger.info(f"Initializing RotatingGeminiLLM with {len(gemini_keys)} API key(s) (model: {model_name})...")
         return RotatingGeminiLLM(api_keys=gemini_keys, model_name=model_name, temperature=temp)
 

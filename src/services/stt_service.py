@@ -1,11 +1,9 @@
 """Speech-to-Text (STT) service for transcribing recorded candidate audio answers."""
 
 import asyncio
-import io
 import logging
 import os
 import tempfile
-from typing import Optional
 
 from src.config import get_settings
 
@@ -19,7 +17,7 @@ async def transcribe_audio(
 ) -> str:
     """
     Transcribe audio bytes to text using Google Gemini Audio Processing or OpenAI Whisper.
-    
+
     Returns transcribed Vietnamese text string.
     """
     if not audio_bytes or len(audio_bytes) < 100:
@@ -28,14 +26,15 @@ async def transcribe_audio(
     settings = get_settings()
     gemini_keys = settings.parsed_gemini_api_keys
     openai_key = settings.openai_api_key or os.environ.get("OPENAI_API_KEY", "")
-    model_name = settings.model_name or "gemini-1.5-flash"
+    model_name = settings.model_name or "gemini-3.6-flash"
 
     last_error = None
 
     # 1. Try Gemini Audio Transcription
     if gemini_keys:
-        import google.generativeai as genai
-        
+        from google import genai
+        from google.genai import types
+
         prompt = (
             "Bạn là chuyên gia bóc băng âm thanh phỏng vấn tuyển dụng tiếng Việt chuyên nghiệp. "
             "Hãy chuyển toàn bộ lời nói của ứng viên trong đoạn ghi âm sau thành văn bản chính xác từng từ. "
@@ -47,8 +46,7 @@ async def transcribe_audio(
 
         for attempt, key in enumerate(gemini_keys):
             try:
-                genai.configure(api_key=key)
-                model = genai.GenerativeModel(model_name)
+                client = genai.Client(api_key=key)
 
                 # Normalize mime type for Gemini
                 clean_mime = mime_type.split(";")[0].strip() if ";" in mime_type else mime_type.strip()
@@ -63,13 +61,13 @@ async def transcribe_audio(
                 elif "m4a" in clean_mime or "mp4" in clean_mime:
                     clean_mime = "audio/mp4"
 
-                audio_part = {
-                    "mime_type": clean_mime,
-                    "data": audio_bytes,
-                }
+                audio_part = types.Part.from_bytes(data=audio_bytes, mime_type=clean_mime)
 
                 logger.info(f"Transcribing audio with Gemini ({model_name}, key #{attempt + 1}/{len(gemini_keys)}, size: {len(audio_bytes)} bytes)...")
-                response = await asyncio.to_thread(model.generate_content, [prompt, audio_part])
+                response = await client.aio.models.generate_content(
+                    model=model_name,
+                    contents=[prompt, audio_part],
+                )
                 text = response.text.strip() if response and hasattr(response, "text") else ""
                 if text:
                     logger.info(f"Gemini STT success ({len(text)} chars)")

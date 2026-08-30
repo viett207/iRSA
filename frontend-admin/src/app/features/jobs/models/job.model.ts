@@ -420,6 +420,10 @@ export interface CvJdCompareResponse {
   matched_skills: string[];
   missing_skills: string[];
   matched_keywords: string[];
+  total_score: number | null;
+  skill_match_score: number | null;
+  experience_score: number | null;
+  education_score: number | null;
 }
 
 export interface AiSkillAssessment {

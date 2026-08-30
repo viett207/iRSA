@@ -2,7 +2,7 @@
 
 import asyncio
 import unittest
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 from src.config import Settings
 from src.services.llm_service import RotatingGeminiLLM
@@ -19,9 +19,16 @@ class TestGeminiKeyRotation(unittest.TestCase):
         settings_single = Settings(gemini_api_key="single_key")
         self.assertEqual(settings_single.parsed_gemini_api_keys, ["single_key"])
 
+        settings_auth_key = Settings(gemini_api_key="AQ.example-auth-key")
+        self.assertEqual(settings_auth_key.parsed_gemini_api_keys, ["AQ.example-auth-key"])
+
+    def test_default_model_is_gemini_3_6_flash(self):
+        settings = Settings(_env_file=None)
+        self.assertEqual(settings.model_name, "gemini-3.6-flash")
+
     def test_rotating_gemini_llm_init(self):
         """Test initialization of RotatingGeminiLLM."""
-        rotator = RotatingGeminiLLM(api_keys=["key1", "key2", "key3"], model_name="gemini-1.5-flash")
+        rotator = RotatingGeminiLLM(api_keys=["key1", "key2", "key3"], model_name="gemini-3.6-flash")
         self.assertEqual(rotator.api_keys, ["key1", "key2", "key3"])
         self.assertEqual(rotator.current_index, 0)
         self.assertEqual(rotator.current_key, "key1")
@@ -30,16 +37,18 @@ class TestGeminiKeyRotation(unittest.TestCase):
         """Test that RotatingGeminiLLM automatically rotates to key2 when key1 fails."""
         rotator = RotatingGeminiLLM(api_keys=["key1_bad", "key2_good"])
 
-        # Mock async llm instances using AsyncMock
+        # Mock async Google Gen AI clients
         mock_llm1 = MagicMock()
-        mock_llm1.ainvoke = AsyncMock(side_effect=Exception("429 ResourceHasBeenExhausted: Quota exceeded"))
+        mock_llm1.aio.models.generate_content = AsyncMock(
+            side_effect=Exception("429 ResourceHasBeenExhausted: Quota exceeded")
+        )
 
         mock_llm2 = MagicMock()
         mock_response = MagicMock()
-        mock_response.content = "Success response from key 2"
-        mock_llm2.ainvoke = AsyncMock(return_value=mock_response)
+        mock_response.text = "Success response from key 2"
+        mock_llm2.aio.models.generate_content = AsyncMock(return_value=mock_response)
 
-        rotator._llms = [mock_llm1, mock_llm2]
+        rotator._clients = [mock_llm1, mock_llm2]
 
         async def run_test():
             return await rotator.ainvoke("Test prompt")
@@ -49,26 +58,24 @@ class TestGeminiKeyRotation(unittest.TestCase):
         self.assertEqual(result.content, "Success response from key 2")
         self.assertEqual(rotator.current_index, 1)
         self.assertEqual(rotator.current_key, "key2_good")
-        self.assertEqual(mock_llm1.ainvoke.call_count, 1)
-        self.assertEqual(mock_llm2.ainvoke.call_count, 1)
+        self.assertEqual(mock_llm1.aio.models.generate_content.call_count, 1)
+        self.assertEqual(mock_llm2.aio.models.generate_content.call_count, 1)
 
     def test_rotating_gemini_llm_generate_content_async(self):
         """Test generate_content_async method of RotatingGeminiLLM."""
-        rotator = RotatingGeminiLLM(api_keys=["key1"], model_name="gemini-1.5-flash")
+        rotator = RotatingGeminiLLM(api_keys=["key1"], model_name="gemini-3.6-flash")
 
-        # Mock direct genai
         mock_response = MagicMock()
         mock_response.text = "Async response"
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(return_value=mock_response)
+        rotator._clients = [mock_client]
 
-        with unittest.mock.patch("google.generativeai.GenerativeModel") as MockModel:
-            mock_instance = MockModel.return_value
-            mock_instance.generate_content_async = AsyncMock(return_value=mock_response)
+        async def run_test():
+            return await rotator.generate_content_async("Hello")
 
-            async def run_test():
-                return await rotator.generate_content_async("Hello")
-
-            result = asyncio.run(run_test())
-            self.assertEqual(result.text, "Async response")
+        result = asyncio.run(run_test())
+        self.assertEqual(result.text, "Async response")
 
 
 if __name__ == "__main__":

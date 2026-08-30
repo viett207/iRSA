@@ -520,7 +520,7 @@ import {
                           nzType="default"
                           (click)="openCvJdCompare(app)"
                           nz-tooltip
-                          nzTooltipTitle="Đối chiếu trực quan CV và JD (Highlight khớp nhau - Không tính điểm)"
+                          nzTooltipTitle="Đối chiếu CV và JD, xem điểm matching trước khi quyết định chấm AI"
                           style="color: #1890ff; border-color: #91d5ff"
                         >
                           <span nz-icon nzType="diff"></span>

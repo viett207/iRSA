@@ -13,6 +13,7 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
+import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { CvJdCompareResponse, EDUCATION_LABELS } from '../models/job.model';
 
 @Component({
@@ -32,6 +33,7 @@ import { CvJdCompareResponse, EDUCATION_LABELS } from '../models/job.model';
     NzInputModule,
     NzButtonModule,
     NzBadgeModule,
+    NzProgressModule,
   ],
   template: `
     @if (loading) {
@@ -72,6 +74,56 @@ import { CvJdCompareResponse, EDUCATION_LABELS } from '../models/job.model';
           </div>
 
           <nz-divider style="margin: 10px 0"></nz-divider>
+
+          <!-- Existing rule-based score: no AI call is made by this modal. -->
+          @if (data.total_score != null) {
+            <div class="matching-score-panel">
+              <div class="overall-score">
+                <nz-progress
+                  nzType="circle"
+                  [nzPercent]="data.total_score"
+                  [nzWidth]="82"
+                  [nzStrokeColor]="getScoreColor(data.total_score)"
+                ></nz-progress>
+                <div>
+                  <div class="score-title">Điểm matching CV – JD</div>
+                  <div class="score-note">Chấm tự động theo tiêu chí JD, không sử dụng AI</div>
+                  <nz-tag [nzColor]="getScoreColor(data.total_score)">
+                    {{ getMatchAssessment(data.total_score) }}
+                  </nz-tag>
+                </div>
+              </div>
+
+              <div class="score-breakdown">
+                <div class="breakdown-item">
+                  <span>Kỹ năng</span>
+                  <strong [style.color]="getScoreColor(data.skill_match_score ?? 0)">
+                    {{ (data.skill_match_score ?? 0) | number:'1.0-1' }}%
+                  </strong>
+                </div>
+                <div class="breakdown-item">
+                  <span>Kinh nghiệm</span>
+                  <strong [style.color]="getScoreColor(data.experience_score ?? 0)">
+                    {{ (data.experience_score ?? 0) | number:'1.0-1' }}%
+                  </strong>
+                </div>
+                <div class="breakdown-item">
+                  <span>Học vấn</span>
+                  <strong [style.color]="getScoreColor(data.education_score ?? 0)">
+                    {{ (data.education_score ?? 0) | number:'1.0-1' }}%
+                  </strong>
+                </div>
+              </div>
+            </div>
+          } @else {
+            <nz-alert
+              nzType="warning"
+              nzMessage="Chưa có điểm matching CV – JD"
+              nzDescription="Điểm rule-based chưa được tạo cho hồ sơ này. Việc mở màn hình đối chiếu không tự gọi AI."
+              nzShowIcon
+              style="margin-bottom: 12px"
+            ></nz-alert>
+          }
 
           <!-- Matching skills badges -->
           <div class="skills-summary-bar">
@@ -228,6 +280,55 @@ import { CvJdCompareResponse, EDUCATION_LABELS } from '../models/job.model';
       .skills-summary-bar {
         font-size: 13px;
       }
+      .matching-score-panel {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 14px;
+        padding: 12px 14px;
+        border: 1px solid #d9e8ff;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #f0f7ff 0%, #fff 100%);
+      }
+      .overall-score {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .score-title {
+        margin-bottom: 2px;
+        color: #1f1f1f;
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .score-note {
+        margin-bottom: 6px;
+        color: #737373;
+        font-size: 11px;
+      }
+      .score-breakdown {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(90px, 1fr));
+        gap: 8px;
+      }
+      .breakdown-item {
+        display: flex;
+        min-width: 94px;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 12px;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        background: #fff;
+      }
+      .breakdown-item span {
+        color: #737373;
+        font-size: 11px;
+      }
+      .breakdown-item strong {
+        font-size: 18px;
+      }
       .skill-category {
         display: flex;
         align-items: center;
@@ -336,6 +437,10 @@ import { CvJdCompareResponse, EDUCATION_LABELS } from '../models/job.model';
         font-weight: 600;
       }
       @media (max-width: 900px) {
+        .matching-score-panel {
+          align-items: flex-start;
+          flex-direction: column;
+        }
         .split-view-grid {
           grid-template-columns: 1fr;
           height: auto;
@@ -376,6 +481,20 @@ export class CvJdCompareModalComponent {
   getEducationLabel(level?: string | null): string {
     if (!level) return 'Không yêu cầu cụ thể';
     return EDUCATION_LABELS[level] || level;
+  }
+
+  getScoreColor(score: number): string {
+    if (score >= 80) return '#52c41a';
+    if (score >= 60) return '#1890ff';
+    if (score >= 40) return '#faad14';
+    return '#ff4d4f';
+  }
+
+  getMatchAssessment(score: number): string {
+    if (score >= 80) return 'Khớp cao · Phù hợp để phân tích AI sâu hơn';
+    if (score >= 60) return 'Khớp khá · Nên xem bằng chứng trước khi chấm AI';
+    if (score >= 40) return 'Khớp trung bình · Cần HR đọc kỹ CV';
+    return 'Khớp thấp · Cân nhắc trước khi dùng lượt chấm AI';
   }
 
   setSearchTerm(term: string): void {

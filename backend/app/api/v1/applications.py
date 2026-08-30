@@ -1,12 +1,13 @@
 """Admin API for viewing job applications."""
 
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
-from fastapi.responses import StreamingResponse
 from io import BytesIO
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlalchemy import select, func
-from sqlalchemy.orm import selectinload, defer
+from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import func as sa_func
 
 from app.api.deps import DBSession, HRUser
@@ -599,6 +600,10 @@ class CvJdCompareResponse(BaseModel):
     matched_skills: list[str] = []
     missing_skills: list[str] = []
     matched_keywords: list[str] = []
+    total_score: float | None = None
+    skill_match_score: float | None = None
+    experience_score: float | None = None
+    education_score: float | None = None
 
 
 @router.get(
@@ -611,7 +616,7 @@ async def get_cv_jd_compare(
     current_user: HRUser,
     db: DBSession,
 ):
-    """Retrieve full CV text and JD content with keyword matching without numerical scoring."""
+    """Retrieve CV/JD content and the existing non-AI matching score."""
     import re
     result = await db.execute(
         select(Application)
@@ -619,6 +624,7 @@ async def get_cv_jd_compare(
             selectinload(Application.candidate),
             selectinload(Application.resume),
             selectinload(Application.job).selectinload(Job.criteria),
+            selectinload(Application.scoring_result),
         )
         .where(Application.id == app_id, Application.job_id == job_id)
     )
@@ -629,6 +635,7 @@ async def get_cv_jd_compare(
     cv_text = app.resume.raw_text if (app.resume and app.resume.raw_text) else ""
     job = app.job
     criteria = job.criteria if job else None
+    score = app.scoring_result
 
     must_have = criteria.must_have_skills if (criteria and criteria.must_have_skills) else []
     nice_to_have = criteria.nice_to_have_skills if (criteria and criteria.nice_to_have_skills) else []
@@ -671,6 +678,10 @@ async def get_cv_jd_compare(
         matched_skills=matched_skills,
         missing_skills=missing_skills,
         matched_keywords=matched_keywords,
+        total_score=score.total_score if score else None,
+        skill_match_score=score.skill_match_score if score else None,
+        experience_score=score.experience_score if score else None,
+        education_score=score.education_score if score else None,
     )
 
 

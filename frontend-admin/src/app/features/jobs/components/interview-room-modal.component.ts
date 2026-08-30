@@ -1343,16 +1343,13 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
 
         // Step 2: Request interviewer microphone
         try {
-          micStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-            },
-          });
+          micStream = await this.requestMicrophone();
           activeStreams.push(micStream);
-        } catch (micErr) {
+        } catch (micErr: any) {
           console.warn('Microphone not accessible:', micErr);
-          this.message.warning('Không truy cập được microphone. Hệ thống sẽ chỉ ghi âm thanh tab máy tính.');
+          this.message.warning(
+            `${this.getMicrophoneErrorMessage(micErr)} Hệ thống sẽ chỉ ghi âm thanh tab máy tính.`
+          );
         }
 
         // Step 3: Mix streams via AudioContext
@@ -1395,12 +1392,7 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
       } else {
         // Offline mode: standard Microphone only
         try {
-          micStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-            },
-          });
+          micStream = await this.requestMicrophone();
           activeStreams.push(micStream);
           finalStream = micStream;
 
@@ -1412,7 +1404,8 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
             source.connect(analyser);
           }
         } catch (micErr: any) {
-          this.message.error('Không thể truy cập microphone. Vui lòng cấp quyền mic trong trình duyệt.');
+          console.error('Microphone access error:', micErr);
+          this.message.error(this.getMicrophoneErrorMessage(micErr));
           return;
         }
       }
@@ -1507,6 +1500,59 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
     } catch (err: any) {
       console.error('Recording initialization error:', err);
       this.message.error('Không thể bắt đầu ghi âm: ' + (err?.message || 'Vui lòng kiểm tra quyền truy cập'));
+    }
+  }
+
+  private async requestMicrophone(): Promise<MediaStream> {
+    if (!window.isSecureContext) {
+      throw new DOMException(
+        'Microphone chỉ hoạt động trên HTTPS hoặc http://localhost:4200.',
+        'SecurityError'
+      );
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new DOMException(
+        'Trình duyệt không hỗ trợ truy cập microphone.',
+        'NotSupportedError'
+      );
+    }
+
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: { ideal: true },
+          noiseSuppression: { ideal: true },
+          autoGainControl: { ideal: true },
+        },
+      });
+    } catch (err: any) {
+      // Some browsers/devices reject optional processing constraints. Retry with
+      // the broadest constraint so any available microphone can still be used.
+      if (err?.name === 'OverconstrainedError' || err?.name === 'TypeError') {
+        return navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+      throw err;
+    }
+  }
+
+  private getMicrophoneErrorMessage(error: any): string {
+    switch (error?.name) {
+      case 'NotAllowedError':
+      case 'PermissionDeniedError':
+        return 'Quyền microphone đang bị chặn. Nhấn biểu tượng bên trái thanh địa chỉ, chọn Microphone → Cho phép rồi tải lại trang.';
+      case 'NotFoundError':
+      case 'DevicesNotFoundError':
+        return 'Không tìm thấy microphone. Hãy kết nối hoặc bật thiết bị thu âm trong Windows.';
+      case 'NotReadableError':
+      case 'TrackStartError':
+        return 'Microphone đang bị ứng dụng khác chiếm dụng. Hãy đóng ứng dụng ghi âm/họp khác rồi thử lại.';
+      case 'SecurityError':
+        return error?.message || 'Microphone chỉ hoạt động trên HTTPS hoặc localhost.';
+      case 'NotSupportedError':
+        return error?.message || 'Trình duyệt hiện tại không hỗ trợ microphone.';
+      default:
+        return `Không thể truy cập microphone${error?.message ? `: ${error.message}` : '.'}`;
     }
   }
 
