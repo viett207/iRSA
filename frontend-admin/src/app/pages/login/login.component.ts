@@ -212,7 +212,7 @@ import { environment } from '../../../environments/environment';
 
             <div class="form-options">
               <label nz-checkbox formControlName="remember">Ghi nhớ đăng nhập</label>
-              <a [href]="portalUrl + '/forgot-password'" class="forgot-link">Quên mật khẩu?</a>
+              <a [href]="forgotPasswordUrl" class="forgot-link">Quên mật khẩu?</a>
             </div>
 
             <div *ngIf="loginError" class="login-error" role="alert" aria-live="assertive">
@@ -234,6 +234,29 @@ import { environment } from '../../../environments/environment';
             </button>
 
           </form>
+
+          <section class="demo-account" aria-labelledby="admin-account-title">
+            <div class="demo-account-heading">
+              <span nz-icon nzType="user" nzTheme="outline" aria-hidden="true"></span>
+              <span id="admin-account-title">Tài khoản Admin</span>
+            </div>
+            <button
+              type="button"
+              class="credentials-card"
+              (click)="fillAdminAccount()"
+              title="Nhấn để tự động điền tài khoản Admin"
+            >
+              <span class="credential-item">
+                <span class="credential-label">Email</span>
+                <code>admin&#64;example.com</code>
+              </span>
+              <span class="credential-item">
+                <span class="credential-label">Mật khẩu</span>
+                <code>Admin&#64;123456</code>
+              </span>
+              <span class="credentials-hint">Nhấn vào đây để tự động điền</span>
+            </button>
+          </section>
 
           <div class="register-hr-link">
             <a routerLink="/register-hr">Đăng ký tài khoản HR</a>
@@ -722,6 +745,75 @@ import { environment } from '../../../environments/environment';
       }
     }
 
+    .demo-account {
+      padding-top: 18px;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .demo-account-heading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      margin-bottom: 10px;
+      color: var(--color-text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .credentials-card {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      gap: 8px;
+      padding: 13px 15px;
+      border: 1px dashed var(--color-border);
+      border-radius: 10px;
+      background: var(--color-bg-tertiary);
+      color: var(--color-text-primary);
+      font: inherit;
+      cursor: pointer;
+      transition: border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
+
+      &:hover {
+        border-color: var(--color-primary);
+        background: var(--color-bg-secondary);
+      }
+
+      &:focus-visible {
+        outline: 3px solid var(--color-primary-100);
+        outline-offset: 2px;
+      }
+    }
+
+    .credential-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .credential-label {
+      color: var(--color-text-secondary);
+    }
+
+    .credential-item code {
+      padding: 3px 8px;
+      border: 1px solid var(--color-border);
+      border-radius: 5px;
+      background: var(--color-bg-secondary);
+      color: var(--color-primary);
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 12px;
+    }
+
+    .credentials-hint {
+      color: var(--color-text-tertiary);
+      font-size: 11px;
+      text-align: center;
+    }
+
     /* Register HR Link */
     .register-hr-link {
       text-align: center;
@@ -815,7 +907,8 @@ export class LoginComponent {
   loading = false;
   loginError: string | null = null;
   showPassword = false;
-  portalUrl = environment.portalUrl || 'http://localhost:4300';
+  portalUrl = environment.portalUrl || 'https://portal-irsa.vercel.app/';
+  forgotPasswordUrl = `${this.portalUrl.replace(/\/+$/, '')}/forgot-password`;
 
   constructor(
     private fb: FormBuilder,
@@ -837,6 +930,15 @@ export class LoginComponent {
 
   clearLoginError(): void {
     this.loginError = null;
+  }
+
+  fillAdminAccount(): void {
+    this.loginForm.patchValue({
+      email: 'admin@example.com',
+      password: 'Admin@123456',
+    });
+    this.clearLoginError();
+    this.message.info('Đã tự động điền tài khoản Admin');
   }
 
   onSubmit(): void {
