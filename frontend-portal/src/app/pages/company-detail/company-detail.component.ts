@@ -991,6 +991,30 @@ export function stripCompanyHtml(value: string | null | undefined, maxLength = 1
           }
         }
       }
+
+      /* Dark Mode Overrides */
+      :host-context([data-theme='dark']),
+      :host-context(.dark) {
+        .cover-banner {
+          background: linear-gradient(135deg, #091224 0%, #0c1c38 60%, #0f274c 100%);
+        }
+
+        .cover-overlay {
+          background: linear-gradient(180deg, rgba(9, 18, 36, 0.4) 0%, rgba(9, 18, 36, 0.85) 100%);
+        }
+
+        .culture-card {
+          background: linear-gradient(145deg, rgba(59, 130, 246, 0.12), var(--color-bg-secondary));
+        }
+
+        .gallery-section {
+          background: var(--color-bg-primary);
+        }
+
+        .gallery-empty {
+          background: var(--color-bg-secondary);
+        }
+      }
     `,
   ],
 })

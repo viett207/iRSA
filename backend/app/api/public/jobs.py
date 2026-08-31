@@ -418,8 +418,8 @@ async def list_published_jobs(
             company_code_val = job.creator.company_code
             if job.creator.company:
                 company_name = job.creator.company.company_name
-        if not company_name:
-            company_name = job.department or "iRSA"
+            elif company_code_val:
+                company_name = company_code_val
 
         items.append(
             PublicJobListItem(
@@ -456,13 +456,25 @@ async def get_job_by_slug(slug: str, db: DBSession):
     """Get job details by slug."""
     result = await db.execute(
         select(Job)
-        .options(selectinload(Job.criteria))
+        .options(
+            selectinload(Job.criteria),
+            selectinload(Job.creator).selectinload(User.company),
+        )
         .where(Job.slug == slug, (Job.is_published == True) | (Job.status.in_(["published", "active", "approved"])))
     )
     job = result.scalar_one_or_none()
 
     if not job:
         raise NotFoundException("Job not found")
+
+    company_name = None
+    company_code_val = None
+    if job.creator:
+        company_code_val = job.creator.company_code
+        if job.creator.company:
+            company_name = job.creator.company.company_name
+        elif company_code_val:
+            company_name = company_code_val
 
     criteria = job.criteria
     return PublicJobResponse(
@@ -471,6 +483,9 @@ async def get_job_by_slug(slug: str, db: DBSession):
         title_vi=job.title_vi,
         description_vi=job.description_vi,
         requirements_vi=job.requirements_vi,
+        benefits_vi=job.benefits_vi,
+        company_name=company_name,
+        company_code=company_code_val,
         department=job.department,
         location=job.location,
         employment_type=job.employment_type,

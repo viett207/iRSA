@@ -420,6 +420,73 @@ export function sortJobMatchesByScore(jobs: CVJobMatchItem[]): CVJobMatchItem[] 
       .filter-card nz-slider { grid-column: 1 / -1; grid-row: 2; margin: 4px 0 0; }
       .job-card { padding: 18px; }
     }
+
+    /* Dark Mode Overrides */
+    :host-context([data-theme='dark']),
+    :host-context(.dark) {
+      .analysis-panel {
+        background: linear-gradient(135deg, #111e38 0%, #0f172a 50%, #1e293b 100%);
+        border-color: rgba(59, 130, 246, 0.3);
+        box-shadow: 0 10px 28px -6px rgba(0, 0, 0, 0.4);
+      }
+      .analysis-panel ::ng-deep .ant-progress-inner {
+        background-color: #1e293b !important;
+        border-color: #334155;
+      }
+      .analysis-panel ::ng-deep .ant-progress-bg {
+        background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%) !important;
+      }
+      .analysis-topline .section-kicker {
+        color: #60a5fa;
+      }
+      .analysis-topline h2 {
+        color: #f8fafc;
+      }
+      .ai-orb {
+        background: #1e293b;
+        color: #60a5fa;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2), 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+      .progress-number {
+        color: #60a5fa;
+      }
+      .step-icon {
+        background: var(--color-bg-secondary);
+        border-color: var(--color-border);
+        color: var(--color-text-secondary);
+      }
+      .analysis-step strong {
+        color: #f1f5f9;
+      }
+      .analysis-step span {
+        color: #94a3b8;
+      }
+      .analysis-step.active strong {
+        color: #f8fafc;
+      }
+      .analysis-step.active span {
+        color: #60a5fa;
+      }
+      .step-line {
+        background: #334155;
+      }
+      .filter-card {
+        background: var(--color-bg-secondary);
+        border-color: var(--color-border);
+      }
+      .score-breakdown {
+        background: var(--color-bg-tertiary);
+        border-color: var(--color-border);
+      }
+      .job-card {
+        background: var(--color-bg-secondary);
+        border-color: var(--color-border);
+      }
+      .match-score {
+        background: var(--color-bg-secondary);
+      }
+    }
   `],
 })
 export class CVJobSearchComponent implements OnDestroy {

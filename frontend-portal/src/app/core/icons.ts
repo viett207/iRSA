@@ -95,6 +95,18 @@ export const BookmarkOutline: IconDefinition = {
   icon: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'
 };
 
+export const SunOutline: IconDefinition = {
+  name: 'sun',
+  theme: 'outline',
+  icon: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>'
+};
+
+export const MoonOutline: IconDefinition = {
+  name: 'moon',
+  theme: 'outline',
+  icon: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
+};
+
 export const APP_ICONS: IconDefinition[] = [
   AlertFill,
   AlertOutline,
@@ -167,6 +179,8 @@ export const APP_ICONS: IconDefinition[] = [
   SettingOutline,
   SolutionOutline,
   TeamOutline,
+  SunOutline,
+  MoonOutline,
   ThunderboltFill,
   ThunderboltOutline,
   TranslationOutline,

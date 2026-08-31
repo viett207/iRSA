@@ -1063,6 +1063,180 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
       border: 1px solid var(--color-border);
       padding: var(--space-8);
     }
+
+    /* Dark Mode Overrides */
+    :host-context([data-theme='dark']),
+    :host-context(.dark) {
+      .hero-section {
+        background: radial-gradient(circle at 10% 15%, rgba(56, 189, 248, 0.1) 0%, transparent 45%),
+                    radial-gradient(circle at 90% 85%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                    linear-gradient(135deg, #0b1329 0%, #0f172a 50%, #1e293b 100%);
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+      }
+
+      .hero-title {
+        color: #f8fafc;
+      }
+
+      .hero-highlight {
+        background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 50%, #818cf8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .search-box {
+        background: var(--color-bg-secondary);
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.4);
+
+        &:focus-within {
+          border-color: var(--color-primary);
+          box-shadow: 0 20px 44px -8px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+      }
+
+      .category-chip {
+        background: var(--color-bg-secondary);
+        border-color: rgba(59, 130, 246, 0.35);
+        color: var(--color-primary-light);
+
+        .anticon {
+          color: var(--color-primary-light);
+        }
+
+        &:hover {
+          background: var(--color-primary);
+          border-color: var(--color-primary);
+          color: #ffffff;
+
+          .anticon {
+            color: #ffffff;
+          }
+        }
+      }
+
+      .companies-section {
+        background: var(--color-bg-secondary);
+        border-bottom-color: var(--color-border);
+      }
+
+      .company-card:nth-child(4n + 1) {
+        background: linear-gradient(145deg, #1c1917 0%, #291a13 100%);
+        border-color: rgba(251, 146, 60, 0.3);
+
+        .company-avatar {
+          background: #291a13;
+          color: #fb923c;
+          border-color: rgba(251, 146, 60, 0.4);
+        }
+
+        .company-badge {
+          background: rgba(234, 88, 12, 0.2);
+          color: #fdba74;
+          border-color: rgba(251, 146, 60, 0.4);
+        }
+
+        .company-card-arrow {
+          color: #fb923c;
+        }
+
+        &:hover {
+          border-color: #fb923c;
+          box-shadow: 0 12px 28px -4px rgba(234, 88, 12, 0.25);
+        }
+      }
+
+      .company-card:nth-child(4n + 2) {
+        background: linear-gradient(145deg, #0f172a 0%, #172554 100%);
+        border-color: rgba(96, 165, 250, 0.3);
+
+        .company-avatar {
+          background: #172554;
+          color: #60a5fa;
+          border-color: rgba(96, 165, 250, 0.4);
+        }
+
+        .company-badge {
+          background: rgba(37, 99, 235, 0.2);
+          color: #93c5fd;
+          border-color: rgba(96, 165, 250, 0.4);
+        }
+
+        .company-card-arrow {
+          color: #60a5fa;
+        }
+
+        &:hover {
+          border-color: #60a5fa;
+          box-shadow: 0 12px 28px -4px rgba(37, 99, 235, 0.25);
+        }
+      }
+
+      .company-card:nth-child(4n + 3) {
+        background: linear-gradient(145deg, #1c1917 0%, #2d1519 100%);
+        border-color: rgba(248, 113, 113, 0.3);
+
+        .company-avatar {
+          background: #2d1519;
+          color: #f87171;
+          border-color: rgba(248, 113, 113, 0.4);
+        }
+
+        .company-badge {
+          background: rgba(225, 29, 72, 0.2);
+          color: #fca5a5;
+          border-color: rgba(248, 113, 113, 0.4);
+        }
+
+        .company-card-arrow {
+          color: #f87171;
+        }
+
+        &:hover {
+          border-color: #f87171;
+          box-shadow: 0 12px 28px -4px rgba(225, 29, 72, 0.25);
+        }
+      }
+
+      .company-card:nth-child(4n) {
+        background: linear-gradient(145deg, #0f172a 0%, #062e24 100%);
+        border-color: rgba(52, 211, 153, 0.3);
+
+        .company-avatar {
+          background: #062e24;
+          color: #34d399;
+          border-color: rgba(52, 211, 153, 0.4);
+        }
+
+        .company-badge {
+          background: rgba(5, 150, 105, 0.2);
+          color: #6ee7b7;
+          border-color: rgba(52, 211, 153, 0.4);
+        }
+
+        .company-card-arrow {
+          color: #34d399;
+        }
+
+        &:hover {
+          border-color: #34d399;
+          box-shadow: 0 12px 28px -4px rgba(5, 150, 105, 0.25);
+        }
+      }
+
+      .company-name {
+        color: #f8fafc;
+      }
+
+      .company-meta {
+        color: #94a3b8;
+      }
+
+      .company-card-bottom {
+        border-top-color: rgba(255, 255, 255, 0.08);
+      }
+    }
   `],
 })
 export class HomeComponent implements OnInit {

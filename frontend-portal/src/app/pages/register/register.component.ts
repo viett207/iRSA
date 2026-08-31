@@ -1070,39 +1070,116 @@ interface PasswordCriterion {
       }
 
       /* Dark Mode Compatibility */
+      :host-context([data-theme='dark']),
       :host-context(.dark) {
         .auth-page {
           background: var(--color-bg-primary);
         }
 
         .auth-container {
-          background: var(--color-bg-secondary);
+          background: #0f172a;
+          border-color: rgba(255, 255, 255, 0.1);
+          box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        /* Branding Section in Dark Mode */
+        .auth-branding {
+          background: radial-gradient(circle at 12% 18%, rgba(56, 189, 248, 0.15) 0%, transparent 45%),
+                      radial-gradient(circle at 88% 82%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
+                      linear-gradient(150deg, #0b1329 0%, #0f172a 45%, #1e293b 100%);
+          border-right: 1px solid rgba(255, 255, 255, 0.1);
+          color: #f8fafc;
+        }
+
+        .glow-orb-1 {
+          background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%);
+        }
+
+        .glow-orb-2 {
+          background: radial-gradient(circle, rgba(96, 165, 250, 0.18) 0%, transparent 70%);
+        }
+
+        .glow-orb-3 {
+          background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+        }
+
+        .tech-pattern {
+          opacity: 0.85;
+        }
+
+        .brand-logo-badge {
+          background: #1e293b;
+          border-color: rgba(96, 165, 250, 0.35);
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 12px rgba(59, 130, 246, 0.2);
+
+          span {
+            color: #60a5fa;
+            filter: drop-shadow(0 2px 8px rgba(59, 130, 246, 0.5));
+          }
+        }
+
+        .brand-logo span:last-child {
+          color: #60a5fa;
+        }
+
+        .branding-content h2 {
+          color: #f8fafc;
+        }
+
+        .branding-content p {
+          color: #94a3b8;
+        }
+
+        .feature-item {
+          color: #e2e8f0;
+        }
+
+        .feature-icon {
+          background: rgba(59, 130, 246, 0.18);
+          border-color: rgba(96, 165, 250, 0.35);
+
+          span {
+            color: #60a5fa;
+          }
         }
 
         .auth-form-section {
-          background: linear-gradient(135deg, rgba(15, 23, 42, 0.4) 0%, rgba(30, 41, 59, 0.5) 100%);
+          background: radial-gradient(circle at 90% 10%, rgba(56, 189, 248, 0.08) 0%, transparent 45%),
+                      radial-gradient(circle at 50% 95%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+                      linear-gradient(145deg, #0f172a 0%, #172033 50%, #1e293b 100%);
         }
 
         .auth-card {
-          background: #1e293b;
-          border-color: rgba(255, 255, 255, 0.1);
-          box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.3);
+          background: rgba(30, 41, 59, 0.7);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border-color: rgba(255, 255, 255, 0.12);
+          box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-title {
+          color: #f8fafc;
+        }
+
+        .auth-subtitle {
+          color: #94a3b8;
         }
 
         .social-btn.google {
-          background: #1e293b !important;
-          border-color: rgba(255, 255, 255, 0.15) !important;
-          color: #f1f5f9 !important;
+          background: rgba(15, 23, 42, 0.6) !important;
+          border-color: rgba(255, 255, 255, 0.12) !important;
+          color: #e2e8f0 !important;
 
           &:hover:not([disabled]) {
-            background: #334155 !important;
+            background: rgba(30, 41, 59, 0.9) !important;
             border-color: var(--color-primary-light) !important;
+            color: #ffffff !important;
           }
         }
 
         .ant-input-affix-wrapper-lg {
-          background: #0f172a !important;
-          border-color: rgba(255, 255, 255, 0.15) !important;
+          background: rgba(15, 23, 42, 0.6) !important;
+          border-color: rgba(255, 255, 255, 0.12) !important;
 
           .ant-input {
             color: #f1f5f9 !important;
@@ -1110,17 +1187,21 @@ interface PasswordCriterion {
 
           &:hover {
             border-color: var(--color-primary-light) !important;
-            background: #1e293b !important;
+            background: rgba(15, 23, 42, 0.8) !important;
           }
 
           &-focused {
-            background: #1e293b !important;
+            background: rgba(15, 23, 42, 0.9) !important;
             border-color: var(--color-primary) !important;
           }
         }
 
+        .terms-form-item ::ng-deep .ant-checkbox-wrapper {
+          color: #94a3b8;
+        }
+
         .strength-meter {
-          background: #0f172a;
+          background: rgba(15, 23, 42, 0.6);
           border-color: rgba(255, 255, 255, 0.1);
         }
 
@@ -1129,10 +1210,21 @@ interface PasswordCriterion {
           ::ng-deep .ant-divider-horizontal::after {
             border-top-color: rgba(255, 255, 255, 0.1) !important;
           }
+          ::ng-deep .ant-divider-inner-text {
+            color: #64748b !important;
+          }
         }
 
         .auth-footer {
           border-top-color: rgba(255, 255, 255, 0.1);
+          color: #94a3b8;
+
+          a {
+            color: #60a5fa;
+            &:hover {
+              color: #93c5fd;
+            }
+          }
         }
       }
 

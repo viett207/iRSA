@@ -511,6 +511,59 @@ interface InterviewNotice {
           font-size: 12px !important;
         }
       }
+
+      /* Dark Mode Overrides */
+      :host-context([data-theme='dark']),
+      :host-context(.dark) {
+        .interview-card {
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), #1e293b);
+          border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .stat-card--total .stat-icon-wrapper {
+          background: rgba(59, 130, 246, 0.15);
+          color: #60a5fa;
+          border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .stat-card--review .stat-icon-wrapper {
+          background: rgba(2, 132, 199, 0.15);
+          color: #38bdf8;
+          border-color: rgba(2, 132, 199, 0.3);
+        }
+
+        .stat-card--shortlist .stat-icon-wrapper {
+          background: rgba(245, 158, 11, 0.15);
+          color: #fbbf24;
+          border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .stat-card--selected .stat-icon-wrapper {
+          background: rgba(16, 185, 129, 0.15);
+          color: #34d399;
+          border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .application-item {
+          background: var(--color-bg-secondary);
+          border-color: var(--color-border);
+        }
+
+        .status-timeline {
+          background: var(--color-bg-tertiary);
+          border-color: var(--color-border);
+        }
+
+        .step-marker {
+          background: var(--color-bg-secondary);
+          border-color: var(--color-border);
+        }
+
+        .actions-row .action-card {
+          background: var(--color-bg-secondary);
+          border-color: var(--color-border);
+        }
+      }
     `,
   ],
 })

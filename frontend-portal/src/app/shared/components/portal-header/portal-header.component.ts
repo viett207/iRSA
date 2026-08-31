@@ -11,6 +11,7 @@ import { NzBadgeModule } from 'ng-zorro-antd/badge';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationService, AppNotification } from '../../../core/services/notification.service';
+import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'app-portal-header',
@@ -40,6 +41,21 @@ import { NotificationService, AppNotification } from '../../../core/services/not
 
         <!-- Right Section -->
         <div class="header-right">
+          <!-- Theme Toggle Button -->
+          <button
+            type="button"
+            class="theme-toggle-btn"
+            (click)="themeService.toggleTheme()"
+            [attr.aria-label]="themeService.isDark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'"
+            [title]="themeService.isDark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'"
+          >
+            @if (themeService.isDark) {
+              <span nz-icon nzType="sun" nzTheme="outline"></span>
+            } @else {
+              <span nz-icon nzType="moon" nzTheme="outline"></span>
+            }
+          </button>
+
           @if (authService.isAuthenticated()) {
             <!-- Notification Bell (Desktop) -->
             <div
@@ -221,6 +237,20 @@ import { NotificationService, AppNotification } from '../../../core/services/not
             </div>
           }
 
+          <!-- Theme Toggle in Mobile Drawer -->
+          <div class="mobile-theme-row" (click)="themeService.toggleTheme()">
+            <div class="mobile-theme-label">
+              @if (themeService.isDark) {
+                <span nz-icon nzType="sun" nzTheme="outline"></span>
+                <span>Chế độ sáng</span>
+              } @else {
+                <span nz-icon nzType="moon" nzTheme="outline"></span>
+                <span>Chế độ tối</span>
+              }
+            </div>
+            <span class="theme-status-tag">{{ themeService.isDark ? 'Đang bật' : 'Đang tắt' }}</span>
+          </div>
+
           <ul nz-menu nzMode="vertical" class="mobile-nav">
             @if (authService.isAuthenticated()) {
               <li nz-menu-item routerLink="/dashboard/profile" (click)="mobileMenuOpen = false">
@@ -254,6 +284,7 @@ import { NotificationService, AppNotification } from '../../../core/services/not
 export class PortalHeaderComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   notificationSvc = inject(NotificationService);
+  themeService = inject(ThemeService);
   private router = inject(Router);
 
   mobileMenuOpen = false;

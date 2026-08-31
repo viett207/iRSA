@@ -438,6 +438,19 @@ import {
           display: none !important;
         }
       }
+
+      /* Dark Mode Overrides */
+      :host-context([data-theme='dark']),
+      :host-context(.dark) {
+        .application-card {
+          background: var(--color-bg-secondary);
+          border-color: var(--color-border);
+        }
+
+        .card-details {
+          background: var(--color-bg-tertiary);
+        }
+      }
     `,
   ],
 })
