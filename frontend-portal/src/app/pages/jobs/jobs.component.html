@@ -575,22 +575,24 @@
                         </div>
 
                         <div class="company-meta-row">
-                          @if (job.companyCode) {
-                            <a
-                              [routerLink]="['/companies', job.companyCode]"
-                              (click)="$event.stopPropagation()"
-                              class="company-link"
-                            >
-                              <span nz-icon nzType="bank" nzTheme="outline"></span>
-                              <span>{{ job.company }}</span>
-                            </a>
-                          } @else {
-                            <span class="company-name-text">
-                              <span nz-icon nzType="bank" nzTheme="outline"></span>
-                              <span>{{ job.company }}</span>
-                            </span>
+                          @if (job.company) {
+                            @if (job.companyCode) {
+                              <a
+                                [routerLink]="['/companies', job.companyCode]"
+                                (click)="$event.stopPropagation()"
+                                class="company-link"
+                              >
+                                <span nz-icon nzType="bank" nzTheme="outline"></span>
+                                <span>{{ job.company }}</span>
+                              </a>
+                            } @else {
+                              <span class="company-name-text">
+                                <span nz-icon nzType="bank" nzTheme="outline"></span>
+                                <span>{{ job.company }}</span>
+                              </span>
+                            }
                           }
-                          @if (job.department) {
+                          @if (job.department && job.department !== job.company) {
                             <span class="industry-tag-pill">
                               <span nz-icon nzType="appstore" nzTheme="outline"></span>
                               <span>{{ job.department }}</span>
@@ -756,18 +758,20 @@
                           <div class="preview-title-info">
                             <h2 class="preview-job-title">{{ selectedJobForPreview.title }}</h2>
                             <div class="preview-company-row">
-                              @if (selectedJobForPreview.companyCode) {
-                                <a [routerLink]="['/companies', selectedJobForPreview.companyCode]" class="preview-company-link">
-                                  <span nz-icon nzType="bank" nzTheme="outline"></span>
-                                  {{ selectedJobForPreview.company }}
-                                </a>
-                              } @else {
-                                <span class="preview-company-name">
-                                  <span nz-icon nzType="bank" nzTheme="outline"></span>
-                                  {{ selectedJobForPreview.company }}
-                                </span>
+                              @if (selectedJobForPreview.company) {
+                                @if (selectedJobForPreview.companyCode) {
+                                  <a [routerLink]="['/companies', selectedJobForPreview.companyCode]" class="preview-company-link">
+                                    <span nz-icon nzType="bank" nzTheme="outline"></span>
+                                    {{ selectedJobForPreview.company }}
+                                  </a>
+                                } @else {
+                                  <span class="preview-company-name">
+                                    <span nz-icon nzType="bank" nzTheme="outline"></span>
+                                    {{ selectedJobForPreview.company }}
+                                  </span>
+                                }
                               }
-                              @if (selectedJobForPreview.department) {
+                              @if (selectedJobForPreview.department && selectedJobForPreview.department !== selectedJobForPreview.company) {
                                 <span class="preview-loc-pill">
                                   <span nz-icon nzType="appstore" nzTheme="outline"></span>
                                   {{ selectedJobForPreview.department }}

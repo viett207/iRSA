@@ -1212,6 +1212,25 @@ export function getContactPhoneError(value: string): string | null {
           max-width: 55%;
         }
       }
+
+      /* Dark Mode Overrides */
+      :host-context([data-theme='dark']),
+      :host-context(.dark) {
+        .mobile-sticky-apply {
+          background: rgba(30, 41, 59, 0.95);
+          border-top-color: var(--color-border);
+          box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .phone-input {
+          background: var(--color-bg-secondary);
+          border-color: var(--color-border);
+
+          &:focus-within {
+            border-color: var(--color-primary);
+          }
+        }
+      }
     `,
   ],
 })
@@ -1426,7 +1445,7 @@ export class JobDetailComponent implements OnInit {
   }
 
   getCompanyName(): string {
-    return this.job?.company_name || this.job?.department || 'Nhà tuyển dụng';
+    return this.job?.company_name || this.companyDetail?.company_name || (this.job?.company_code ? this.job.company_code : 'Nhà tuyển dụng');
   }
 
   getCompanyInitials(): string {

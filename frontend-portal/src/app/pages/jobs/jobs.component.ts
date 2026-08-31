@@ -471,9 +471,9 @@ export class JobsComponent implements OnInit {
 
   private mapApiJobsToDisplay(apiJobs: PublicJobListItem[]): Job[] {
     return apiJobs.map((j) => {
-      const companyName = j.company_name || (j.company_code ? j.company_code : 'iRSA Tech');
-      const initial = (companyName.trim()[0] || 'I').toUpperCase();
-      const gradient = this.getGradientForString(companyName);
+      const companyName = j.company_name || (j.company_code ? j.company_code : '');
+      const initial = (companyName.trim()[0] || (j.department ? j.department.trim()[0] : 'J')).toUpperCase();
+      const gradient = this.getGradientForString(companyName || j.title_vi);
       const isNew = this.isNewToday(j.published_at);
       const isHot = (j.applications_count && j.applications_count >= 5) || false;
 
@@ -486,7 +486,8 @@ export class JobsComponent implements OnInit {
         }
       }
       if (!snippet) {
-        snippet = `Cơ hội làm việc tại ${companyName} với mức đãi ngộ hấp dẫn, môi trường chuyên nghiệp, phát triển kỹ năng vượt trội.`;
+        const placeName = companyName || 'doanh nghiệp';
+        snippet = `Cơ hội làm việc tại ${placeName} với mức đãi ngộ hấp dẫn, môi trường chuyên nghiệp, phát triển kỹ năng vượt trội.`;
       }
 
       const skills = (j.must_have_skills && j.must_have_skills.length > 0)

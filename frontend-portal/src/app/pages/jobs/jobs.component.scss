@@ -623,7 +623,21 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--space-2);
     margin-bottom: var(--space-2);
+
+    .facet-title {
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .salary-dynamic-text {
+      display: inline-flex;
+      align-items: center;
+      line-height: 1.4;
+      margin: 0;
+      white-space: nowrap;
+    }
   }
 
   .facet-title {
@@ -645,7 +659,7 @@
   .salary-dynamic-text {
     font-size: var(--text-xs);
     font-weight: 600;
-    color: #059669;
+    color: var(--color-success, #059669);
   }
 }
 
@@ -2093,3 +2107,110 @@
   justify-content: flex-end;
   gap: var(--space-2);
 }
+
+/* ==========================================================================
+   10. Dark Mode Overrides for Jobs Page
+   ========================================================================== */
+
+:host-context([data-theme='dark']),
+:host-context(.dark) {
+  .jobs-hero {
+    background: radial-gradient(circle at 12% 20%, rgba(56, 189, 248, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 88% 75%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                linear-gradient(180deg, #0b1329 0%, #0f172a 50%, #1e293b 100%);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .hero-stat-pill {
+    color: #34d399;
+    .stat-text { color: #34d399; }
+    .stat-number {
+      background: linear-gradient(135deg, #10b981 0%, #34d399 50%, #6ee7b7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  }
+
+  .search-console {
+    background: var(--color-bg-secondary);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 36px -6px rgba(0, 0, 0, 0.4);
+  }
+
+  .console-field {
+    background: var(--color-bg-primary);
+    border-color: var(--color-border);
+
+    &:hover {
+      background: var(--color-bg-tertiary);
+      border-color: var(--color-primary-200);
+    }
+
+    &:focus-within {
+      background: var(--color-bg-secondary);
+      border-color: var(--color-primary);
+    }
+  }
+
+  .quick-chip-btn {
+    background: var(--color-bg-secondary);
+    border-color: rgba(59, 130, 246, 0.35);
+    color: var(--color-primary-light);
+
+    &:hover {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #ffffff;
+    }
+
+    &.active {
+      background: var(--color-primary-dark);
+      border-color: var(--color-primary);
+      color: #ffffff;
+    }
+  }
+
+  .filter-card {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+  }
+
+  .salary-quick-pill {
+    background: var(--color-bg-primary);
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+
+    &:hover {
+      background: var(--color-primary-surface);
+      border-color: var(--color-primary-200);
+      color: var(--color-primary-light);
+    }
+
+    &.active {
+      background: var(--color-primary-surface);
+      border-color: var(--color-primary);
+      color: var(--color-primary-light);
+    }
+  }
+
+  .results-toolbar-card {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+  }
+
+  .job-card-item,
+  .job-card {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+
+    &:hover {
+      border-color: var(--color-primary-200);
+      box-shadow: var(--shadow-card-hover), 0 0 0 1px rgba(59, 130, 246, 0.15);
+    }
+  }
+
+  .salary-dynamic-text {
+    color: var(--color-success-light, #34d399);
+  }
+}
+

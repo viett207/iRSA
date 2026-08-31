@@ -770,6 +770,33 @@ export function canRespondToInvitation(invitation: InterviewInvitation): boolean
           text-align: left;
         }
       }
+
+      /* Dark Mode Overrides */
+      :host-context([data-theme='dark']),
+      :host-context(.dark) {
+        .invitation-card {
+          background: var(--color-bg-secondary);
+          border-color: var(--color-border);
+
+          &.highlighted {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3), var(--shadow-card-hover);
+          }
+        }
+
+        .card-details {
+          background: var(--color-bg-tertiary);
+        }
+
+        .reschedule-info {
+          background: rgba(245, 158, 11, 0.12);
+          border-color: rgba(245, 158, 11, 0.3);
+
+          .info-date {
+            color: #fbbf24;
+          }
+        }
+      }
     `,
   ],
 })
