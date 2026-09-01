@@ -439,12 +439,25 @@
   }
 }
 
+:host ::ng-deep .user-dropdown .ant-dropdown-menu-item.logout-item,
+:host ::ng-deep .user-dropdown .ant-menu-item.logout-item,
+:host ::ng-deep .mobile-drawer-menu .ant-menu-item.logout-item,
 .logout-item {
-  color: var(--color-error) !important;
+  color: #ef4444 !important;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+
+  .anticon {
+    color: #ef4444 !important;
+  }
 
   &:hover {
-    background: var(--color-error-bg) !important;
-    color: var(--color-error) !important;
+    background: rgba(239, 68, 68, 0.08) !important;
+    color: #dc2626 !important;
+
+    .anticon {
+      color: #dc2626 !important;
+    }
   }
 }
 
@@ -820,6 +833,27 @@
     &:hover {
       background: rgba(59, 130, 246, 0.22);
       border-color: rgba(96, 165, 250, 0.5);
+    }
+  }
+
+  :host ::ng-deep .user-dropdown .ant-dropdown-menu-item.logout-item,
+  :host ::ng-deep .user-dropdown .ant-menu-item.logout-item,
+  :host ::ng-deep .mobile-drawer-menu .ant-menu-item.logout-item,
+  .logout-item {
+    color: #f87171 !important;
+    font-weight: 600;
+
+    .anticon {
+      color: #f87171 !important;
+    }
+
+    &:hover {
+      background: rgba(239, 68, 68, 0.22) !important;
+      color: #fca5a5 !important;
+
+      .anticon {
+        color: #fca5a5 !important;
+      }
     }
   }
 }

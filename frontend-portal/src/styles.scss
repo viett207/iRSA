@@ -1703,3 +1703,66 @@ body.dark {
   }
 }
 
+/* ==========================================================================
+   Global Logout Items & Dark Mode Visibility
+   ========================================================================== */
+.user-dropdown .ant-dropdown-menu-item.logout-item,
+.user-dropdown .ant-menu-item.logout-item,
+.mobile-drawer-menu .ant-menu-item.logout-item,
+.ant-dropdown-menu-item.logout-item,
+.ant-menu-item.logout-item,
+.logout-item {
+  color: #ef4444 !important;
+  font-weight: 500;
+  transition: all 0.15s ease;
+
+  .anticon {
+    color: #ef4444 !important;
+  }
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.08) !important;
+    color: #dc2626 !important;
+
+    .anticon {
+      color: #dc2626 !important;
+    }
+  }
+}
+
+[data-theme='dark'] .user-dropdown .ant-dropdown-menu-item.logout-item,
+[data-theme='dark'] .user-dropdown .ant-menu-item.logout-item,
+[data-theme='dark'] .mobile-drawer-menu .ant-menu-item.logout-item,
+[data-theme='dark'] .ant-dropdown-menu-item.logout-item,
+[data-theme='dark'] .ant-menu-item.logout-item,
+[data-theme='dark'] .logout-item,
+html.dark .user-dropdown .ant-dropdown-menu-item.logout-item,
+html.dark .user-dropdown .ant-menu-item.logout-item,
+html.dark .mobile-drawer-menu .ant-menu-item.logout-item,
+html.dark .ant-dropdown-menu-item.logout-item,
+html.dark .ant-menu-item.logout-item,
+html.dark .logout-item,
+body.dark .user-dropdown .ant-dropdown-menu-item.logout-item,
+body.dark .user-dropdown .ant-menu-item.logout-item,
+body.dark .mobile-drawer-menu .ant-menu-item.logout-item,
+body.dark .ant-dropdown-menu-item.logout-item,
+body.dark .ant-menu-item.logout-item,
+body.dark .logout-item {
+  color: #f87171 !important;
+  font-weight: 600;
+
+  .anticon {
+    color: #f87171 !important;
+  }
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.22) !important;
+    color: #fca5a5 !important;
+
+    .anticon {
+      color: #fca5a5 !important;
+    }
+  }
+}
+
+
