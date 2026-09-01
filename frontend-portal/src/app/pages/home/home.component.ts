@@ -677,7 +677,7 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
        ========================================================================== */
     .companies-section {
       padding: var(--space-16) 0 var(--space-20);
-      background: var(--color-bg-secondary);
+      background: var(--color-bg-primary);
       border-top: 1px solid var(--color-border);
 
       @media (max-width: 768px) {
