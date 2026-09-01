@@ -1,25 +1,26 @@
 """Public job endpoints for job portal."""
 
-from fastapi import APIRouter, Query, UploadFile, File, Form
-from sqlalchemy import select, func
-from sqlalchemy.orm import selectinload
-from pydantic import BaseModel
-from datetime import datetime
 import logging
+from datetime import datetime
 
-from app.api.deps import DBSession, CandidateUser
-from app.core.exceptions import NotFoundException, BadRequestException
-from app.models import Job, JobCriteria, User, Company
+from fastapi import APIRouter, BackgroundTasks, File, Form, Query, UploadFile
+from pydantic import BaseModel
+from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
+
+from app.api.deps import CandidateUser, DBSession
+from app.core.exceptions import BadRequestException, NotFoundException
+from app.models import Company, Job, JobCriteria, User
 from app.models.application import Application
 from app.models.resume import Resume
-from app.services.job import JobService
+from app.schemas.application import ApplicationResponse
 from app.schemas.job import (
-    PublicJobResponse,
     PublicJobListItem,
     PublicJobListResponse,
+    PublicJobResponse,
 )
-from app.schemas.application import ApplicationResponse
 from app.services.application import ApplicationService
+from app.services.scoring import score_application_in_background
 
 router = APIRouter(prefix="/jobs", tags=["public-jobs"])
 logger = logging.getLogger(__name__)
@@ -124,8 +125,8 @@ async def search_jobs_by_cv(
     jobs = jobs_result.scalars().all()
 
     # 3. Score each job using ResumeScorer class methods directly
-    from app.services.vietnamese_nlp import get_nlp
     from app.services.scoring import ResumeScorer
+    from app.services.vietnamese_nlp import get_nlp
 
     nlp = get_nlp()
     resume_keywords = nlp.extract_keywords(resume_text)
@@ -504,6 +505,7 @@ async def get_job_by_slug(slug: str, db: DBSession):
 @router.post("/{slug}/apply", response_model=ApplicationResponse)
 async def apply_to_job(
     slug: str,
+    background_tasks: BackgroundTasks,
     db: DBSession,
     user: CandidateUser,
     resume_id: int | None = Form(None),
@@ -538,6 +540,8 @@ async def apply_to_job(
     # The application is already committed. Failures in optional notifications
     # must not turn a successful submission into a misleading HTTP 500.
     try:
+        from app.tasks.notification_tasks import send_application_received_notification
+
         send_application_received_notification.delay(
             email=user.email,
             full_name=user.full_name,
@@ -546,10 +550,9 @@ async def apply_to_job(
     except Exception:
         logger.exception("Unable to enqueue application receipt for application %s", application.id)
 
-    try:
-        score_application_task.delay(application.id)
-    except Exception:
-        logger.exception("Unable to enqueue scoring for application %s", application.id)
+    # Run deterministic CV/JD matching after returning the successful response.
+    # This path does not call an LLM or require a separate Celery worker.
+    background_tasks.add_task(score_application_in_background, application.id)
 
     try:
         from app.services.notification_service import notify_hr_for_new_application

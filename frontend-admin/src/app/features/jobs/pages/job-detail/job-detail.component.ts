@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -383,12 +383,13 @@ import {
               <thead>
                 <tr>
                   <th nzWidth="4%"></th>
-                  <th nzWidth="18%">Ứng viên</th>
-                  <th nzWidth="18%">Đánh giá AI</th>
+                  <th nzWidth="15%">Ứng viên</th>
+                  <th nzWidth="11%">Matching CV–JD</th>
+                  <th nzWidth="14%">Đánh giá AI</th>
                   <th nzWidth="11%">Trạng thái</th>
-                  <th nzWidth="10%">Ngày nộp</th>
-                  <th nzWidth="24%">Hồ sơ & Đối chiếu</th>
-                  <th nzWidth="15%">Thao tác</th>
+                  <th nzWidth="9%">Ngày nộp</th>
+                  <th nzWidth="22%">Hồ sơ & Đối chiếu</th>
+                  <th nzWidth="14%">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -405,6 +406,28 @@ import {
                       <strong>{{ app.candidate_name }}</strong>
                       <br />
                       <small style="color: #888">{{ app.candidate_email }}</small>
+                    </td>
+                    <td>
+                      @if (app.total_score != null) {
+                        <nz-progress
+                          [nzPercent]="app.total_score"
+                          nzType="circle"
+                          [nzWidth]="42"
+                          [nzStrokeColor]="getScoreColor(app.total_score)"
+                          [nzFormat]="scoreFormat"
+                          (click)="openCvJdCompare(app)"
+                          style="cursor: pointer"
+                          nz-tooltip
+                          nzTooltipTitle="Bấm để xem đối chiếu CV–JD chi tiết"
+                        ></nz-progress>
+                      } @else if (isMatchingPending(app)) {
+                        <span style="display: inline-flex; align-items: center; gap: 6px; color: #1677ff; font-size: 12px">
+                          <nz-spin nzSimple nzSize="small"></nz-spin>
+                          Đang chấm
+                        </span>
+                      } @else {
+                        <nz-tag>Chưa có điểm</nz-tag>
+                      }
                     </td>
                     <td>
                       @if (app.ai_score != null || app.has_ai_evaluation) {
@@ -704,7 +727,7 @@ import {
     `,
   ],
 })
-export class JobDetailComponent implements OnInit {
+export class JobDetailComponent implements OnInit, OnDestroy {
   job = signal<Job | null>(null);
   loading = signal(false);
 
@@ -715,6 +738,10 @@ export class JobDetailComponent implements OnInit {
   transitioningApplicationId = signal<number | null>(null);
   applicantsPage = 1;
   private applicantsLoaded = false;
+  private matchingRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+  private matchingRefreshAttempts = 0;
+  private readonly matchingRefreshIntervalMs = 3_000;
+  private readonly maxMatchingRefreshAttempts = 100;
 
   rejectModalVisible = false;
   rejectReason = '';
@@ -775,7 +802,10 @@ export class JobDetailComponent implements OnInit {
         const j = this.job();
         if (j) {
           this.loadJob(j.id);
-          if (this.applicantsLoaded) this.loadApplicants();
+          if (this.applicantsLoaded) {
+            if (n.type === 'application') this.matchingRefreshAttempts = 0;
+            this.loadApplicants();
+          }
         }
       }
     });
@@ -783,6 +813,7 @@ export class JobDetailComponent implements OnInit {
 
   ngOnDestroy(): void {
     this.notifSub?.unsubscribe();
+    this.stopMatchingScoreRefresh();
   }
 
   loadJob(id: number): void {
@@ -985,16 +1016,17 @@ export class JobDetailComponent implements OnInit {
 
   onApplicantsTabSelect(): void {
     if (!this.applicantsLoaded) {
+      this.matchingRefreshAttempts = 0;
       this.loadApplicants();
       this.applicantsLoaded = true;
     }
   }
 
-  loadApplicants(): void {
+  loadApplicants(showLoading = true): void {
     const j = this.job();
     if (!j) return;
 
-    this.applicantsLoading.set(true);
+    if (showLoading) this.applicantsLoading.set(true);
     this.jobService
       .getApplications(j.id, {
         page: this.applicantsPage,
@@ -1006,16 +1038,48 @@ export class JobDetailComponent implements OnInit {
           this.applicants.set(res.items);
           this.applicantsTotal.set(res.total);
           this.applicantsLoading.set(false);
+          this.scheduleMatchingScoreRefresh();
         },
         error: () => {
-          this.message.error('Không thể tải danh sách ứng viên');
+          if (showLoading) this.message.error('Không thể tải danh sách ứng viên');
           this.applicantsLoading.set(false);
+          if (!showLoading) this.scheduleMatchingScoreRefresh();
         },
       });
   }
 
+  private scheduleMatchingScoreRefresh(): void {
+    const hasPendingMatching = this.applicants().some((app) => this.isMatchingPending(app));
+    if (!hasPendingMatching || this.matchingRefreshAttempts >= this.maxMatchingRefreshAttempts) {
+      this.stopMatchingScoreRefresh();
+      return;
+    }
+
+    if (this.matchingRefreshTimer !== null) return;
+    this.matchingRefreshTimer = setTimeout(() => {
+      this.matchingRefreshTimer = null;
+      this.matchingRefreshAttempts += 1;
+      this.loadApplicants(false);
+    }, this.matchingRefreshIntervalMs);
+  }
+
+  private stopMatchingScoreRefresh(): void {
+    if (this.matchingRefreshTimer !== null) {
+      clearTimeout(this.matchingRefreshTimer);
+      this.matchingRefreshTimer = null;
+    }
+  }
+
+  isMatchingPending(app: Applicant): boolean {
+    if (app.total_score != null) return false;
+    const submittedAt = new Date(app.submitted_at).getTime();
+    if (Number.isNaN(submittedAt)) return false;
+    return Date.now() - submittedAt < this.maxMatchingRefreshAttempts * this.matchingRefreshIntervalMs;
+  }
+
   onApplicantsPageChange(page: number): void {
     this.applicantsPage = page;
+    this.matchingRefreshAttempts = 0;
     this.loadApplicants();
   }
 

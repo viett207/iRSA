@@ -546,3 +546,37 @@ class ResumeScorer:
 def score_application_sync(db: Session, application_id: int):
     """Wrapper function để giữ tương thích ngược."""
     return ResumeScorer.score_application(db, application_id)
+
+
+def score_application_in_background(application_id: int) -> None:
+    """Calculate and persist CV/JD matching outside the request lifecycle.
+
+    FastAPI runs synchronous background callables in its thread pool, so the
+    candidate receives the successful application response without waiting for
+    NLP/scoring work to finish. A fresh database session is used because the
+    request-scoped async session is closed after the response.
+    """
+    from app.core.database import get_sync_session
+
+    try:
+        with get_sync_session() as db:
+            result = score_application_sync(db, application_id)
+
+        if result is None:
+            logger.warning(
+                "Application %s has insufficient CV data for automatic matching",
+                application_id,
+            )
+            return
+
+        logger.info(
+            "Automatic CV/JD matching completed for application %s: %.1f",
+            application_id,
+            result.total_score,
+        )
+    except Exception:
+        # The request has already completed, so retain the traceback for ops.
+        logger.exception(
+            "Automatic CV/JD matching failed for application %s",
+            application_id,
+        )
