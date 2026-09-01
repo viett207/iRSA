@@ -176,14 +176,14 @@ export class JobsComponent implements OnInit {
   }));
 
   quickChips = [
-    { id: 'hot', label: 'Tuyển gấp 🔥', active: false },
-    { id: 'new', label: 'Mới đăng 24h ✨', active: false },
-    { id: 'high_salary', label: 'Lương > 30 triệu 💰', active: false },
-    { id: 'hcm', label: 'TP. Hồ Chí Minh 📍', active: false },
-    { id: 'hanoi', label: 'Hà Nội 📍', active: false },
-    { id: 'fulltime', label: 'Toàn thời gian 💼', active: false },
-    { id: 'fresher', label: 'Fresher / Thực tập 🌱', active: false },
-    { id: 'senior', label: 'Senior (5+ năm) 🚀', active: false },
+    { id: 'hot', label: 'Tuyển gấp', active: false },
+    { id: 'new', label: 'Mới đăng 24h', active: false },
+    { id: 'high_salary', label: 'Lương > 30 triệu', active: false },
+    { id: 'hcm', label: 'TP. Hồ Chí Minh', active: false },
+    { id: 'hanoi', label: 'Hà Nội', active: false },
+    { id: 'fulltime', label: 'Toàn thời gian', active: false },
+    { id: 'fresher', label: 'Fresher / Thực tập', active: false },
+    { id: 'senior', label: 'Senior (5+ năm)', active: false },
   ];
 
   salaryPresets = [

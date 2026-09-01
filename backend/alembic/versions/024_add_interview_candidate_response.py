@@ -1,15 +1,15 @@
 """Add candidate response fields to interviews table.
 
-Revision ID: 024_interview_candidate_response
-Revises: 023_notifications
+Revision ID: 025_interview_candidate_response
+Revises: 024_interview_evaluation
 """
 
 from typing import Union
 from alembic import op
 import sqlalchemy as sa
 
-revision: str = "024_interview_candidate_response"
-down_revision: Union[str, None] = "023_notifications"
+revision: str = "025_interview_candidate_response"
+down_revision: Union[str, None] = "024_interview_evaluation"
 branch_labels: Union[str, None] = None
 depends_on: Union[str, None] = None
 

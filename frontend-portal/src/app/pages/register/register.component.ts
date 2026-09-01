@@ -496,17 +496,18 @@ interface PasswordCriterion {
 
       /* Branding Section (Left Column) */
       .auth-branding {
-        background: radial-gradient(circle at 10% 15%, rgba(56, 189, 248, 0.22) 0%, transparent 50%),
-                    radial-gradient(circle at 90% 85%, rgba(59, 130, 246, 0.16) 0%, transparent 50%),
-                    linear-gradient(150deg, #f0f7ff 0%, #e0f2fe 35%, #dbeafe 70%, #bfdbfe 100%);
+        background: radial-gradient(circle at 12% 15%, rgba(56, 189, 248, 0.14) 0%, transparent 45%),
+                    radial-gradient(circle at 88% 85%, rgba(96, 165, 250, 0.12) 0%, transparent 50%),
+                    radial-gradient(circle at 50% 50%, rgba(36, 50, 75, 0.6) 0%, transparent 70%),
+                    linear-gradient(180deg, #222f46 0%, #293852 50%, #202c42 100%);
         padding: clamp(36px, 5vh, 48px) clamp(28px, 3.5vw, 40px);
         display: flex;
         flex-direction: column;
         justify-content: center;
         position: relative;
         overflow: hidden;
-        color: var(--color-text-primary);
-        border-right: 1px solid rgba(191, 219, 254, 0.6);
+        color: #ffffff;
+        border-right: 1px solid rgba(255, 255, 255, 0.10);
       }
 
       .branding-decorations {
@@ -529,7 +530,7 @@ interface PasswordCriterion {
         height: 240px;
         top: -30px;
         right: -30px;
-        background: radial-gradient(circle, rgba(56, 189, 248, 0.28) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, transparent 70%);
       }
 
       .glow-orb-2 {
@@ -537,7 +538,7 @@ interface PasswordCriterion {
         height: 220px;
         bottom: -30px;
         left: -30px;
-        background: radial-gradient(circle, rgba(96, 165, 250, 0.24) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(96, 165, 250, 0.18) 0%, transparent 70%);
       }
 
       .glow-orb-3 {
@@ -545,7 +546,7 @@ interface PasswordCriterion {
         height: 160px;
         top: 8%;
         left: 8%;
-        background: radial-gradient(circle, rgba(186, 230, 253, 0.3) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
       }
 
       .tech-pattern {
@@ -553,7 +554,7 @@ interface PasswordCriterion {
         inset: 0;
         width: 100%;
         height: 100%;
-        opacity: 0.75;
+        opacity: 0.85;
         z-index: 0;
         pointer-events: none;
       }
@@ -573,8 +574,11 @@ interface PasswordCriterion {
           font-family: var(--font-heading);
           font-size: 28px;
           font-weight: 800;
-          color: var(--color-primary);
           letter-spacing: -0.02em;
+          background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 50%, #818cf8 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
         }
       }
 
@@ -582,17 +586,17 @@ interface PasswordCriterion {
         width: 48px;
         height: 48px;
         border-radius: 14px;
-        background: #ffffff;
-        border: 1px solid rgba(59, 130, 246, 0.18);
+        background: #1e293b;
+        border: 1px solid rgba(96, 165, 250, 0.35);
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 14px rgba(15, 82, 186, 0.12), 0 1px 2px rgba(15, 82, 186, 0.08);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 12px rgba(59, 130, 246, 0.2);
 
         span {
           font-size: 26px;
-          color: var(--color-primary);
-          filter: drop-shadow(0 2px 6px rgba(15, 82, 186, 0.25));
+          color: #60a5fa;
+          filter: drop-shadow(0 2px 6px rgba(59, 130, 246, 0.5));
         }
       }
 
@@ -601,7 +605,7 @@ interface PasswordCriterion {
         font-size: clamp(22px, 2.2vw, 28px);
         font-weight: 700;
         margin: 0 0 10px 0;
-        color: var(--color-text-primary);
+        color: #f8fafc;
         line-height: 1.3;
         letter-spacing: -0.01em;
       }
@@ -609,7 +613,7 @@ interface PasswordCriterion {
       .branding-content p {
         font-size: 14px;
         line-height: 1.6;
-        color: var(--color-text-secondary);
+        color: #cbd5e1;
         margin: 0 0 20px 0;
         font-weight: 400;
       }
@@ -625,7 +629,7 @@ interface PasswordCriterion {
         align-items: center;
         gap: 12px;
         font-size: 13.5px;
-        color: var(--color-text-primary);
+        color: #e2e8f0;
         font-weight: 500;
       }
 
@@ -633,8 +637,8 @@ interface PasswordCriterion {
         width: 24px;
         height: 24px;
         border-radius: 50%;
-        background: rgba(59, 130, 246, 0.12);
-        border: 1px solid rgba(59, 130, 246, 0.25);
+        background: rgba(59, 130, 246, 0.18);
+        border: 1px solid rgba(96, 165, 250, 0.35);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -642,7 +646,7 @@ interface PasswordCriterion {
 
         span {
           font-size: 12px;
-          color: var(--color-primary);
+          color: #60a5fa;
           font-weight: 700;
         }
       }
@@ -928,22 +932,22 @@ interface PasswordCriterion {
         border-radius: 10px !important;
         font-weight: 600 !important;
         font-size: 14px !important;
-        background: linear-gradient(135deg, #1d4ed8 0%, #0f52ba 100%) !important;
+        background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 100%) !important;
         border: none !important;
         color: #ffffff !important;
-        box-shadow: 0 4px 14px rgba(15, 82, 186, 0.28) !important;
+        box-shadow: var(--shadow-md) !important;
         transition: all var(--transition-fast) !important;
         margin-top: 2px;
 
         &:hover:not([disabled]) {
-          background: linear-gradient(135deg, #1e40af 0%, #0a387e 100%) !important;
-          box-shadow: 0 6px 18px rgba(15, 82, 186, 0.38) !important;
+          background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%) !important;
+          box-shadow: var(--shadow-lg) !important;
           transform: translateY(-1px);
         }
 
         &:active:not([disabled]) {
           transform: translateY(0);
-          box-shadow: 0 2px 6px rgba(15, 82, 186, 0.25) !important;
+          box-shadow: var(--shadow-sm) !important;
         }
       }
 
@@ -1032,10 +1036,11 @@ interface PasswordCriterion {
 
         /* Branding Section in Dark Mode */
         .auth-branding {
-          background: radial-gradient(circle at 12% 18%, rgba(56, 189, 248, 0.15) 0%, transparent 45%),
-                      radial-gradient(circle at 88% 82%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
-                      linear-gradient(150deg, #0b1329 0%, #0f172a 45%, #1e293b 100%);
-          border-right: 1px solid rgba(255, 255, 255, 0.1);
+          background: radial-gradient(circle at 12% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 45%),
+                      radial-gradient(circle at 88% 85%, rgba(96, 165, 250, 0.10) 0%, transparent 50%),
+                      radial-gradient(circle at 50% 50%, rgba(36, 50, 75, 0.6) 0%, transparent 70%),
+                      linear-gradient(180deg, #222f46 0%, #293852 50%, #202c42 100%);
+          border-right: 1px solid rgba(255, 255, 255, 0.10);
           color: #f8fafc;
         }
 

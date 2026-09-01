@@ -323,7 +323,16 @@ export function stripCompanyHtml(value: string | null | undefined, maxLength = 1
         position: relative;
         height: 280px;
         overflow: hidden;
-        background: linear-gradient(135deg, #0A387E 0%, #0F52BA 60%, #1E40AF 100%);
+        background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #38bdf8 100%);
+
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.25) 0%, transparent 60%),
+                      radial-gradient(circle at 20% 80%, rgba(56, 189, 248, 0.2) 0%, transparent 60%);
+          pointer-events: none;
+        }
 
         img {
           width: 100%;
@@ -335,7 +344,7 @@ export function stripCompanyHtml(value: string | null | undefined, maxLength = 1
       .cover-overlay {
         position: absolute;
         inset: 0;
-        background: linear-gradient(180deg, rgba(10, 56, 126, 0.2) 0%, rgba(10, 56, 126, 0.65) 100%);
+        background: linear-gradient(180deg, rgba(30, 64, 175, 0.1) 0%, rgba(15, 23, 42, 0.35) 100%);
       }
 
       .cover-content {
@@ -995,24 +1004,52 @@ export function stripCompanyHtml(value: string | null | undefined, maxLength = 1
       /* Dark Mode Overrides */
       :host-context([data-theme='dark']),
       :host-context(.dark) {
+        .company-page,
+        .company-hero,
+        .about-section,
+        .jobs-section {
+          background: #0f172a;
+        }
+
         .cover-banner {
-          background: linear-gradient(135deg, #091224 0%, #0c1c38 60%, #0f274c 100%);
+          background: linear-gradient(135deg, #222f46 0%, #293852 50%, #1e3a8a 85%, #0284c7 100%);
+
+          &::before {
+            background: radial-gradient(circle at 80% 20%, rgba(56, 189, 248, 0.35) 0%, transparent 60%),
+                        radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.3) 0%, transparent 60%);
+          }
         }
 
         .cover-overlay {
-          background: linear-gradient(180deg, rgba(9, 18, 36, 0.4) 0%, rgba(9, 18, 36, 0.85) 100%);
+          background: linear-gradient(180deg, rgba(34, 47, 70, 0.2) 0%, rgba(15, 23, 42, 0.45) 100%);
+        }
+
+        .company-profile-card,
+        .story-card,
+        .job-card {
+          background: #1e293b;
+          border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .company-meta .meta-item {
+          background: #0f172a;
+          border-color: rgba(255, 255, 255, 0.08);
         }
 
         .culture-card {
-          background: linear-gradient(145deg, rgba(59, 130, 246, 0.12), var(--color-bg-secondary));
+          background: linear-gradient(145deg, rgba(59, 130, 246, 0.12) 0%, #1e293b 100%);
+          border-color: rgba(96, 165, 250, 0.2);
         }
 
         .gallery-section {
-          background: var(--color-bg-primary);
+          background: #080d19;
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .gallery-empty {
-          background: var(--color-bg-secondary);
+          background: #1e293b;
+          border-color: rgba(255, 255, 255, 0.12);
         }
       }
     `,

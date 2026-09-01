@@ -38,12 +38,12 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
         <svg class="hero-tech-pattern" width="100%" height="100%" viewBox="0 0 1440 500" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
           <defs>
             <linearGradient id="hero-net-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#0284c7" stop-opacity="0.4"/>
-              <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.2"/>
+              <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45"/>
+              <stop offset="100%" stop-color="#60a5fa" stop-opacity="0.2"/>
             </linearGradient>
             <linearGradient id="hero-net-grad-rev" x1="100%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#0284c7" stop-opacity="0.4"/>
-              <stop offset="100%" stop-color="#60a5fa" stop-opacity="0.2"/>
+              <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45"/>
+              <stop offset="100%" stop-color="#818cf8" stop-opacity="0.2"/>
             </linearGradient>
             <filter id="hero-glow-dot" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="2.5" result="blur"/>
@@ -97,32 +97,32 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
           <circle cx="910" cy="450" r="3.5" fill="#818cf8"/>
 
           <!-- Decorative Orbit Rings in Empty Margins -->
-          <circle cx="200" cy="80" r="140" stroke="rgba(37, 99, 235, 0.1)" stroke-width="1.5" stroke-dasharray="8 8"/>
-          <circle cx="1240" cy="80" r="140" stroke="rgba(37, 99, 235, 0.1)" stroke-width="1.5" stroke-dasharray="8 8"/>
-          <circle cx="100" cy="440" r="100" stroke="rgba(2, 132, 199, 0.12)" stroke-width="1.5"/>
-          <circle cx="1340" cy="440" r="100" stroke="rgba(2, 132, 199, 0.12)" stroke-width="1.5"/>
+          <circle cx="200" cy="80" r="140" stroke="rgba(96, 165, 250, 0.15)" stroke-width="1.5" stroke-dasharray="8 8"/>
+          <circle cx="1240" cy="80" r="140" stroke="rgba(96, 165, 250, 0.15)" stroke-width="1.5" stroke-dasharray="8 8"/>
+          <circle cx="100" cy="440" r="100" stroke="rgba(56, 189, 248, 0.16)" stroke-width="1.5"/>
+          <circle cx="1340" cy="440" r="100" stroke="rgba(56, 189, 248, 0.16)" stroke-width="1.5"/>
 
           <!-- Subtle Outline Career & Tech Icons along margins -->
           <!-- Top Left: Briefcase Outline -->
-          <g transform="translate(48, 140) scale(0.9)" stroke="rgba(30, 64, 175, 0.25)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <g transform="translate(48, 140) scale(0.9)" stroke="rgba(96, 165, 250, 0.28)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
             <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
             <path d="M12 12v.01"/>
           </g>
 
           <!-- Bottom Left: Code Brackets Outline -->
-          <g transform="translate(52, 330) scale(0.9)" stroke="rgba(2, 132, 199, 0.25)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <g transform="translate(52, 330) scale(0.9)" stroke="rgba(56, 189, 248, 0.28)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="16 18 22 12 16 6"/>
             <polyline points="8 6 2 12 8 18"/>
           </g>
 
           <!-- Top Right: Sparkle / Star Outline -->
-          <g transform="translate(1360, 160) scale(0.85)" stroke="rgba(37, 99, 235, 0.25)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <g transform="translate(1360, 160) scale(0.85)" stroke="rgba(96, 165, 250, 0.28)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </g>
 
           <!-- Bottom Right: Search Outline -->
-          <g transform="translate(1350, 340) scale(0.9)" stroke="rgba(2, 132, 199, 0.25)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <g transform="translate(1350, 340) scale(0.9)" stroke="rgba(56, 189, 248, 0.28)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </g>
@@ -183,55 +183,6 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
         </div>
       </div>
     </section>
-
-    <!-- Active Companies -->
-    @if (activeCompanies.length > 0) {
-      <section class="companies-section">
-        <div class="container">
-          <div class="section-header">
-            <div>
-              <h2 class="section-title">Doanh nghiệp đang tuyển dụng</h2>
-              <p class="section-subtitle">Kết nối trực tiếp với các nhà tuyển dụng uy tín hàng đầu</p>
-            </div>
-          </div>
-
-          <div class="companies-grid">
-            @for (company of activeCompanies; track company.company_code) {
-              <a class="company-card" [routerLink]="['/companies', company.company_code]">
-                <div class="company-card-top">
-                  <div class="company-avatar">
-                    <span>{{ company.company_name.charAt(0) }}</span>
-                  </div>
-                  <div class="company-info">
-                    <h3 class="company-name" [title]="company.company_name">{{ company.company_name }}</h3>
-                    <div class="company-meta">
-                      @if (company.industry) {
-                        <span class="meta-item" [title]="company.industry">
-                          <span nz-icon nzType="appstore" nzTheme="outline"></span>
-                          <span>{{ company.industry }}</span>
-                        </span>
-                      }
-                      @if (company.location) {
-                        <span class="meta-item" [title]="company.location">
-                          <span nz-icon nzType="environment" nzTheme="outline"></span>
-                          <span>{{ company.location }}</span>
-                        </span>
-                      }
-                    </div>
-                  </div>
-                </div>
-                <div class="company-card-bottom">
-                  <span class="company-badge">
-                    {{ company.job_count }} việc làm
-                  </span>
-                  <span nz-icon nzType="arrow-right" nzTheme="outline" class="company-card-arrow"></span>
-                </div>
-              </a>
-            }
-          </div>
-        </div>
-      </section>
-    }
 
     <!-- Latest Jobs -->
     <section class="jobs-section">
@@ -310,20 +261,69 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
         }
       </div>
     </section>
+
+    <!-- Active Companies -->
+    @if (activeCompanies.length > 0) {
+      <section class="companies-section">
+        <div class="container">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Doanh nghiệp đang tuyển dụng</h2>
+              <p class="section-subtitle">Kết nối trực tiếp với các nhà tuyển dụng uy tín hàng đầu</p>
+            </div>
+          </div>
+
+          <div class="companies-grid">
+            @for (company of activeCompanies; track company.company_code) {
+              <a class="company-card" [routerLink]="['/companies', company.company_code]">
+                <div class="company-card-top">
+                  <div class="company-avatar">
+                    <span>{{ company.company_name.charAt(0) }}</span>
+                  </div>
+                  <div class="company-info">
+                    <h3 class="company-name" [title]="company.company_name">{{ company.company_name }}</h3>
+                    <div class="company-meta">
+                      @if (company.industry) {
+                        <span class="meta-item" [title]="company.industry">
+                          <span nz-icon nzType="appstore" nzTheme="outline"></span>
+                          <span>{{ company.industry }}</span>
+                        </span>
+                      }
+                      @if (company.location) {
+                        <span class="meta-item" [title]="company.location">
+                          <span nz-icon nzType="environment" nzTheme="outline"></span>
+                          <span>{{ company.location }}</span>
+                        </span>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="company-card-bottom">
+                  <span class="company-badge">
+                    {{ company.job_count }} việc làm
+                  </span>
+                  <span nz-icon nzType="arrow-right" nzTheme="outline" class="company-card-arrow"></span>
+                </div>
+              </a>
+            }
+          </div>
+        </div>
+      </section>
+    }
   `,
   styles: [`
     /* ==========================================================================
        Hero Section
        ========================================================================== */
     .hero-section {
-      background: radial-gradient(circle at 10% 15%, rgba(56, 189, 248, 0.18) 0%, transparent 45%),
-                  radial-gradient(circle at 90% 85%, rgba(59, 130, 246, 0.14) 0%, transparent 50%),
-                  radial-gradient(circle at 50% 50%, rgba(224, 242, 254, 0.45) 0%, transparent 70%),
-                  linear-gradient(135deg, #f8fbff 0%, #eff6ff 35%, #e0f2fe 70%, #dbeafe 100%);
+      background: radial-gradient(circle at 12% 15%, rgba(56, 189, 248, 0.14) 0%, transparent 45%),
+                  radial-gradient(circle at 88% 85%, rgba(96, 165, 250, 0.12) 0%, transparent 50%),
+                  radial-gradient(circle at 50% 50%, rgba(36, 50, 75, 0.6) 0%, transparent 70%),
+                  linear-gradient(180deg, #222f46 0%, #293852 50%, #202c42 100%);
       position: relative;
       overflow: hidden;
       padding: clamp(40px, 4.5vw, 56px) 0;
-      border-bottom: 1px solid rgba(191, 219, 254, 0.5);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.10);
     }
 
     .hero-decorations {
@@ -346,7 +346,7 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
       height: 380px;
       top: -80px;
       right: 5%;
-      background: radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
     }
 
     .glow-orb-2 {
@@ -354,7 +354,7 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
       height: 360px;
       bottom: -80px;
       left: 5%;
-      background: radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(96, 165, 250, 0.12) 0%, transparent 70%);
     }
 
     .glow-orb-3 {
@@ -362,7 +362,7 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
       height: 300px;
       top: 30%;
       left: 45%;
-      background: radial-gradient(circle, rgba(147, 197, 253, 0.22) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(129, 140, 248, 0.10) 0%, transparent 70%);
     }
 
     .hero-tech-pattern {
@@ -393,20 +393,21 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      padding: 0;
-      background: transparent;
-      border: none;
-      color: var(--color-primary, #0f52ba);
+      padding: 4px 14px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: var(--radius-full);
+      color: #38bdf8;
       font-size: 13.5px;
       font-weight: 600;
       letter-spacing: 0.01em;
-      margin-bottom: 10px;
-      box-shadow: none;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
       cursor: default;
       user-select: none;
 
       .hero-badge-icon {
-        color: var(--color-primary, #0f52ba);
+        color: #38bdf8;
         font-size: 14px;
       }
     }
@@ -415,14 +416,14 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
       font-family: var(--font-heading);
       font-size: clamp(32px, 4.5vw, 48px);
       font-weight: 800;
-      color: #0f172a;
+      color: #ffffff;
       line-height: 1.25;
       margin-bottom: 22px;
       letter-spacing: -0.025em;
     }
 
     .hero-highlight {
-      background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #6366f1 100%);
+      background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 50%, #818cf8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -432,11 +433,11 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
 
     /* Search Box */
     .search-box {
-      background: #FFFFFF;
+      background: #ffffff;
       border-radius: 16px;
       padding: 6px 6px 6px 12px;
-      border: 1px solid rgba(219, 234, 254, 0.9);
-      box-shadow: 0 16px 36px -10px rgba(15, 82, 186, 0.1), 0 0 1px 1px rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1);
       display: flex;
       gap: 10px;
       max-width: 680px;
@@ -445,8 +446,8 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
       transition: all var(--transition-normal);
 
       &:focus-within {
-        box-shadow: 0 20px 44px -8px rgba(15, 82, 186, 0.18), 0 0 0 3px rgba(56, 189, 248, 0.35);
-        border-color: #38bdf8;
+        box-shadow: 0 20px 44px -8px rgba(0, 0, 0, 0.45), 0 0 0 3px rgba(59, 130, 246, 0.3);
+        border-color: var(--color-primary-light);
       }
 
       @media (max-width: 640px) {
@@ -476,11 +477,11 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
       ::ng-deep .ant-input {
         font-size: 15.5px !important;
         font-family: var(--font-body) !important;
-        color: var(--color-text-primary) !important;
+        color: #0f172a !important;
         background: transparent !important;
 
         &::placeholder {
-          color: #94a3b8 !important;
+          color: #64748b !important;
           font-size: 15px !important;
         }
       }
@@ -506,24 +507,24 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
       border-radius: 12px !important;
       font-weight: 600 !important;
       font-size: 15px !important;
-      background: linear-gradient(135deg, #1d4ed8 0%, #0f52ba 100%) !important;
+      background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 100%) !important;
       border: none !important;
       color: #ffffff !important;
-      box-shadow: 0 4px 14px rgba(15, 82, 186, 0.32) !important;
+      box-shadow: var(--shadow-md) !important;
       transition: all var(--transition-fast) !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
 
       &:hover {
-        background: linear-gradient(135deg, #1e40af 0%, #0a387e 100%) !important;
-        box-shadow: 0 6px 18px rgba(15, 82, 186, 0.45) !important;
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%) !important;
+        box-shadow: var(--shadow-lg) !important;
         transform: translateY(-1px);
       }
 
       &:active {
         transform: translateY(0);
-        box-shadow: 0 2px 8px rgba(15, 82, 186, 0.25) !important;
+        box-shadow: var(--shadow-sm) !important;
       }
 
       @media (max-width: 640px) {
@@ -543,7 +544,7 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
 
     .category-chips-label {
       font-size: 13.5px;
-      color: var(--color-text-secondary);
+      color: #cbd5e1;
       font-weight: 500;
       white-space: nowrap;
       text-align: center;
@@ -561,31 +562,33 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: #FFFFFF;
-      border: 1.5px solid rgba(15, 82, 186, 0.35);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1.5px solid rgba(255, 255, 255, 0.16);
       border-radius: var(--radius-full);
       padding: 6px 16px;
       font-size: 13px;
       font-weight: 600;
-      color: var(--color-primary, #0F52BA);
+      color: #f8fafc;
       cursor: pointer;
-      box-shadow: 0 3px 10px rgba(15, 82, 186, 0.1), 0 1px 3px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       transition: all var(--transition-fast);
       text-decoration: none;
       white-space: nowrap;
 
       .anticon {
         font-size: 14px;
-        color: var(--color-primary, #0F52BA);
+        color: #38bdf8;
         transition: all var(--transition-fast);
       }
 
       &:hover {
-        background: var(--color-primary, #0F52BA);
-        border-color: var(--color-primary, #0F52BA);
+        background: var(--color-primary);
+        border-color: var(--color-primary);
         color: #FFFFFF;
         transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(15, 82, 186, 0.25);
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
 
         .anticon {
           color: #FFFFFF;
@@ -595,7 +598,7 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
 
       &:active {
         transform: translateY(0);
-        box-shadow: 0 2px 6px rgba(15, 82, 186, 0.15);
+        box-shadow: var(--shadow-xs);
       }
     }
 
@@ -673,9 +676,14 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
        Companies Section
        ========================================================================== */
     .companies-section {
-      padding: var(--space-12) 0;
+      padding: var(--space-12) 0 var(--space-16);
       background: var(--color-bg-secondary);
+      border-top: 1px solid var(--color-border);
       border-bottom: 1px solid var(--color-border);
+
+      @media (max-width: 768px) {
+        padding: var(--space-8) 0 var(--space-10);
+      }
     }
 
     .companies-grid {
@@ -1068,10 +1076,11 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
     :host-context([data-theme='dark']),
     :host-context(.dark) {
       .hero-section {
-        background: radial-gradient(circle at 10% 15%, rgba(56, 189, 248, 0.1) 0%, transparent 45%),
-                    radial-gradient(circle at 90% 85%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-                    linear-gradient(135deg, #0b1329 0%, #0f172a 50%, #1e293b 100%);
-        border-bottom-color: rgba(255, 255, 255, 0.08);
+        background: radial-gradient(circle at 12% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 45%),
+                    radial-gradient(circle at 88% 85%, rgba(96, 165, 250, 0.10) 0%, transparent 50%),
+                    radial-gradient(circle at 50% 50%, rgba(36, 50, 75, 0.6) 0%, transparent 70%),
+                    linear-gradient(180deg, #222f46 0%, #293852 50%, #202c42 100%);
+        border-bottom-color: rgba(255, 255, 255, 0.10);
       }
 
       .hero-title {
@@ -1086,23 +1095,45 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
       }
 
       .search-box {
-        background: var(--color-bg-secondary);
+        background: #1e293b;
         border-color: rgba(255, 255, 255, 0.12);
-        box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.5);
 
         &:focus-within {
           border-color: var(--color-primary);
-          box-shadow: 0 20px 44px -8px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(59, 130, 246, 0.25);
+          box-shadow: 0 20px 44px -8px rgba(0, 0, 0, 0.6), 0 0 0 3px rgba(59, 130, 246, 0.25);
         }
       }
 
+      .search-input {
+        ::ng-deep .ant-input {
+          color: #f8fafc !important;
+
+          &::placeholder {
+            color: #94a3b8 !important;
+          }
+        }
+
+        .input-icon {
+          color: #94a3b8;
+        }
+
+        ::ng-deep .ant-input-affix-wrapper-focused .input-icon {
+          color: var(--color-primary);
+        }
+      }
+
+      .category-chips-label {
+        color: #94a3b8;
+      }
+
       .category-chip {
-        background: var(--color-bg-secondary);
+        background: #1e293b;
         border-color: rgba(59, 130, 246, 0.35);
-        color: var(--color-primary-light);
+        color: #60a5fa;
 
         .anticon {
-          color: var(--color-primary-light);
+          color: #60a5fa;
         }
 
         &:hover {

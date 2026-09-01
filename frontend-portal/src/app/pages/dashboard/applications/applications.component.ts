@@ -54,10 +54,11 @@ import {
           </a>
         </div>
 
-        <div class="page-header">
+        <header class="page-header">
+          <span class="eyebrow">ỨNG TUYỂN CỦA TÔI</span>
           <h1>Đơn ứng tuyển của tôi</h1>
           <p>Theo dõi tiến trình và trạng thái các vị trí bạn đã ứng tuyển</p>
-        </div>
+        </header>
 
         <!-- Desktop Table View -->
         <div class="desktop-table-container hide-mobile">
@@ -241,19 +242,19 @@ import {
   styles: [
     `
       .applications-page {
-        padding: var(--space-8) 0;
-        min-height: 100vh;
-        background: var(--color-bg-primary);
+        min-height: calc(100vh - var(--header-height));
+        padding: 40px 0 64px;
+        background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 5%, var(--color-bg-primary)) 0, var(--color-bg-primary) 260px);
       }
 
       .container {
-        max-width: var(--container-max);
+        width: min(1120px, calc(100% - 40px));
         margin: 0 auto;
-        padding: 0 var(--container-padding);
+        padding: 0;
       }
 
       .back-link-wrapper {
-        margin-bottom: var(--space-5);
+        margin-bottom: var(--space-5, 20px);
       }
 
       .back-link {
@@ -261,10 +262,10 @@ import {
         align-items: center;
         gap: 6px;
         color: var(--color-text-secondary);
-        font-size: var(--text-sm);
+        font-size: var(--text-sm, 14px);
         font-weight: 500;
         text-decoration: none;
-        transition: color var(--transition-fast);
+        transition: color var(--transition-fast, .2s ease);
 
         &:hover {
           color: var(--color-primary);
@@ -272,18 +273,34 @@ import {
       }
 
       .page-header {
-        margin-bottom: var(--space-6);
+        margin-bottom: 28px;
+
+        .eyebrow {
+          display: block;
+          margin-bottom: 8px;
+          color: var(--color-primary);
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
 
         h1 {
           font-family: var(--font-heading);
-          font-size: var(--text-2xl);
-          font-weight: var(--font-bold);
+          font-size: clamp(24px, 2.5vw, 28px);
+          font-weight: 700;
+          line-height: 1.25;
+          letter-spacing: -0.01em;
           color: var(--color-text-primary);
-          margin-bottom: var(--space-2);
+          margin: 0;
         }
 
         p {
+          max-width: 680px;
+          margin: 10px 0 0;
           color: var(--color-text-secondary);
+          font-size: 15px;
+          line-height: 1.6;
         }
       }
 
@@ -425,6 +442,20 @@ import {
         display: flex;
         justify-content: center;
         padding: var(--space-6) 0 var(--space-2);
+      }
+
+      @media (max-width: 700px) {
+        .applications-page {
+          padding: 28px 0 44px;
+        }
+        .container {
+          width: min(100% - 24px, 1120px);
+        }
+        .page-header {
+          align-items: flex-start;
+          flex-direction: column;
+          margin-bottom: 22px;
+        }
       }
 
       @media (max-width: 767px) {

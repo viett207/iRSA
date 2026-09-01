@@ -60,12 +60,13 @@ import { ThemeService } from '../../../core/services/theme.service';
             <!-- Notification Bell (Desktop) -->
             <div
               class="notif-bell hide-mobile"
+              [class.has-unread]="notificationSvc.unreadCount() > 0"
               nz-dropdown
               [nzDropdownMenu]="notifMenu"
               nzTrigger="click"
               nzPlacement="bottomRight"
             >
-              <nz-badge [nzCount]="notificationSvc.unreadCount()" [nzOverflowCount]="9" nzSize="small">
+              <nz-badge [nzCount]="notificationSvc.unreadCount()" [nzOverflowCount]="9">
                 <span nz-icon nzType="bell" nzTheme="outline"></span>
               </nz-badge>
             </div>
@@ -146,12 +147,13 @@ import { ThemeService } from '../../../core/services/theme.service';
             <!-- Notification Bell (Mobile) -->
             <div
               class="notif-bell show-mobile-only"
+              [class.has-unread]="notificationSvc.unreadCount() > 0"
               nz-dropdown
               [nzDropdownMenu]="notifMenuMobile"
               nzTrigger="click"
               nzPlacement="bottomRight"
             >
-              <nz-badge [nzCount]="notificationSvc.unreadCount()" [nzOverflowCount]="9" nzSize="small">
+              <nz-badge [nzCount]="notificationSvc.unreadCount()" [nzOverflowCount]="9">
                 <span nz-icon nzType="bell" nzTheme="outline"></span>
               </nz-badge>
             </div>

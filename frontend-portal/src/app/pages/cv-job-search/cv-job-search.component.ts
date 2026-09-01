@@ -68,10 +68,7 @@ export function sortJobMatchesByScore(jobs: CVJobMatchItem[]): CVJobMatchItem[] 
 
         <header class="page-header">
           <span class="eyebrow">AI CV MATCHING</span>
-          <h1>
-            <span nz-icon nzType="file-search" nzTheme="outline"></span>
-            Tìm việc làm bằng CV
-          </h1>
+          <h1>Tìm việc làm bằng CV</h1>
           <p>Tải lên CV của bạn hoặc chọn CV đã lưu để hệ thống AI phân tích và gợi ý các công việc phù hợp nhất.</p>
         </header>
 
@@ -307,51 +304,51 @@ export function sortJobMatchesByScore(jobs: CVJobMatchItem[]): CVJobMatchItem[] 
   styles: [`
     :host { display: block; }
     .cv-search-page {
-      min-height: 100vh;
-      padding: clamp(16px, 2.5vh, 28px) 0 48px;
-      background: radial-gradient(circle at 8% 4%, color-mix(in srgb, var(--color-primary) 11%, transparent), transparent 28%), linear-gradient(180deg, var(--color-bg-primary), var(--color-bg-secondary));
+      min-height: calc(100vh - var(--header-height));
+      padding: 40px 0 64px;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 5%, var(--color-bg-primary)) 0, var(--color-bg-primary) 260px);
     }
-    .container { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
-    .back-link-wrapper { margin-bottom: 16px; }
+    .container { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+    .back-link-wrapper { margin-bottom: var(--space-5, 20px); }
     .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-secondary); font-size: var(--text-sm, 14px); font-weight: 500; text-decoration: none; transition: color var(--transition-fast, .2s ease); }
     .back-link:hover { color: var(--color-primary); }
-    .page-header { max-width: 760px; margin-bottom: 14px; }
-    .eyebrow, .section-kicker { display: block; color: var(--color-primary); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 3px; }
-    .page-header h1 { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; color: var(--color-text-primary); font-size: clamp(22px, 2.8vw, 32px); line-height: 1.2; font-weight: 800; }
-    .page-header h1 [nz-icon] { color: var(--color-primary); }
-    .page-header p, .results-heading p { margin: 0; color: var(--color-text-secondary); font-size: 13.5px; }
+    .page-header { margin-bottom: 28px; }
+    .eyebrow, .section-kicker { display: block; color: var(--color-primary); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px; }
+    .page-header h1 { font-family: var(--font-heading); margin: 0; color: var(--color-text-primary); font-size: clamp(24px, 2.5vw, 28px); font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; }
+    .page-header p { max-width: 680px; margin: 10px 0 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
+    .results-heading p { margin: 0; color: var(--color-text-secondary); font-size: 13.5px; }
     .search-card { margin-bottom: 16px; overflow: hidden; border: 1px solid var(--color-border); border-radius: 16px; box-shadow: var(--shadow-sm); }
     .search-card ::ng-deep .ant-card-body { padding: 16px 20px 18px; }
     .uploader-heading { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
     .uploader-heading h2, .analysis-topline h2, .results-heading h2 { margin: 0; color: var(--color-text-primary); font-size: 16.5px; font-weight: 700; }
     .secure-note { display: inline-flex; align-items: center; gap: 5px; color: var(--color-success); font-size: 11.5px; white-space: nowrap; }
     .analyze-button { width: 100%; height: 42px; margin-top: 10px; border-radius: 10px; font-weight: 600; font-size: 14px; }
-    .analysis-panel { margin: 24px 0; padding: 26px; border: 1px solid #BFDBFE; border-radius: 18px; background: linear-gradient(135deg, #F0F7FF 0%, #EBF4FE 50%, #F5F9FF 100%); box-shadow: 0 10px 28px -6px rgba(15, 82, 186, 0.08), 0 2px 8px rgba(15, 82, 186, 0.04); overflow: hidden; }
-    .analysis-panel ::ng-deep .ant-progress-inner { background-color: #DBEAFE !important; border: 1px solid #BFDBFE; }
-    .analysis-panel ::ng-deep .ant-progress-bg { background: linear-gradient(90deg, #2563EB 0%, #0F52BA 100%) !important; box-shadow: 0 1px 4px rgba(15, 82, 186, 0.3); }
+    .analysis-panel { margin: 24px 0; padding: 26px; border: 1px solid var(--color-primary-200); border-radius: 18px; background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-bg-primary) 50%, var(--color-primary-50) 100%); box-shadow: var(--shadow-lg); overflow: hidden; }
+    .analysis-panel ::ng-deep .ant-progress-inner { background-color: var(--color-primary-100) !important; border: 1px solid var(--color-primary-200); }
+    .analysis-panel ::ng-deep .ant-progress-bg { background: linear-gradient(90deg, var(--color-primary-light) 0%, var(--color-primary) 100%) !important; box-shadow: var(--shadow-sm); }
     .analysis-topline { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
-    .analysis-topline .section-kicker { color: #1E40AF; }
-    .analysis-topline h2 { margin: 0; color: #0F172A; font-size: 20px; font-weight: 700; }
-    .ai-orb { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; color: #0F52BA; background: #DBEAFE; border: 1.5px solid #93C5FD; font-size: 24px; box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.18), 0 4px 12px rgba(15, 82, 186, 0.12); animation: pulse 1.8s ease-in-out infinite; }
+    .analysis-topline .section-kicker { color: var(--color-primary); }
+    .analysis-topline h2 { margin: 0; color: var(--color-text-primary); font-size: 20px; font-weight: 700; }
+    .ai-orb { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; color: var(--color-primary); background: var(--color-primary-50); border: 1.5px solid var(--color-primary-200); font-size: 24px; box-shadow: 0 0 0 6px var(--color-primary-100), var(--shadow-md); animation: pulse 1.8s ease-in-out infinite; }
     .analysis-topline > div:nth-child(2) { flex: 1; }
-    .progress-number { color: #0F52BA; font-size: 24px; font-weight: 800; text-shadow: 0 1px 2px rgba(15, 82, 186, 0.12); }
+    .progress-number { color: var(--color-primary); font-size: 24px; font-weight: 800; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); }
     .analysis-steps { display: grid; grid-template-columns: minmax(130px, 1fr) 50px minmax(150px, 1fr) 50px minmax(150px, 1fr); align-items: center; gap: 10px; margin-top: 24px; }
     .analysis-step { display: flex; align-items: center; gap: 10px; opacity: .85; transition: opacity .25s ease, transform .25s ease; }
     .analysis-step.active, .analysis-step.done { opacity: 1; }
     .analysis-step.active { transform: translateY(-2px); }
-    .step-icon { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: #475569; background: #FFFFFF; border: 2px solid #CBD5E1; font-size: 16px; transition: all .25s ease; }
+    .step-icon { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: var(--color-text-secondary); background: var(--color-bg-secondary); border: 2px solid var(--color-border); font-size: 16px; transition: all .25s ease; }
     .step-icon [nz-icon] { font-size: 16px; display: inline-flex; align-items: center; justify-content: center; }
-    .analysis-step.active .step-icon { color: #FFFFFF; background: linear-gradient(135deg, #2563EB 0%, #0F52BA 100%); border: 2px solid #0F52BA; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25); animation: pulse 1.4s ease-in-out infinite; }
-    .analysis-step.done .step-icon { color: #FFFFFF; background: #059669; border: 2px solid #059669; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15); }
+    .analysis-step.active .step-icon { color: #FFFFFF; background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 100%); border: 2px solid var(--color-primary); box-shadow: 0 0 0 4px var(--color-primary-200); animation: pulse 1.4s ease-in-out infinite; }
+    .analysis-step.done .step-icon { color: #FFFFFF; background: var(--color-success); border: 2px solid var(--color-success); box-shadow: 0 0 0 3px var(--color-success-bg); }
     .analysis-step div { display: flex; flex-direction: column; }
-    .analysis-step strong { color: #334155; font-size: 13.5px; font-weight: 600; }
-    .analysis-step span { color: #64748B; font-size: 11.5px; }
-    .analysis-step.active strong { color: #0F172A; font-weight: 700; }
-    .analysis-step.active span { color: #1E40AF; font-weight: 600; }
-    .analysis-step.done strong { color: #065F46; font-weight: 700; }
-    .analysis-step.done span { color: #047857; font-weight: 500; }
-    .step-line { height: 3px; background: #CBD5E1; border-radius: 2px; transition: background .25s ease; }
-    .step-line.done { background: #059669; }
+    .analysis-step strong { color: var(--color-text-primary); font-size: 13.5px; font-weight: 600; }
+    .analysis-step span { color: var(--color-text-tertiary); font-size: 11.5px; }
+    .analysis-step.active strong { color: var(--color-text-primary); font-weight: 700; }
+    .analysis-step.active span { color: var(--color-primary); font-weight: 600; }
+    .analysis-step.done strong { color: var(--color-success); font-weight: 700; }
+    .analysis-step.done span { color: var(--color-success-dark); font-weight: 500; }
+    .step-line { height: 3px; background: var(--color-border); border-radius: 2px; transition: background .25s ease; }
+    .step-line.done { background: var(--color-success); }
     .results-section { margin-top: 34px; scroll-margin-top: 90px; }
     .results-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
     .results-heading h2 { font-size: 27px; }
@@ -407,8 +404,9 @@ export function sortJobMatchesByScore(jobs: CVJobMatchItem[]): CVJobMatchItem[] 
       .job-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 700px) {
-      .container { width: min(100% - 24px, 1180px); }
-      .page-header h1 { align-items: flex-start; }
+      .cv-search-page { padding: 28px 0 44px; }
+      .container { width: min(100% - 24px, 1120px); }
+      .page-header { align-items: flex-start; flex-direction: column; margin-bottom: 22px; }
       .search-card ::ng-deep .ant-card-body { padding: 18px; }
       .uploader-heading, .results-heading { align-items: flex-start; flex-direction: column; }
       .secure-note { align-self: flex-start; }

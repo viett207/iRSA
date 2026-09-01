@@ -90,7 +90,7 @@ import { ResumeManagementComponent } from './resume-management/resume-management
     .back-link:hover { color: var(--color-primary); }
     .page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; margin-bottom: 28px; }
     .eyebrow { display: block; margin-bottom: 8px; color: var(--color-primary); font-size: 11px; font-weight: 800; letter-spacing: .12em; }
-    h1 { margin: 0; color: var(--color-text-primary); font: 800 clamp(28px, 4vw, 40px)/1.2 var(--font-heading); letter-spacing: -.02em; }
+    h1 { margin: 0; color: var(--color-text-primary); font-family: var(--font-heading); font-size: clamp(24px, 2.5vw, 28px); font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; }
     .page-header p { max-width: 680px; margin: 10px 0 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
     .secure-note { display: inline-flex; align-items: center; gap: 5px; color: var(--color-success); font-size: 11.5px; white-space: nowrap; }
     .profile-sections { display: grid; gap: 22px; animation: profile-enter .3s ease both; }

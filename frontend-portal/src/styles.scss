@@ -9,52 +9,79 @@
    ========================================================================== */
 
 :root {
-  /* Primary Color Palette - Royal Sapphire */
-  --color-primary: #0F52BA;
-  --color-primary-dark: #0A387E;
-  --color-primary-light: #2563EB;
-  --color-primary-surface: #EFF6FF;
-  --color-primary-50: #EFF6FF;
-  --color-primary-100: #DBEAFE;
-  --color-primary-200: #BFDBFE;
-  --color-primary-300: #93C5FD;
-  --color-primary-500: #0F52BA;
-  --color-primary-600: #0A387E;
+  /* Primary Colors (Professional Trust Blue) - Synced with Admin */
+  --color-primary: hsl(215 70% 42%);
+  --color-primary-light: hsl(215 76% 52%);
+  --color-primary-dark: hsl(218 72% 31%);
+  --color-primary-50: hsl(213 100% 96%);
+  --color-primary-100: hsl(212 94% 90%);
+  --color-primary-200: hsl(212 84% 82%);
+  --color-primary-300: hsl(213 79% 70%);
+  --color-primary-400: hsl(214 75% 58%);
+  --color-primary-500: hsl(215 76% 52%);
+  --color-primary-600: hsl(215 70% 42%);
+  --color-primary-700: hsl(218 72% 35%);
+  --color-primary-800: hsl(220 73% 28%);
+  --color-primary-900: hsl(222 73% 20%);
+  --color-primary-surface: var(--color-primary-50);
 
-  /* Semantic - Success / Salary (Emerald) */
-  --color-success: #059669;
-  --color-success-light: #10B981;
-  --color-success-bg: #ECFDF5;
-  --color-success-border: #A7F3D0;
+  /* Semantic - Success / Salary */
+  --color-success: hsl(153 48% 34%);
+  --color-success-light: hsl(153 46% 54%);
+  --color-success-dark: hsl(153 54% 27%);
+  --color-success-bg: hsl(145 55% 96%);
+  --color-success-border: hsl(153 48% 80%);
 
-  /* Semantic - Warning / Pending (Amber) */
-  --color-warning: #D97706;
-  --color-warning-light: #F59E0B;
-  --color-warning-bg: #FFFBEB;
-  --color-warning-border: #FDE68A;
+  /* Semantic - Warning / Pending */
+  --color-warning: hsl(36 76% 43%);
+  --color-warning-light: hsl(38 82% 63%);
+  --color-warning-dark: hsl(31 78% 35%);
+  --color-warning-bg: hsl(39 100% 96%);
+  --color-warning-border: hsl(38 82% 80%);
 
-  /* Semantic - Error / Critical (Ruby) */
-  --color-error: #DC2626;
-  --color-error-light: #EF4444;
-  --color-error-bg: #FEF2F2;
-  --color-error-border: #FECACA;
+  /* Semantic - Error / Critical */
+  --color-error: hsl(0 67% 48%);
+  --color-error-light: hsl(0 76% 66%);
+  --color-error-dark: hsl(0 72% 39%);
+  --color-error-bg: hsl(0 100% 97%);
+  --color-error-border: hsl(0 76% 85%);
 
-  /* Neutrals - Slate Surfaces & High Contrast Text */
-  --color-bg-primary: #F8FAFC;
-  --color-bg-secondary: #FFFFFF;
-  --color-bg-tertiary: #F1F5F9;
-  --color-bg-elevated: #FFFFFF;
+  --color-info: var(--color-primary-light);
+  --color-info-bg: var(--color-primary-50);
 
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #475569;
-  --color-text-tertiary: #64748B;
-  --color-text-muted: #64748B;
-  --color-text-inverse: #FFFFFF;
+  /* Neutrals - Unified High Contrast & Surfaces */
+  --color-bg-primary: hsl(215 35% 97%);
+  --color-bg-secondary: hsl(0 0% 100%);
+  --color-bg-tertiary: hsl(214 32% 95%);
+  --color-bg-dark: hsl(220 35% 17%);
+  --color-bg-elevated: hsl(0 0% 100%);
 
-  --color-border: #E2E8F0;
-  --color-border-light: #F1F5F9;
-  --color-border-hover: #BFDBFE;
-  --color-border-focus: #0F52BA;
+  --color-text-primary: hsl(218 28% 19%);
+  --color-text-secondary: hsl(218 16% 39%);
+  --color-text-tertiary: hsl(218 14% 56%);
+  --color-text-muted: hsl(218 14% 56%);
+  --color-text-inverse: hsl(0 0% 100%);
+  --color-text: var(--color-text-primary);
+  --color-bg-card: var(--color-bg-secondary);
+
+  --color-border: hsl(214 25% 87%);
+  --color-border-light: hsl(214 30% 92%);
+  --color-border-dark: hsl(214 23% 79%);
+  --color-border-hover: var(--color-primary-200);
+  --color-border-focus: var(--color-primary);
+
+  /* Shadows - Synced with Admin */
+  --shadow-xs: 0 1px 2px hsl(220 30% 18% / 0.04);
+  --shadow-sm: 0 2px 5px hsl(220 30% 18% / 0.06);
+  --shadow-md: 0 7px 18px hsl(220 30% 18% / 0.08);
+  --shadow-lg: 0 16px 32px hsl(220 30% 18% / 0.10);
+  --shadow-xl: 0 24px 44px hsl(220 30% 18% / 0.13);
+  --shadow-2xl: 0 32px 58px hsl(220 30% 18% / 0.16);
+  --shadow-inner: inset 0 1px 2px hsl(220 30% 18% / 0.05);
+
+  --shadow-header: 0 2px 12px hsl(220 30% 18% / 0.07);
+  --shadow-card: 0 3px 12px hsl(220 30% 18% / 0.045);
+  --shadow-card-hover: 0 12px 26px hsl(220 30% 18% / 0.09);
 
   /* Typography - Unified Be Vietnam Pro */
   --font-heading: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -419,10 +446,11 @@ a {
 
   &:hover,
   &:focus {
-    background-color: var(--color-primary-dark) !important;
-    border-color: var(--color-primary-dark) !important;
+    background-color: var(--color-primary-light) !important;
+    border-color: var(--color-primary-light) !important;
     color: #ffffff !important;
-    box-shadow: 0 2px 8px rgba(15, 82, 186, 0.25) !important;
+    box-shadow: var(--shadow-md) !important;
+    transform: translateY(-1px);
   }
 
   &:active {
@@ -495,7 +523,7 @@ a {
   &:focus,
   &.ant-input-affix-wrapper-focused {
     border-color: var(--color-primary) !important;
-    box-shadow: 0 0 0 3px rgba(15, 82, 186, 0.12) !important;
+    box-shadow: 0 0 0 2px var(--color-primary-100) !important;
   }
 
   &::placeholder {
@@ -533,7 +561,7 @@ a {
 
 .ant-select-focused .ant-select-selector {
   border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 3px rgba(15, 82, 186, 0.12) !important;
+  box-shadow: 0 0 0 2px var(--color-primary-100) !important;
 }
 
 .ant-select-dropdown {
@@ -726,9 +754,9 @@ a {
    6. Custom Component Styles (Shared Helpers)
    ========================================================================== */
 
-/* Hero Section (Clean Professional Royal Blue) */
+/* Hero Section (Clean Professional Trust Blue) */
 .hero-section {
-  background: linear-gradient(135deg, #0A387E 0%, #0F52BA 60%, #1D4ED8 100%);
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 60%, var(--color-primary-light) 100%);
   position: relative;
   overflow: hidden;
 }
