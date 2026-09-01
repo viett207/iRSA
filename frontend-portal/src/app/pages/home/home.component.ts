@@ -678,7 +678,7 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
     .companies-section {
       padding: var(--space-16) 0 var(--space-20);
       background: var(--color-bg-primary);
-      border-top: 1px solid var(--color-border);
+      border: none;
 
       @media (max-width: 768px) {
         padding: var(--space-10) 0 var(--space-16);
@@ -936,6 +936,7 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
     .jobs-section {
       padding: var(--space-16) 0 var(--space-20);
       background: var(--color-bg-primary);
+      border: none;
 
       @media (max-width: 768px) {
         padding: var(--space-10) 0 var(--space-16);
