@@ -149,3 +149,51 @@ async def notify_interview_scheduled(
         message=f"Bạn có lịch phỏng vấn {type_label} cho vị trí {job_title} vào {interview_date}",
         data={"job_id": job_id, "application_id": application_id},
     )
+
+
+async def notify_hr_interview_response(
+    db: AsyncSession,
+    hr_user_id: int,
+    candidate_name: str,
+    job_title: str,
+    response_type: str,
+    interview_date_str: str,
+    proposed_date_str: str | None = None,
+    note: str | None = None,
+    job_id: int | None = None,
+    application_id: int | None = None,
+    interview_id: int | None = None,
+):
+    """Notify HR when a candidate responds to an interview invitation."""
+    if response_type == "accepted":
+        title = "Ứng viên đã xác nhận phỏng vấn"
+        msg = f"{candidate_name} đã xác nhận tham gia phỏng vấn vị trí {job_title} vào lúc {interview_date_str}"
+        notif_type = "interview_accepted"
+    elif response_type == "declined":
+        title = "Ứng viên từ chối phỏng vấn"
+        msg = f"{candidate_name} đã từ chối lịch phỏng vấn vị trí {job_title}"
+        if note:
+            msg += f'. Lý do: "{note}"'
+        notif_type = "interview_declined"
+    else:  # reschedule_requested
+        title = "Ứng viên yêu cầu đổi lịch phỏng vấn"
+        msg = f"{candidate_name} xin đổi lịch PV vị trí {job_title}"
+        if proposed_date_str:
+            msg += f" sang {proposed_date_str}"
+        if note:
+            msg += f'. Lý do: "{note}"'
+        notif_type = "interview_reschedule"
+
+    await create_and_push(
+        db, hr_user_id,
+        type=notif_type,
+        title=title,
+        message=msg,
+        data={
+            "job_id": job_id,
+            "application_id": application_id,
+            "interview_id": interview_id,
+            "response": response_type,
+        },
+    )
+

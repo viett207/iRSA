@@ -1,6 +1,6 @@
 import { Component, signal, computed, OnInit, OnDestroy, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval, startWith, switchMap } from 'rxjs';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
@@ -805,14 +805,22 @@ import { DashboardService } from '../../core/services/dashboard.service';
         color: var(--color-info);
       }
 
-      &.success {
-        background: var(--color-success-bg);
-        color: var(--color-success);
+      &.success,
+      &.interview_accepted {
+        background: var(--color-success-bg, #f6ffed);
+        color: var(--color-success, #52c41a);
       }
 
-      &.warning {
-        background: var(--color-warning-bg);
-        color: var(--color-warning);
+      &.warning,
+      &.interview_reschedule {
+        background: var(--color-warning-bg, #fffbe6);
+        color: var(--color-warning, #faad14);
+      }
+
+      &.error,
+      &.interview_declined {
+        background: var(--color-error-bg, #fff2f0);
+        color: var(--color-error, #ff4d4f);
       }
     }
 
@@ -1046,11 +1054,16 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     return labels[role || ''] || 'Người dùng';
   }
 
+  private readonly router = inject(Router);
+
   getNotificationIcon(type: string): string {
     const icons: Record<string, string> = {
       application: 'file-text',
       job: 'solution',
       interview: 'calendar',
+      interview_accepted: 'check-circle',
+      interview_declined: 'close-circle',
+      interview_reschedule: 'clock-circle',
       system: 'info-circle',
     };
     return icons[type] || 'bell';
@@ -1059,6 +1072,13 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   onNotificationClick(notif: any): void {
     if (!notif.is_read) {
       this.notificationSvc.markAsRead(notif.id);
+    }
+    if (notif.type?.startsWith('interview')) {
+      this.router.navigate(['/jobs/interviewing']);
+    } else if (notif.data?.application_id) {
+      this.router.navigate(['/applications']);
+    } else if (notif.data?.job_id) {
+      this.router.navigate(['/jobs', notif.data.job_id]);
     }
   }
 
