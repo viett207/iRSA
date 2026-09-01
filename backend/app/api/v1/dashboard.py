@@ -5,7 +5,7 @@ Admin users without company_code see all data.
 """
 
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Tuple
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -25,6 +25,11 @@ class DashboardStats(BaseModel):
     active_jobs: int
     total_applications: int
     total_candidates: int
+    pending_applications: int
+    avg_time_to_fill: float | None
+    jobs_trend: float | None
+    apps_trend: float | None
+    time_trend: float | None
 
 
 class RecentApplication(BaseModel):
@@ -59,6 +64,27 @@ CACHE_TTL_SECONDS = 15.0
 # --- Endpoint ---
 
 router = APIRouter()
+
+
+def _percentage_change(current: int, previous: int) -> float:
+    """Return an honest period-over-period percentage without fabricating a baseline."""
+    if previous == 0:
+        return 100.0 if current > 0 else 0.0
+    return round(((current - previous) / previous) * 100, 1)
+
+
+def _average(values: list[float]) -> float | None:
+    return round(sum(values) / len(values), 1) if values else None
+
+
+def _elapsed_days(start: datetime, end: datetime) -> float | None:
+    """Calculate elapsed days safely for both timezone-aware and legacy naive rows."""
+    if start.tzinfo is None:
+        start = start.replace(tzinfo=timezone.utc)
+    if end.tzinfo is None:
+        end = end.replace(tzinfo=timezone.utc)
+    elapsed = (end - start).total_seconds() / 86400
+    return elapsed if elapsed >= 0 else None
 
 
 @router.get("/stats", response_model=DashboardResponse)
@@ -111,6 +137,86 @@ async def get_dashboard_stats(
         )
     ).all()
     status_counts = {row[0]: row[1] for row in status_rows}
+    pending_applications = status_counts.get("submitted", 0) + status_counts.get("reviewing", 0)
+
+    # Real weekly trends. These values are based on persisted timestamps rather
+    # than UI-generated placeholders.
+    period_end = datetime.now(timezone.utc)
+    current_week_start = period_end - timedelta(days=7)
+    previous_week_start = current_week_start - timedelta(days=7)
+
+    current_jobs = await db.scalar(
+        select(func.count(Job.id)).where(
+            Job.is_published == True,
+            Job.id.in_(company_jobs_sq),
+            Job.published_at >= current_week_start,
+        )
+    ) or 0
+    previous_jobs = await db.scalar(
+        select(func.count(Job.id)).where(
+            Job.is_published == True,
+            Job.id.in_(company_jobs_sq),
+            Job.published_at >= previous_week_start,
+            Job.published_at < current_week_start,
+        )
+    ) or 0
+
+    current_apps = await db.scalar(
+        select(func.count(Application.id)).where(
+            Application.job_id.in_(company_jobs_sq),
+            Application.submitted_at >= current_week_start,
+        )
+    ) or 0
+    previous_apps = await db.scalar(
+        select(func.count(Application.id)).where(
+            Application.job_id.in_(company_jobs_sq),
+            Application.submitted_at >= previous_week_start,
+            Application.submitted_at < current_week_start,
+        )
+    ) or 0
+
+    # Time-to-fill is measured from job creation to the persisted timestamp at
+    # which an application reached `hired`. Rows without an update timestamp are
+    # excluded because their completion time cannot be established reliably.
+    hired_rows = (
+        await db.execute(
+            select(Job.created_at, Application.updated_at)
+            .join(Application, Application.job_id == Job.id)
+            .where(
+                Job.id.in_(company_jobs_sq),
+                Application.status == "hired",
+                Application.updated_at.is_not(None),
+            )
+        )
+    ).all()
+
+    all_fill_days: list[float] = []
+    current_fill_days: list[float] = []
+    previous_fill_days: list[float] = []
+    current_month_start = period_end - timedelta(days=30)
+    previous_month_start = current_month_start - timedelta(days=30)
+
+    for created_at, hired_at in hired_rows:
+        if not created_at or not hired_at:
+            continue
+        elapsed = _elapsed_days(created_at, hired_at)
+        if elapsed is None:
+            continue
+        all_fill_days.append(elapsed)
+        normalized_hired_at = hired_at if hired_at.tzinfo else hired_at.replace(tzinfo=timezone.utc)
+        if normalized_hired_at >= current_month_start:
+            current_fill_days.append(elapsed)
+        elif normalized_hired_at >= previous_month_start:
+            previous_fill_days.append(elapsed)
+
+    avg_time_to_fill = _average(all_fill_days)
+    current_time_avg = _average(current_fill_days)
+    previous_time_avg = _average(previous_fill_days)
+    time_trend = (
+        round(current_time_avg - previous_time_avg, 1)
+        if current_time_avg is not None and previous_time_avg is not None
+        else None
+    )
 
     # Recent applications (last 10, company-scoped) - use joinedload for 1 roundtrip
     recent_result = await db.execute(
@@ -175,6 +281,11 @@ async def get_dashboard_stats(
             active_jobs=active_jobs,
             total_applications=total_applications,
             total_candidates=total_candidates,
+            pending_applications=pending_applications,
+            avg_time_to_fill=avg_time_to_fill,
+            jobs_trend=_percentage_change(current_jobs, previous_jobs),
+            apps_trend=_percentage_change(current_apps, previous_apps),
+            time_trend=time_trend,
         ),
         application_status_counts=status_counts,
         job_status_counts=job_status_counts,
