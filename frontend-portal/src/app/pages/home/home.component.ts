@@ -676,12 +676,13 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
        Companies Section
        ========================================================================== */
     .companies-section {
-      padding: var(--space-16) 0 var(--space-20);
-      background: var(--color-bg-primary);
-      border: none;
+      padding: var(--space-12) 0 var(--space-16);
+      background: var(--color-bg-secondary);
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
 
       @media (max-width: 768px) {
-        padding: var(--space-10) 0 var(--space-16);
+        padding: var(--space-8) 0 var(--space-10);
       }
     }
 
@@ -934,12 +935,11 @@ import { PublicJobListItem, ActiveCompany } from '../../shared/models/job.model'
        Latest Jobs Section
        ========================================================================== */
     .jobs-section {
-      padding: var(--space-16) 0 var(--space-20);
+      padding: var(--space-12) 0 var(--space-16);
       background: var(--color-bg-primary);
-      border: none;
 
       @media (max-width: 768px) {
-        padding: var(--space-10) 0 var(--space-16);
+        padding: var(--space-8) 0 var(--space-10);
       }
     }
 
