@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -28,6 +28,7 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 
 import { JobService } from '../../services/job.service';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -54,6 +55,8 @@ import {
   MatchDetailsResponse,
   CvJdCompareResponse,
   AiEvaluationResponse,
+  AiEvaluation,
+  Interview,
 } from '../../models/job.model';
 
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
@@ -90,13 +93,14 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
     NzPopoverModule,
     NzProgressModule,
     NzCheckboxModule,
+    NzPaginationModule,
     NzDatePickerModule,
     NzSelectModule,
   ],
   templateUrl: './job-detail.component.html',
   styleUrl: './job-detail.component.scss',
 })
-export class JobDetailComponent implements OnInit, OnDestroy {
+export class JobDetailComponent implements OnInit {
   job = signal<Job | null>(null);
   loading = signal(false);
   readonly workflowStages = ['Bản nháp', 'Chờ duyệt', 'Đã duyệt', 'Đang tuyển'];
@@ -108,22 +112,49 @@ export class JobDetailComponent implements OnInit, OnDestroy {
   transitioningApplicationId = signal<number | null>(null);
   applicantsPage = 1;
   private applicantsLoaded = false;
-  private matchingRefreshTimer: ReturnType<typeof setTimeout> | null = null;
-  private matchingRefreshAttempts = 0;
-  private readonly matchingRefreshIntervalMs = 3_000;
-  private readonly maxMatchingRefreshAttempts = 100;
 
   rejectModalVisible = false;
   rejectReason = '';
   downloadingAppId: number | null = null;
   evaluatingAppId: number | null = null;
   evaluatingAll = false;
-  sortBy: 'date' | 'ai_score' = 'date';
+  sortBy: 'date' | 'ai_score' | 'score' = 'date';
+  viewMode: 'table' | 'split' = 'table';
+  applicantQuickFilter: 'all' | 'top_match' | 'top_ai' | 'needs_review' = 'all';
   compareSelected = new Set<number>();
   applicantSearchTerm = '';
   applicantAiFilter: 'all' | 'pending' | 'evaluated' = 'all';
   submittedDate = '';
   submittedDateObj: Date | null = null;
+  selectedApplicant = signal<Applicant | null>(null);
+  selectedCompareReview = signal<CvJdCompareResponse | null>(null);
+  selectedAiReview = signal<AiEvaluationResponse | null>(null);
+  selectedInterviews = signal<Interview[]>([]);
+  reviewCompareLoading = signal(false);
+  reviewAiLoading = signal(false);
+  reviewResumeLoading = signal(false);
+  reviewResumeUrl = signal<SafeResourceUrl | null>(null);
+  candidateListCollapsed = false;
+  private reviewResumeObjectUrl: string | null = null;
+
+  upcomingInterview = computed(() => {
+    const now = Date.now();
+    return this.selectedInterviews()
+      .filter((item) => item.status === 'scheduled' && new Date(item.interview_date).getTime() >= now)
+      .sort((a, b) => new Date(a.interview_date).getTime() - new Date(b.interview_date).getTime())[0] || null;
+  });
+
+  candidateSummary = computed(() => {
+    const items = this.applicants();
+    const passed = items.filter((item) => (item.ai_score ?? -1) >= 70).length;
+    const failed = items.filter((item) => item.ai_score != null && item.ai_score < 40).length;
+    const undecided = Math.max(0, items.length - passed - failed);
+    const top = items
+      .filter((item) => item.ai_score != null)
+      .sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0))
+      .slice(0, 3);
+    return { passed, failed, undecided, top, total: items.length };
+  });
 
   onSubmittedDateChange(date: Date | null): void {
     if (date) {
@@ -187,10 +218,7 @@ export class JobDetailComponent implements OnInit, OnDestroy {
         const j = this.job();
         if (j) {
           this.loadJob(j.id);
-          if (this.applicantsLoaded) {
-            if (n.type === 'application') this.matchingRefreshAttempts = 0;
-            this.loadApplicants();
-          }
+          if (this.applicantsLoaded) this.loadApplicants();
         }
       }
     });
@@ -198,7 +226,7 @@ export class JobDetailComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.notifSub?.unsubscribe();
-    this.stopMatchingScoreRefresh();
+    this.releaseReviewResumeUrl();
   }
 
   loadJob(id: number): void {
@@ -412,17 +440,16 @@ export class JobDetailComponent implements OnInit, OnDestroy {
 
   onApplicantsTabSelect(): void {
     if (!this.applicantsLoaded) {
-      this.matchingRefreshAttempts = 0;
       this.loadApplicants();
       this.applicantsLoaded = true;
     }
   }
 
-  loadApplicants(showLoading = true): void {
+  loadApplicants(): void {
     const j = this.job();
     if (!j) return;
 
-    if (showLoading) this.applicantsLoading.set(true);
+    this.applicantsLoading.set(true);
     this.jobService
       .getApplications(j.id, {
         page: this.applicantsPage,
@@ -435,48 +462,26 @@ export class JobDetailComponent implements OnInit, OnDestroy {
           this.applicants.set(res.items);
           this.applicantsTotal.set(res.total);
           this.applicantsLoading.set(false);
-          this.scheduleMatchingScoreRefresh();
+          const selectedId = this.selectedApplicant()?.id;
+          const selected = selectedId ? res.items.find((item) => item.id === selectedId) : null;
+          if (selected) {
+            this.selectedApplicant.set(selected);
+          } else {
+            this.selectedApplicant.set(null);
+            this.selectedCompareReview.set(null);
+            this.selectedAiReview.set(null);
+            this.releaseReviewResumeUrl();
+          }
         },
         error: () => {
-          if (showLoading) this.message.error('Không thể tải danh sách ứng viên');
+          this.message.error('Không thể tải danh sách ứng viên');
           this.applicantsLoading.set(false);
-          if (!showLoading) this.scheduleMatchingScoreRefresh();
         },
       });
   }
 
-  private scheduleMatchingScoreRefresh(): void {
-    const hasPendingMatching = this.applicants().some((app) => this.isMatchingPending(app));
-    if (!hasPendingMatching || this.matchingRefreshAttempts >= this.maxMatchingRefreshAttempts) {
-      this.stopMatchingScoreRefresh();
-      return;
-    }
-
-    if (this.matchingRefreshTimer !== null) return;
-    this.matchingRefreshTimer = setTimeout(() => {
-      this.matchingRefreshTimer = null;
-      this.matchingRefreshAttempts += 1;
-      this.loadApplicants(false);
-    }, this.matchingRefreshIntervalMs);
-  }
-
-  private stopMatchingScoreRefresh(): void {
-    if (this.matchingRefreshTimer !== null) {
-      clearTimeout(this.matchingRefreshTimer);
-      this.matchingRefreshTimer = null;
-    }
-  }
-
-  isMatchingPending(app: Applicant): boolean {
-    if (app.total_score != null) return false;
-    const submittedAt = new Date(app.submitted_at).getTime();
-    if (Number.isNaN(submittedAt)) return false;
-    return Date.now() - submittedAt < this.maxMatchingRefreshAttempts * this.matchingRefreshIntervalMs;
-  }
-
   onApplicantsPageChange(page: number): void {
     this.applicantsPage = page;
-    this.matchingRefreshAttempts = 0;
     this.loadApplicants();
   }
 
@@ -488,14 +493,171 @@ export class JobDetailComponent implements OnInit, OnDestroy {
       const matchesAi = this.applicantAiFilter === 'all'
         || (this.applicantAiFilter === 'evaluated' && evaluated)
         || (this.applicantAiFilter === 'pending' && !evaluated);
-      return matchesTerm && matchesAi;
+      const matchesQuick = this.applicantQuickFilter === 'all'
+        || (this.applicantQuickFilter === 'top_match' && (app.total_score ?? 0) > 80)
+        || (this.applicantQuickFilter === 'top_ai' && (app.ai_score ?? 0) >= 70)
+        || (this.applicantQuickFilter === 'needs_review'
+          && app.status !== 'hired'
+          && app.status !== 'rejected'
+          && (app.ai_score == null || app.ai_score < 70));
+      return matchesTerm && matchesAi && matchesQuick;
     });
+  }
+
+  setQuickFilter(filter: 'all' | 'top_match' | 'top_ai' | 'needs_review'): void {
+    this.applicantQuickFilter = this.applicantQuickFilter === filter ? 'all' : filter;
+    if (filter === 'top_match') this.changeSortBy('score');
+    if (filter === 'top_ai') this.changeSortBy('ai_score');
+  }
+
+  setViewMode(mode: 'table' | 'split'): void {
+    this.viewMode = mode;
+  }
+
+  openApplicantReview(app: Applicant): void {
+    this.viewMode = 'split';
+    this.selectApplicant(app);
+  }
+
+  showApplicantOverview(): void {
+    this.selectedApplicant.set(null);
+    this.selectedCompareReview.set(null);
+    this.selectedAiReview.set(null);
+    this.selectedInterviews.set([]);
+    this.reviewCompareLoading.set(false);
+    this.reviewAiLoading.set(false);
+    this.reviewResumeLoading.set(false);
+    this.releaseReviewResumeUrl();
+  }
+
+  getSummaryChartBackground(): string {
+    const summary = this.candidateSummary();
+    if (!summary.total) return '#eeece6';
+    const passEnd = (summary.passed / summary.total) * 100;
+    const reviewEnd = passEnd + (summary.undecided / summary.total) * 100;
+    return `conic-gradient(#52705c 0 ${passEnd}%, #a1a1aa ${passEnd}% ${reviewEnd}%, #a66a62 ${reviewEnd}% 100%)`;
+  }
+
+  getScoreTone(score?: number | null): 'high' | 'medium' | 'low' | 'empty' {
+    if (score == null) return 'empty';
+    if (score >= 70) return 'high';
+    if (score >= 40) return 'medium';
+    return 'low';
+  }
+
+  getCandidateInitials(name: string): string {
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(-2)
+      .map((part) => part.charAt(0))
+      .join('')
+      .toLocaleUpperCase('vi') || 'UV';
   }
 
   applySubmittedDate(value: string): void {
     this.submittedDate = value || '';
     this.applicantsPage = 1;
     this.loadApplicants();
+  }
+
+  selectApplicant(app: Applicant): void {
+    const j = this.job();
+    if (!j) return;
+
+    this.selectedApplicant.set(app);
+    this.selectedCompareReview.set(null);
+    this.selectedAiReview.set(null);
+    this.selectedInterviews.set([]);
+    this.reviewCompareLoading.set(true);
+    this.reviewResumeLoading.set(true);
+    this.reviewAiLoading.set(app.ai_score != null || !!app.has_ai_evaluation);
+    this.releaseReviewResumeUrl();
+
+    this.jobService.downloadResume(j.id, app.id).subscribe({
+      next: (blob) => {
+        if (this.selectedApplicant()?.id !== app.id) return;
+        const pdf = new Blob([blob], { type: blob.type || 'application/pdf' });
+        this.reviewResumeObjectUrl = URL.createObjectURL(pdf);
+        this.updateReviewResumeUrl();
+        this.reviewResumeLoading.set(false);
+      },
+      error: () => {
+        if (this.selectedApplicant()?.id === app.id) this.reviewResumeLoading.set(false);
+      },
+    });
+
+    this.jobService.getCvJdCompare(j.id, app.id).subscribe({
+      next: (data) => {
+        if (this.selectedApplicant()?.id === app.id) {
+          this.selectedCompareReview.set(data);
+          this.reviewCompareLoading.set(false);
+        }
+      },
+      error: () => {
+        if (this.selectedApplicant()?.id === app.id) this.reviewCompareLoading.set(false);
+      },
+    });
+
+    this.loadSelectedInterviews(app);
+
+    if (app.ai_score != null || app.has_ai_evaluation) {
+      this.jobService.getAiEvaluation(j.id, app.id).subscribe({
+        next: (data) => {
+          if (this.selectedApplicant()?.id === app.id) {
+            this.selectedAiReview.set(data);
+            this.reviewAiLoading.set(false);
+          }
+        },
+        error: () => {
+          if (this.selectedApplicant()?.id === app.id) this.reviewAiLoading.set(false);
+        },
+      });
+    }
+  }
+
+  toggleCandidateList(): void {
+    this.candidateListCollapsed = !this.candidateListCollapsed;
+  }
+
+  private loadSelectedInterviews(app: Applicant): void {
+    const j = this.job();
+    if (!j) return;
+    this.jobService.getInterviews(j.id, app.id).subscribe({
+      next: (items) => {
+        if (this.selectedApplicant()?.id === app.id) this.selectedInterviews.set(items);
+      },
+      error: () => {
+        if (this.selectedApplicant()?.id === app.id) this.selectedInterviews.set([]);
+      },
+    });
+  }
+
+  formatInterviewDate(value: string): string {
+    return new Intl.DateTimeFormat('vi-VN', {
+      weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    }).format(new Date(value));
+  }
+
+  getFoundSkillCount(evaluation: AiEvaluation): number {
+    return evaluation.skill_assessments.filter((item) => item.found).length;
+  }
+
+  private updateReviewResumeUrl(): void {
+    if (!this.reviewResumeObjectUrl) {
+      this.reviewResumeUrl.set(null);
+      return;
+    }
+    this.reviewResumeUrl.set(
+      this.sanitizer.bypassSecurityTrustResourceUrl(`${this.reviewResumeObjectUrl}#page=1&view=Fit`),
+    );
+  }
+
+  private releaseReviewResumeUrl(): void {
+    if (this.reviewResumeObjectUrl) URL.revokeObjectURL(this.reviewResumeObjectUrl);
+    this.reviewResumeObjectUrl = null;
+    this.reviewResumeUrl.set(null);
   }
 
   getAppStatusLabel(status: string): string {
@@ -564,10 +726,11 @@ export class JobDetailComponent implements OnInit, OnDestroy {
     if (!j) return;
 
     this.evaluatingAppId = app.id;
+    if (this.selectedApplicant()?.id === app.id) {
+      this.reviewAiLoading.set(true);
+    }
     this.startEvaluatingStepAnimation();
-
-    // Open Live Progress Modal
-    this.openScoringProgress(app);
+    this.message.info(`Đang đánh giá hồ sơ ${app.candidate_name}. Bạn có thể tiếp tục đọc CV.`);
 
     this.jobService.triggerAiEvaluation(j.id, app.id).subscribe({
       next: () => {
@@ -577,10 +740,23 @@ export class JobDetailComponent implements OnInit, OnDestroy {
           this.evaluatingAppId = null;
           if (this.evaluatingTimer) clearInterval(this.evaluatingTimer);
           this.loadApplicants();
+          if (this.selectedApplicant()?.id === app.id) {
+            this.jobService.getAiEvaluation(j.id, app.id).subscribe({
+              next: (data) => {
+                this.selectedAiReview.set(data);
+                this.reviewAiLoading.set(false);
+              },
+              error: () => {
+                this.reviewAiLoading.set(false);
+                this.message.warning('Đánh giá đã được gửi, nhưng kết quả chưa sẵn sàng.');
+              },
+            });
+          }
         }, 11000);
       },
       error: () => {
         this.evaluatingAppId = null;
+        if (this.selectedApplicant()?.id === app.id) this.reviewAiLoading.set(false);
         if (this.evaluatingTimer) clearInterval(this.evaluatingTimer);
         this.message.error('Lỗi khi gửi yêu cầu phân tích AI');
       },
@@ -732,7 +908,7 @@ export class JobDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  changeSortBy(sort: 'date' | 'ai_score'): void {
+  changeSortBy(sort: 'date' | 'ai_score' | 'score'): void {
     if (this.sortBy === sort) return;
     this.sortBy = sort;
     this.applicantsPage = 1;
@@ -786,6 +962,7 @@ export class JobDetailComponent implements OnInit, OnDestroy {
     ref.afterClose.subscribe((result) => {
       if (result) {
         this.loadApplicants();
+        this.loadSelectedInterviews(app);
       }
     });
   }
@@ -858,6 +1035,14 @@ export class JobDetailComponent implements OnInit, OnDestroy {
         this.applicants.update((list) =>
           list.map((a) => (a.id === app.id ? { ...a, status: updated.status, public_status: updated.public_status, updated_at: updated.updated_at } : a))
         );
+        if (this.selectedApplicant()?.id === app.id) {
+          this.selectedApplicant.update((current) => current ? {
+            ...current,
+            status: updated.status,
+            public_status: updated.public_status,
+            updated_at: updated.updated_at,
+          } : current);
+        }
         this.message.success(`Đã chuyển trạng thái sang "${this.getAppStatusLabel(newStatus)}"`);
       },
       error: (err) => {
@@ -865,6 +1050,44 @@ export class JobDetailComponent implements OnInit, OnDestroy {
         const detail = err?.error?.detail || 'Không thể cập nhật trạng thái';
         this.message.error(detail);
       },
+    });
+  }
+
+  getPrimaryCandidateAction(app: Applicant): { label: string; icon: string } | null {
+    const actions: Partial<Record<ApplicationStatus, { label: string; icon: string }>> = {
+      submitted: { label: 'Pass vòng chấm điểm', icon: 'check' },
+      reviewing: { label: 'Pass vòng chấm điểm', icon: 'check' },
+      shortlisted: { label: 'Hẹn phỏng vấn', icon: 'calendar' },
+      interviewing: { label: 'Đề nghị tuyển', icon: 'send' },
+      offered: { label: 'Xác nhận tuyển', icon: 'trophy' },
+    };
+    return actions[app.status] ?? null;
+  }
+
+  runPrimaryCandidateAction(app: Applicant): void {
+    if (app.status === 'submitted' || app.status === 'reviewing') {
+      this.updateStatus(app, 'shortlisted');
+    } else if (app.status === 'shortlisted') {
+      this.openScheduleInterview(app);
+    } else if (app.status === 'interviewing') {
+      this.updateStatus(app, 'offered');
+    } else if (app.status === 'offered') {
+      this.updateStatus(app, 'hired');
+    }
+  }
+
+  markForConsideration(app: Applicant): void {
+    this.updateStatus(app, 'reviewing');
+  }
+
+  rejectApplicant(app: Applicant): void {
+    this.modal.confirm({
+      nzTitle: 'Từ chối ứng viên?',
+      nzContent: `Hồ sơ của ${app.candidate_name} sẽ được chuyển sang trạng thái không phù hợp.`,
+      nzOkText: 'Từ chối',
+      nzOkDanger: true,
+      nzCancelText: 'Hủy',
+      nzOnOk: () => this.updateStatus(app, 'rejected'),
     });
   }
 

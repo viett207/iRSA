@@ -14,8 +14,9 @@ export class AuthService {
   private readonly USER_KEY = 'current_user';
 
   private currentUser = signal<User | null>(null);
+  private tokenAvailable = signal(false);
   user = this.currentUser.asReadonly();
-  isAuthenticated = computed(() => !!this.currentUser());
+  isAuthenticated = computed(() => !!this.currentUser() && this.tokenAvailable());
 
   constructor(
     private http: HttpClient,
@@ -26,12 +27,22 @@ export class AuthService {
 
   private loadStoredUser(): void {
     const stored = localStorage.getItem(this.USER_KEY);
-    if (stored) {
+    const accessToken = localStorage.getItem(this.TOKEN_KEY);
+    if (stored && accessToken) {
       try {
-        this.currentUser.set(JSON.parse(stored));
+        const user = JSON.parse(stored) as Partial<User>;
+        const validRoles: User['role'][] = ['candidate', 'recruiter', 'leader', 'admin'];
+        if (!user.id || !user.email || !user.role || !validRoles.includes(user.role)) {
+          this.clearSession();
+          return;
+        }
+        this.currentUser.set(user as User);
+        this.tokenAvailable.set(true);
       } catch {
-        this.clearStorage();
+        this.clearSession();
       }
+    } else if (stored || accessToken || localStorage.getItem(this.REFRESH_KEY)) {
+      this.clearSession();
     }
   }
 
@@ -42,7 +53,7 @@ export class AuthService {
         tap((tokens) => this.storeTokens(tokens)),
         switchMap(() => this.fetchCurrentUser()),
         catchError((error) => {
-          this.clearStorage();
+          this.clearSession();
           return throwError(() => error);
         })
       );
@@ -51,6 +62,7 @@ export class AuthService {
   private storeTokens(tokens: TokenResponse): void {
     localStorage.setItem(this.TOKEN_KEY, tokens.access_token);
     localStorage.setItem(this.REFRESH_KEY, tokens.refresh_token);
+    this.tokenAvailable.set(true);
   }
 
   private fetchCurrentUser(): Observable<User> {
@@ -82,15 +94,16 @@ export class AuthService {
   }
 
   logout(): void {
-    this.clearStorage();
-    this.currentUser.set(null);
+    this.clearSession();
     this.router.navigate(['/login']);
   }
 
-  private clearStorage(): void {
+  clearSession(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_KEY);
     localStorage.removeItem(this.USER_KEY);
+    this.currentUser.set(null);
+    this.tokenAvailable.set(false);
   }
 
   getAccessToken(): string | null {

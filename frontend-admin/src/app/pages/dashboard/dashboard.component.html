@@ -83,8 +83,8 @@
       <section class="dashboard-card recent-section" aria-labelledby="recent-title">
         <header class="card-top-bar table-top-bar">
           <div class="title-group">
-            <h2 id="recent-title" class="section-heading">Hồ sơ mới nhận</h2>
-            <p class="section-desc">{{ recentApplications().length }} hồ sơ được nộp gần nhất, sắp xếp theo thời điểm hệ thống tiếp nhận.</p>
+            <h2 id="recent-title" class="section-heading">Top 10 Hồ sơ ứng tuyển mới nhất</h2>
+            <p class="section-desc">10 hồ sơ ứng tuyển mới nhất được đồng bộ theo thời gian thực từ dữ liệu tuyển dụng.</p>
           </div>
           <a routerLink="/applications" class="inline-action">Xem tất cả hồ sơ</a>
         </header>
@@ -94,15 +94,19 @@
             <table class="flat-data-table">
               <thead>
                 <tr>
-                  <th scope="col" style="width: 27%;">Ứng viên</th>
-                  <th scope="col" style="width: 39%;">Vị trí ứng tuyển</th>
-                  <th scope="col" style="width: 18%;">Thời điểm nhận</th>
-                  <th scope="col" style="width: 16%; text-align: right;">Sàng lọc AI</th>
+                  <th scope="col" style="width: 60px; text-align: center;">TOP</th>
+                  <th scope="col" style="width: 25%;">Ứng viên</th>
+                  <th scope="col" style="width: 40%;">Vị trí ứng tuyển</th>
+                  <th scope="col" style="width: 18%;">Ngày nộp</th>
+                  <th scope="col" style="width: 17%; text-align: right;">Trạng thái</th>
                 </tr>
               </thead>
               <tbody>
-                @for (application of recentApplications(); track application.id) {
+                @for (application of recentApplications(); track application.id; let idx = $index) {
                   <tr>
+                    <td class="text-center">
+                      <span class="top-rank-badge mono-num">#{{ idx + 1 }}</span>
+                    </td>
                     <td>
                       <div class="candidate-identity">
                         <strong class="candidate-name">{{ application.candidate_name }}</strong>
@@ -129,14 +133,10 @@
                       <time [attr.datetime]="application.submitted_at">{{ formatDate(application.submitted_at) }}</time>
                     </td>
                     <td class="text-right">
-                      @if (application.ai_score != null) {
-                        <div class="screening-result">
-                          <strong class="mono-num">{{ application.ai_score | number:'1.0-1' }}</strong>
-                          <span>Đã đánh giá</span>
-                        </div>
-                      } @else {
-                        <span class="screening-pending">Chưa đánh giá</span>
-                      }
+                      <span class="application-status" [attr.data-status]="application.status">
+                        <span aria-hidden="true"></span>
+                        {{ statusLabel(application.status) }}
+                      </span>
                     </td>
                   </tr>
                 }

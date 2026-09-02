@@ -282,7 +282,8 @@
                 class="candidate-toolbar__sort"
               >
                 <nz-option nzValue="date" nzLabel="Mới nhất trước"></nz-option>
-                <nz-option nzValue="ai_score" nzLabel="Điểm AI cao nhất"></nz-option>
+                <nz-option nzValue="ai_score" nzLabel="Điểm AI: Cao đến thấp"></nz-option>
+                <nz-option nzValue="score" nzLabel="Phù hợp JD: Cao đến thấp"></nz-option>
               </nz-select>
             </div>
 
@@ -302,174 +303,232 @@
                   So sánh ({{ compareSelected.size }}/2)
                 </button>
               }
+              <div class="candidate-view-toggle" role="group" aria-label="Chế độ xem ứng viên">
+                <button type="button" [class.is-active]="viewMode === 'table'" (click)="setViewMode('table')" nz-tooltip nzTooltipTitle="Xem dạng bảng"><span nz-icon nzType="table"></span></button>
+                <button type="button" [class.is-active]="viewMode === 'split'" (click)="setViewMode('split')" nz-tooltip nzTooltipTitle="Xem CV và đánh giá"><span nz-icon nzType="layout"></span></button>
+              </div>
+            </div>
+
+            <div class="candidate-quick-filters" aria-label="Bộ lọc nhanh">
+              <span>Lọc nhanh</span>
+              <button type="button" [class.is-active]="applicantQuickFilter === 'top_match'" (click)="setQuickFilter('top_match')"><span nz-icon nzType="star"></span> Top Matching (&gt;80%)</button>
+              <button type="button" [class.is-active]="applicantQuickFilter === 'top_ai'" (click)="setQuickFilter('top_ai')"><span nz-icon nzType="rise"></span> Điểm AI cao</button>
+              <button type="button" [class.is-active]="applicantQuickFilter === 'needs_review'" (click)="setQuickFilter('needs_review')"><span nz-icon nzType="warning"></span> Cần xem xét</button>
             </div>
           </section>
         }
 
-        <nz-table
-          #applicantsTable
-          [nzData]="filteredApplicants()"
-          [nzLoading]="applicantsLoading()"
-          [nzTotal]="applicantsTotal()"
-          [nzPageIndex]="applicantsPage"
-          [nzPageSize]="20"
-          [nzFrontPagination]="false"
-          (nzPageIndexChange)="onApplicantsPageChange($event)"
-          nzSize="middle"
-        >
-          <thead>
-            <tr>
-              <th nzWidth="4%"></th>
-              <th nzWidth="21%">Ứng viên</th>
-              <th nzWidth="23%">Tiến trình đánh giá AI</th>
-              <th nzWidth="11%">Ngày nộp</th>
-              <th nzWidth="23%">Hồ sơ & đối chiếu</th>
-              <th nzWidth="18%"><span class="sr-only">Hành động</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (app of applicantsTable.data; track app.id) {
-              <tr>
-                <td>
-                  <label nz-checkbox
-                    [nzChecked]="compareSelected.has(app.id)"
-                    [nzDisabled]="!compareSelected.has(app.id) && compareSelected.size >= 2"
-                    (nzCheckedChange)="toggleCompare(app.id, $event)">
-                  </label>
-                </td>
-                <td>
-                  <strong>{{ app.candidate_name }}</strong>
-                  <br />
-                  <small class="candidate-email">{{ app.candidate_email }}</small>
-                </td>
-                <td>
-                  @if (app.ai_score != null || app.has_ai_evaluation) {
-                    <button
-                      type="button"
-                      class="ai-evaluation ai-evaluation--complete"
-                      [class.ai-evaluation--strong]="(app.ai_score || 0) >= 70"
-                      [class.ai-evaluation--weak]="(app.ai_score || 0) < 40"
-                      (click)="openAiEvaluation(app)"
-                      nz-tooltip
-                      nzTooltipTitle="Xem kết quả phân tích AI"
-                    >
-                      <span class="ai-evaluation__rail" aria-hidden="true">
-                        @for (step of [1, 2, 3, 4, 5]; track step) {
-                          <span class="ai-evaluation__node"></span>
-                        }
-                      </span>
-                      <span class="ai-evaluation__summary">
-                        <strong class="mono-text">{{ app.ai_score || 0 }}</strong>
-                        <span>{{ getRecommendationLabel(app.ai_recommendation) }}</span>
-                      </span>
-                    </button>
-                  } @else if (evaluatingAppId === app.id) {
-                    <button
-                      type="button"
-                      class="ai-evaluation ai-evaluation--running"
-                      (click)="openScoringProgress(app)"
-                        nz-tooltip
-                        nzTooltipTitle="Xem tiến trình phân tích"
-                    >
-                      <span class="ai-evaluation__rail" aria-hidden="true">
-                        @for (step of [1, 2, 3, 4, 5]; track step) {
-                          <span class="ai-evaluation__node"></span>
-                        }
-                      </span>
-                      <span class="ai-evaluation__summary">
-                        <nz-spin nzSimple nzSize="small"></nz-spin>
-                        <span>Đang phân tích</span>
-                      </span>
-                    </button>
-                  } @else if (isOwner()) {
-                    <button
-                      type="button"
-                      class="ai-evaluation ai-evaluation--empty"
-                      (click)="triggerAi(app)"
-                      nz-tooltip
-                      nzTooltipTitle="Bắt đầu đối chiếu và đánh giá bằng AI"
-                    >
-                      <span class="ai-evaluation__rail" aria-hidden="true">
-                        @for (step of [1, 2, 3, 4, 5]; track step) {
-                          <span class="ai-evaluation__node"></span>
-                        }
-                      </span>
-                      <span class="ai-evaluation__summary">
-                        <span nz-icon nzType="play-circle"></span>
-                        <span>Bắt đầu đánh giá</span>
-                      </span>
-                    </button>
-                  } @else {
-                    <span class="empty-value">Chưa đánh giá</span>
-                  }
-                </td>
-                <td>{{ formatDate(app.submitted_at) }}</td>
-                <td>
-                  <div class="document-actions">
-                    <button
-                      nz-button
-                      nzType="link"
-                      nzSize="small"
-                      class="compact-link"
-                      (click)="viewResume(app)"
-                      nz-tooltip
-                      nzTooltipTitle="Xem nhanh file CV ứng viên"
-                    >
-                      <span nz-icon nzType="eye"></span> Xem CV
-                    </button>
-                    <button
-                      nz-button
-                      nzType="link"
-                      nzSize="small"
-                      class="compact-link"
-                      (click)="downloadResume(app)"
-                      [nzLoading]="downloadingAppId === app.id"
-                      nz-tooltip
-                      nzTooltipTitle="Tải file CV về máy"
-                    >
-                      <span nz-icon nzType="download"></span> Tải CV
-                    </button>
-                    <button
-                      nz-button
-                      nzType="link"
-                      nzSize="small"
-                      class="compact-link"
-                      (click)="openCvJdCompare(app)"
-                      nz-tooltip
-                      nzTooltipTitle="Xem đối chiếu trực quan giữa CV và JD"
-                    >
-                      <span nz-icon nzType="check-circle"></span> Đối chiếu CV-JD
-                    </button>
-                  </div>
-                </td>
-                <td class="text-right">
-                  <div class="candidate-actions">
-                    <a
-                      nz-dropdown
-                      [nzDropdownMenu]="statusMenu"
-                      [nzTrigger]="'click'"
-                      [class.disabled]="transitioningApplicationId() !== null"
-                    >
-                      <span class="status-tag" [attr.data-status]="app.status">
-                        {{ getAppStatusLabel(app.status) }}
-                        <span nz-icon nzType="down"></span>
-                      </span>
-                    </a>
-                    <nz-dropdown-menu #statusMenu="nzDropdownMenu">
-                      <ul nz-menu>
-                        @for (targetStatus of getAvailableTransitions(app.status); track targetStatus) {
-                          <li nz-menu-item (click)="updateStatus(app, targetStatus)">
-                            Chuyển sang: {{ getAppStatusLabel(targetStatus) }}
-                          </li>
-                        }
-                      </ul>
-                    </nz-dropdown-menu>
-                  </div>
-                </td>
-              </tr>
+        @if (viewMode === 'table') {
+          <section class="candidate-table-card">
+            <div class="candidate-table-wrap">
+              <table class="candidate-overview-table">
+                <thead><tr><th>Ứng viên</th><th>Matching JD</th><th>Điểm AI</th><th>Kinh nghiệm</th><th>Trạng thái</th></tr></thead>
+                <tbody>
+                  @for (app of filteredApplicants(); track app.id) {
+                    <tr tabindex="0" (click)="openApplicantReview(app)" (keydown.enter)="openApplicantReview(app)">
+                      <td>
+                        <div class="candidate-table__identity">
+                          <label nz-checkbox [nzChecked]="compareSelected.has(app.id)" [nzDisabled]="!compareSelected.has(app.id) && compareSelected.size >= 2" (click)="$event.stopPropagation()" (nzCheckedChange)="toggleCompare(app.id, $event)"></label>
+                          <div><strong>{{ app.candidate_name }}</strong><small>{{ app.candidate_email }}</small></div>
+                        </div>
+                      </td>
+                      <td><span class="table-score" [attr.data-tone]="getScoreTone(app.total_score)">{{ app.total_score != null ? (app.total_score | number:'1.0-0') + '%' : '—' }}</span></td>
+                      <td><span class="table-score" [attr.data-tone]="getScoreTone(app.ai_score)">{{ app.ai_score != null ? (app.ai_score | number:'1.0-0') : '—' }}</span></td>
+                      <td><span class="experience-value">{{ app.detected_experience_years != null ? app.detected_experience_years + ' năm' : 'Chưa xác định' }}</span></td>
+                      <td><span class="table-status" [attr.data-status]="app.status"><i></i>{{ getAppStatusLabel(app.status) }}</span><span nz-icon nzType="right" class="row-open-icon"></span></td>
+                    </tr>
+                  } @empty { <tr><td colspan="5"><p class="review-empty">Không có ứng viên phù hợp bộ lọc.</p></td></tr> }
+                </tbody>
+              </table>
+            </div>
+            @if (applicantsTotal() > 20) {
+              <footer class="candidate-table-pagination"><span>Đang hiển thị {{ filteredApplicants().length }} / {{ applicantsTotal() }} hồ sơ</span><nz-pagination [nzPageIndex]="applicantsPage" [nzPageSize]="20" [nzTotal]="applicantsTotal()" (nzPageIndexChange)="onApplicantsPageChange($event)"></nz-pagination></footer>
             }
-          </tbody>
-        </nz-table>
+          </section>
+        } @else {
+        <section class="review-workbench" [class.is-list-collapsed]="candidateListCollapsed">
+          <aside class="review-candidates" aria-label="Danh sách ứng viên" (click)="showApplicantOverview()">
+            <header>
+              @if (!candidateListCollapsed) { <div><strong>{{ filteredApplicants().length }} ứng viên</strong><span>Chọn hồ sơ để đánh giá</span></div> }
+              <button type="button" class="candidate-list-toggle" (click)="$event.stopPropagation(); toggleCandidateList()" [attr.aria-label]="candidateListCollapsed ? 'Mở danh sách ứng viên' : 'Thu gọn danh sách ứng viên'" nz-tooltip [nzTooltipTitle]="candidateListCollapsed ? 'Mở danh sách' : 'Thu gọn danh sách'">
+                <span nz-icon [nzType]="candidateListCollapsed ? 'menu-unfold' : 'menu-fold'"></span>
+              </button>
+            </header>
+            @if (!candidateListCollapsed) { <div class="review-candidates__list">
+              @for (app of filteredApplicants(); track app.id) {
+                <article class="review-candidate" [class.is-selected]="selectedApplicant()?.id === app.id" (click)="$event.stopPropagation(); selectApplicant(app)" tabindex="0" (keydown.enter)="selectApplicant(app)">
+                  <label nz-checkbox [nzChecked]="compareSelected.has(app.id)" [nzDisabled]="!compareSelected.has(app.id) && compareSelected.size >= 2" (click)="$event.stopPropagation()" (nzCheckedChange)="toggleCompare(app.id, $event)"></label>
+                  <div class="review-candidate__content">
+                    <div><strong>{{ app.candidate_name }}</strong><span>{{ getAppStatusLabel(app.status) }}</span></div>
+                    <small>{{ app.candidate_email }}</small>
+                    <footer>
+                      @if (app.ai_score != null) { <span class="candidate-ai-score">Điểm AI: <b class="mono-text">{{ app.ai_score | number:'1.0-0' }}/100</b></span> } @else { <span>Chưa đánh giá AI</span> }
+                      <time>{{ formatDate(app.submitted_at) }}</time>
+                    </footer>
+                  </div>
+                </article>
+              } @empty { <p class="review-empty">Không có ứng viên phù hợp bộ lọc.</p> }
+            </div> } @else {
+              <div class="review-candidates__collapsed" aria-label="Ứng viên rút gọn">
+                @for (app of filteredApplicants(); track app.id) {
+                  <button
+                    type="button"
+                    class="candidate-avatar"
+                    [class.is-selected]="selectedApplicant()?.id === app.id"
+                    (click)="$event.stopPropagation(); selectApplicant(app)"
+                    nz-tooltip
+                    [nzTooltipTitle]="app.candidate_name"
+                    nzTooltipPlacement="right"
+                    [attr.aria-label]="'Xem hồ sơ ' + app.candidate_name"
+                  >{{ getCandidateInitials(app.candidate_name) }}</button>
+                }
+              </div>
+            }
+            @if (!candidateListCollapsed && applicantsTotal() > 20) {
+              <footer class="review-candidates__pagination">
+                <nz-pagination
+                  [nzPageIndex]="applicantsPage"
+                  [nzPageSize]="20"
+                  [nzTotal]="applicantsTotal()"
+                  nzSimple
+                  (nzPageIndexChange)="onApplicantsPageChange($event)"
+                ></nz-pagination>
+              </footer>
+            }
+          </aside>
+
+          <div class="review-detail">
+            @if (selectedApplicant(); as selected) {
+              <header class="review-detail__header">
+                <div><span>HỒ SƠ ĐANG XEM</span><h3>{{ selected.candidate_name }}</h3><p>{{ selected.candidate_email }}</p></div>
+                <span class="review-detail__status" [attr.data-status]="selected.status">{{ getAppStatusLabel(selected.status) }}</span>
+              </header>
+
+              <div class="review-detail__split">
+                <section class="pdf-panel">
+                  <header><strong [title]="selected.resume_filename">{{ selected.resume_filename }}</strong></header>
+                  @if (reviewResumeLoading()) {
+                    <div class="review-loading"><nz-spin nzSimple></nz-spin><span>Đang tải CV…</span></div>
+                  } @else if (reviewResumeUrl()) {
+                    <iframe [src]="reviewResumeUrl()" title="CV ứng viên"></iframe>
+                  } @else { <p class="review-empty">Không thể hiển thị CV.</p> }
+                </section>
+
+                <section class="assessment-panel">
+                  <nz-tabset [nzAnimated]="false" class="assessment-tabs">
+                    <nz-tab nzTitle="Đánh giá AI">
+                      @if (reviewAiLoading()) {
+                        <div class="review-loading"><nz-spin nzSimple></nz-spin><span>Đang tải kết quả AI…</span></div>
+                      } @else {
+                        @if (selectedAiReview()?.ai_evaluation; as evaluation) {
+                          <section class="ai-decision-card">
+                            <div class="ai-decision-card__score"><strong class="mono-text">{{ evaluation.overall_score }}</strong><span>/100</span></div>
+                            <div><span class="section-kicker">KHUYẾN NGHỊ CHO HR</span><h3>{{ getRecommendationLabel(evaluation.recommendation) }}</h3><p>{{ evaluation.overall_assessment }}</p></div>
+                          </section>
+
+                          <div class="hr-facts">
+                            <section><span>Kỹ năng xác nhận</span><strong class="mono-text">{{ getFoundSkillCount(evaluation) }}/{{ evaluation.skill_assessments.length }}</strong></section>
+                            <section><span>Kinh nghiệm liên quan</span><strong class="mono-text">{{ evaluation.experience_assessment.relevant_years }} năm</strong><small>{{ evaluation.experience_assessment.summary }}</small></section>
+                            <section><span>Học vấn</span><strong>{{ evaluation.education_assessment.detected_level || 'Chưa xác định' }}</strong><small>{{ evaluation.education_assessment.field_relevant ? 'Đúng chuyên ngành' : 'Cần kiểm tra chuyên ngành' }}</small></section>
+                          </div>
+
+                          <div class="assessment-columns">
+                            <section><h4>Điểm mạnh có bằng chứng</h4><ul>@for (item of evaluation.strengths; track item) { <li>{{ item }}</li> }</ul></section>
+                            <section><h4>Điểm cần xác minh</h4><ul>@for (item of evaluation.concerns; track item) { <li>{{ item }}</li> }</ul></section>
+                          </div>
+
+                          <section class="skill-evidence">
+                            <h4>Bằng chứng kỹ năng trong CV</h4>
+                            @for (skill of evaluation.skill_assessments; track skill.skill) {
+                              <article [class.is-found]="skill.found"><span nz-icon [nzType]="skill.found ? 'check-circle' : 'minus-circle'"></span><div><strong>{{ skill.skill }}</strong><p>{{ skill.evidence || 'Chưa tìm thấy bằng chứng trực tiếp trong CV.' }}</p></div><small class="mono-text">{{ skill.confidence }}%</small></article>
+                            }
+                          </section>
+
+                          @if (isOwner() && selected.status !== 'hired') { <button nz-button class="rerun-ai" (click)="confirmRerunAi(selected)"><span nz-icon nzType="reload"></span> Chấm lại AI</button> }
+                        } @else {
+                          <div class="assessment-empty"><span nz-icon nzType="robot"></span><strong>Chưa có đánh giá AI</strong><p>Có thể đọc đối chiếu CV–JD trước khi dùng lượt AI.</p>@if (isOwner()) { <button nz-button nzType="primary" (click)="triggerAi(selected)">Bắt đầu đánh giá</button> }</div>
+                        }
+                      }
+                    </nz-tab>
+
+                    <nz-tab nzTitle="Đối chiếu JD">
+                      @if (reviewCompareLoading()) {
+                        <div class="review-loading"><nz-spin nzSimple></nz-spin><span>Đang đối chiếu CV–JD…</span></div>
+                      } @else {
+                        @if (selectedCompareReview(); as comparison) {
+                          <div class="match-summary"><span>Matching CV–JD</span><strong class="mono-text">{{ comparison.total_score != null ? comparison.total_score + '%' : '—' }}</strong></div>
+                          <h4>Kỹ năng tìm thấy</h4><div class="review-skills">@for (skill of comparison.matched_skills; track skill) { <span class="is-matched">{{ skill }}</span> } @empty { <small>Không có từ khóa khớp trực tiếp.</small> }</div>
+                          <h4>Chưa tìm thấy trong CV</h4><div class="review-skills">@for (skill of comparison.missing_skills; track skill) { <span class="is-missing">{{ skill }}</span> } @empty { <small>Không có.</small> }</div>
+                          <div class="jd-copy"><h4>Mô tả công việc</h4><p>{{ comparison.job_description || 'Chưa có mô tả.' }}</p><h4>Yêu cầu ứng viên</h4><p>{{ comparison.job_requirements || 'Chưa có yêu cầu.' }}</p></div>
+                        } @else { <p class="review-empty">Không thể tải dữ liệu đối chiếu.</p> }
+                      }
+                    </nz-tab>
+
+                    <nz-tab nzTitle="Phỏng vấn">
+                      <div class="interview-tab">
+                        <section class="interview-next-step">
+                          <header>
+                            <div><span class="section-kicker">LỊCH SẮP TỚI</span><h4>Lịch phỏng vấn</h4></div>
+                            @if (isOwner() && (selected.status === 'shortlisted' || selected.status === 'interviewing')) {
+                              <button nz-button (click)="openScheduleInterview(selected)"><span nz-icon nzType="calendar"></span> {{ upcomingInterview() ? 'Đổi lịch' : 'Đặt lịch' }}</button>
+                            }
+                          </header>
+                          @if (upcomingInterview(); as interview) {
+                            <div class="upcoming-interview"><span nz-icon nzType="clock-circle"></span><div><strong>{{ formatInterviewDate(interview.interview_date) }}</strong><p>{{ interview.interview_type === 'online' ? 'Phỏng vấn trực tuyến' : 'Phỏng vấn trực tiếp' }}{{ interview.location ? ' · ' + interview.location : '' }}</p></div></div>
+                          } @else { <p class="no-schedule">Chưa có lịch phỏng vấn sắp tới.</p> }
+                        </section>
+
+                        <section class="interview-next-step interview-question-card">
+                          <header><div><span class="section-kicker">GỢI Ý TỪ ĐÁNH GIÁ AI</span><h4>Câu hỏi cần xác minh</h4></div></header>
+                          @if (reviewAiLoading()) {
+                            <div class="review-loading review-loading--compact"><nz-spin nzSimple></nz-spin><span>Đang tải câu hỏi…</span></div>
+                          } @else {
+                            @if (selectedAiReview()?.ai_evaluation; as evaluation) {
+                              @if (evaluation.interview_questions?.length) {
+                                <ol class="interview-question-list">@for (question of evaluation.interview_questions!; track question.question) { <li><strong>{{ question.question }}</strong><span>{{ question.purpose }}</span></li> }</ol>
+                              } @else { <p class="no-schedule">Kết quả AI chưa có câu hỏi phỏng vấn gợi ý.</p> }
+                            } @else { <p class="no-schedule">Cần hoàn tất đánh giá AI để tạo câu hỏi theo hồ sơ.</p> }
+                          }
+                        </section>
+                      </div>
+                    </nz-tab>
+                  </nz-tabset>
+                </section>
+              </div>
+
+              @if (isOwner() && selected.status !== 'hired') {
+                <footer class="review-actions">
+                  <div class="review-actions__buttons">
+                    <button nz-button (click)="markForConsideration(selected)" [disabled]="selected.status === 'reviewing' || transitioningApplicationId() !== null"><span nz-icon nzType="clock-circle"></span> Cân nhắc thêm</button>
+                    <button nz-button nzDanger (click)="rejectApplicant(selected)" [disabled]="selected.status === 'rejected' || transitioningApplicationId() !== null">Từ chối</button>
+                    @if (getPrimaryCandidateAction(selected); as action) {
+                      <button nz-button nzType="primary" (click)="runPrimaryCandidateAction(selected)" [disabled]="transitioningApplicationId() !== null"><span nz-icon [nzType]="action.icon"></span> {{ action.label }}</button>
+                    }
+                  </div>
+                </footer>
+              }
+            } @else {
+              @if (candidateSummary(); as summary) {
+                <div class="candidate-mini-dashboard">
+                  <header><span class="section-kicker">TỔNG QUAN HỒ SƠ</span><h3>Chọn ứng viên để bắt đầu đánh giá</h3><p>Số liệu dựa trên {{ summary.total }} hồ sơ đang được tải trong danh sách.</p></header>
+                  <div class="candidate-mini-dashboard__grid">
+                    <section class="candidate-outcome-card">
+                      <div class="candidate-donut" [style.background]="getSummaryChartBackground()"><div><strong class="mono-text">{{ summary.total }}</strong><span>hồ sơ</span></div></div>
+                      <div class="candidate-outcome-legend"><p><i class="is-pass"></i><span>AI phù hợp</span><strong>{{ summary.passed }}</strong></p><p><i class="is-review"></i><span>Chưa quyết định</span><strong>{{ summary.undecided }}</strong></p><p><i class="is-fail"></i><span>Không phù hợp</span><strong>{{ summary.failed }}</strong></p></div>
+                    </section>
+                    <section class="top-candidates-card">
+                      <header><div><span class="section-kicker">ƯU TIÊN XEM</span><h4>Top 3 theo điểm AI</h4></div></header>
+                      @for (app of summary.top; track app.id; let rank = $index) {
+                        <article><span class="candidate-rank mono-text">{{ rank + 1 }}</span><div><strong>{{ app.candidate_name }}</strong><small>Matching {{ app.total_score != null ? (app.total_score | number:'1.0-0') + '%' : '—' }}</small></div><b class="mono-text">AI {{ app.ai_score | number:'1.0-0' }}</b><button type="button" (click)="openApplicantReview(app)">Xem ngay</button></article>
+                      } @empty { <p class="review-empty">Chưa có hồ sơ được đánh giá AI.</p> }
+                    </section>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </section>
+        }
       </nz-tab>
     </nz-tabset>
   }

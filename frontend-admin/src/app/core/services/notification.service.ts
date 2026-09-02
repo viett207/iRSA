@@ -61,6 +61,9 @@ export class NotificationService implements OnDestroy {
           this.notifications.set(res.items);
           this.unreadCount.set(res.unread_count);
         },
+        error: () => {
+          // Keep the shell usable when the notification endpoint is temporarily unavailable.
+        },
       });
   }
 
@@ -73,6 +76,9 @@ export class NotificationService implements OnDestroy {
         );
         this.unreadCount.update((c) => Math.max(0, c - 1));
       },
+      error: () => {
+        // Preserve the local unread state; the next successful refresh reconciles it.
+      },
     });
   }
 
@@ -84,6 +90,9 @@ export class NotificationService implements OnDestroy {
           list.map((n) => ({ ...n, is_read: true }))
         );
         this.unreadCount.set(0);
+      },
+      error: () => {
+        // Preserve the local unread state; the next successful refresh reconciles it.
       },
     });
   }

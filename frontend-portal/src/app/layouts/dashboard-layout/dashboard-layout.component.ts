@@ -15,25 +15,7 @@ import { PortalHeaderComponent } from '../../shared/components/portal-header/por
     NzLayoutModule,
     PortalHeaderComponent,
   ],
-  template: `
-    <nz-layout class="dashboard-layout">
-      <app-portal-header></app-portal-header>
-
-      <nz-content class="dashboard-content">
-        <router-outlet></router-outlet>
-      </nz-content>
-    </nz-layout>
-  `,
-  styles: [`
-    .dashboard-layout {
-      min-height: 100vh;
-    }
-
-    .dashboard-content {
-      background: var(--color-bg-primary);
-      min-height: calc(100vh - var(--header-height));
-      padding-top: var(--header-height);
-    }
-  `],
+  templateUrl: './dashboard-layout.component.html',
+  styleUrl: './dashboard-layout.component.scss',
 })
 export class DashboardLayoutComponent {}

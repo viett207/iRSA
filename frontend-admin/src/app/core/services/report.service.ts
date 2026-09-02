@@ -40,6 +40,10 @@ export interface ReportsOverview {
   scored_applications: number;
   avg_score: number | null;
   hired_count: number;
+  completed_interviews?: number;
+  passed_interviews?: number;
+  interview_pass_rate?: number | null;
+  ai_screening_time_saved_hours?: number | null;
   application_trend: DailyCount[];
   score_distribution: ScoreBucket[];
   application_by_status: StatusCount[];

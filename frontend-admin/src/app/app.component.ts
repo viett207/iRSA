@@ -7,8 +7,8 @@ import { TranslateService } from '@ngx-translate/core';
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, NzMessageModule],
-  template: `<router-outlet></router-outlet>`,
-  styles: [],
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.scss',
 })
 export class AppComponent {
   title = 'frontend-admin';

@@ -1,23 +1,13 @@
 import { inject } from '@angular/core';
-import { Router, CanActivateFn, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from './auth.service';
 
-/**
- * Route guard that requires user to be authenticated.
- * If unauthenticated or token is expired, redirects to /login with returnUrl.
- * If user email is unverified, redirects to /email-required.
- */
-export const authGuard: CanActivateFn = (
-  route: ActivatedRouteSnapshot,
-  state: RouterStateSnapshot
-) => {
+export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  const token = authService.getAccessToken();
-
-  if (!authService.isAuthenticated() || !token || authService.isTokenExpired(token)) {
-    authService.logout(state.url);
+  if (!authService.isAuthenticated()) {
+    router.navigate(['/login']);
     return false;
   }
 
@@ -30,18 +20,14 @@ export const authGuard: CanActivateFn = (
   return true;
 };
 
-/**
- * Route guard for guest-only pages (e.g. /login, /register).
- * If already authenticated, redirects to home '/'.
- */
 export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isAuthenticated()) {
-    router.navigate(['/']);
-    return false;
+  if (!authService.isAuthenticated()) {
+    return true;
   }
 
-  return true;
+  router.navigate(['/']);
+  return false;
 };

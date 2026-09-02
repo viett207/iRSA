@@ -1,10 +1,9 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Subject, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, takeUntil, switchMap, tap, catchError } from 'rxjs/operators';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -25,16 +24,20 @@ import { NzSliderModule } from 'ng-zorro-antd/slider';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ToastService } from '../../core/services/toast.service';
+import { NzMessageService } from 'ng-zorro-antd/message';
 
 import { JobService } from '../../core/services/job.service';
 import { ApplicationService } from '../../core/services/application.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { PublicJobListItem, ActiveCompany, PublicJob } from '../../shared/models/job.model';
 import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industries';
+import { JobsDrawersComponent } from './components/jobs-drawers.component';
+import { JobsFilterPanelComponent } from './components/jobs-filter-panel.component';
+import { JobsResultsToolbarComponent } from './components/jobs-results-toolbar.component';
+import { JobsResultsComponent } from './components/jobs-results.component';
+import { JobsSearchHeroComponent } from './components/jobs-search-hero.component';
 
-interface Job {
+export interface Job {
   id: number;
   slug: string;
   title: string;
@@ -42,7 +45,6 @@ interface Job {
   companyCode?: string;
   companyInitial: string;
   companyGradient: string;
-  department?: string;
   location: string;
   type: string;
   employmentTypeValue: string;
@@ -72,7 +74,6 @@ interface Job {
     CommonModule,
     FormsModule,
     RouterModule,
-    TranslateModule,
     NzGridModule,
     NzCardModule,
     NzInputModule,
@@ -93,27 +94,34 @@ interface Job {
     NzToolTipModule,
     NzDividerModule,
     NzSegmentedModule,
+    JobsDrawersComponent,
+    JobsFilterPanelComponent,
+    JobsResultsToolbarComponent,
+    JobsResultsComponent,
+    JobsSearchHeroComponent,
   ],
   templateUrl: './jobs.component.html',
   styleUrls: ['./jobs.component.scss'],
 })
-export class JobsComponent implements OnInit {
-  private readonly destroyRef = inject(DestroyRef);
+export class JobsComponent implements OnInit, OnDestroy {
+  readonly view = this;
+
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private jobService = inject(JobService);
   private applicationService = inject(ApplicationService);
   public authService = inject(AuthService);
-  public translate = inject(TranslateService);
-  private message = inject(ToastService);
+  private message = inject(NzMessageService);
 
   appliedJobIds = new Set<number>();
   savedJobIds = new Set<number>();
   private searchSubject = new Subject<string>();
   private suggestionSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
 
   // Filter models
   searchQuery = '';
+  isKeywordFocused = false;
   selectedLocation = '';
   selectedCategory: string | null = null;
   selectedSalaryPreset: string = 'all';
@@ -138,7 +146,6 @@ export class JobsComponent implements OnInit {
 
   loading = false;
   totalJobs = 0;
-  animatedTotalJobs = 0;
   suggestions: PublicJobListItem[] = [];
   suggestionsLoading = false;
   allActiveCompanies: ActiveCompany[] = [];
@@ -176,14 +183,13 @@ export class JobsComponent implements OnInit {
   }));
 
   quickChips = [
-    { id: 'hot', label: 'Tuyển gấp 🔥', active: false },
-    { id: 'new', label: 'Mới đăng 24h ✨', active: false },
-    { id: 'high_salary', label: 'Lương > 30 triệu 💰', active: false },
-    { id: 'hcm', label: 'TP. Hồ Chí Minh 📍', active: false },
-    { id: 'hanoi', label: 'Hà Nội 📍', active: false },
-    { id: 'fulltime', label: 'Toàn thời gian 💼', active: false },
-    { id: 'fresher', label: 'Fresher / Thực tập 🌱', active: false },
-    { id: 'senior', label: 'Senior (5+ năm) 🚀', active: false },
+    { id: 'hot', label: 'Tuyển gấp', nzIcon: 'fire', active: false },
+    { id: 'new', label: 'Mới đăng 24h', nzIcon: 'clock-circle', active: false },
+    { id: 'high_salary', label: 'Lương >30 triệu', nzIcon: 'dollar', active: false },
+    { id: 'hcm', label: 'TP. Hồ Chí Minh', nzIcon: 'environment', active: false },
+    { id: 'hanoi', label: 'Hà Nội', nzIcon: 'environment', active: false },
+    { id: 'fresher', label: 'Fresher / Thực tập', nzIcon: 'read', active: false },
+    { id: 'senior', label: 'Senior (5+ năm)', nzIcon: 'trophy', active: false },
   ];
 
   salaryPresets = [
@@ -198,21 +204,21 @@ export class JobsComponent implements OnInit {
   apiJobs: PublicJobListItem[] = [];
 
   private avatarGradients = [
-    'linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary-dark) 100%)',
-    'linear-gradient(135deg, var(--color-primary-cyan) 0%, var(--color-primary-dark) 100%)',
-    'linear-gradient(135deg, var(--color-success-light) 0%, var(--color-success-dark) 100%)',
-    'linear-gradient(135deg, var(--color-warning-light) 0%, var(--color-warning-dark) 100%)',
-    'linear-gradient(135deg, var(--color-secondary-light) 0%, var(--color-secondary-dark) 100%)',
-    'linear-gradient(135deg, var(--color-danger-light) 0%, var(--color-danger-dark) 100%)',
-    'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary-dark) 100%)',
-    'linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-dark) 100%)',
+    '#18181b',
+    '#27272a',
+    '#3f3f46',
+    '#52525b',
   ];
 
   get filteredJobs(): Job[] {
+    let result = this.jobs;
     if (this.onlySavedFilter) {
-      return this.jobs.filter((j) => this.savedJobIds.has(j.id));
+      result = result.filter((j) => this.savedJobIds.has(j.id));
     }
-    return this.jobs;
+    if (this.postedDateFilter === '24h') {
+      result = result.filter((j) => j.isNew);
+    }
+    return result;
   }
 
   get paginatedJobs(): Job[] {
@@ -230,11 +236,7 @@ export class JobsComponent implements OnInit {
     }
 
     this.searchSubject
-      .pipe(
-        debounceTime(400),
-        distinctUntilChanged(),
-        takeUntilDestroyed(this.destroyRef)
-      )
+      .pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(() => {
         this.currentPage = 1;
         this.loadJobs();
@@ -260,7 +262,7 @@ export class JobsComponent implements OnInit {
             catchError(() => of({ items: [] as PublicJobListItem[] }))
           );
         }),
-        takeUntilDestroyed(this.destroyRef)
+        takeUntil(this.destroy$)
       )
       .subscribe({
         next: (res) => {
@@ -273,11 +275,10 @@ export class JobsComponent implements OnInit {
         },
       });
 
-    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const categoryParam = params['category'] || params['department'];
-      if (categoryParam) {
-        this.selectedCategory = categoryParam;
-        const cat = this.categories.find((c) => c.value === categoryParam);
+    this.route.queryParams.subscribe((params) => {
+      if (params['category']) {
+        this.selectedCategory = params['category'];
+        const cat = this.categories.find((c) => c.value === params['category']);
         if (cat) cat.checked = true;
       }
       if (params['location']) {
@@ -296,8 +297,14 @@ export class JobsComponent implements OnInit {
         const max = params['salary_max'] ? parseInt(params['salary_max'], 10) : 100;
         this.salaryRange = [min, max];
       }
+      this.syncQuickChipsState();
       this.loadJobs();
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadSavedJobIds(): void {
@@ -332,10 +339,21 @@ export class JobsComponent implements OnInit {
   }
 
   loadActiveCompanies(): void {
-    this.jobService.listActiveCompanies(50).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.jobService.listActiveCompanies(50).subscribe({
       next: (res) => {
         this.allActiveCompanies = res.items || [];
         this.filteredCompanies = res.items || [];
+        const namesByCode = new Map(
+          this.allActiveCompanies.map((company) => [company.company_code, company.company_name])
+        );
+        this.jobs.forEach((job) => {
+          const companyName = job.companyCode ? namesByCode.get(job.companyCode) : undefined;
+          if (companyName) {
+            job.company = companyName;
+            job.companyInitial = (companyName.trim()[0] || 'D').toUpperCase();
+            job.companyGradient = this.getGradientForString(companyName);
+          }
+        });
       },
       error: () => {},
     });
@@ -354,7 +372,7 @@ export class JobsComponent implements OnInit {
 
   loadAppliedJobIds(): void {
     if (!this.authService.isAuthenticated()) return;
-    this.applicationService.getAppliedJobIds().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.applicationService.getAppliedJobIds().subscribe({
       next: (ids) => {
         this.appliedJobIds = new Set(ids);
         this.jobs.forEach((j) => (j.isApplied = this.appliedJobIds.has(j.id)));
@@ -368,12 +386,6 @@ export class JobsComponent implements OnInit {
     const selectedType = this.jobTypes.find((t) => t.checked);
     const expParams = this.getExperienceParams();
 
-    // Map backend supported order_by values
-    let backendOrderBy: string | undefined = undefined;
-    if (['salary_desc', 'salary_asc', 'popular'].includes(this.sortBy)) {
-      backendOrderBy = this.sortBy;
-    }
-
     this.jobService
       .list({
         q: this.searchQuery ? this.searchQuery.trim() : undefined,
@@ -384,17 +396,15 @@ export class JobsComponent implements OnInit {
         salary_min: this.salaryRange[0] > 0 ? this.salaryRange[0] : undefined,
         salary_max: this.salaryRange[1] < 100 ? this.salaryRange[1] : undefined,
         ...expParams,
-        order_by: backendOrderBy,
+        order_by: this.sortBy !== 'newest' ? this.sortBy : undefined,
         page: this.currentPage,
         size: this.pageSize,
       })
-      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      .subscribe({
         next: (res) => {
           this.apiJobs = res.items || [];
           this.totalJobs = res.total || 0;
-          this.animateTotalJobs(this.totalJobs);
           this.jobs = this.mapApiJobsToDisplay(this.apiJobs);
-          this.applySorting();
           this.loading = false;
 
           // If in split mode and no job selected or current selection not in list, select first
@@ -408,72 +418,18 @@ export class JobsComponent implements OnInit {
           this.loading = false;
           this.jobs = [];
           this.totalJobs = 0;
-          this.animatedTotalJobs = 0;
         },
       });
   }
 
-  private animateTotalJobs(target: number): void {
-    if (target <= 0) {
-      this.animatedTotalJobs = 0;
-      return;
-    }
-    const start = this.animatedTotalJobs;
-    const duration = 600;
-    const startTime = performance.now();
-
-    const update = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 2);
-      this.animatedTotalJobs = Math.round(start + (target - start) * eased);
-      if (progress < 1) {
-        requestAnimationFrame(update);
-      }
-    };
-    requestAnimationFrame(update);
-  }
-
-  private applySorting(): void {
-    if (!this.jobs || this.jobs.length <= 1) return;
-
-    switch (this.sortBy) {
-      case 'popular': // Nhiều ứng viên nhất
-        this.jobs.sort((a, b) => (b.applicants || 0) - (a.applicants || 0));
-        break;
-      case 'least_applicants': // Ít ứng viên nhất
-        this.jobs.sort((a, b) => (a.applicants || 0) - (b.applicants || 0));
-        break;
-      case 'full_time_first': // Toàn thời gian trước
-        this.jobs.sort((a, b) => {
-          const aIsFt = (a.employmentTypeValue === 'full_time' || a.type.toLowerCase().includes('toàn thời gian')) ? 1 : 0;
-          const bIsFt = (b.employmentTypeValue === 'full_time' || b.type.toLowerCase().includes('toàn thời gian')) ? 1 : 0;
-          return bIsFt - aIsFt;
-        });
-        break;
-      case 'part_time_first': // Bán thời gian trước
-        this.jobs.sort((a, b) => {
-          const aIsPt = (a.employmentTypeValue === 'part_time' || a.type.toLowerCase().includes('bán thời gian')) ? 1 : 0;
-          const bIsPt = (b.employmentTypeValue === 'part_time' || b.type.toLowerCase().includes('bán thời gian')) ? 1 : 0;
-          return bIsPt - aIsPt;
-        });
-        break;
-      case 'salary_desc': // Lương cao nhất
-        this.jobs.sort((a, b) => (b.salaryMax || b.salaryMin || 0) - (a.salaryMax || a.salaryMin || 0));
-        break;
-      case 'salary_asc': // Lương thấp nhất
-        this.jobs.sort((a, b) => (a.salaryMin || a.salaryMax || 0) - (b.salaryMin || b.salaryMax || 0));
-        break;
-      default:
-        break;
-    }
-  }
-
   private mapApiJobsToDisplay(apiJobs: PublicJobListItem[]): Job[] {
     return apiJobs.map((j) => {
-      const companyName = j.company_name || (j.company_code ? j.company_code : '');
-      const initial = (companyName.trim()[0] || (j.department ? j.department.trim()[0] : 'J')).toUpperCase();
-      const gradient = this.getGradientForString(companyName || j.title_vi);
+      const activeCompany = this.allActiveCompanies.find(
+        (company) => company.company_code === j.company_code
+      );
+      const companyName = j.company_name || activeCompany?.company_name || j.company_code || 'Doanh nghiệp tuyển dụng';
+      const initial = (companyName.trim()[0] || 'I').toUpperCase();
+      const gradient = this.getGradientForString(companyName);
       const isNew = this.isNewToday(j.published_at);
       const isHot = (j.applications_count && j.applications_count >= 5) || false;
 
@@ -486,8 +442,7 @@ export class JobsComponent implements OnInit {
         }
       }
       if (!snippet) {
-        const placeName = companyName || 'doanh nghiệp';
-        snippet = `Cơ hội làm việc tại ${placeName} với mức đãi ngộ hấp dẫn, môi trường chuyên nghiệp, phát triển kỹ năng vượt trội.`;
+        snippet = `Cơ hội làm việc tại ${companyName} với mức đãi ngộ hấp dẫn, môi trường chuyên nghiệp, phát triển kỹ năng vượt trội.`;
       }
 
       const skills = (j.must_have_skills && j.must_have_skills.length > 0)
@@ -499,16 +454,15 @@ export class JobsComponent implements OnInit {
         slug: j.slug || j.id.toString(),
         title: j.title_vi,
         company: companyName,
-        companyCode: j.company_code ?? undefined,
+        companyCode: j.company_code,
         companyInitial: initial,
         companyGradient: gradient,
-        department: j.department || undefined,
         location: j.location || 'Việt Nam',
         type: this.getEmploymentTypeLabel(j.employment_type),
         employmentTypeValue: j.employment_type || 'full_time',
         experience: this.formatExperienceLabel(j.min_experience_years, j.max_experience_years),
-        minExperienceYears: j.min_experience_years ?? undefined,
-        maxExperienceYears: j.max_experience_years ?? undefined,
+        minExperienceYears: j.min_experience_years,
+        maxExperienceYears: j.max_experience_years,
         skills,
         salaryMin: j.salary_min ?? undefined,
         salaryMax: j.salary_max ?? undefined,
@@ -518,7 +472,7 @@ export class JobsComponent implements OnInit {
         deadlineDate: j.application_deadline ? this.formatDeadline(j.application_deadline) : undefined,
         applicants: j.applications_count || 0,
         descriptionSnippet: snippet,
-        descriptionVi: j.description_vi ?? undefined,
+        descriptionVi: j.description_vi,
         isHot,
         isNew,
         isApplied: this.appliedJobIds.has(j.id),
@@ -556,7 +510,7 @@ export class JobsComponent implements OnInit {
     return this.avatarGradients[index];
   }
 
-  private formatSalaryLabel(min?: number | null, max?: number | null): string {
+  private formatSalaryLabel(min?: number, max?: number): string {
     if (min != null && max != null) {
       return min === max ? `${min} triệu` : `${min} - ${max} triệu`;
     }
@@ -565,7 +519,7 @@ export class JobsComponent implements OnInit {
     return 'Thương lượng';
   }
 
-  private formatSalaryFormatted(min?: number | null, max?: number | null): string {
+  private formatSalaryFormatted(min?: number, max?: number): string {
     if (min != null && max != null) {
       return min === max ? `${min} triệu VNĐ` : `${min} - ${max} triệu VNĐ`;
     }
@@ -574,7 +528,7 @@ export class JobsComponent implements OnInit {
     return 'Thoả thuận';
   }
 
-  private formatExperienceLabel(min?: number | null, max?: number | null): string {
+  private formatExperienceLabel(min?: number, max?: number): string {
     if (min != null && max != null) {
       if (min === 0 && max === 0) return 'Không yêu cầu KN';
       return `${min} - ${max} năm KN`;
@@ -584,7 +538,7 @@ export class JobsComponent implements OnInit {
     return 'Không yêu cầu KN';
   }
 
-  private getEmploymentTypeLabel(type?: string | null): string {
+  private getEmploymentTypeLabel(type?: string): string {
     const labels: Record<string, string> = {
       full_time: 'Toàn thời gian',
       part_time: 'Bán thời gian',
@@ -594,7 +548,7 @@ export class JobsComponent implements OnInit {
     return labels[type || ''] || type || 'Toàn thời gian';
   }
 
-  private formatDate(dateStr?: string | null): string {
+  private formatDate(dateStr?: string): string {
     if (!dateStr) return '';
     const diff = Date.now() - new Date(dateStr).getTime();
     const minutes = Math.floor(diff / 60000);
@@ -620,7 +574,7 @@ export class JobsComponent implements OnInit {
     }
   }
 
-  private isNewToday(dateStr?: string | null): boolean {
+  private isNewToday(dateStr?: string): boolean {
     if (!dateStr) return false;
     const diff = Date.now() - new Date(dateStr).getTime();
     return diff < 48 * 60 * 60 * 1000;
@@ -680,6 +634,7 @@ export class JobsComponent implements OnInit {
         if (t.value !== selected.value) t.checked = false;
       });
     }
+    this.syncQuickChipsState();
     this.currentPage = 1;
     this.loadJobs();
   }
@@ -690,66 +645,121 @@ export class JobsComponent implements OnInit {
         if (e.value !== selected.value) e.checked = false;
       });
     }
+    this.syncQuickChipsState();
     this.currentPage = 1;
     this.loadJobs();
   }
 
-  onSalaryPresetSelect(valueOrPreset: string | { label?: string; value: string; range: [number, number] }): void {
-    let targetValue = 'all';
-    let targetRange: [number, number] = [0, 100];
-
-    if (typeof valueOrPreset === 'string') {
-      targetValue = valueOrPreset;
-      const found = this.salaryPresets.find((p) => p.value === targetValue);
-      if (found) {
-        targetRange = [...found.range];
-      }
-    } else if (valueOrPreset && typeof valueOrPreset === 'object') {
-      targetValue = valueOrPreset.value || 'all';
-      if (valueOrPreset.range) {
-        targetRange = [...valueOrPreset.range];
-      }
-    }
-
-    this.selectedSalaryPreset = targetValue;
-    this.salaryRange = [...targetRange];
+  onSalaryPresetSelect(preset: { label: string; value: string; range: [number, number] }): void {
+    this.selectedSalaryPreset = preset.value;
+    this.salaryRange = [...preset.range];
+    this.syncQuickChipsState();
     this.currentPage = 1;
     this.loadJobs();
   }
 
   toggleQuickChip(chip: { id: string; label: string; active: boolean }): void {
-    chip.active = !chip.active;
+    const willBeActive = !chip.active;
     this.currentPage = 1;
 
     switch (chip.id) {
       case 'hot':
-        this.sortBy = chip.active ? 'popular' : 'newest';
+        this.sortBy = willBeActive ? 'popular' : 'newest';
         break;
       case 'new':
-        this.sortBy = 'newest';
+        this.postedDateFilter = willBeActive ? '24h' : 'all';
+        if (willBeActive) {
+          this.sortBy = 'newest';
+        }
         break;
       case 'high_salary':
-        this.salaryRange = chip.active ? [30, 100] : [0, 100];
+        this.salaryRange = willBeActive ? [30, 100] : [0, 100];
+        this.selectedSalaryPreset = willBeActive ? '30_50' : 'all';
         break;
       case 'hcm':
-        this.selectedLocation = chip.active ? 'Hồ Chí Minh' : '';
+        this.selectedLocation = willBeActive ? 'Hồ Chí Minh' : '';
         break;
       case 'hanoi':
-        this.selectedLocation = chip.active ? 'Hà Nội' : '';
-        break;
-      case 'fulltime':
-        const ft = this.jobTypes.find((t) => t.value === 'full_time');
-        if (ft) ft.checked = chip.active;
+        this.selectedLocation = willBeActive ? 'Hà Nội' : '';
         break;
       case 'fresher':
         const entry = this.experienceLevels.find((e) => e.value === 'entry');
-        if (entry) entry.checked = chip.active;
+        if (entry) {
+          entry.checked = willBeActive;
+          if (willBeActive) {
+            this.experienceLevels.forEach((e) => {
+              if (e.value !== 'entry') e.checked = false;
+            });
+          }
+        }
         break;
       case 'senior':
         const snr = this.experienceLevels.find((e) => e.value === 'senior');
-        if (snr) snr.checked = chip.active;
+        if (snr) {
+          snr.checked = willBeActive;
+          if (willBeActive) {
+            this.experienceLevels.forEach((e) => {
+              if (e.value !== 'senior') e.checked = false;
+            });
+          }
+        }
         break;
     }
+
+    this.syncQuickChipsState();
+    this.loadJobs();
+  }
+
+  syncQuickChipsState(): void {
+    for (const chip of this.quickChips) {
+      switch (chip.id) {
+        case 'hot':
+          chip.active = this.sortBy === 'popular';
+          break;
+        case 'new':
+          chip.active = this.postedDateFilter === '24h';
+          break;
+        case 'high_salary':
+          chip.active = this.salaryRange[0] >= 30;
+          break;
+        case 'hcm':
+          chip.active =
+            !!this.selectedLocation &&
+            (this.selectedLocation.toLowerCase().includes('hồ chí minh') ||
+              this.selectedLocation.toLowerCase().includes('hcm'));
+          break;
+        case 'hanoi':
+          chip.active =
+            !!this.selectedLocation &&
+            (this.selectedLocation.toLowerCase().includes('hà nội') ||
+              this.selectedLocation.toLowerCase().includes('ha noi'));
+          break;
+        case 'fresher':
+          chip.active = !!this.experienceLevels.find((e) => e.value === 'entry')?.checked;
+          break;
+        case 'senior':
+          chip.active = !!this.experienceLevels.find((e) => e.value === 'senior')?.checked;
+          break;
+      }
+    }
+  }
+
+  hasActiveQuickChips(): boolean {
+    return this.quickChips.some((c) => c.active);
+  }
+
+  clearQuickChips(): void {
+    this.sortBy = 'newest';
+    this.postedDateFilter = 'all';
+    this.salaryRange = [0, 100];
+    this.selectedSalaryPreset = 'all';
+    this.selectedLocation = '';
+    const entry = this.experienceLevels.find((e) => e.value === 'entry');
+    if (entry) entry.checked = false;
+    const snr = this.experienceLevels.find((e) => e.value === 'senior');
+    if (snr) snr.checked = false;
+    this.syncQuickChipsState();
+    this.currentPage = 1;
     this.loadJobs();
   }
 
@@ -765,7 +775,7 @@ export class JobsComponent implements OnInit {
     this.previewLoading = true;
     this.previewJobDetail = null;
 
-    this.jobService.getBySlug(job.slug).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.jobService.getBySlug(job.slug).subscribe({
       next: (res) => {
         this.previewJobDetail = res;
         this.previewLoading = false;
@@ -792,6 +802,7 @@ export class JobsComponent implements OnInit {
   }
 
   onFilterChange(): void {
+    this.syncQuickChipsState();
     this.currentPage = 1;
     this.loadJobs();
   }
@@ -816,13 +827,14 @@ export class JobsComponent implements OnInit {
     this.companyCodeFilter = null;
     this.onlySavedFilter = false;
     this.postedDateFilter = 'all';
+    this.sortBy = 'newest';
     this.filteredCompanies = this.allActiveCompanies;
     this.salaryRange = [0, 100];
     this.jobTypes.forEach((t) => (t.checked = false));
     this.experienceLevels.forEach((e) => (e.checked = false));
     this.categories.forEach((c) => (c.checked = false));
-    this.quickChips.forEach((c) => (c.active = false));
     this.filterDrawerOpen = false;
+    this.syncQuickChipsState();
     this.currentPage = 1;
     this.loadJobs();
   }
@@ -839,6 +851,8 @@ export class JobsComponent implements OnInit {
       !!this.selectedCategory ||
       !!this.companyCodeFilter ||
       this.onlySavedFilter ||
+      this.postedDateFilter !== 'all' ||
+      this.sortBy !== 'newest' ||
       this.salaryRange[0] > 0 ||
       this.salaryRange[1] < 100 ||
       this.jobTypes.some((t) => t.checked) ||
@@ -854,6 +868,8 @@ export class JobsComponent implements OnInit {
     if (this.selectedCategory) count++;
     if (this.companyCodeFilter) count++;
     if (this.onlySavedFilter) count++;
+    if (this.postedDateFilter !== 'all') count++;
+    if (this.sortBy !== 'newest') count++;
     if (this.salaryRange[0] > 0 || this.salaryRange[1] < 100) count++;
     count += this.jobTypes.filter((t) => t.checked).length;
     count += this.experienceLevels.filter((e) => e.checked).length;
@@ -890,6 +906,16 @@ export class JobsComponent implements OnInit {
     if (this.onlySavedFilter) {
       filters.push({ key: 'onlySaved', value: 'true', label: 'Việc đã lưu' });
     }
+    if (this.postedDateFilter === '24h') {
+      filters.push({ key: 'postedDate', value: '24h', label: 'Mới đăng 24h' });
+    }
+    if (this.sortBy === 'popular') {
+      filters.push({ key: 'sortBy', value: 'popular', label: 'Tuyển gấp / Phổ biến' });
+    } else if (this.sortBy === 'salary_desc') {
+      filters.push({ key: 'sortBy', value: 'salary_desc', label: 'Lương cao nhất' });
+    } else if (this.sortBy === 'salary_asc') {
+      filters.push({ key: 'sortBy', value: 'salary_asc', label: 'Lương thấp nhất' });
+    }
 
     this.jobTypes
       .filter((t) => t.checked)
@@ -916,6 +942,10 @@ export class JobsComponent implements OnInit {
       this.selectedSalaryPreset = 'all';
     } else if (key === 'onlySaved') {
       this.onlySavedFilter = false;
+    } else if (key === 'postedDate') {
+      this.postedDateFilter = 'all';
+    } else if (key === 'sortBy') {
+      this.sortBy = 'newest';
     } else if (key === 'jobType') {
       const type = this.jobTypes.find((t) => t.value === value);
       if (type) type.checked = false;
@@ -923,6 +953,7 @@ export class JobsComponent implements OnInit {
       const exp = this.experienceLevels.find((e) => e.value === value);
       if (exp) exp.checked = false;
     }
+    this.syncQuickChipsState();
     this.onFilterChange();
   }
 

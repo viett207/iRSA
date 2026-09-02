@@ -10,8 +10,7 @@ export const authGuard: CanActivateFn = () => {
     return true;
   }
 
-  router.navigate(['/login']);
-  return false;
+  return router.createUrlTree(['/login']);
 };
 
 export const roleGuard = (...allowedRoles: string[]): CanActivateFn => {
@@ -20,17 +19,16 @@ export const roleGuard = (...allowedRoles: string[]): CanActivateFn => {
     const router = inject(Router);
 
     if (!authService.isAuthenticated()) {
-      router.navigate(['/login']);
-      return false;
+      return router.createUrlTree(['/login']);
     }
 
     if (authService.hasRole(...allowedRoles)) {
       return true;
     }
 
-    // No matching role → log out and redirect to login (avoids redirect loop)
-    authService.logout();
-    return false;
+    // Clear a stale/unsupported role, then redirect atomically from the guard.
+    authService.clearSession();
+    return router.createUrlTree(['/login']);
   };
 };
 

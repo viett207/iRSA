@@ -9,17 +9,14 @@
   <meta name="theme-color" content="#18181B">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleusercontent.com https://accounts.google.com; frame-src 'self' blob: https://accounts.google.com; connect-src 'self' http://localhost:8000 ws://localhost:8000 https://irsa-backend-mwz7.onrender.com https://accounts.google.com https://www.googleapis.com https://oauth2.googleapis.com; object-src 'none'; base-uri 'self';">
-
-  <!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+    content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; frame-src 'self' blob:; connect-src 'self' http://localhost:8000 ws://localhost:8000 http://127.0.0.1:8000 ws://127.0.0.1:8000 https: wss:; object-src 'none'; base-uri 'self';">
 
   <!-- Google Fonts - Vietnamese support -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="portal-app">
   <app-root></app-root>
 </body>
 </html>

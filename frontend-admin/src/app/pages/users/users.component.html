@@ -68,11 +68,11 @@
           <nz-option [nzValue]="false" nzLabel="Tài khoản bị khóa"></nz-option>
         </nz-select>
 
-        <button
-          type="button"
-          class="refresh-icon-btn"
+        <button 
+          type="button" 
+          class="refresh-icon-btn" 
           (click)="loadUsers()"
-          nz-tooltip
+          nz-tooltip 
           nzTooltipTitle="Làm mới danh sách"
           [disabled]="loading()"
         >
@@ -103,10 +103,10 @@
         <tr>
           <!-- Selection Checkbox Header -->
           <th nzWidth="48px" nzAlign="center">
-            <input
-              type="checkbox"
+            <input 
+              type="checkbox" 
               class="smart-checkbox"
-              [checked]="isAllChecked()"
+              [checked]="isAllChecked()" 
               [indeterminate]="isIndeterminate()"
               (change)="toggleSelectAll($any($event.target).checked)"
               aria-label="Chọn tất cả người dùng"
@@ -126,8 +126,8 @@
           <tr class="table-user-row" [class.table-user-row--selected]="selectedUserIds().has(user.id)" (click)="openUserDrawer(user, 'view')">
             <!-- Checkbox Row -->
             <td nzAlign="center" (click)="$event.stopPropagation()">
-              <input
-                type="checkbox"
+              <input 
+                type="checkbox" 
                 class="smart-checkbox"
                 [checked]="selectedUserIds().has(user.id)"
                 (change)="toggleSelectUser(user.id, $any($event.target).checked)"
@@ -163,7 +163,7 @@
 
             <!-- Role Badge -->
             <td>
-              <span
+              <span 
                 class="role-pill-badge"
                 [class.role-pill-badge--admin]="user.role === 'admin'"
                 [class.role-pill-badge--leader]="user.role === 'leader'"
@@ -193,7 +193,7 @@
 
             <!-- Email Verified -->
             <td>
-              <span
+              <span 
                 class="verified-tag"
                 [class.verified-tag--yes]="user.email_verified"
                 [class.verified-tag--no]="!user.email_verified"
@@ -212,11 +212,11 @@
             <td nzAlign="right" (click)="$event.stopPropagation()">
               <div class="action-btn-group">
                 <!-- 3-dots Menu Dropdown -->
-                <button
-                  type="button"
-                  class="action-more-btn"
-                  nz-dropdown
-                  [nzDropdownMenu]="rowMenu"
+                <button 
+                  type="button" 
+                  class="action-more-btn" 
+                  nz-dropdown 
+                  [nzDropdownMenu]="rowMenu" 
                   nzTrigger="click"
                   nzPlacement="bottomRight"
                   aria-label="Thao tác khác"
@@ -246,8 +246,8 @@
                     <li nz-menu-item (click)="openUserDrawer(user, 'edit')">
                       <span nz-icon nzType="edit"></span> Chỉnh sửa chi tiết
                     </li>
-                    <li
-                      nz-menu-item
+                    <li 
+                      nz-menu-item 
                       nzDanger
                       nz-popconfirm
                       nzPopconfirmTitle="Bạn có chắc muốn xóa tài khoản này?"
@@ -476,47 +476,47 @@
           <div class="drawer-form-section">
             <h3 class="form-section-heading">Thông tin tài khoản mới</h3>
             <p class="form-section-sub">Tạo tài khoản và phân quyền trực tiếp trên hệ thống</p>
-
+            
             <div class="form-field-group">
               <label class="form-label" for="drawer-fullname">Họ và tên <span class="required-star">*</span></label>
-              <input
+              <input 
                 id="drawer-fullname"
-                type="text"
-                class="form-text-input"
-                formControlName="full_name"
+                type="text" 
+                class="form-text-input" 
+                formControlName="full_name" 
                 placeholder="VD: Nguyễn Văn A"
               />
             </div>
 
             <div class="form-field-group">
               <label class="form-label" for="drawer-email">Địa chỉ Email <span class="required-star">*</span></label>
-              <input
+              <input 
                 id="drawer-email"
-                type="email"
-                class="form-text-input"
-                formControlName="email"
+                type="email" 
+                class="form-text-input" 
+                formControlName="email" 
                 placeholder="VD: nguyenvana@company.com"
               />
             </div>
 
             <div class="form-field-group">
               <label class="form-label" for="drawer-phone">Số điện thoại</label>
-              <input
+              <input 
                 id="drawer-phone"
-                type="tel"
-                class="form-text-input"
-                formControlName="phone"
+                type="tel" 
+                class="form-text-input" 
+                formControlName="phone" 
                 placeholder="VD: 0912 345 678"
               />
             </div>
 
             <div class="form-field-group">
               <label class="form-label" for="drawer-pwd">Mật khẩu đăng nhập <span class="required-star">*</span></label>
-              <input
+              <input 
                 id="drawer-pwd"
-                type="password"
-                class="form-text-input"
-                formControlName="password"
+                type="password" 
+                class="form-text-input" 
+                formControlName="password" 
                 placeholder="Tối thiểu 8 ký tự"
               />
             </div>
@@ -524,7 +524,7 @@
 
           <div class="drawer-form-section">
             <h3 class="form-section-heading">Phân quyền &amp; Tổ chức</h3>
-
+            
             <div class="form-field-group">
               <label class="form-label">Vai trò trong hệ thống <span class="required-star">*</span></label>
               <nz-select formControlName="role" class="drawer-select-control">
@@ -564,7 +564,7 @@
                 <h2 class="drawer-user-title">{{ user.full_name }}</h2>
                 <span class="drawer-user-email">{{ user.email }}</span>
                 <div class="drawer-badge-row">
-                  <span
+                  <span 
                     class="role-pill-badge"
                     [class.role-pill-badge--admin]="user.role === 'admin'"
                     [class.role-pill-badge--leader]="user.role === 'leader'"
@@ -573,7 +573,7 @@
                   >
                     {{ getRoleLabel(user.role) }}
                   </span>
-                  <span
+                  <span 
                     class="verified-tag"
                     [class.verified-tag--yes]="user.is_active"
                     [class.verified-tag--no]="!user.is_active"
@@ -647,21 +647,21 @@
                 <form [formGroup]="userForm" class="drawer-form-layout" (ngSubmit)="saveDrawerUser()">
                   <div class="form-field-group">
                     <label class="form-label" for="edit-fullname">Họ và tên <span class="required-star">*</span></label>
-                    <input
+                    <input 
                       id="edit-fullname"
-                      type="text"
-                      class="form-text-input"
-                      formControlName="full_name"
+                      type="text" 
+                      class="form-text-input" 
+                      formControlName="full_name" 
                     />
                   </div>
 
                   <div class="form-field-group">
                     <label class="form-label" for="edit-phone">Số điện thoại</label>
-                    <input
+                    <input 
                       id="edit-phone"
-                      type="tel"
-                      class="form-text-input"
-                      formControlName="phone"
+                      type="tel" 
+                      class="form-text-input" 
+                      formControlName="phone" 
                     />
                   </div>
 
@@ -686,11 +686,11 @@
 
                   <div class="form-field-group">
                     <label class="form-label" for="edit-password">Đặt lại mật khẩu mới (Nếu muốn đổi)</label>
-                    <input
+                    <input 
                       id="edit-password"
-                      type="password"
-                      class="form-text-input"
-                      formControlName="password"
+                      type="password" 
+                      class="form-text-input" 
+                      formControlName="password" 
                       placeholder="Để trống nếu không đổi mật khẩu"
                     />
                   </div>
@@ -719,10 +719,10 @@
     <div class="drawer-footer-actions">
       <button type="button" class="btn-cancel" (click)="closeDrawer()">Đóng</button>
       @if (drawerMode() === 'create' || drawerActiveTab() === 1) {
-        <button
-          type="button"
-          class="btn-submit"
-          [disabled]="drawerSaving()"
+        <button 
+          type="button" 
+          class="btn-submit" 
+          [disabled]="drawerSaving()" 
           (click)="saveDrawerUser()"
         >
           <span nz-icon nzType="loading" *ngIf="drawerSaving()"></span>

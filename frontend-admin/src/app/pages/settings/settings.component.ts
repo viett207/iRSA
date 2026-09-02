@@ -8,28 +8,7 @@ import { RouterModule } from '@angular/router';
   selector: 'app-settings',
   standalone: true,
   imports: [CommonModule, NzResultModule, NzButtonModule, RouterModule],
-  template: `
-    <div class="page-container">
-      <nz-result
-        nzStatus="info"
-        nzTitle="Cài đặt"
-        nzSubTitle="Tính năng cài đặt đang được phát triển"
-      >
-        <div nz-result-extra>
-          <button nz-button nzType="primary" routerLink="/dashboard">
-            Quay lại Dashboard
-          </button>
-        </div>
-      </nz-result>
-    </div>
-  `,
-  styles: [`
-    .page-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 60vh;
-    }
-  `],
+  templateUrl: './settings.component.html',
+  styleUrl: './settings.component.scss',
 })
 export class SettingsComponent {}

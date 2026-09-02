@@ -1,15 +1,13 @@
-import { Injectable, signal, OnDestroy } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { NzMessageDataOptions, NzMessageRef } from 'ng-zorro-antd/message';
+import { Injectable, signal, computed, OnDestroy } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { ToastService } from './toast.service';
 
 export interface AppNotification {
   id: number;
   type: string;
   title: string;
   message: string;
-  data: Record<string, unknown> | null;
+  data: Record<string, any> | null;
   is_read: boolean;
   created_at: string;
 }
@@ -20,78 +18,19 @@ interface NotificationListResponse {
   unread_count: number;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function isAppNotification(value: unknown): value is AppNotification {
-  if (!isRecord(value)) {
-    return false;
-  }
-
-  return (
-    typeof value['id'] === 'number' &&
-    typeof value['type'] === 'string' &&
-    typeof value['title'] === 'string' &&
-    typeof value['message'] === 'string' &&
-    typeof value['is_read'] === 'boolean' &&
-    typeof value['created_at'] === 'string' &&
-    (value['data'] === null || isRecord(value['data']))
-  );
-}
-
 @Injectable({ providedIn: 'root' })
 export class NotificationService implements OnDestroy {
   private baseUrl = `${environment.apiUrl}/notifications`;
   private ws: WebSocket | null = null;
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private pingTimer: ReturnType<typeof setInterval> | null = null;
+  private reconnectTimer: any = null;
+  private pingTimer: any = null;
 
   /** All loaded notifications */
   notifications = signal<AppNotification[]>([]);
   /** Unread count for badge */
   unreadCount = signal(0);
 
-  constructor(
-    private http: HttpClient,
-    private toast: ToastService,
-  ) {}
-
-  // --- Toast Helpers (Success, Error, Info, Warning) with auto-dismiss (3-5s) ---
-
-  success(content: unknown, options?: NzMessageDataOptions): void {
-    this.toast.success(content, options);
-  }
-
-  info(content: unknown, options?: NzMessageDataOptions): void {
-    this.toast.info(content, options);
-  }
-
-  warning(content: unknown, options?: NzMessageDataOptions): void {
-    this.toast.warning(content, options);
-  }
-
-  error(content: unknown, options?: NzMessageDataOptions): void {
-    this.toast.error(content, options);
-  }
-
-  loading(content: string, options?: NzMessageDataOptions): NzMessageRef {
-    return this.toast.loading(content, options);
-  }
-
-  removeToast(id?: string): void {
-    this.toast.remove(id);
-  }
-
-  reportHttpError(error: unknown, fallback?: string): void {
-    this.toast.reportHttpError(error, fallback);
-  }
-
-  errorFromHttp(error: unknown, fallback?: string, preferFallback = false): void {
-    this.toast.errorFromHttp(error, fallback, preferFallback);
-  }
-
-  // --- WebSocket & In-App Notifications ---
+  constructor(private http: HttpClient) {}
 
   /** Connect WebSocket and load initial notifications. Call after login. */
   connect(): void {
@@ -171,19 +110,14 @@ export class NotificationService implements OnDestroy {
 
     this.ws.onmessage = (event) => {
       try {
-        const data: unknown = JSON.parse(event.data);
-        if (!isRecord(data)) {
-          return;
-        }
-
-        if (data['type'] === 'init' && typeof data['unread_count'] === 'number') {
-          this.unreadCount.set(data['unread_count']);
-        } else if (data['type'] === 'notification' && isAppNotification(data['notification'])) {
+        const data = JSON.parse(event.data);
+        if (data.type === 'init') {
+          this.unreadCount.set(data.unread_count);
+        } else if (data.type === 'notification') {
           // Prepend new notification to list
-          const notif = data['notification'];
+          const notif: AppNotification = data.notification;
           this.notifications.update((list) => [notif, ...list]);
           this.unreadCount.update((c) => c + 1);
-          this.toast.info(`${notif.title}: ${notif.message}`);
         }
       } catch {
         // Ignore non-JSON (e.g., "pong")
