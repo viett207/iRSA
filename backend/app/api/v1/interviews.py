@@ -73,6 +73,10 @@ class InterviewResponse(BaseModel):
     location: str | None
     notes: str | None
     status: str
+    candidate_response: str = "pending"
+    candidate_response_note: str | None = None
+    candidate_proposed_date: datetime | None = None
+    candidate_responded_at: datetime | None = None
     questions: list | None = None
     answers: dict | None = None
     overall_score: float | None = None
@@ -205,6 +209,10 @@ async def get_interview_data(
             "location": active_interview.location,
             "status": active_interview.status or "scheduled",
             "notes": active_interview.notes,
+            "candidate_response": getattr(active_interview, "candidate_response", "pending") or "pending",
+            "candidate_response_note": getattr(active_interview, "candidate_response_note", None),
+            "candidate_proposed_date": getattr(active_interview, "candidate_proposed_date", None),
+            "candidate_responded_at": getattr(active_interview, "candidate_responded_at", None),
             "overall_score": active_interview.overall_score,
             "overall_feedback": active_interview.overall_feedback,
             "recommendation": active_interview.recommendation,
@@ -745,6 +753,10 @@ async def schedule_interview(
         location=interview.location,
         notes=interview.notes,
         status=interview.status,
+        candidate_response=getattr(interview, "candidate_response", "pending") or "pending",
+        candidate_response_note=getattr(interview, "candidate_response_note", None),
+        candidate_proposed_date=getattr(interview, "candidate_proposed_date", None),
+        candidate_responded_at=getattr(interview, "candidate_responded_at", None),
         questions=interview.questions,
         answers=interview.answers,
         overall_score=interview.overall_score,
@@ -837,6 +849,10 @@ async def list_interviews(
             location=iv.location,
             notes=iv.notes,
             status=iv.status,
+            candidate_response=getattr(iv, "candidate_response", "pending") or "pending",
+            candidate_response_note=getattr(iv, "candidate_response_note", None),
+            candidate_proposed_date=getattr(iv, "candidate_proposed_date", None),
+            candidate_responded_at=getattr(iv, "candidate_responded_at", None),
             questions=iv.questions,
             answers=iv.answers,
             overall_score=iv.overall_score,
@@ -874,8 +890,12 @@ async def update_interview(
     if not interview:
         raise HTTPException(status_code=404, detail="Interview not found")
 
+    date_changed = False
     if body.interview_date is not None:
         interview.interview_date = body.interview_date
+        interview.candidate_response = "pending"
+        interview.candidate_proposed_date = None
+        date_changed = True
     if body.interview_type is not None:
         interview.interview_type = body.interview_type
     if body.location is not None:
@@ -890,6 +910,29 @@ async def update_interview(
     await db.commit()
     await db.refresh(interview)
 
+    if date_changed:
+        try:
+            from app.services.notification_service import notify_interview_scheduled
+            app_result = await db.execute(
+                select(Application)
+                .options(selectinload(Application.candidate), selectinload(Application.job))
+                .where(Application.id == app_id)
+            )
+            app_obj = app_result.scalar_one_or_none()
+            if app_obj and app_obj.candidate:
+                await notify_interview_scheduled(
+                    db,
+                    candidate_user_id=app_obj.candidate.id,
+                    job_title=app_obj.job.title_vi if app_obj.job else "N/A",
+                    interview_date=interview.interview_date.strftime("%d/%m/%Y %H:%M"),
+                    interview_type=interview.interview_type,
+                    job_id=job_id,
+                    application_id=app_id,
+                )
+                await db.commit()
+        except Exception as e:
+            logger.warning(f"Failed to push updated interview notification: {e}")
+
     return InterviewResponse(
         id=interview.id,
         application_id=interview.application_id,
@@ -900,6 +943,10 @@ async def update_interview(
         location=interview.location,
         notes=interview.notes,
         status=interview.status,
+        candidate_response=getattr(interview, "candidate_response", "pending") or "pending",
+        candidate_response_note=getattr(interview, "candidate_response_note", None),
+        candidate_proposed_date=getattr(interview, "candidate_proposed_date", None),
+        candidate_responded_at=getattr(interview, "candidate_responded_at", None),
         questions=interview.questions,
         answers=interview.answers,
         overall_score=interview.overall_score,

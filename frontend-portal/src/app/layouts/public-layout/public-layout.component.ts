@@ -18,8 +18,6 @@ import { PortalHeaderComponent } from '../../shared/components/portal-header/por
   ],
   template: `
     <nz-layout class="layout">
-      <a class="skip-link" href="#main-content">Bỏ qua đến nội dung chính</a>
-
       <app-portal-header></app-portal-header>
 
       <nz-content id="main-content" class="content">
@@ -31,7 +29,7 @@ import { PortalHeaderComponent } from '../../shared/components/portal-header/por
           <div class="footer-main">
             <div class="footer-brand">
               <div class="footer-logo">
-                <span nz-icon nzType="thunderbolt" nzTheme="fill"></span>
+                <span nz-icon nzType="thunderbolt" nzTheme="fill" class="brand-icon"></span>
                 <span>iRSA</span>
               </div>
               <p class="footer-tagline">
@@ -82,18 +80,24 @@ import { PortalHeaderComponent } from '../../shared/components/portal-header/por
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      background: var(--color-bg-primary);
     }
 
     .skip-link {
       position: absolute;
-      top: -40px;
-      left: 0;
+      top: -60px;
+      left: 16px;
       background: var(--color-primary);
-      color: white;
+      color: #FFFFFF;
       padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-weight: 500;
       z-index: 9999;
-      transition: top 0.2s;
-      &:focus { top: 0; }
+      transition: top 0.2s ease;
+
+      &:focus {
+        top: 16px;
+      }
     }
 
     .content {
@@ -107,6 +111,7 @@ import { PortalHeaderComponent } from '../../shared/components/portal-header/por
       background: var(--color-bg-secondary) !important;
       border-top: 1px solid var(--color-border);
       padding: 0 !important;
+      color: var(--color-text-secondary);
     }
 
     .footer-container {
@@ -117,9 +122,9 @@ import { PortalHeaderComponent } from '../../shared/components/portal-header/por
 
     .footer-main {
       display: grid;
-      grid-template-columns: 1fr 2fr;
+      grid-template-columns: 1.2fr 2fr;
       gap: var(--space-12);
-      padding: var(--space-12) 0;
+      padding: var(--space-12) 0 var(--space-10);
 
       @media (max-width: 768px) {
         grid-template-columns: 1fr;
@@ -128,18 +133,23 @@ import { PortalHeaderComponent } from '../../shared/components/portal-header/por
       }
     }
 
-    .footer-brand { max-width: 280px; }
+    .footer-brand {
+      max-width: 320px;
+    }
 
     .footer-logo {
       display: flex;
       align-items: center;
       gap: var(--space-2);
       font-family: var(--font-heading);
-      font-size: var(--text-xl);
-      font-weight: var(--font-extrabold);
+      font-size: var(--text-2xl);
+      font-weight: 800;
       color: var(--color-primary);
-      margin-bottom: var(--space-3);
-      span:first-child { font-size: 24px; }
+      margin-bottom: var(--space-2);
+
+      .brand-icon {
+        font-size: 22px;
+      }
     }
 
     .footer-tagline {
@@ -153,22 +163,33 @@ import { PortalHeaderComponent } from '../../shared/components/portal-header/por
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: var(--space-8);
-      @media (max-width: 768px) { grid-template-columns: repeat(2, 1fr); gap: var(--space-6); }
-      @media (max-width: 480px) { grid-template-columns: 1fr; }
+
+      @media (max-width: 768px) {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-6);
+      }
+
+      @media (max-width: 480px) {
+        grid-template-columns: 1fr;
+      }
     }
 
     .footer-column {
       h4 {
         font-family: var(--font-heading);
-        font-size: var(--text-sm);
-        font-weight: var(--font-semibold);
+        font-size: var(--text-xs);
+        font-weight: 700;
         color: var(--color-text-primary);
         margin-bottom: var(--space-4);
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.06em;
       }
 
-      ul { list-style: none; padding: 0; margin: 0; }
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
 
       li {
         margin-bottom: var(--space-3);
@@ -181,16 +202,24 @@ import { PortalHeaderComponent } from '../../shared/components/portal-header/por
         a {
           color: var(--color-text-secondary);
           transition: color var(--transition-fast);
-          &:hover { color: var(--color-primary); }
+
+          &:hover {
+            color: var(--color-primary);
+          }
         }
       }
     }
 
     .footer-bottom {
       padding: var(--space-6) 0;
-      border-top: 1px solid var(--color-border);
+      border-top: 1px solid var(--color-border-light);
       text-align: center;
-      p { margin: 0; color: var(--color-text-tertiary); font-size: var(--text-xs); }
+
+      p {
+        margin: 0;
+        color: var(--color-text-tertiary);
+        font-size: var(--text-xs);
+      }
     }
   `],
 })

@@ -1,26 +1,4 @@
 /**
- * Profile models for job portal.
+ * Re-export from core/models for backwards compatibility and single source of truth.
  */
-
-export interface Profile {
-  id: number;
-  email: string;
-  full_name: string;
-  phone?: string;
-  avatar_url?: string;
-  headline?: string;
-  summary?: string;
-  location?: string;
-  linkedin_url?: string;
-  portfolio_url?: string;
-}
-
-export interface ProfileUpdate {
-  full_name?: string;
-  phone?: string;
-  headline?: string;
-  summary?: string;
-  location?: string;
-  linkedin_url?: string;
-  portfolio_url?: string;
-}
+export * from '../../core/models/profile.model';

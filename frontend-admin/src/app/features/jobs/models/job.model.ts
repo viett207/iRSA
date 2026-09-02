@@ -467,6 +467,10 @@ export interface Interview {
   location: string | null;
   notes: string | null;
   status: 'scheduled' | 'completed' | 'cancelled';
+  candidate_response?: 'pending' | 'accepted' | 'declined' | 'reschedule_requested' | string;
+  candidate_response_note?: string | null;
+  candidate_proposed_date?: string | null;
+  candidate_responded_at?: string | null;
   questions?: AiInterviewQuestion[];
   answers?: Record<string, InterviewAnswer>;
   overall_score?: number | null;
@@ -536,3 +540,18 @@ export const APPLICATION_STATUS_COLORS: Record<string, string> = {
   hired: 'success',
   rejected: 'error',
 };
+
+export const CANDIDATE_RESPONSE_LABELS: Record<string, string> = {
+  pending: 'Chờ phản hồi',
+  accepted: 'Đã xác nhận',
+  declined: 'Từ chối',
+  reschedule_requested: 'Yêu cầu đổi lịch',
+};
+
+export const CANDIDATE_RESPONSE_COLORS: Record<string, string> = {
+  pending: 'blue',
+  accepted: 'success',
+  declined: 'error',
+  reschedule_requested: 'warning',
+};
+

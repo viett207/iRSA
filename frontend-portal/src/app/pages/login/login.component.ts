@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
   FormBuilder,
   FormGroup,
@@ -12,13 +13,16 @@ import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
-import { NzMessageService } from 'ng-zorro-antd/message';
+import { ToastService } from '../../core/services/toast.service';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { environment } from '../../../environments/environment';
+
+import { FocusTrapDirective } from '../../shared/directives/focus-trap.directive';
 
 @Component({
   selector: 'app-login',
@@ -27,6 +31,7 @@ import { environment } from '../../../environments/environment';
     CommonModule,
     RouterModule,
     ReactiveFormsModule,
+    TranslateModule,
     NzFormModule,
     NzInputModule,
     NzButtonModule,
@@ -35,36 +40,102 @@ import { environment } from '../../../environments/environment';
     NzDividerModule,
     NzModalModule,
     NzAlertModule,
+    FocusTrapDirective,
   ],
   template: `
     <div class="auth-page">
       <div class="auth-container">
         <!-- Left Side - Branding -->
         <div class="auth-branding hide-mobile">
+          <div class="branding-decorations" aria-hidden="true">
+            <div class="glow-orb glow-orb-1"></div>
+            <div class="glow-orb glow-orb-2"></div>
+            <div class="glow-orb glow-orb-3"></div>
+            <svg class="tech-pattern" width="100%" height="100%" viewBox="0 0 500 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="net-grad-top" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#0284c7" stop-opacity="0.45"/>
+                  <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.25"/>
+                </linearGradient>
+                <linearGradient id="net-grad-bot" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.4"/>
+                  <stop offset="100%" stop-color="#60a5fa" stop-opacity="0.25"/>
+                </linearGradient>
+                <filter id="glow-dot" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                  <feMerge>
+                    <feMergeNode in="blur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+
+              <!-- Top Network Cluster (Above Text Area) -->
+              <path d="M 35 55 L 120 100 L 230 60 L 360 95 L 465 45" stroke="url(#net-grad-top)" stroke-width="1.2" stroke-dasharray="4 4"/>
+              <path d="M 120 100 L 190 35 L 290 75 L 360 95" stroke="url(#net-grad-top)" stroke-width="1.2"/>
+              <path d="M 35 55 L 85 20 L 190 35" stroke="url(#net-grad-top)" stroke-width="1"/>
+
+              <circle cx="35" cy="55" r="3.5" fill="#38bdf8" filter="url(#glow-dot)"/>
+              <circle cx="85" cy="20" r="3" fill="#60a5fa"/>
+              <circle cx="120" cy="100" r="4.5" fill="#38bdf8" filter="url(#glow-dot)"/>
+              <circle cx="190" cy="35" r="4" fill="#93c5fd"/>
+              <circle cx="230" cy="60" r="3.5" fill="#38bdf8"/>
+              <circle cx="290" cy="75" r="4" fill="#60a5fa" filter="url(#glow-dot)"/>
+              <circle cx="360" cy="95" r="4.5" fill="#38bdf8" filter="url(#glow-dot)"/>
+              <circle cx="465" cy="45" r="3.5" fill="#818cf8"/>
+
+              <!-- Top Decorative Orbit & Sparkle -->
+              <circle cx="440" cy="70" r="65" stroke="rgba(37, 99, 235, 0.14)" stroke-width="1.5" stroke-dasharray="6 6"/>
+              <g transform="translate(425, 90) scale(0.8)" stroke="rgba(37, 99, 235, 0.25)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </g>
+
+              <!-- Outer Margins Light Accents -->
+              <circle cx="20" cy="260" r="3" fill="#38bdf8" filter="url(#glow-dot)"/>
+              <circle cx="480" cy="280" r="3" fill="#60a5fa" filter="url(#glow-dot)"/>
+              <g transform="translate(455, 230) scale(0.8)" stroke="rgba(2, 132, 199, 0.22)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </g>
+
+              <!-- Bottom Network Cluster (Below Text Area) -->
+              <path d="M 35 480 L 125 530 L 235 475 L 365 525 L 465 470" stroke="url(#net-grad-bot)" stroke-width="1.2" stroke-dasharray="5 5"/>
+              <path d="M 125 530 L 210 565 L 320 545 L 435 565" stroke="url(#net-grad-bot)" stroke-width="1.2"/>
+              <path d="M 235 475 L 320 545" stroke="url(#net-grad-bot)" stroke-width="1"/>
+
+              <circle cx="35" cy="480" r="3.5" fill="#38bdf8" filter="url(#glow-dot)"/>
+              <circle cx="125" cy="530" r="4.5" fill="#60a5fa" filter="url(#glow-dot)"/>
+              <circle cx="210" cy="565" r="3" fill="#93c5fd"/>
+              <circle cx="235" cy="475" r="4" fill="#38bdf8"/>
+              <circle cx="320" cy="545" r="4" fill="#60a5fa" filter="url(#glow-dot)"/>
+              <circle cx="365" cy="525" r="4.5" fill="#38bdf8" filter="url(#glow-dot)"/>
+              <circle cx="435" cy="565" r="3.5" fill="#818cf8"/>
+              <circle cx="465" cy="470" r="3.5" fill="#38bdf8"/>
+
+              <!-- Bottom Decorative Orbit & Icons -->
+              <circle cx="75" cy="535" r="70" stroke="rgba(2, 132, 199, 0.15)" stroke-width="1.5"/>
+              <g transform="translate(25, 455) scale(0.85)" stroke="rgba(30, 64, 175, 0.25)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                <path d="M12 12v.01"/>
+              </g>
+              <g transform="translate(445, 455) scale(0.85)" stroke="rgba(2, 132, 199, 0.25)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6"/>
+                <polyline points="8 6 2 12 8 18"/>
+              </g>
+            </svg>
+          </div>
           <div class="branding-content">
             <div class="brand-logo">
-              <span nz-icon nzType="thunderbolt" nzTheme="fill"></span>
+              <div class="brand-logo-badge">
+                <span nz-icon nzType="thunderbolt" nzTheme="fill"></span>
+              </div>
               <span>iRSA</span>
             </div>
-            <h2>Chào mừng trở lại!</h2>
+            <h2>Chào mừng bạn trở lại!</h2>
             <p>
-              Đăng nhập để tiếp tục tìm kiếm cơ hội nghề nghiệp
-              và theo dõi trạng thái ứng tuyển của bạn.
+              Đăng nhập để tiếp tục ứng tuyển và khám phá hàng ngàn cơ hội việc làm hấp dẫn.
             </p>
-            <div class="branding-features">
-              <div class="feature-item">
-                <span nz-icon nzType="check-circle" nzTheme="fill"></span>
-                <span>Truy cập nhanh vào hồ sơ</span>
-              </div>
-              <div class="feature-item">
-                <span nz-icon nzType="check-circle" nzTheme="fill"></span>
-                <span>Theo dõi đơn ứng tuyển</span>
-              </div>
-              <div class="feature-item">
-                <span nz-icon nzType="check-circle" nzTheme="fill"></span>
-                <span>Nhận thông báo việc làm mới</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -74,63 +145,77 @@ import { environment } from '../../../environments/environment';
             <div class="auth-header">
               <div class="auth-logo show-mobile-only">
                 <span nz-icon nzType="thunderbolt" nzTheme="fill"></span>
-                iRSA
+                <span>iRSA</span>
               </div>
               <h1 class="auth-title">Đăng nhập</h1>
               <p class="auth-subtitle">
-                Nhập thông tin tài khoản để tiếp tục
+                Nhập thông tin tài khoản của bạn để tiếp tục
               </p>
             </div>
 
             <!-- Social Login -->
             <div class="social-login">
-              <button nz-button nzBlock class="social-btn google">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-                  <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
-                  <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-                  <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+              <button
+                nz-button
+                nzBlock
+                class="social-btn google"
+                type="button"
+                [nzLoading]="googleLoading"
+                [disabled]="googleLoading || loading"
+                (click)="onGoogleLogin()"
+              >
+                <svg class="google-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
                 </svg>
                 Tiếp tục với Google
               </button>
             </div>
 
             <div class="auth-divider">
-              <nz-divider nzText="hoặc"></nz-divider>
+              <nz-divider nzText="Hoặc đăng nhập bằng email"></nz-divider>
             </div>
 
             <!-- Login Form -->
             <form nz-form [formGroup]="loginForm" (ngSubmit)="onSubmit()" nzLayout="vertical">
               <nz-form-item>
-                <nz-form-label nzRequired>Email</nz-form-label>
-                <nz-form-control nzErrorTip="Vui lòng nhập địa chỉ email hợp lệ">
+                <nz-form-label nzRequired nzFor="login-email">Email</nz-form-label>
+                <nz-form-control nzErrorTip="Vui lòng nhập địa chỉ email hợp lệ!">
                   <nz-input-group [nzPrefix]="emailIcon" nzSize="large">
                     <input
+                      id="login-email"
                       type="email"
                       nz-input
                       formControlName="email"
-                      placeholder="example&#64;email.com"
+                      placeholder="name@example.com"
+                      autocomplete="email"
+                      aria-required="true"
                     />
                   </nz-input-group>
                   <ng-template #emailIcon>
-                    <span nz-icon nzType="mail" nzTheme="outline"></span>
+                    <span nz-icon nzType="mail" nzTheme="outline" aria-hidden="true"></span>
                   </ng-template>
                 </nz-form-control>
               </nz-form-item>
 
               <nz-form-item>
-                <nz-form-label nzRequired>Mật khẩu</nz-form-label>
-                <nz-form-control nzErrorTip="Vui lòng nhập mật khẩu">
+                <nz-form-label nzRequired nzFor="login-password">Mật khẩu</nz-form-label>
+                <nz-form-control nzErrorTip="Vui lòng nhập mật khẩu (tối thiểu 8 ký tự)!">
                   <nz-input-group [nzPrefix]="passwordIcon" [nzSuffix]="passwordSuffix" nzSize="large">
                     <input
+                      id="login-password"
                       [type]="showPassword ? 'text' : 'password'"
                       nz-input
                       formControlName="password"
-                      placeholder="Nhập mật khẩu"
+                      placeholder="••••••••"
+                      autocomplete="current-password"
+                      aria-required="true"
                     />
                   </nz-input-group>
                   <ng-template #passwordIcon>
-                    <span nz-icon nzType="lock" nzTheme="outline"></span>
+                    <span nz-icon nzType="lock" nzTheme="outline" aria-hidden="true"></span>
                   </ng-template>
                   <ng-template #passwordSuffix>
                     <span
@@ -138,6 +223,8 @@ import { environment } from '../../../environments/environment';
                       [nzType]="showPassword ? 'eye' : 'eye-invisible'"
                       nzTheme="outline"
                       class="password-toggle"
+                      role="button"
+                      tabindex="0"
                       (click)="showPassword = !showPassword"
                     ></span>
                   </ng-template>
@@ -202,12 +289,20 @@ import { environment } from '../../../environments/environment';
       nzTitle="Email chưa được xác thực"
       [nzFooter]="null"
       [nzClosable]="true"
+      [nzKeyboard]="true"
       (nzOnCancel)="closeVerifyModal()"
       nzWidth="460px"
     >
       <ng-container *nzModalContent>
-        <div class="verify-modal-body">
-          <div class="verify-icon">
+        <div
+          class="verify-modal-body"
+          appFocusTrap
+          (escapePressed)="closeVerifyModal()"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Cửa sổ thông báo xác thực email"
+        >
+          <div class="verify-icon" aria-hidden="true">
             <span nz-icon nzType="mail" nzTheme="outline"></span>
           </div>
           <p class="verify-desc">
@@ -220,7 +315,9 @@ import { environment } from '../../../environments/environment';
               [nzType]="verifyMessageType"
               [nzMessage]="verifyMessage"
               nzShowIcon
-              style="margin-bottom: 16px;"
+              class="verify-alert"
+              role="alert"
+              aria-live="polite"
             ></nz-alert>
           }
 
@@ -232,12 +329,13 @@ import { environment } from '../../../environments/environment';
               nzSize="large"
               [nzLoading]="sendingVerify"
               (click)="resendVerification()"
+              aria-label="Gửi lại email xác thực tài khoản"
             >
-              <span nz-icon nzType="send" nzTheme="outline"></span>
+              <span nz-icon nzType="send" nzTheme="outline" aria-hidden="true"></span>
               Gửi lại email xác thực
             </button>
-            <button nz-button nzBlock (click)="logoutAndClose()">
-              <span nz-icon nzType="logout" nzTheme="outline"></span>
+            <button nz-button nzBlock (click)="logoutAndClose()" aria-label="Đăng xuất khỏi phiên hiện tại">
+              <span nz-icon nzType="logout" nzTheme="outline" aria-hidden="true"></span>
               Đăng xuất
             </button>
           </div>
@@ -249,211 +347,342 @@ import { environment } from '../../../environments/environment';
   styles: [
     `
       .auth-page {
-        min-height: 100vh;
-        background: var(--color-bg-primary);
+        min-height: calc(100vh - 140px);
+        background: #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: var(--space-4);
+        padding: clamp(28px, 5vh, 56px) 16px;
+        position: relative;
       }
 
       .auth-container {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        max-width: 1000px;
+        max-width: 980px;
+        min-height: 580px;
         width: 100%;
-        background: var(--color-bg-secondary);
-        border-radius: var(--radius-2xl);
+        background: #ffffff;
+        border-radius: 24px;
         overflow: hidden;
-        box-shadow: var(--shadow-2xl);
-
-        @media (max-width: 768px) {
-          grid-template-columns: 1fr;
-        }
+        box-shadow: 0 16px 40px -12px rgba(15, 23, 42, 0.08), 0 0 1px 1px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--color-border);
+        position: relative;
+        z-index: 1;
       }
 
-      /* Branding Section */
+      /* Branding Section (Left Column) */
       .auth-branding {
-        background: linear-gradient(135deg, var(--color-primary) 0%, #0072E5 100%);
-        padding: var(--space-12);
+        background: radial-gradient(circle at 10% 15%, rgba(56, 189, 248, 0.22) 0%, transparent 50%),
+                    radial-gradient(circle at 90% 85%, rgba(59, 130, 246, 0.16) 0%, transparent 50%),
+                    linear-gradient(150deg, #f0f7ff 0%, #e0f2fe 35%, #dbeafe 70%, #bfdbfe 100%);
+        padding: clamp(36px, 5vh, 52px);
         display: flex;
-        align-items: center;
+        flex-direction: column;
         justify-content: center;
         position: relative;
         overflow: hidden;
+        color: var(--color-text-primary);
+        border-right: 1px solid rgba(191, 219, 254, 0.6);
+      }
 
-        &::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-          opacity: 0.5;
-        }
+      .branding-decorations {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 0;
+      }
+
+      .glow-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(50px);
+        pointer-events: none;
+      }
+
+      .glow-orb-1 {
+        width: 220px;
+        height: 220px;
+        top: -30px;
+        right: -20px;
+        background: radial-gradient(circle, rgba(56, 189, 248, 0.28) 0%, transparent 70%);
+      }
+
+      .glow-orb-2 {
+        width: 220px;
+        height: 220px;
+        bottom: -30px;
+        left: -20px;
+        background: radial-gradient(circle, rgba(96, 165, 250, 0.24) 0%, transparent 70%);
+      }
+
+      .glow-orb-3 {
+        width: 160px;
+        height: 160px;
+        top: 8%;
+        left: 8%;
+        background: radial-gradient(circle, rgba(186, 230, 253, 0.3) 0%, transparent 70%);
+      }
+
+      .tech-pattern {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.75;
+        z-index: 0;
+        pointer-events: none;
       }
 
       .branding-content {
         position: relative;
-        z-index: 1;
-        color: white;
+        z-index: 2;
       }
 
       .brand-logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 28px;
+
+        span:last-child {
+          font-family: var(--font-heading);
+          font-size: 28px;
+          font-weight: 800;
+          color: var(--color-primary);
+          letter-spacing: -0.02em;
+        }
+      }
+
+      .brand-logo-badge {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: #ffffff;
+        border: 1px solid rgba(59, 130, 246, 0.18);
         display: flex;
         align-items: center;
-        gap: var(--space-2);
-        font-family: var(--font-heading);
-        font-size: var(--text-2xl);
-        font-weight: var(--font-extrabold);
-        margin-bottom: var(--space-8);
+        justify-content: center;
+        box-shadow: 0 4px 14px rgba(15, 82, 186, 0.12), 0 1px 2px rgba(15, 82, 186, 0.08);
 
-        span:first-child {
-          font-size: 32px;
+        span {
+          font-size: 26px;
+          color: var(--color-primary);
+          filter: drop-shadow(0 2px 6px rgba(15, 82, 186, 0.25));
         }
       }
 
       .branding-content h2 {
         font-family: var(--font-heading);
-        font-size: var(--text-3xl);
-        font-weight: var(--font-bold);
-        margin-bottom: var(--space-4);
-        color: white;
+        font-size: clamp(24px, 2.4vw, 30px);
+        font-weight: 700;
+        margin: 0 0 14px 0;
+        color: var(--color-text-primary);
+        line-height: 1.3;
+        letter-spacing: -0.01em;
       }
 
       .branding-content p {
-        font-size: var(--text-base);
-        line-height: var(--leading-relaxed);
-        opacity: 0.9;
-        margin-bottom: var(--space-8);
+        font-size: 15px;
+        line-height: 1.65;
+        color: var(--color-text-secondary);
+        margin: 0;
+        max-width: 380px;
+        font-weight: 400;
       }
 
-      .branding-features {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-3);
-      }
-
-      .feature-item {
-        display: flex;
-        align-items: center;
-        gap: var(--space-3);
-        font-size: var(--text-sm);
-        opacity: 0.9;
-
-        span:first-child {
-          color: #52C41A;
-          font-size: 18px;
-        }
-      }
-
-      /* Form Section */
+      /* Form Section (Right Column) - Light White-Blue Container */
       .auth-form-section {
-        padding: var(--space-12);
+        padding: clamp(24px, 4vh, 40px) clamp(20px, 3.5vw, 36px);
         display: flex;
         align-items: center;
         justify-content: center;
-
-        @media (max-width: 768px) {
-          padding: var(--space-8);
-        }
+        background: radial-gradient(circle at 90% 10%, rgba(56, 189, 248, 0.14) 0%, transparent 45%),
+                    radial-gradient(circle at 50% 95%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 95% 50%, rgba(224, 242, 254, 0.25) 0%, transparent 40%),
+                    linear-gradient(145deg, #f8fbff 0%, #f0f7ff 50%, #e6f2fe 100%);
+        position: relative;
+        overflow: hidden;
       }
 
       .auth-card {
         width: 100%;
-        max-width: 380px;
+        max-width: 375px;
+        margin: 0 auto;
+        padding: clamp(26px, 3.5vh, 32px) clamp(22px, 3vw, 28px);
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.85);
+        border-radius: 16px;
+        box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.06), 0 0 1px 1px rgba(255, 255, 255, 0.6), inset 0 1px 1px 0 rgba(255, 255, 255, 0.9);
+        transition: all var(--transition-normal);
+        position: relative;
+        z-index: 1;
       }
 
       .auth-header {
         text-align: center;
-        margin-bottom: var(--space-8);
+        margin-bottom: 18px;
       }
 
-      .auth-logo {
+      .auth-logo.show-mobile-only {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: var(--space-2);
+        gap: 8px;
         font-family: var(--font-heading);
-        font-size: var(--text-2xl);
-        font-weight: var(--font-extrabold);
+        font-size: 22px;
+        font-weight: 800;
         color: var(--color-primary);
-        margin-bottom: var(--space-6);
+        margin-bottom: 14px;
 
         span:first-child {
-          font-size: 28px;
+          font-size: 24px;
         }
       }
 
       .auth-title {
         font-family: var(--font-heading);
-        font-size: var(--text-2xl);
-        font-weight: var(--font-bold);
+        font-size: 24px;
+        font-weight: 700;
         color: var(--color-text-primary);
-        margin-bottom: var(--space-2);
+        margin: 0 0 4px 0;
+        letter-spacing: -0.01em;
       }
 
       .auth-subtitle {
         color: var(--color-text-secondary);
-        font-size: var(--text-sm);
+        font-size: 13.5px;
         margin: 0;
+        line-height: 1.4;
       }
 
       /* Social Login */
       .social-login {
-        margin-bottom: var(--space-2);
+        margin-bottom: 2px;
       }
 
       .social-btn {
-        height: 48px !important;
-        border-radius: var(--radius-lg) !important;
-        font-weight: var(--font-medium) !important;
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        gap: var(--space-3);
+        height: 44px !important;
+        width: 100% !important;
+        border-radius: 10px !important;
+        font-weight: 500 !important;
+        font-size: 14px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 9px !important;
+        border: 1px solid rgba(255, 255, 255, 0.8) !important;
+        color: var(--color-text-primary) !important;
+        background: rgba(255, 255, 255, 0.6) !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 1px 3px rgba(15, 82, 186, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+        transition: all var(--transition-fast) !important;
 
         &.google {
-          border-color: var(--color-border) !important;
-          color: var(--color-text-primary) !important;
+          .google-icon,
+          svg {
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            min-height: 18px;
+            flex-shrink: 0;
+            display: inline-block;
+            vertical-align: middle;
+          }
 
           &:hover {
-            border-color: var(--color-primary) !important;
+            border-color: rgba(59, 130, 246, 0.35) !important;
             color: var(--color-primary) !important;
+            background: rgba(255, 255, 255, 0.88) !important;
+            box-shadow: 0 4px 12px rgba(15, 82, 186, 0.08) !important;
           }
         }
       }
 
       .auth-divider {
-        margin: var(--space-4) 0;
+        margin: 14px 0 16px 0;
 
         ::ng-deep .ant-divider-inner-text {
           color: var(--color-text-tertiary);
-          font-size: var(--text-sm);
+          font-size: 12.5px;
+          font-weight: 400;
+          padding: 0 10px;
+        }
+
+        ::ng-deep .ant-divider-horizontal::before,
+        ::ng-deep .ant-divider-horizontal::after {
+          border-top-color: rgba(203, 213, 225, 0.5) !important;
         }
       }
 
       /* Form Styles */
       ::ng-deep {
+        .ant-form-item {
+          margin-bottom: 14px;
+        }
+
         .ant-form-item-label > label {
-          font-weight: var(--font-medium);
+          font-weight: 500;
+          font-size: 13px;
           color: var(--color-text-primary);
+          height: auto;
+          margin-bottom: 3px;
         }
 
         .ant-input-affix-wrapper-lg {
-          padding: 12px 16px !important;
-          border-radius: var(--radius-lg) !important;
+          height: 44px !important;
+          padding: 0 12px !important;
+          border-radius: 10px !important;
+          border: 1px solid rgba(203, 213, 225, 0.65);
+          font-size: 13.5px;
+          transition: all var(--transition-fast);
+          background: rgba(255, 255, 255, 0.65);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.02);
+
+          &:hover {
+            border-color: rgba(59, 130, 246, 0.4) !important;
+            background: rgba(255, 255, 255, 0.82);
+          }
+
+          &-focused {
+            border-color: var(--color-primary) !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            box-shadow: 0 0 0 3px rgba(15, 82, 186, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
+          }
+
+          .ant-input-prefix {
+            margin-right: 8px;
+            color: var(--color-text-tertiary);
+            font-size: 15px;
+          }
+
+          input.ant-input {
+            font-size: 13.5px;
+            background: transparent;
+            color: var(--color-text-primary);
+          }
+        }
+
+        .ant-form-item-explain-error {
+          font-size: 11.5px;
+          margin-top: 3px;
         }
       }
 
       .password-toggle {
         cursor: pointer;
         color: var(--color-text-tertiary);
+        font-size: 15px;
         transition: color var(--transition-fast);
 
         &:hover {
-          color: var(--color-text-secondary);
+          color: var(--color-text-primary);
         }
       }
 
@@ -461,53 +690,258 @@ import { environment } from '../../../environments/environment';
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: var(--space-6);
+        margin: 2px 0 16px 0;
+        font-size: 13px;
+        white-space: nowrap;
+
+        ::ng-deep .ant-checkbox-wrapper {
+          font-size: 13px;
+          color: var(--color-text-secondary);
+          font-weight: 400;
+          white-space: nowrap;
+        }
       }
 
       .forgot-link {
-        font-size: var(--text-sm);
+        font-size: 13px;
         color: var(--color-primary);
-        font-weight: var(--font-medium);
+        font-weight: 500;
+        white-space: nowrap;
+        transition: color var(--transition-fast);
 
         &:hover {
+          color: var(--color-primary-dark);
           text-decoration: underline;
         }
       }
 
       .submit-btn {
-        height: 48px !important;
-        border-radius: var(--radius-lg) !important;
-        font-weight: var(--font-semibold) !important;
-        font-size: var(--text-base) !important;
+        height: 44px !important;
+        width: 100% !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        font-size: 14.5px !important;
+        background: linear-gradient(135deg, #1d4ed8 0%, #0f52ba 100%) !important;
+        border: none !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(15, 82, 186, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        transition: all var(--transition-fast) !important;
+
+        &:hover {
+          background: linear-gradient(135deg, #1e40af 0%, #0a387e 100%) !important;
+          box-shadow: 0 6px 18px rgba(15, 82, 186, 0.38) !important;
+          transform: translateY(-1px);
+        }
+
+        &:active {
+          transform: translateY(0);
+          box-shadow: 0 2px 6px rgba(15, 82, 186, 0.25) !important;
+        }
       }
 
       .auth-footer {
         text-align: center;
-        margin-top: var(--space-8);
-        padding-top: var(--space-6);
-        border-top: 1px solid var(--color-border);
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(226, 232, 240, 0.5);
         color: var(--color-text-secondary);
-        font-size: var(--text-sm);
+        font-size: 13px;
 
         a {
           color: var(--color-primary);
-          font-weight: var(--font-semibold);
-          margin-left: var(--space-1);
+          font-weight: 600;
+          margin-left: 5px;
+          transition: color var(--transition-fast);
 
           &:hover {
+            color: var(--color-primary-dark);
             text-decoration: underline;
           }
         }
       }
 
-      /* Responsive */
-      @media (max-width: 767px) {
-        .hide-mobile {
-          display: none !important;
+      /* Dark Mode Compatibility */
+      :host-context([data-theme='dark']),
+      :host-context(.dark) {
+        .auth-page {
+          background: var(--color-bg-primary);
+        }
+
+        .auth-container {
+          background: #0f172a;
+          border-color: rgba(255, 255, 255, 0.1);
+          box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        /* Branding Section in Dark Mode */
+        .auth-branding {
+          background: radial-gradient(circle at 12% 18%, rgba(56, 189, 248, 0.15) 0%, transparent 45%),
+                      radial-gradient(circle at 88% 82%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
+                      linear-gradient(150deg, #0b1329 0%, #0f172a 45%, #1e293b 100%);
+          border-right: 1px solid rgba(255, 255, 255, 0.1);
+          color: #f8fafc;
+        }
+
+        .glow-orb-1 {
+          background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%);
+        }
+
+        .glow-orb-2 {
+          background: radial-gradient(circle, rgba(96, 165, 250, 0.18) 0%, transparent 70%);
+        }
+
+        .glow-orb-3 {
+          background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+        }
+
+        .tech-pattern {
+          opacity: 0.85;
+        }
+
+        .brand-logo-badge {
+          background: #1e293b;
+          border-color: rgba(96, 165, 250, 0.35);
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 12px rgba(59, 130, 246, 0.2);
+
+          span {
+            color: #60a5fa;
+            filter: drop-shadow(0 2px 8px rgba(59, 130, 246, 0.5));
+          }
+        }
+
+        .brand-logo span:last-child {
+          color: #60a5fa;
+        }
+
+        .branding-content h2 {
+          color: #f8fafc;
+        }
+
+        .branding-content p {
+          color: #94a3b8;
+        }
+
+        .auth-form-section {
+          background: radial-gradient(circle at 90% 10%, rgba(56, 189, 248, 0.08) 0%, transparent 45%),
+                      radial-gradient(circle at 50% 95%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+                      linear-gradient(145deg, #0f172a 0%, #172033 50%, #1e293b 100%);
+        }
+
+        .auth-card {
+          background: rgba(30, 41, 59, 0.7);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border-color: rgba(255, 255, 255, 0.12);
+          box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-title {
+          color: #f8fafc;
+        }
+
+        .auth-subtitle {
+          color: #94a3b8;
+        }
+
+        .social-btn.google {
+          background: rgba(15, 23, 42, 0.6) !important;
+          border-color: rgba(255, 255, 255, 0.12) !important;
+          color: #e2e8f0 !important;
+
+          &:hover {
+            background: rgba(30, 41, 59, 0.9) !important;
+            border-color: var(--color-primary-light) !important;
+            color: #ffffff !important;
+          }
+        }
+
+        .ant-input-affix-wrapper-lg {
+          background: rgba(15, 23, 42, 0.6) !important;
+          border-color: rgba(255, 255, 255, 0.12) !important;
+
+          input.ant-input {
+            color: #f1f5f9 !important;
+          }
+
+          &:hover {
+            border-color: var(--color-primary-light) !important;
+            background: rgba(15, 23, 42, 0.8) !important;
+          }
+
+          &-focused {
+            background: rgba(15, 23, 42, 0.9) !important;
+            border-color: var(--color-primary) !important;
+          }
+        }
+
+        .form-options ::ng-deep .ant-checkbox-wrapper {
+          color: #94a3b8;
+        }
+
+        .forgot-link {
+          color: #60a5fa;
+
+          &:hover {
+            color: #93c5fd;
+          }
+        }
+
+        .auth-divider {
+          ::ng-deep .ant-divider-horizontal::before,
+          ::ng-deep .ant-divider-horizontal::after {
+            border-top-color: rgba(255, 255, 255, 0.1) !important;
+          }
+          ::ng-deep .ant-divider-inner-text {
+            color: #64748b !important;
+          }
+        }
+
+        .auth-footer {
+          border-top-color: rgba(255, 255, 255, 0.1);
+          color: #94a3b8;
+
+          a {
+            color: #60a5fa;
+            &:hover {
+              color: #93c5fd;
+            }
+          }
         }
       }
 
-      @media (min-width: 768px) {
+      /* Responsive */
+      @media (max-width: 850px) {
+        .auth-container {
+          grid-template-columns: 1fr;
+          max-width: 440px;
+          border-radius: 18px;
+        }
+
+        .hide-mobile {
+          display: none !important;
+        }
+
+        .show-mobile-only {
+          display: flex !important;
+        }
+
+        .auth-form-section {
+          padding: 24px 16px;
+        }
+
+        .auth-card {
+          padding: 24px 18px;
+          border-radius: 14px;
+        }
+      }
+
+      @media (min-width: 851px) and (max-width: 1024px) {
+        .tech-pattern {
+          opacity: 0.45;
+        }
+      }
+
+      @media (min-width: 851px) {
         .show-mobile-only {
           display: none !important;
         }
@@ -523,6 +957,11 @@ import { environment } from '../../../environments/environment';
         font-size: 48px;
         color: var(--color-primary);
         margin-bottom: 16px;
+      }
+
+      .verify-alert {
+        margin-bottom: 16px;
+        text-align: left;
       }
 
       .verify-desc {
@@ -705,8 +1144,10 @@ import { environment } from '../../../environments/environment';
   ],
 })
 export class LoginComponent {
+  private readonly destroyRef = inject(DestroyRef);
   loginForm: FormGroup;
   loading = false;
+  googleLoading = false;
   showPassword = false;
   adminUrl = environment.adminUrl || 'http://localhost:4200';
 
@@ -721,11 +1162,12 @@ export class LoginComponent {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private message: NzMessageService
+    private route: ActivatedRoute,
+    private message: ToastService
   ) {
     this.loginForm = this.fb.group({
-      email: ['nguyenviet2k72k3@gmail.com', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
-      password: ['12345abcde', [Validators.required, Validators.minLength(8)]],
+      email: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
+      password: ['', [Validators.required, Validators.minLength(8)]],
       remember: [true],
     });
   }
@@ -736,6 +1178,48 @@ export class LoginComponent {
       password: '12345abcde',
     });
     this.message.info('Đã tự động điền tài khoản Ứng viên');
+  }
+
+  onGoogleLogin(): void {
+    if (this.googleLoading || this.loading) return;
+    this.googleLoading = true;
+
+    this.authService.initiateGoogleSignIn().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (user) => {
+        this.googleLoading = false;
+        this.message.success('Đăng nhập thành công');
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        if (returnUrl && returnUrl !== '/login') {
+          this.router.navigateByUrl(returnUrl);
+        } else {
+          this.router.navigate(['/']);
+        }
+      },
+      error: (err: unknown) => {
+        this.googleLoading = false;
+        if (err instanceof HttpErrorResponse) {
+          this.message.errorFromHttp(err, this.getLoginErrorMessage(err), true);
+        } else {
+          const errMsg = (err as Error)?.message || '';
+          if (
+            errMsg.includes('popup_closed') ||
+            errMsg.includes('user_cancel') ||
+            errMsg.includes('access_denied') ||
+            errMsg.includes('closed_by_user')
+          ) {
+          } else if (
+            errMsg.toLowerCase().includes('client id') ||
+            errMsg.toLowerCase().includes('client_id') ||
+            errMsg.toLowerCase().includes('googleclientid') ||
+            errMsg.includes('YOUR_GOOGLE_CLIENT_ID')
+          ) {
+            this.message.warning('Chưa cấu hình Google Client ID. Vui lòng cấu hình googleClientId trong environment.ts.');
+          } else {
+            this.message.error(errMsg || 'Đăng nhập với Google không thành công. Vui lòng thử lại.');
+          }
+        }
+      },
+    });
   }
 
   onSubmit(): void {
@@ -752,7 +1236,7 @@ export class LoginComponent {
     this.loading = true;
     const { email, password } = this.loginForm.value;
 
-    this.authService.login({ email, password }).subscribe({
+    this.authService.login({ email, password }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (user) => {
         this.loading = false;
         if (!user.email_verified) {
@@ -760,7 +1244,12 @@ export class LoginComponent {
           this.showVerifyModal = true;
         } else {
           this.message.success('Đăng nhập thành công');
-          this.router.navigate(['/']);
+          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+          if (returnUrl && returnUrl !== '/login') {
+            this.router.navigateByUrl(returnUrl);
+          } else {
+            this.router.navigate(['/']);
+          }
         }
       },
       error: (err: HttpErrorResponse) => {
@@ -772,7 +1261,7 @@ export class LoginComponent {
           this.showVerifyModal = true;
           return;
         }
-        this.message.error(this.getLoginErrorMessage(err));
+        this.message.errorFromHttp(err, this.getLoginErrorMessage(err), true);
       },
     });
   }
@@ -784,32 +1273,31 @@ export class LoginComponent {
       INVALID_CREDENTIALS: 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra và thử lại.',
       ACCOUNT_PENDING_APPROVAL: 'Tài khoản đang chờ quản trị viên phê duyệt.',
       ACCOUNT_REJECTED: 'Yêu cầu đăng ký tài khoản đã bị từ chối. Vui lòng liên hệ quản trị viên để được hỗ trợ.',
-      ACCOUNT_DISABLED: 'Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.',
+      ACCOUNT_DEACTIVATED: 'Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.',
     };
-
-    if (code && messages[code]) return messages[code];
-    if (err.status === 0) return 'Không thể kết nối đến hệ thống. Vui lòng kiểm tra mạng và thử lại.';
-    if (err.status === 429) return 'Bạn đã thử đăng nhập quá nhiều lần. Vui lòng đợi một lát rồi thử lại.';
-    if (err.status === 422) return 'Thông tin đăng nhập chưa hợp lệ. Vui lòng kiểm tra email và mật khẩu.';
-    if (err.status >= 500) return 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.';
-    if (typeof detail === 'object' && detail?.message) return detail.message;
-    if (typeof detail === 'string') return detail;
-    return 'Không thể đăng nhập. Vui lòng thử lại.';
+    if (code && messages[code]) {
+      return messages[code];
+    }
+    const message = typeof detail === 'string' ? detail : detail?.message;
+    return message || 'Đăng nhập không thành công. Vui lòng thử lại.';
   }
 
   resendVerification(): void {
+    if (!this.unverifiedEmail) return;
     this.sendingVerify = true;
     this.verifyMessage = '';
-    this.authService.resendVerification(this.unverifiedEmail).subscribe({
-      next: () => {
+
+    this.authService.resendVerification(this.unverifiedEmail).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
         this.sendingVerify = false;
-        this.verifyMessage = 'Email xác thực đã được gửi lại thành công!';
         this.verifyMessageType = 'success';
+        this.verifyMessage = res.message || 'Đã gửi lại email xác thực. Vui lòng kiểm tra hộp thư.';
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         this.sendingVerify = false;
-        this.verifyMessage = err.error?.detail || 'Gửi email thất bại. Vui lòng thử lại.';
         this.verifyMessageType = 'error';
+        const msg = err.error?.detail;
+        this.verifyMessage = typeof msg === 'string' ? msg : 'Không thể gửi email xác thực. Vui lòng thử lại sau.';
       },
     });
   }
@@ -820,8 +1308,7 @@ export class LoginComponent {
   }
 
   logoutAndClose(): void {
+    this.closeVerifyModal();
     this.authService.logout();
-    this.showVerifyModal = false;
-    this.verifyMessage = '';
   }
 }
