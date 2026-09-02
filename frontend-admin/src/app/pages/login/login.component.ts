@@ -143,12 +143,29 @@ import { environment } from '../../../environments/environment';
           <!-- Mobile Logo -->
           <div class="mobile-logo">
             <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="40" height="40" rx="10" fill="#0050B3"/>
+              <rect width="40" height="40" rx="10" fill="#18181B"/>
               <path d="M10 12.5h7.5v15H10V12.5zm12.5 0H30v15h-7.5V12.5z" fill="white"/>
-              <circle cx="13.75" cy="20" r="2.5" fill="#0050B3"/>
-              <circle cx="26.25" cy="20" r="2.5" fill="#0050B3"/>
+              <circle cx="13.75" cy="20" r="2.5" fill="#71717A"/>
+              <circle cx="26.25" cy="20" r="2.5" fill="#71717A"/>
             </svg>
             <span class="mobile-brand">iRSA Admin</span>
+          </div>
+
+          <div class="auth-mascot" aria-hidden="true">
+            <svg viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle class="mascot-halo" cx="48" cy="48" r="45"/>
+              <path class="mascot-spark" d="M17 24v8M13 28h8M75 15v6M72 18h6"/>
+              <path class="mascot-antenna" d="M48 22v-7"/>
+              <circle class="mascot-antenna-dot" cx="48" cy="12" r="4"/>
+              <rect class="mascot-face" x="22" y="23" width="52" height="44" rx="16"/>
+              <circle class="mascot-eye" cx="39" cy="43" r="4"/>
+              <circle class="mascot-eye" cx="57" cy="43" r="4"/>
+              <path class="mascot-smile" d="M40 55c5 5 11 5 16 0"/>
+              <rect class="mascot-cv" x="58" y="56" width="29" height="27" rx="8"/>
+              <path class="mascot-cv-line" d="M65 64h11M65 69h8"/>
+              <circle class="mascot-check-dot" cx="78" cy="76" r="5"/>
+              <path class="mascot-check" d="m75.5 76 1.7 1.7 3.2-3.6"/>
+            </svg>
           </div>
 
           <!-- Form Header -->
@@ -860,6 +877,113 @@ import { environment } from '../../../environments/environment';
       }
     }
 
+    /* Warm Slate authentication surface */
+    .login-page {
+      color: #18181B;
+      background: #F3F0E6;
+    }
+
+    .branding-panel {
+      color: #FFFFFF;
+      background: #18181B;
+
+      &::before {
+        background-image: radial-gradient(rgb(255 255 255 / .13) .75px, transparent .75px);
+      }
+    }
+
+    .hero-title {
+      color: #FFFFFF;
+
+      .highlight { color: #D4D4D8; }
+    }
+
+    .hero-description { color: rgb(244 244 245 / .82); }
+    .feature-icon { background: rgb(255 255 255 / .09); }
+
+    .workflow-visual { filter: drop-shadow(0 18px 30px rgb(0 0 0 / .18)); }
+    .workflow-halo { fill: rgb(255 255 255 / .02); stroke: rgb(212 212 216 / .26); }
+    .workflow-route { stroke: rgb(212 212 216 / .58); }
+    .workflow-card > rect:first-child,
+    .workflow-card--candidate > rect:first-child,
+    .workflow-card--shortlist > rect:first-child { fill: rgb(255 255 255 / .08); stroke: rgb(228 228 231 / .28); }
+    .workflow-card-line,
+    .workflow-card-line--short { fill: rgb(244 244 245 / .72); }
+    .workflow-card-dot { fill: #A1A1AA; }
+    .workflow-core circle { fill: rgb(255 255 255 / .1); stroke: rgb(228 228 231 / .5); }
+    .workflow-core-line,
+    .workflow-chart { stroke: #D4D4D8; }
+    .workflow-check-ring { fill: rgb(255 255 255 / .08); stroke: #A1A1AA; }
+    .workflow-label { fill: rgb(244 244 245 / .75); }
+
+    .form-panel {
+      background: #F3F0E6;
+    }
+
+    .form-container {
+      max-width: 27rem;
+      padding: 34px;
+      border: 1px solid #E4DFD3;
+      border-radius: 16px;
+      background: #FFFFFF;
+      box-shadow: 0 10px 30px rgb(24 24 27 / .06);
+    }
+
+    .form-title { color: #18181B; }
+    .form-subtitle { color: #71717A; }
+
+    .auth-mascot {
+      width: 82px;
+      height: 82px;
+      margin: 0 0 18px;
+    }
+
+    .auth-mascot svg { display: block; width: 100%; height: 100%; }
+    .mascot-halo { fill: #F3F0E6; stroke: #E4DFD3; }
+    .mascot-spark { stroke: #A1A1AA; stroke-width: 2; stroke-linecap: round; }
+    .mascot-antenna { stroke: #18181B; stroke-width: 3; stroke-linecap: round; }
+    .mascot-antenna-dot,
+    .mascot-face { fill: #18181B; }
+    .mascot-eye { fill: #FFFFFF; }
+    .mascot-smile { stroke: #FFFFFF; stroke-width: 2.5; stroke-linecap: round; }
+    .mascot-cv { fill: #FFFFFF; stroke: #18181B; stroke-width: 2; }
+    .mascot-cv-line { stroke: #71717A; stroke-width: 2; stroke-linecap: round; }
+    .mascot-check-dot { fill: #10B981; }
+    .mascot-check { stroke: #FFFFFF; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+    :host ::ng-deep nz-input-group.ant-input-affix-wrapper {
+      border-color: #E4DFD3 !important;
+      background: #FAFAFA !important;
+
+      &:hover { border-color: #A1A1AA !important; }
+
+      &:focus-within,
+      &.ant-input-affix-wrapper-focused {
+        border-color: #18181B !important;
+        background: #FFFFFF !important;
+        box-shadow: 0 0 0 3px rgb(24 24 27 / .1) !important;
+      }
+    }
+
+    .login-btn:hover:not(:disabled),
+    .portal-switch-btn:hover {
+      box-shadow: 0 6px 16px rgb(24 24 27 / .14);
+    }
+
+    .credentials-card {
+      border-color: #E4DFD3;
+      background: #FAFAFA;
+    }
+
+    .credential-item code {
+      color: #18181B;
+      background: #FFFFFF;
+      font-family: var(--font-mono);
+    }
+
+    .register-hr-link a,
+    .forgot-link { color: #3F3F46; font-weight: 600; }
+
     /* Responsive */
     @media (max-width: 1024px) {
       .branding-panel {
@@ -898,6 +1022,7 @@ import { environment } from '../../../environments/environment';
 
       .form-container {
         max-width: 100%;
+        padding: 24px;
       }
     }
   `],

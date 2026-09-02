@@ -43,7 +43,7 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
   template: `
     <div class="page-header">
       <h2>
-        <span nz-icon nzType="trophy" nzTheme="outline" style="color: #faad14; margin-right: 8px"></span>
+        <span nz-icon nzType="trophy" nzTheme="outline" style="color: #18181b; margin-right: 8px"></span>
         Vòng 3 - Đã Pass phỏng vấn & Đề xuất tuyển dụng
       </h2>
       <p style="color: #888; margin: 4px 0 16px">
@@ -136,7 +136,7 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
                 <button
                   nz-button
                   nzSize="small"
-                  style="color: #722ed1; border-color: #d3adf7; font-weight: 500"
+                  style="color: #18181b; border-color: #d4d4d8; font-weight: 600"
                   (click)="openInterviewRoom(app)"
                   nz-tooltip
                   nzTooltipTitle="Xem lại biên bản phỏng vấn, câu trả lời, ghi âm và điểm số"
@@ -185,8 +185,8 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
   `,
   styles: [`
     .page-header h2 {
-      font-size: 20px;
-      font-weight: 600;
+      font-size: 26px;
+      font-weight: 700;
       margin-bottom: 0;
       display: flex;
       align-items: center;

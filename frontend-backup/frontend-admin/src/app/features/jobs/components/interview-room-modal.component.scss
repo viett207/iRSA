@@ -1,0 +1,11 @@
+.interview-room-container {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Former inline presentation rules */
+.text-warning { color: #faad14; }
+.text-error { color: #ff4d4f; }
+.tabs-spacing { margin-top: 12px; }
+.loading-copy { margin-top: 16px; color: #666; font-size: 14px; }
+.loading-state { text-align: center; padding: 40px; }

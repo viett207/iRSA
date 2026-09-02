@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.api.deps import HRUser
-from app.models import Job, Application, ScoringResult
+from app.models import Job, Application, Interview, ScoringResult
 from app.models.user import User
 
 
@@ -56,6 +56,12 @@ class ReportsOverview(BaseModel):
     scored_applications: int
     avg_score: float | None
     hired_count: int
+    completed_interviews: int
+    passed_interviews: int
+    interview_pass_rate: float | None
+    # Requires product telemetry comparing actual HR review time with AI review time.
+    # Keep null until that telemetry exists; never fabricate a time-saving estimate.
+    ai_screening_time_saved_hours: float | None = None
 
     # Trends
     application_trend: list[DailyCount]
@@ -151,6 +157,32 @@ async def get_reports_overview(
             Application.job_id.in_(company_jobs_sq),
         )
     ) or 0
+
+    completed_interviews = await db.scalar(
+        select(func.count(Interview.id))
+        .join(Application, Interview.application_id == Application.id)
+        .where(
+            Interview.status == "completed",
+            Interview.interview_date >= since,
+            Application.job_id.in_(company_jobs_sq),
+        )
+    ) or 0
+
+    passed_interviews = await db.scalar(
+        select(func.count(Interview.id))
+        .join(Application, Interview.application_id == Application.id)
+        .where(
+            Interview.status == "completed",
+            Interview.interview_date >= since,
+            Interview.recommendation.in_(["STRONG_HIRE", "HIRE"]),
+            Application.job_id.in_(company_jobs_sq),
+        )
+    ) or 0
+    interview_pass_rate = (
+        round((passed_interviews / completed_interviews) * 100, 1)
+        if completed_interviews > 0
+        else None
+    )
 
     # --- Application trend (daily counts for the period) ---
     trend_rows = (
@@ -300,6 +332,10 @@ async def get_reports_overview(
         scored_applications=scored_applications,
         avg_score=avg_score,
         hired_count=hired_count,
+        completed_interviews=completed_interviews,
+        passed_interviews=passed_interviews,
+        interview_pass_rate=interview_pass_rate,
+        ai_screening_time_saved_hours=None,
         application_trend=application_trend,
         score_distribution=score_distribution,
         application_by_status=application_by_status,

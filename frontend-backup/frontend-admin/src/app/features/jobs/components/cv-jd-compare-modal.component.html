@@ -1,0 +1,221 @@
+@if (loading) {
+  <div style="text-align: center; padding: 50px">
+    <nz-spin nzSimple></nz-spin>
+    <p style="margin-top: 12px; color: #888">Đang tải và đối chiếu dữ liệu CV & JD...</p>
+  </div>
+} @else if (error) {
+  <nz-alert nzType="error" [nzMessage]="error" nzShowIcon></nz-alert>
+} @else if (data) {
+  <div class="compare-container">
+    <!-- Top Toolbar & Skill Summary -->
+    <div class="top-summary-card">
+      <div class="summary-header">
+        <div>
+          <h3 style="margin: 0; font-size: 16px; font-weight: 600">
+            <span nz-icon nzType="diff" nzTheme="outline" style="color: var(--color-primary-light); margin-right: 6px"></span>
+            Đối chiếu trực quan: {{ data.candidate_name }} &harr; {{ data.job_title }}
+          </h3>
+          <div style="font-size: 12px; color: #888; margin-top: 2px">
+            File CV: <strong>{{ data.resume_filename }}</strong> | Ứng tuyển: <strong>{{ data.job_department || 'Công ty' }}</strong>
+          </div>
+        </div>
+        <!-- Custom Search Filter -->
+        <div style="width: 260px">
+          <nz-input-group [nzPrefix]="prefixSearch" nzSize="small">
+            <input
+              type="text"
+              nz-input
+              placeholder="Tìm & highlight từ khóa..."
+              [(ngModel)]="customSearchTerm"
+            />
+          </nz-input-group>
+          <ng-template #prefixSearch>
+            <span nz-icon nzType="search"></span>
+          </ng-template>
+        </div>
+      </div>
+
+      <nz-divider style="margin: 10px 0"></nz-divider>
+
+      <!-- Existing rule-based score: no AI call is made by this modal. -->
+      @if (data.total_score != null) {
+        <div class="matching-score-panel">
+          <div class="overall-score">
+            <nz-progress
+              nzType="circle"
+              [nzPercent]="data.total_score"
+              [nzWidth]="82"
+              [nzStrokeColor]="getScoreColor(data.total_score)"
+            ></nz-progress>
+            <div>
+              <div class="score-title">Điểm matching CV – JD</div>
+              <div class="score-note">Chấm tự động theo tiêu chí JD, không sử dụng AI</div>
+              <nz-tag [nzColor]="getScoreColor(data.total_score)">
+                {{ getMatchAssessment(data.total_score) }}
+              </nz-tag>
+            </div>
+          </div>
+
+          <div class="score-breakdown">
+            <div class="breakdown-item">
+              <span>Kỹ năng</span>
+              <strong [style.color]="getScoreColor(data.skill_match_score ?? 0)">
+                {{ (data.skill_match_score ?? 0) | number:'1.0-1' }}%
+              </strong>
+            </div>
+            <div class="breakdown-item">
+              <span>Kinh nghiệm</span>
+              <strong [style.color]="getScoreColor(data.experience_score ?? 0)">
+                {{ (data.experience_score ?? 0) | number:'1.0-1' }}%
+              </strong>
+            </div>
+            <div class="breakdown-item">
+              <span>Học vấn</span>
+              <strong [style.color]="getScoreColor(data.education_score ?? 0)">
+                {{ (data.education_score ?? 0) | number:'1.0-1' }}%
+              </strong>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <nz-alert
+          nzType="warning"
+          nzMessage="Chưa có điểm matching CV – JD"
+          nzDescription="Điểm rule-based chưa được tạo cho hồ sơ này. Việc mở màn hình đối chiếu không tự gọi AI."
+          nzShowIcon
+          style="margin-bottom: 12px"
+        ></nz-alert>
+      }
+
+      <!-- Matching skills badges -->
+      <div class="skills-summary-bar">
+        <div class="skill-category">
+          <span class="skill-category-title">
+            <span nz-icon nzType="check-circle" style="color: #52c41a"></span>
+            Khớp trong CV ({{ data.matched_skills.length }}):
+          </span>
+          <div class="tags-container">
+            @for (skill of data.matched_skills; track skill) {
+              <nz-tag nzColor="success" class="clickable-tag" (click)="setSearchTerm(skill)">
+                <span nz-icon nzType="check"></span> {{ skill }}
+              </nz-tag>
+            }
+            @if (data.matched_skills.length === 0) {
+              <span style="font-size: 12px; color: #999; font-style: italic">Không tìm thấy từ khóa kỹ năng khớp trực tiếp</span>
+            }
+          </div>
+        </div>
+
+        @if (data.missing_skills.length > 0) {
+          <div class="skill-category" style="margin-top: 8px">
+            <span class="skill-category-title">
+              <span nz-icon nzType="close-circle" style="color: #fa8c16"></span>
+              Chưa thấy trong CV ({{ data.missing_skills.length }}):
+            </span>
+            <div class="tags-container">
+              @for (skill of data.missing_skills; track skill) {
+                <nz-tag nzColor="orange" class="clickable-tag" (click)="setSearchTerm(skill)">
+                  <span nz-icon nzType="minus"></span> {{ skill }}
+                </nz-tag>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- 2 Columns: Split View -->
+    <div class="split-view-grid">
+      <!-- Left Column: CV Content -->
+      <div class="panel-column cv-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span nz-icon nzType="file-text" nzTheme="outline" style="color: var(--color-primary-light)"></span>
+            Nội dung CV ứng viên
+          </div>
+          <nz-tag nzColor="blue">{{ data.candidate_name }}</nz-tag>
+        </div>
+        <div class="panel-body">
+          @if (data.cv_text) {
+            <div class="text-content cv-text" [innerHTML]="highlightText(data.cv_text)"></div>
+          } @else {
+            <nz-empty nzNotFoundContent="Không có nội dung văn bản trích xuất được từ CV (hoặc file scan/ảnh)"></nz-empty>
+          }
+        </div>
+      </div>
+
+      <!-- Right Column: JD Content -->
+      <div class="panel-column jd-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span nz-icon nzType="audit" nzTheme="outline" style="color: #52c41a"></span>
+            Mô tả & Tiêu chí công việc (JD)
+          </div>
+          <nz-tag nzColor="green">{{ data.job_title }}</nz-tag>
+        </div>
+        <div class="panel-body">
+          <!-- Job Criteria Overview -->
+          <div class="jd-section">
+            <h4 class="jd-section-title">
+              <span nz-icon nzType="control" nzTheme="outline"></span>
+              Tiêu chí tuyển dụng
+            </h4>
+            <nz-descriptions nzBordered [nzColumn]="2" nzSize="small">
+              <nz-descriptions-item nzTitle="Kinh nghiệm">
+                {{ data.min_experience_years }} năm
+                @if (data.max_experience_years) { - {{ data.max_experience_years }} năm }
+              </nz-descriptions-item>
+              <nz-descriptions-item nzTitle="Học vấn">
+                {{ getEducationLabel(data.min_education) }}
+              </nz-descriptions-item>
+              <nz-descriptions-item nzTitle="Kỹ năng bắt buộc" [nzSpan]="2">
+                @for (s of data.must_have_skills; track s) {
+                  <nz-tag [nzColor]="isSkillMatched(s) ? 'success' : 'red'">
+                    <span nz-icon [nzType]="isSkillMatched(s) ? 'check' : 'close'"></span>
+                    {{ s }}
+                  </nz-tag>
+                }
+                @if (data.must_have_skills.length === 0) {
+                  <span style="color: #999">-</span>
+                }
+              </nz-descriptions-item>
+              <nz-descriptions-item nzTitle="Kỹ năng ưu tiên" [nzSpan]="2">
+                @for (s of data.nice_to_have_skills; track s) {
+                  <nz-tag [nzColor]="isSkillMatched(s) ? 'green' : 'orange'">
+                    <span nz-icon [nzType]="isSkillMatched(s) ? 'check' : 'minus'"></span>
+                    {{ s }}
+                  </nz-tag>
+                }
+                @if (data.nice_to_have_skills.length === 0) {
+                  <span style="color: #999">-</span>
+                }
+              </nz-descriptions-item>
+            </nz-descriptions>
+          </div>
+
+          <!-- Job Description -->
+          @if (data.job_description) {
+            <div class="jd-section">
+              <h4 class="jd-section-title">
+                <span nz-icon nzType="project" nzTheme="outline"></span>
+                Mô tả công việc
+              </h4>
+              <div class="text-content" [innerHTML]="highlightText(data.job_description)"></div>
+            </div>
+          }
+
+          <!-- Job Requirements -->
+          @if (data.job_requirements) {
+            <div class="jd-section">
+              <h4 class="jd-section-title">
+                <span nz-icon nzType="check-square" nzTheme="outline"></span>
+                Yêu cầu ứng viên
+              </h4>
+              <div class="text-content" [innerHTML]="highlightText(data.job_requirements)"></div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

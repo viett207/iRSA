@@ -1,0 +1,258 @@
+<div class="job-detail-page">
+  @if (loading) {
+    <div class="loading-container">
+      <nz-skeleton [nzActive]="true" [nzParagraph]="{ rows: 10 }"></nz-skeleton>
+    </div>
+  } @else if (error) {
+    <div class="error-container">
+      <nz-alert
+        nzType="error"
+        nzMessage="Lỗi"
+        [nzDescription]="error"
+        nzShowIcon
+      ></nz-alert>
+      <button nz-button nzType="primary" routerLink="/jobs" class="mt-4">
+        Quay lại danh sách
+      </button>
+    </div>
+  } @else if (job) {
+    <div class="container">
+      <div class="back-link">
+        <a routerLink="/jobs">
+          <span nz-icon nzType="arrow-left" nzTheme="outline"></span>
+          Quay lại danh sách việc làm
+        </a>
+      </div>
+
+      <div nz-row [nzGutter]="24">
+        <div nz-col [nzXs]="24" [nzLg]="16">
+          <!-- Job Header -->
+          <nz-card class="job-header-card">
+            <div class="job-header">
+              <h1 class="job-title">{{ job.title_vi }}</h1>
+
+              <div class="job-meta">
+                @if (job.department) {
+                  <span class="meta-item">
+                    <span nz-icon nzType="apartment" nzTheme="outline"></span>
+                    {{ job.department }}
+                  </span>
+                }
+                @if (job.location) {
+                  <span class="meta-item">
+                    <span nz-icon nzType="environment" nzTheme="outline"></span>
+                    {{ job.location }}
+                  </span>
+                }
+                @if (job.employment_type) {
+                  <span class="meta-item">
+                    <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
+                    {{ getEmploymentTypeLabel(job.employment_type) }}
+                  </span>
+                }
+              </div>
+
+              @if (job.salary_min != null || job.salary_max != null) {
+                <div class="salary-badge">
+                  <span nz-icon nzType="dollar" nzTheme="outline"></span>
+                  {{ formatSalary(job.salary_min, job.salary_max) }}
+                </div>
+              }
+            </div>
+          </nz-card>
+
+          <!-- Job Description -->
+          @if (job.description_vi) {
+            <nz-card class="content-card">
+              <h3>Mô tả công việc</h3>
+              <div class="content-text text-justify leading-relaxed tracking-wide text-slate-600" [innerHTML]="sanitizeHtml(job.description_vi)"></div>
+            </nz-card>
+          }
+
+          <!-- Job Requirements -->
+          @if (job.requirements_vi) {
+            <nz-card class="content-card">
+              <h3>Yêu cầu</h3>
+              <div class="content-text text-justify leading-relaxed tracking-wide text-slate-600" [innerHTML]="sanitizeHtml(job.requirements_vi)"></div>
+            </nz-card>
+          }
+
+          <!-- Skills -->
+          @if (job.must_have_skills.length > 0 || job.nice_to_have_skills.length > 0) {
+            <nz-card class="content-card">
+              <h3>Kỹ năng</h3>
+              @if (job.must_have_skills.length > 0) {
+                <div class="skills-section">
+                  <h4>Bắt buộc:</h4>
+                  <div class="skills-tags">
+                    @for (skill of job.must_have_skills; track skill) {
+                      <nz-tag nzColor="blue">{{ skill }}</nz-tag>
+                    }
+                  </div>
+                </div>
+              }
+              @if (job.nice_to_have_skills.length > 0) {
+                <div class="skills-section">
+                  <h4>Ưu tiên:</h4>
+                  <div class="skills-tags">
+                    @for (skill of job.nice_to_have_skills; track skill) {
+                      <nz-tag nzColor="geekblue">{{ skill }}</nz-tag>
+                    }
+                  </div>
+                </div>
+              }
+            </nz-card>
+          }
+        </div>
+
+        <!-- Sidebar -->
+        <div nz-col [nzXs]="24" [nzLg]="8">
+          <nz-card class="apply-card">
+            <h3>Ứng tuyển ngay</h3>
+
+            @if (!authService.isAuthenticated()) {
+              <p class="login-prompt">
+                Vui lòng đăng nhập để ứng tuyển vị trí này
+              </p>
+              <button
+                nz-button
+                nzType="primary"
+                nzBlock
+                nzSize="large"
+                class="apply-primary-action irsa-btn-primary"
+                routerLink="/login"
+                [queryParams]="{ returnUrl: '/jobs/' + job.slug }"
+              >
+                Đăng nhập để ứng tuyển
+              </button>
+            } @else if (hasApplied) {
+              <button
+                nz-button
+                nzBlock
+                nzSize="large"
+                disabled
+                class="applied-btn irsa-btn-applied"
+              >
+                <span nz-icon nzType="check-circle" nzTheme="outline"></span>
+                Đã ứng tuyển
+              </button>
+            } @else {
+              <button
+                nz-button
+                nzType="primary"
+                nzBlock
+                nzSize="large"
+                class="apply-primary-action irsa-btn-primary"
+                (click)="openApplyModal()"
+              >
+                <span nz-icon nzType="send" nzTheme="outline"></span>
+                Ứng tuyển
+              </button>
+            }
+
+            <p class="apply-assurance">Hồ sơ được gửi trực tiếp và chỉ dùng cho quy trình tuyển dụng.</p>
+
+            <nz-divider></nz-divider>
+
+            <nz-descriptions [nzColumn]="1" nzSize="small">
+              @if (job.min_experience_years !== undefined) {
+                <nz-descriptions-item nzTitle="Kinh nghiệm">
+                  {{ getExperienceText() }}
+                </nz-descriptions-item>
+              }
+              @if (job.min_education) {
+                <nz-descriptions-item nzTitle="Học vấn">
+                  {{ getEducationLabel(job.min_education) }}
+                </nz-descriptions-item>
+              }
+              @if (job.application_deadline) {
+                <nz-descriptions-item nzTitle="Hạn nộp">
+                  {{ job.application_deadline | date: 'dd/MM/yyyy' }}
+                </nz-descriptions-item>
+              }
+              @if (job.published_at) {
+                <nz-descriptions-item nzTitle="Đăng ngày">
+                  {{ job.published_at | date: 'dd/MM/yyyy' }}
+                </nz-descriptions-item>
+              }
+            </nz-descriptions>
+          </nz-card>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Apply Modal -->
+<nz-modal
+  [(nzVisible)]="applyModalVisible"
+  nzTitle="Ứng tuyển vị trí"
+  [nzFooter]="applyModalFooter"
+  (nzOnCancel)="closeApplyModal()"
+  [nzWidth]="600"
+>
+  <ng-container *nzModalContent>
+    <div class="apply-form">
+      <!-- Resume Selection -->
+      <div class="form-section">
+        <label>CV / Hồ sơ của bạn <span class="required">*</span></label>
+
+        @if (resumes.length > 0) {
+          <nz-select
+            [(ngModel)]="selectedResumeId"
+            nzPlaceHolder="Chọn CV có sẵn"
+            nzSize="large"
+            class="resume-select"
+            [nzAllowClear]="true"
+            (ngModelChange)="onResumeSelect($event)"
+          >
+            @for (resume of resumes; track resume.id) {
+              <nz-option
+                [nzValue]="resume.id"
+                [nzLabel]="resume.original_filename + (resume.is_default ? ' (Mặc định)' : '')"
+              ></nz-option>
+            }
+          </nz-select>
+
+          <p class="or-divider">hoặc tải lên CV mới</p>
+        }
+
+        <nz-upload
+          [(nzFileList)]="uploadedFiles"
+          [nzBeforeUpload]="beforeUpload"
+          nzAccept=".pdf,.docx"
+        >
+          <button nz-button>
+            <span nz-icon nzType="upload" nzTheme="outline"></span>
+            Tải lên CV (PDF, DOCX - tối đa 5MB)
+          </button>
+        </nz-upload>
+      </div>
+
+      <!-- Cover Letter -->
+      <div class="form-section">
+        <label>Thư xin việc (tùy chọn)</label>
+        <textarea
+          nz-input
+          [(ngModel)]="coverLetter"
+          [nzAutosize]="{ minRows: 4, maxRows: 8 }"
+          placeholder="Giới thiệu ngắn về bản thân và lý do bạn phù hợp với vị trí này..."
+        ></textarea>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #applyModalFooter>
+    <button nz-button class="irsa-btn-secondary" (click)="closeApplyModal()">Hủy</button>
+    <button
+      nz-button
+      nzType="primary"
+      class="apply-submit-btn irsa-btn-primary"
+      [nzLoading]="submitting"
+      [disabled]="!canSubmit()"
+      (click)="submitApplication()"
+    >
+      Gửi hồ sơ
+    </button>
+  </ng-template>
+</nz-modal>

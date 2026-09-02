@@ -1,0 +1,40 @@
+<div class="interview-room-container">
+  @if (loading()) {
+    <div class="loading-state">
+      <nz-spin nzSimple nzSize="large"></nz-spin>
+      <p class="loading-copy">
+        Đang tải dữ liệu phòng phỏng vấn và bộ câu hỏi...
+      </p>
+    </div>
+  } @else if (data()) {
+    <app-interview-candidate-banner [room]="view" />
+
+    <nz-tabset [(nzSelectedIndex)]="activeTabIndex" class="tabs-spacing">
+      <nz-tab [nzTitle]="tabLiveTitle">
+        <ng-template #tabLiveTitle>
+          <span nz-icon nzType="audio" class="text-error"></span>
+          <strong>Phòng phỏng vấn ({{ activeQuestions().length }} câu hỏi)</strong>
+        </ng-template>
+        <app-interview-live-room [room]="view" />
+      </nz-tab>
+
+      <nz-tab [nzTitle]="tabSetupTitle">
+        <ng-template #tabSetupTitle>
+          <span nz-icon nzType="form"></span>
+          Thiết lập bộ câu hỏi ({{ allQuestionStates().length }})
+        </ng-template>
+        <app-interview-question-setup [room]="view" />
+      </nz-tab>
+
+      <nz-tab [nzTitle]="tabSummaryTitle">
+        <ng-template #tabSummaryTitle>
+          <span nz-icon nzType="trophy" class="text-warning"></span>
+          Tổng kết & Chốt quyết định
+        </ng-template>
+        <app-interview-summary [room]="view" />
+      </nz-tab>
+    </nz-tabset>
+  }
+</div>
+
+<app-interview-question-dialogs [room]="view" />

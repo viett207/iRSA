@@ -1,0 +1,48 @@
+<div class="email-required-container">
+  <div class="email-required-card">
+    <div class="icon-wrapper">
+      <span nz-icon nzType="mail" nzTheme="outline"></span>
+    </div>
+    <h2>Xác thực email để tiếp tục</h2>
+    <p class="description">
+      Tài khoản <strong>{{ userEmail }}</strong> chưa được xác thực email.
+      Vui lòng kiểm tra hộp thư và nhấn vào link xác thực để sử dụng tài khoản.
+    </p>
+
+    @if (message) {
+      <nz-alert
+        [nzType]="messageType"
+        [nzMessage]="message"
+        nzShowIcon
+        style="margin-bottom: 16px;"
+      ></nz-alert>
+    }
+
+    <div class="actions">
+      <button
+        nz-button
+        nzType="primary"
+        nzSize="large"
+        nzBlock
+        [nzLoading]="sending"
+        (click)="resendEmail()"
+      >
+        <span nz-icon nzType="send" nzTheme="outline"></span>
+        Gửi lại email xác thực
+      </button>
+      <button
+        nz-button
+        nzSize="large"
+        nzBlock
+        (click)="logout()"
+      >
+        <span nz-icon nzType="logout" nzTheme="outline"></span>
+        Đăng xuất
+      </button>
+    </div>
+
+    <p class="hint">
+      Không nhận được email? Kiểm tra thư mục spam hoặc bấm "Gửi lại email xác thực".
+    </p>
+  </div>
+</div>

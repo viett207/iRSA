@@ -1,0 +1,59 @@
+<nz-layout class="layout">
+  <a class="skip-link" href="#main-content">Bỏ qua đến nội dung chính</a>
+
+  <app-portal-header></app-portal-header>
+
+  <nz-content id="main-content" class="content">
+    <router-outlet></router-outlet>
+  </nz-content>
+
+  <nz-footer class="footer">
+    <div class="footer-container">
+      <div class="footer-main">
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <span nz-icon nzType="thunderbolt" nzTheme="fill"></span>
+            <span>iRSA</span>
+          </div>
+          <p class="footer-tagline">
+            Hệ thống tuyển dụng thông minh sử dụng AI
+          </p>
+        </div>
+
+        <div class="footer-links">
+          <div class="footer-column">
+            <h4>Ứng viên</h4>
+            <ul>
+              <li><a routerLink="/jobs">Tìm việc làm</a></li>
+              <li><a routerLink="/register">Tạo tài khoản</a></li>
+            </ul>
+          </div>
+          <div class="footer-column">
+            <h4>Nhà tuyển dụng</h4>
+            <ul>
+              <li><a href="#">Đăng tin tuyển dụng</a></li>
+              <li><a href="#">Giải pháp HR</a></li>
+            </ul>
+          </div>
+          <div class="footer-column">
+            <h4>Liên hệ</h4>
+            <ul>
+              <li>
+                <span nz-icon nzType="mail" nzTheme="outline"></span>
+                contact&#64;irsa.vn
+              </li>
+              <li>
+                <span nz-icon nzType="phone" nzTheme="outline"></span>
+                1900 xxxx
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2025 iRSA. Intelligent Resume Screening Automation. All rights reserved.</p>
+      </div>
+    </div>
+  </nz-footer>
+</nz-layout>

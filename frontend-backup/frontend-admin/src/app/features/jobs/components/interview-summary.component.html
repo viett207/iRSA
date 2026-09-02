@@ -1,0 +1,85 @@
+  <div class="summary-card-large">
+    <div class="summary-top">
+      <div class="inline-row-lg">
+        <nz-progress
+          [nzPercent]="overallScore() || 0"
+          nzType="circle"
+          [nzWidth]="80"
+          [nzStrokeColor]="getScoreColor(overallScore() || 0)"
+          [nzFormat]="scoreFormat"
+        ></nz-progress>
+        <div>
+          <div class="inline-row-sm">
+            <h3 class="summary-title">Kết quả phỏng vấn tổng thể</h3>
+            @if (recommendation()) {
+              <nz-tag [nzColor]="getRecColor(recommendation()!)" class="recommendation-tag">
+                {{ getRecLabel(recommendation()!) }}
+              </nz-tag>
+            }
+          </div>
+          <p class="summary-copy">
+            {{ overallFeedback() || 'Chưa có tổng kết. Hãy bấm "Tổng kết phỏng vấn bằng AI" sau khi đã chấm các câu hỏi.' }}
+          </p>
+        </div>
+      </div>
+
+      <button
+        nz-button
+        nzType="primary"
+        [nzLoading]="summarizing"
+        [disabled]="answeredCount() === 0"
+        (click)="triggerSummary()"
+      >
+        <span nz-icon nzType="sync"></span> Cập nhật tổng kết AI
+      </button>
+    </div>
+
+    <nz-divider></nz-divider>
+
+    <!-- Final Decision Actions -->
+    <div class="decision-box">
+      <h4 class="decision-title">
+        <span nz-icon nzType="safety-certificate" class="text-primary"></span>
+        Chốt quyết định cho ứng viên {{ data()!.candidate.name }}:
+      </h4>
+
+      <div class="action-row-wrap">
+        <button
+          nz-button
+          nzType="primary"
+          nzSize="large"
+         
+          nz-popconfirm
+          nzPopconfirmTitle="Xác nhận ĐẠT phỏng vấn và chuyển sang đề xuất tuyển dụng (Offered)?"
+          (nzOnConfirm)="updateApplicationStatus('offered')" class="action-success"
+        >
+          <span nz-icon nzType="like"></span>
+          Phỏng vấn ĐẠT - Đề xuất tuyển (Chuyển sang Đã trúng tuyển)
+        </button>
+
+        <button
+          nz-button
+          nzDanger
+          nzSize="large"
+          nz-popconfirm
+          nzPopconfirmTitle="Xác nhận ứng viên KHÔNG ĐẠT phỏng vấn?"
+          (nzOnConfirm)="updateApplicationStatus('rejected')"
+        >
+          <span nz-icon nzType="dislike"></span>
+          Không đạt phỏng vấn
+        </button>
+
+        <button
+          nz-button
+          nzType="default"
+          nzSize="large"
+          nz-popconfirm
+          nzPopconfirmTitle="Đưa ứng viên quay lại vòng Shortlist để xem xét thêm?"
+          (nzOnConfirm)="updateApplicationStatus('shortlisted')"
+        >
+          <span nz-icon nzType="rollback"></span>
+          Quay lại Shortlist
+        </button>
+      </div>
+    </div>
+  </div>

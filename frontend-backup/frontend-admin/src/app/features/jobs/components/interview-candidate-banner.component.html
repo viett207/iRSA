@@ -1,0 +1,53 @@
+<!-- Top Banner: Candidate & Job Profile -->
+<div class="candidate-banner">
+  <div class="banner-left">
+    <div class="avatar-circle">
+      <span nz-icon nzType="user" class="candidate-icon"></span>
+    </div>
+    <div>
+      <div class="inline-row-sm">
+        <h3 class="candidate-name">
+          {{ data()!.candidate.name }}
+        </h3>
+        <nz-tag [nzColor]="getStatusColor(data()!.application_status)">
+          {{ getStatusLabel(data()!.application_status) }}
+        </nz-tag>
+      </div>
+      <div class="candidate-meta">
+        <span><span nz-icon nzType="mail"></span> {{ data()!.candidate.email }}</span>
+        @if (data()!.candidate.phone) {
+          <span class="candidate-meta-item"><span nz-icon nzType="phone"></span> {{ data()!.candidate.phone }}</span>
+        }
+        <span class="candidate-meta-item"><span nz-icon nzType="solution"></span> <strong>{{ data()!.job_title }}</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screening score pill -->
+  <div class="banner-right">
+    @if (data()!.screening_ai_score != null) {
+      <div class="score-pill">
+        <div class="score-label">Điểm AI CV</div>
+        <nz-progress
+          [nzPercent]="data()!.screening_ai_score!"
+          nzType="circle"
+          [nzWidth]="42"
+          [nzStrokeColor]="getScoreColor(data()!.screening_ai_score!)"
+          [nzFormat]="scoreFormat"
+        ></nz-progress>
+      </div>
+    }
+    @if (overallScore() != null) {
+      <div class="score-pill interview-score">
+        <div class="score-label-primary">Điểm Phỏng vấn</div>
+        <nz-progress
+          [nzPercent]="overallScore()!"
+          nzType="circle"
+          [nzWidth]="46"
+          [nzStrokeColor]="getScoreColor(overallScore()!)"
+          [nzFormat]="scoreFormat"
+        ></nz-progress>
+      </div>
+    }
+  </div>
+</div>

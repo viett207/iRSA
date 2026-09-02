@@ -1,6 +1,6 @@
 """Admin API for viewing job applications."""
 
-from datetime import datetime
+from datetime import date, datetime, time, timedelta
 from io import BytesIO
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
@@ -34,6 +34,7 @@ class ApplicantResponse(BaseModel):
     total_score: float | None = None
     skill_match_score: float | None = None
     experience_score: float | None = None
+    detected_experience_years: float | None = None
     education_score: float | None = None
     ai_score: float | None = None
     ai_evaluated_at: datetime | None = None
@@ -63,13 +64,21 @@ async def list_job_applications(
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
     sort_by: str = Query("date", pattern="^(date|score|ai_score)$"),
+    submitted_date: date | None = Query(None),
 ):
     """List applications for a job.
 
     Supports sorting by date, score, or ai_score.
     Requires HR staff role (admin, leader, recruiter).
     """
-    base_where = Application.job_id == job_id
+    filters = [Application.job_id == job_id]
+    if submitted_date is not None:
+        day_start = datetime.combine(submitted_date, time.min)
+        next_day = day_start + timedelta(days=1)
+        filters.extend([
+            Application.submitted_at >= day_start,
+            Application.submitted_at < next_day,
+        ])
 
     # Build query
     query = (
@@ -79,7 +88,7 @@ async def list_job_applications(
             selectinload(Application.resume).defer(Resume.raw_text),
             selectinload(Application.scoring_result),
         )
-        .where(base_where)
+        .where(*filters)
     )
 
     # Count total
@@ -112,6 +121,11 @@ async def list_job_applications(
         ai_eval = sr.ai_evaluation if sr else None
         has_eval = bool(ai_eval) if ai_eval else False
         rec = ai_eval.get("recommendation") if (has_eval and isinstance(ai_eval, dict)) else None
+        experience_details = (
+            sr.match_details.get("experience", {})
+            if sr and isinstance(sr.match_details, dict)
+            else {}
+        )
 
         items.append(
             ApplicantResponse(
@@ -126,6 +140,7 @@ async def list_job_applications(
                 total_score=sr.total_score if sr else None,
                 skill_match_score=sr.skill_match_score if sr else None,
                 experience_score=sr.experience_score if sr else None,
+                detected_experience_years=experience_details.get("detected_years"),
                 education_score=sr.education_score if sr else None,
                 ai_score=sr.ai_score if sr else None,
                 ai_evaluated_at=sr.ai_evaluated_at if sr else None,
@@ -423,7 +438,7 @@ async def view_resume_inline(
 # --- Shortlisted (First Round Qualifiers) ---
 
 class ShortlistedApplicantResponse(BaseModel):
-    """Shortlisted applicant with job context and AI evaluation status."""
+    """Shortlisted applicant with job context, AI evaluation status, and scheduled interview."""
 
     id: int
     job_id: int
@@ -438,6 +453,9 @@ class ShortlistedApplicantResponse(BaseModel):
     ai_score: float | None = None
     ai_evaluated_at: datetime | None = None
     has_ai_evaluation: bool = False
+    interview_date: datetime | None = None
+    interview_type: str | None = None
+    interview_status: str | None = None
 
     class Config:
         from_attributes = True
@@ -454,11 +472,15 @@ class ShortlistedListResponse(BaseModel):
 async def list_shortlisted_applications(
     current_user: HRUser,
     db: DBSession,
+    job_id: int | None = Query(None),
+    status: str | None = Query(None),
     page: int = Query(1, ge=1),
-    size: int = Query(20, ge=1, le=100),
+    size: int = Query(50, ge=1, le=100),
     sort_by: str = Query("date", pattern="^(date|score|ai_score)$"),
 ):
-    """List all shortlisted applications across all jobs."""
+    """List all shortlisted & scheduled applications across all jobs or for a specific job."""
+    target_statuses = [status] if status else ["shortlisted", "interviewing"]
+
     base_query = (
         select(Application)
         .options(
@@ -466,14 +488,19 @@ async def list_shortlisted_applications(
             selectinload(Application.job),
             selectinload(Application.resume).defer(Resume.raw_text),
             selectinload(Application.scoring_result),
+            selectinload(Application.interviews),
         )
-        .where(Application.status == "shortlisted")
+        .where(Application.status.in_(target_statuses))
     )
 
+    if job_id:
+        base_query = base_query.where(Application.job_id == job_id)
+
     # Count
-    count_q = select(func.count()).select_from(
-        select(Application.id).where(Application.status == "shortlisted").subquery()
-    )
+    count_sub = select(Application.id).where(Application.status.in_(target_statuses))
+    if job_id:
+        count_sub = count_sub.where(Application.job_id == job_id)
+    count_q = select(func.count()).select_from(count_sub.subquery())
     total = (await db.execute(count_q)).scalar() or 0
 
     # Sorting
@@ -492,26 +519,31 @@ async def list_shortlisted_applications(
     result = await db.execute(base_query.offset(offset).limit(size))
     apps = result.scalars().all()
 
-    items = [
-        ShortlistedApplicantResponse(
-            id=a.id,
-            job_id=a.job_id,
-            job_title=a.job.title_vi if a.job else "N/A",
-            job_created_by=a.job.created_by if a.job else None,
-            candidate_name=a.candidate.full_name if a.candidate else "N/A",
-            candidate_email=a.candidate.email if a.candidate else "N/A",
-            resume_filename=a.resume.original_filename if a.resume else "N/A",
-            status=a.status,
-            submitted_at=a.submitted_at,
-            total_score=a.scoring_result.total_score if a.scoring_result else None,
-            ai_score=a.scoring_result.ai_score if a.scoring_result else None,
-            ai_evaluated_at=a.scoring_result.ai_evaluated_at if a.scoring_result else None,
-            has_ai_evaluation=bool(
-                a.scoring_result and a.scoring_result.ai_evaluation
-            ),
+    items = []
+    for a in apps:
+        latest_iv = a.interviews[-1] if a.interviews else None
+        items.append(
+            ShortlistedApplicantResponse(
+                id=a.id,
+                job_id=a.job_id,
+                job_title=a.job.title_vi if a.job else "N/A",
+                job_created_by=a.job.created_by if a.job else None,
+                candidate_name=a.candidate.full_name if a.candidate else "N/A",
+                candidate_email=a.candidate.email if a.candidate else "N/A",
+                resume_filename=a.resume.original_filename if a.resume else "N/A",
+                status=a.status,
+                submitted_at=a.submitted_at,
+                total_score=a.scoring_result.total_score if a.scoring_result else None,
+                ai_score=a.scoring_result.ai_score if a.scoring_result else None,
+                ai_evaluated_at=a.scoring_result.ai_evaluated_at if a.scoring_result else None,
+                has_ai_evaluation=bool(
+                    a.scoring_result and a.scoring_result.ai_evaluation
+                ),
+                interview_date=latest_iv.interview_date if latest_iv else None,
+                interview_type=latest_iv.interview_type if latest_iv else None,
+                interview_status=latest_iv.status if latest_iv else None,
+            )
         )
-        for a in apps
-    ]
 
     return ShortlistedListResponse(items=items, total=total, page=page, size=size)
 

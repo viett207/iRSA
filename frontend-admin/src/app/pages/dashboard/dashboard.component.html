@@ -1,0 +1,152 @@
+<main class="dashboard-main">
+  @if (loadError()) {
+    <section class="state-card state-card--error" role="alert">
+      <div><strong>Không thể tải dữ liệu bảng điều khiển</strong><span>Vui lòng kiểm tra kết nối và thử lại.</span></div>
+      <button type="button" (click)="loadDashboardData()">Thử lại</button>
+    </section>
+  }
+
+  @if (loading() && !dashboard()) {
+    <section class="state-card" aria-label="Đang tải bảng điều khiển">
+      <nz-skeleton [nzActive]="true" [nzParagraph]="{ rows: 10 }"></nz-skeleton>
+    </section>
+  } @else {
+    @if (dashboard(); as data) {
+      <section class="kpi-grid" aria-label="Tổng quan dữ liệu tuyển dụng">
+        <article class="dashboard-card kpi-card">
+          <span class="kpi-title">Tổng hồ sơ ứng tuyển</span>
+          <strong class="kpi-value mono-num">{{ formatNumber(data.stats.total_applications) }}</strong>
+          <p class="kpi-subtitle">Tất cả hồ sơ đã lưu trong hệ thống</p>
+        </article>
+        <article class="dashboard-card kpi-card">
+          <span class="kpi-title">Hồ sơ chờ xử lý</span>
+          <strong class="kpi-value mono-num">{{ formatNumber(data.stats.pending_applications ?? 0) }}</strong>
+          <p class="kpi-subtitle">Trạng thái đã nộp hoặc đang xem xét</p>
+        </article>
+        <article class="dashboard-card kpi-card">
+          <span class="kpi-title">Vị trí đang tuyển</span>
+          <strong class="kpi-value mono-num">{{ formatNumber(data.stats.active_jobs) }}</strong>
+          <p class="kpi-subtitle">Tin tuyển dụng đang được công khai</p>
+        </article>
+        <article class="dashboard-card kpi-card">
+          <span class="kpi-title">Ứng viên trong hệ thống</span>
+          <strong class="kpi-value mono-num">{{ formatNumber(data.stats.total_candidates) }}</strong>
+          <p class="kpi-subtitle">Tài khoản ứng viên thuộc phạm vi quản lý</p>
+        </article>
+      </section>
+
+      <section class="analytics-grid">
+        <article class="dashboard-card" aria-labelledby="application-status-title">
+          <header class="card-top-bar">
+            <div class="title-group">
+              <h2 id="application-status-title" class="section-heading">Phân bố hồ sơ theo trạng thái</h2>
+              <p class="section-desc">Số hồ sơ hiện có ở từng trạng thái trong quy trình.</p>
+            </div>
+            <a routerLink="/applications" class="inline-action">Xem tất cả hồ sơ</a>
+          </header>
+
+          @if (applicationStatuses().length) {
+            <div class="metric-list">
+              @for (status of applicationStatuses(); track status.key) {
+                <div class="metric-row" [attr.data-status]="status.key">
+                  <div class="metric-heading"><span>{{ status.label }}</span><strong class="mono-num">{{ formatNumber(status.count) }} <small>{{ status.percentage }}%</small></strong></div>
+                  <div class="progress-track"><span class="progress-fill" [style.width.%]="status.percentage"></span></div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="empty-message">Chưa có hồ sơ ứng tuyển để tổng hợp trạng thái.</p>
+          }
+        </article>
+
+        <article class="dashboard-card" aria-labelledby="job-status-title">
+          <header class="card-top-bar">
+            <div class="title-group">
+              <h2 id="job-status-title" class="section-heading">Trạng thái tin tuyển dụng</h2>
+              <p class="section-desc">Phân bố các tin tuyển dụng hiện có.</p>
+            </div>
+            <a routerLink="/jobs" class="inline-action">Quản lý tin</a>
+          </header>
+
+          @if (jobStatuses().length) {
+            <ul class="job-status-list">
+              @for (status of jobStatuses(); track status.key) {
+                <li><span class="status-marker" [attr.data-status]="status.key" aria-hidden="true"></span><span>{{ status.label }}</span><strong class="mono-num">{{ formatNumber(status.count) }}</strong></li>
+              }
+            </ul>
+          } @else {
+            <p class="empty-message">Chưa có tin tuyển dụng trong hệ thống.</p>
+          }
+        </article>
+      </section>
+
+      <section class="dashboard-card recent-section" aria-labelledby="recent-title">
+        <header class="card-top-bar table-top-bar">
+          <div class="title-group">
+            <h2 id="recent-title" class="section-heading">Hồ sơ mới nhận</h2>
+            <p class="section-desc">{{ recentApplications().length }} hồ sơ được nộp gần nhất, sắp xếp theo thời điểm hệ thống tiếp nhận.</p>
+          </div>
+          <a routerLink="/applications" class="inline-action">Xem tất cả hồ sơ</a>
+        </header>
+
+        @if (recentApplications().length) {
+          <div class="table-container">
+            <table class="flat-data-table">
+              <thead>
+                <tr>
+                  <th scope="col" style="width: 27%;">Ứng viên</th>
+                  <th scope="col" style="width: 39%;">Vị trí ứng tuyển</th>
+                  <th scope="col" style="width: 18%;">Thời điểm nhận</th>
+                  <th scope="col" style="width: 16%; text-align: right;">Sàng lọc AI</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (application of recentApplications(); track application.id) {
+                  <tr>
+                    <td>
+                      <div class="candidate-identity">
+                        <strong class="candidate-name">{{ application.candidate_name }}</strong>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="job-applied-cell">
+                        <a class="job-title-link" [routerLink]="['/jobs', application.job_id]" [title]="'Xem chi tiết tin tuyển dụng: ' + application.job_title">
+                          {{ application.job_title }}
+                        </a>
+                        @if (application.department || application.employment_type) {
+                          <div class="job-meta-sub">
+                            @if (application.department) {
+                              <span class="meta-tag meta-tag--dept">{{ application.department }}</span>
+                            }
+                            @if (application.employment_type) {
+                              <span class="meta-tag meta-tag--type">{{ formatEmploymentType(application.employment_type) }}</span>
+                            }
+                          </div>
+                        }
+                      </div>
+                    </td>
+                    <td class="mono-num">
+                      <time [attr.datetime]="application.submitted_at">{{ formatDate(application.submitted_at) }}</time>
+                    </td>
+                    <td class="text-right">
+                      @if (application.ai_score != null) {
+                        <div class="screening-result">
+                          <strong class="mono-num">{{ application.ai_score | number:'1.0-1' }}</strong>
+                          <span>Đã đánh giá</span>
+                        </div>
+                      } @else {
+                        <span class="screening-pending">Chưa đánh giá</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="empty-message empty-message--table">Chưa có hồ sơ ứng tuyển gần đây.</p>
+        }
+      </section>
+    }
+  }
+</main>

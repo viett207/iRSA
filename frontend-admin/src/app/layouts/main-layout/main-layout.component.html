@@ -1,0 +1,249 @@
+<nz-layout class="app-layout bg-irsa-canvas text-irsa-charcoal">
+  <!-- Sidebar -->
+  <nz-sider
+    class="sidebar bg-irsa-card border-irsa-border"
+    nzCollapsible
+    [(nzCollapsed)]="isCollapsed"
+    [nzWidth]="280"
+    [nzCollapsedWidth]="64"
+    nzBreakpoint="lg"
+    [nzTrigger]="null"
+  >
+    <div class="sidebar-top">
+      <!-- Logo -->
+      <div class="sidebar-logo bg-irsa-card border-irsa-border" [class.collapsed]="isCollapsed">
+        <span class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 28 28" role="img" focusable="false">
+            <rect x="2" y="16" width="6" height="10" rx="3" fill="#D4D4D8"></rect>
+            <rect x="11" y="9" width="6" height="17" rx="3" fill="#71717A"></rect>
+            <rect x="20" y="2" width="6" height="24" rx="3" fill="#D4D4D8"></rect>
+          </svg>
+        </span>
+        @if (!isCollapsed) {
+          <div class="logo-text">
+            <span class="logo-title">iRSA Admin</span>
+          </div>
+        }
+      </div>
+
+      <!-- Navigation Menu -->
+      <ul nz-menu nzMode="inline" nzTheme="light" class="sidebar-menu">
+        @if (!isCollapsed) { <li class="menu-section-header">Tổng quan</li> }
+        <li nz-menu-item [nzSelected]="isRouteActive('/dashboard')" [class.menu-item--active]="isRouteActive('/dashboard')" routerLink="/dashboard" class="menu-item">
+          <span nz-icon nzType="dashboard" nzTheme="outline"></span>
+          <span class="menu-text">Bảng điều khiển</span>
+        </li>
+        <li nz-menu-item [nzSelected]="isRouteActive('/reports')" [class.menu-item--active]="isRouteActive('/reports')" routerLink="/reports" class="menu-item">
+          <span nz-icon nzType="bar-chart" nzTheme="outline"></span>
+          <span class="menu-text">Báo cáo &amp; Thống kê</span>
+        </li>
+
+        @if (!isCollapsed) { <li class="menu-section-header">Quản lý tuyển dụng</li> }
+        <ng-template #jobsMenuTitle>
+          <span class="jobs-submenu-title">
+            <span>Tin tuyển dụng</span>
+            @if (newApplicationCount() > 0) { <span class="menu-alert-dot" aria-label="Có hồ sơ mới"></span> }
+          </span>
+        </ng-template>
+        <li nz-submenu nzIcon="solution" [nzTitle]="jobsMenuTitle" [(nzOpen)]="jobsMenuOpen" class="menu-submenu">
+          <ul>
+            <li nz-menu-item [nzSelected]="isRouteActive('/jobs')" [class.menu-item--active]="isRouteActive('/jobs')" routerLink="/jobs" class="submenu-item">
+              <span nz-icon nzType="unordered-list" nzTheme="outline"></span>
+              <span>Tất cả tin tuyển dụng</span>
+            </li>
+            <li nz-menu-item [nzSelected]="isRouteActive('/jobs/new')" [class.menu-item--active]="isRouteActive('/jobs/new')" routerLink="/jobs/new" class="submenu-item">
+              <span nz-icon nzType="plus-circle" nzTheme="outline"></span>
+              <span>Tạo tin tuyển dụng mới</span>
+            </li>
+            <li nz-menu-item [nzSelected]="isRouteActive('/applications')" [class.menu-item--active]="isRouteActive('/applications')" routerLink="/applications" class="submenu-item" (click)="acknowledgeNewApplications()">
+              <span nz-icon nzType="file-text" nzTheme="outline"></span>
+              <span>Hồ sơ ứng tuyển</span>
+              @if (newApplicationCount() > 0) {
+                <span class="application-alert-count">{{ newApplicationCount() > 99 ? '99+' : newApplicationCount() }}</span>
+              }
+            </li>
+          </ul>
+        </li>
+
+        <ng-template #processMenuTitle><span>Quy trình tuyển dụng AI</span></ng-template>
+        <li nz-submenu nzIcon="filter" [nzTitle]="processMenuTitle" [(nzOpen)]="processMenuOpen" class="menu-submenu">
+          <ul>
+            <li nz-menu-item [nzSelected]="isRouteActive('/jobs/shortlisted')" [class.menu-item--active]="isRouteActive('/jobs/shortlisted')" routerLink="/jobs/shortlisted" class="submenu-item">
+              <span nz-icon nzType="calendar" nzTheme="outline"></span>
+              <span>1. Hẹn lịch phỏng vấn</span>
+            </li>
+            <li nz-menu-item [nzSelected]="isRouteActive('/jobs/interviewing')" [class.menu-item--active]="isRouteActive('/jobs/interviewing')" routerLink="/jobs/interviewing" class="submenu-item">
+              <span nz-icon nzType="audio" nzTheme="outline"></span>
+              <span>2. Phỏng vấn AI</span>
+            </li>
+            <li nz-menu-item [nzSelected]="isRouteActive('/jobs/interview-passed')" [class.menu-item--active]="isRouteActive('/jobs/interview-passed')" routerLink="/jobs/interview-passed" class="submenu-item">
+              <span nz-icon nzType="trophy" nzTheme="outline"></span>
+              <span>3. Đạt phỏng vấn</span>
+            </li>
+          </ul>
+        </li>
+
+        @if (authService.hasRole('admin')) {
+          @if (!isCollapsed) { <li class="menu-section-header">Quản trị hệ thống</li> }
+          <li nz-menu-item [nzSelected]="isRouteActive('/companies')" [class.menu-item--active]="isRouteActive('/companies')" routerLink="/companies" class="menu-item">
+            <span nz-icon nzType="bank" nzTheme="outline"></span>
+            <span class="menu-text">Quản lý Công ty</span>
+          </li>
+          <li nz-menu-item [nzSelected]="isRouteActive('/users')" [class.menu-item--active]="isRouteActive('/users')" routerLink="/users" class="menu-item">
+            <span nz-icon nzType="team" nzTheme="outline"></span>
+            <span class="menu-text">Quản lý Người dùng</span>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-bottom sidebar-footer" [class.collapsed]="isCollapsed">
+      <a class="sidebar-footer-link" href="mailto:support@irsa.vn">
+        <span nz-icon nzType="question-circle" nzTheme="outline"></span>
+        @if (!isCollapsed) { <span>Trung tâm trợ giúp</span> }
+      </a>
+      <button class="sidebar-footer-link" type="button" (click)="logout()">
+        <span nz-icon nzType="logout" nzTheme="outline"></span>
+        @if (!isCollapsed) { <span>Đăng xuất</span> }
+      </button>
+    </div>
+  </nz-sider>
+
+  <!-- Main Content Area -->
+  <nz-layout class="main-area" [class.sidebar-collapsed]="isCollapsed">
+    <!-- Header -->
+    <nz-header class="app-header bg-irsa-card border-irsa-border">
+      <div class="header-left">
+        <button
+          type="button"
+          class="menu-toggle"
+          (click)="isCollapsed = !isCollapsed"
+          [attr.aria-label]="isCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'"
+          nz-tooltip
+          [nzTooltipTitle]="isCollapsed ? 'Mở rộng menu' : 'Thu gọn menu'"
+        >
+          <span nz-icon [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'" nzTheme="outline"></span>
+        </button>
+
+        <nav class="header-breadcrumb" aria-label="Breadcrumb">
+          @for (item of breadcrumbs(); track $index; let last = $last) {
+            @if (!last) {
+              <span class="breadcrumb-item">{{ item }}</span>
+              <span class="breadcrumb-divider" aria-hidden="true">/</span>
+            } @else {
+              <strong class="breadcrumb-current" aria-current="page">{{ item }}</strong>
+            }
+          }
+        </nav>
+      </div>
+
+      <div class="header-right">
+        <label class="workspace-search">
+          <span nz-icon nzType="search" aria-hidden="true"></span>
+          <input
+            id="workspace-quick-search"
+            type="search"
+            [(ngModel)]="workspaceSearch"
+            (ngModelChange)="onWorkspaceSearchChange($event)"
+            (keyup.enter)="searchWorkspace()"
+            placeholder="Tìm kiếm nhanh..."
+            aria-label="Tìm trong hệ thống"
+          />
+          <kbd aria-hidden="true">⌘K</kbd>
+        </label>
+        <!-- Notifications -->
+        <div
+          class="header-action notification-trigger"
+          [class.has-unread]="notificationSvc.unreadCount() > 0"
+          nz-dropdown
+          [nzDropdownMenu]="notificationMenu"
+          nzTrigger="click"
+          nz-tooltip
+          nzTooltipTitle="Thông báo"
+        >
+          <nz-badge [nzCount]="notificationSvc.unreadCount()" [nzOverflowCount]="9">
+            <span nz-icon nzType="bell" nzTheme="outline"></span>
+          </nz-badge>
+        </div>
+
+        <nz-dropdown-menu #notificationMenu="nzDropdownMenu">
+          <div class="notification-dropdown">
+            <div class="notification-header">
+              <span>Thông báo</span>
+              <a (click)="notificationSvc.markAllAsRead()">Đánh dấu đã đọc</a>
+            </div>
+            <div class="notification-list">
+              @for (notif of notificationSvc.notifications(); track notif.id) {
+                <div class="notification-item" [class.unread]="!notif.is_read"
+                  (click)="onNotificationClick(notif)">
+                  <div class="notification-icon" [ngClass]="notif.type">
+                    <span nz-icon [nzType]="getNotificationIcon(notif.type)"></span>
+                  </div>
+                  <div class="notification-content">
+                    <p class="notification-text text-irsa-muted irsa-text-justify">{{ notif.message }}</p>
+                    <span class="notification-time">{{ formatTime(notif.created_at) }}</span>
+                  </div>
+                </div>
+              }
+              @if (notificationSvc.notifications().length === 0) {
+                <div class="notification-empty">
+                  Không có thông báo
+                </div>
+              }
+            </div>
+          </div>
+        </nz-dropdown-menu>
+
+        <!-- Divider -->
+        <nz-divider nzType="vertical" class="header-divider hide-mobile"></nz-divider>
+
+        <!-- User Menu -->
+        <div
+          class="user-profile"
+          nz-dropdown
+          [nzDropdownMenu]="userMenu"
+          nzTrigger="click"
+        >
+          <nz-avatar
+            [nzText]="userInitial()"
+            [nzSize]="36"
+            class="user-avatar"
+          ></nz-avatar>
+          <div class="user-info hide-mobile">
+            <span class="user-name">{{ authService.user()?.full_name }}</span>
+            <span class="user-role">{{ authService.user()?.email }}</span>
+          </div>
+          <span nz-icon nzType="down" nzTheme="outline" class="hide-mobile user-arrow"></span>
+        </div>
+
+        <nz-dropdown-menu #userMenu="nzDropdownMenu">
+          <ul nz-menu class="user-dropdown-menu">
+            <li nz-menu-item disabled class="user-dropdown-header">
+              <div class="dropdown-user-info">
+                <nz-avatar [nzText]="userInitial()" [nzSize]="48"></nz-avatar>
+                <div>
+                  <strong>{{ authService.user()?.full_name }}</strong>
+                  <span>{{ authService.user()?.email }}</span>
+                  <span class="dropdown-role-label">{{ getRoleLabel() }}</span>
+                </div>
+              </div>
+            </li>
+            <li nz-menu-divider></li>
+            <li nz-menu-item (click)="logout()" class="logout-item">
+              <span nz-icon nzType="logout" nzTheme="outline"></span>
+              Đăng xuất
+            </li>
+          </ul>
+        </nz-dropdown-menu>
+      </div>
+    </nz-header>
+
+    <!-- Page Content -->
+    <nz-content class="app-content bg-irsa-canvas text-irsa-charcoal">
+      <div class="content-wrapper">
+        <router-outlet></router-outlet>
+      </div>
+    </nz-content>
+  </nz-layout>
+</nz-layout>

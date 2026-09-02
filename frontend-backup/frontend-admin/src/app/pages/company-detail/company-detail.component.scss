@@ -1,0 +1,66 @@
+.company-detail-page { animation: page-enter .24s ease-out; max-width: 1280px; margin: 0 auto; padding-bottom: 18px; }
+.back-link { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 16px; color: var(--color-text-secondary); font-size: 13px; font-weight: 600; transition: color .18s ease, transform .18s ease; }
+.back-link:hover { color: var(--color-primary); transform: translateX(-2px); }
+.company-cover { position: relative; height: 174px; overflow: hidden; border-radius: 18px 18px 0 0; background: linear-gradient(120deg, hsl(215 58% 29%), hsl(211 70% 43%)); }
+.company-cover::before { position: absolute; inset: 0; background-image: linear-gradient(hsl(0 0% 100% / .08) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 100% / .08) 1px, transparent 1px); background-size: 28px 28px; content: ''; mask-image: linear-gradient(110deg, hsl(0 0% 0% / .9), transparent 86%); }
+.cover-orb { position: absolute; border-radius: 50%; background: hsl(196 93% 75% / .2); filter: blur(1px); }
+.cover-orb--one { top: -92px; right: 14%; width: 235px; height: 235px; }
+.cover-orb--two { right: -52px; bottom: -88px; width: 218px; height: 218px; background: hsl(0 0% 100% / .12); }
+.cover-grid { position: absolute; top: 23px; right: 29px; width: 151px; height: 95px; border: 1px solid hsl(0 0% 100% / .2); border-radius: 10px; transform: rotate(-8deg); }
+.company-hero { position: relative; z-index: 1; display: grid; grid-template-columns: 88px minmax(0, 1fr); align-items: center; gap: 20px; min-height: 144px; margin: -49px 24px 0; padding: 23px 28px; border: 1px solid var(--color-border-light); border-radius: 15px; background: var(--color-bg-secondary); box-shadow: 0 12px 30px hsl(215 42% 28% / .12); }
+.company-avatar { display: grid; width: 88px; height: 88px; place-items: center; border: 5px solid var(--color-bg-secondary); border-radius: 20px; color: #fff; background: var(--color-primary); box-shadow: 0 9px 18px hsl(215 62% 35% / .2); font-family: var(--font-heading); font-size: 34px; font-weight: 750; }
+.company-identity h1 { margin: 0; color: var(--color-text-primary); font-family: var(--font-heading); font-size: 29px; font-weight: 750; letter-spacing: -.04em; line-height: 1.15; text-wrap: balance; }
+.company-summary { max-width: 690px; margin: 7px 0 0; color: var(--color-text-secondary); font-size: 13px; line-height: 1.55; }
+.company-tags { display: flex; align-items: center; gap: 10px; margin-top: 10px; color: var(--color-text-secondary); font-size: 12px; flex-wrap: wrap; }
+.company-tags > span { display: inline-flex; align-items: center; gap: 5px; }
+.profile-tabs { display: flex; align-items: center; gap: 22px; min-height: 58px; margin: 0 24px 18px; padding: 0 6px; border-bottom: 1px solid var(--color-border-light); }
+.profile-tab { position: relative; display: inline-flex; align-items: center; gap: 7px; height: 58px; color: var(--color-text-secondary); font-size: 13px; font-weight: 650; }
+.profile-tab span { display: grid; min-width: 20px; height: 18px; place-items: center; border-radius: 5px; color: var(--color-primary); background: var(--color-primary-50); font-size: 10px; font-variant-numeric: tabular-nums; }
+.profile-tab--active { color: var(--color-primary); }
+.profile-tab--active::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; border-radius: 2px; background: var(--color-primary); content: ''; }
+.stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin: 0 0 18px; }
+.metric-card { position: relative; display: grid; grid-template-columns: 36px 1fr; column-gap: 10px; row-gap: 3px; min-height: 108px; padding: 18px; border: 1px solid var(--color-border-light); border-radius: 13px; background: var(--color-bg-secondary); box-shadow: 0 6px 18px hsl(215 40% 25% / .04); overflow: hidden; }
+.metric-card::after { position: absolute; right: -22px; bottom: -33px; width: 95px; height: 95px; border: 1px solid hsl(214 50% 75% / .26); border-radius: 50%; content: ''; }
+.metric-card--accent { border-color: var(--color-primary-200); background: var(--color-primary-50); }
+.metric-icon { display: grid; grid-row: span 3; width: 36px; height: 36px; place-items: center; border-radius: 10px; color: var(--color-primary); background: hsl(213 85% 92%); font-size: 17px; }
+.metric-card--accent .metric-icon { color: #fff; background: var(--color-primary); }
+.metric-label { color: var(--color-text-secondary); font-size: 12px; font-weight: 600; }
+.metric-card strong { align-self: end; color: var(--color-text-primary); font-size: 25px; font-variant-numeric: tabular-nums; line-height: 1; }
+.metric-note { color: var(--color-text-tertiary); font-size: 11px; white-space: nowrap; }
+.content-grid { display: grid; grid-template-columns: minmax(0, 2.15fr) minmax(280px, .85fr); gap: 18px; align-items: start; }
+.company-introduction { padding: 1px 1px 5px; }
+.introduction-heading { display: flex; align-items: center; gap: 9px; }
+.introduction-heading > span { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 8px; color: var(--color-primary); background: var(--color-primary-50); font-size: 14px; }
+.company-introduction h2 { margin: 0; color: var(--color-text-primary); font-family: var(--font-heading); font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
+.company-introduction p { max-width: 72ch; margin: 13px 0 0; color: var(--color-text-secondary); font-size: 13px; line-height: 1.75; white-space: pre-line; }
+.section-divider { height: 1px; margin: 22px 0; background: var(--color-border-light); }
+.section-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.section-header h2, .information-card h2 { margin: 0; color: var(--color-text-primary); font-family: var(--font-heading); font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
+.section-header p { margin: 5px 0 0; color: var(--color-text-secondary); font-size: 12px; }
+.job-list { border-top: 1px solid var(--color-border-light); }
+.job-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 66px 14px; align-items: center; gap: 14px; min-height: 71px; padding: 12px 4px; border-bottom: 1px solid var(--color-border-light); color: inherit; transition: background .18s ease, padding .18s ease; }
+.job-row:hover { padding-right: 9px; padding-left: 9px; border-radius: 9px; background: var(--color-primary-50); }
+.job-primary { min-width: 0; }
+.job-primary strong { display: block; overflow: hidden; color: var(--color-text-primary); font-size: 13px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.job-meta { display: flex; gap: 10px; margin-top: 6px; color: var(--color-text-secondary); font-size: 11px; }
+.job-meta span { display: inline-flex; align-items: center; gap: 3px; }
+.application-total { display: grid; justify-items: end; gap: 2px; color: var(--color-text-secondary); font-size: 10px; }
+.application-total strong { color: var(--color-text-primary); font-size: 15px; font-variant-numeric: tabular-nums; line-height: 1; }
+.job-arrow { color: var(--color-text-tertiary); font-size: 11px; }
+.information-card h2 { margin-bottom: 16px; }
+.information-card dl { display: grid; gap: 14px; margin: 0; }
+.information-card dl > div { display: grid; gap: 5px; padding-bottom: 13px; border-bottom: 1px solid var(--color-border-light); }
+.information-card dl > div:last-child { padding-bottom: 0; border-bottom: 0; }
+.information-card dt { color: var(--color-text-tertiary); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.information-card dd { margin: 0; color: var(--color-text-primary); font-size: 13px; font-weight: 600; }
+.workflow-card { margin-top: 15px; background: hsl(213 66% 97%); }
+.workflow-card > span { display: grid; flex: 0 0 auto; width: 34px; height: 34px; place-items: center; border-radius: 10px; color: var(--color-primary); background: hsl(213 83% 91%); font-size: 16px; }
+.workflow-card strong { display: block; margin-top: 1px; color: var(--color-text-primary); font-size: 13px; }
+.workflow-card p { margin: 5px 0 0; color: var(--color-text-secondary); font-size: 12px; line-height: 1.55; }
+.loading-card, .state-card { padding: 28px; border: 1px solid var(--color-border-light); border-radius: 16px; background: var(--color-bg-secondary); }
+.state-card { display: flex; align-items: center; gap: 15px; }
+.state-icon { color: var(--color-error); font-size: 25px; }
+.state-card h1 { margin: 0; font-size: 17px; }
+.state-card p { margin: 4px 0 0; color: var(--color-text-secondary); font-size: 13px; }
+.state-card button { margin-left: auto; }
+@keyframes page-enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }

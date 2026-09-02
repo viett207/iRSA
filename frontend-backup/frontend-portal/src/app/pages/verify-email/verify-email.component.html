@@ -1,0 +1,34 @@
+<div class="verify-container">
+  @if (loading) {
+    <div class="loading-state">
+      <nz-spin nzSize="large" nzTip="Đang xác thực email..."></nz-spin>
+    </div>
+  } @else if (success) {
+    <nz-result
+      nzStatus="success"
+      nzTitle="Xác thực email thành công!"
+      nzSubTitle="Tài khoản của bạn đã được xác thực. Bạn có thể đăng nhập ngay bây giờ."
+    >
+      <div nz-result-extra>
+        <button nz-button nzType="primary" nzSize="large" routerLink="/login">
+          Đăng nhập
+        </button>
+      </div>
+    </nz-result>
+  } @else {
+    <nz-result
+      nzStatus="error"
+      [nzTitle]="errorTitle"
+      [nzSubTitle]="errorMessage"
+    >
+      <div nz-result-extra>
+        <button nz-button nzType="primary" nzSize="large" (click)="resendVerification()">
+          Gửi lại email xác thực
+        </button>
+        <button nz-button nzSize="large" routerLink="/login">
+          Về trang đăng nhập
+        </button>
+      </div>
+    </nz-result>
+  }
+</div>

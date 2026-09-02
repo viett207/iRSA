@@ -1,0 +1,283 @@
+/* ==========================================================================
+   iRSA Premium Design System Tokens (DESIGN-V5) - "Warm Slate Minimalist"
+   Font Inter / SF Pro Display & Giao diện Tiếng Việt
+   ========================================================================== */
+
+:root {
+  /* --- Typography chuẩn Inter / SF Pro --- */
+  --irsa-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+
+  /* --- Spacing System --- */
+  --irsa-space-xs: 4px;
+  --irsa-space-sm: 8px;
+  --irsa-space-md: 16px;
+  --irsa-space-lg: 24px;
+  --irsa-space-xl: 32px;
+
+  /* --- Border Radius Scale --- */
+  --irsa-radius-sm: 6px;
+  --irsa-radius-md: 8px;
+  --irsa-radius-lg: 12px;
+  --irsa-radius-xl: 16px;
+  --irsa-radius-pill: 9999px;
+
+  /* --- Color Tokens --- */
+  --irsa-bg-canvas: #F3F0E6;        /* Nền vàng ngà ấm */
+  --irsa-bg-sidebar: #FFFFFF;
+  --irsa-bg-card: #FFFFFF;
+  --irsa-bg-nav-active: #E6E1D3;    /* Nền pill active vàng ấm */
+  
+  --irsa-border-light: #E4DFD3;     /* Viền ấm trên canvas */
+  --irsa-border-table: #F4F4F5;
+
+  /* Màu chữ */
+  --irsa-text-strong: #09090B;      /* Tiêu đề và số liệu quan trọng */
+  --irsa-text-primary: #18181B;     /* Zinc-900 */
+  --irsa-text-secondary: #71717A;   /* Zinc-500 */
+  --irsa-text-muted: #A1A1AA;       /* Zinc-400 */
+
+  /* Xu hướng */
+  --irsa-trend-positive: #16A34A;   /* Green-600 */
+  --irsa-trend-negative: #DC2626;   /* Red-600 */
+
+  /* Trạng thái công việc */
+  --irsa-badge-active-bg: #DCFCE7;
+  --irsa-badge-active-text: #166534;
+  --irsa-badge-active-dot: #22C55E;
+
+  --irsa-badge-pending-bg: #FEF3C7;
+  --irsa-badge-pending-text: #92400E;
+  --irsa-badge-pending-dot: #F59E0B;
+
+  --irsa-badge-closed-bg: #F4F4F5;
+  --irsa-badge-closed-text: #52525B;
+  --irsa-badge-closed-dot: #71717A;
+
+  /* Compatibility aliases for existing Angular and NG-ZORRO components. */
+  --font-body: var(--irsa-font-sans);
+  --font-heading: var(--irsa-font-sans);
+  --font-mono: 'Geist Mono', 'SFMono-Regular', Consolas, monospace;
+  --color-primary: var(--irsa-text-primary);
+  --color-primary-dark: #09090B;
+  --color-primary-light: var(--irsa-text-secondary);
+  --color-primary-50: var(--irsa-bg-nav-active);
+  --color-primary-100: #E4E4E1;
+  --color-bg-primary: var(--irsa-bg-canvas);
+  --color-bg-secondary: var(--irsa-bg-card);
+  --color-bg-tertiary: #FAFAF9;
+  --color-bg-card: var(--irsa-bg-card);
+  --color-text: var(--irsa-text-primary);
+  --color-text-primary: var(--irsa-text-primary);
+  --color-text-secondary: var(--irsa-text-secondary);
+  --color-text-tertiary: var(--irsa-text-muted);
+  --color-border: var(--irsa-border-light);
+  --color-border-light: var(--irsa-border-table);
+  --color-border-dark: #D4D4D8;
+  --color-success: var(--irsa-badge-active-dot);
+  --color-success-dark: var(--irsa-badge-active-text);
+  --color-success-bg: var(--irsa-badge-active-bg);
+  --color-warning: var(--irsa-badge-pending-dot);
+  --color-warning-dark: var(--irsa-badge-pending-text);
+  --color-warning-bg: var(--irsa-badge-pending-bg);
+  --irsa-brand-accent: var(--irsa-text-primary);
+  --irsa-brand-hover: #27272A;
+  --irsa-brand-light: var(--irsa-bg-nav-active);
+  --irsa-border-muted: var(--irsa-border-table);
+  --irsa-status-active-dot: var(--irsa-badge-active-dot);
+  --focus-ring: 0 0 0 3px rgb(24 24 27 / 12%);
+  --sidebar-width: 256px;
+}
+
+body {
+  font-family: var(--irsa-font-sans);
+  background-color: var(--irsa-bg-canvas);
+  color: var(--irsa-text-primary);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Shell Layout */
+.irsa-layout-shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--irsa-bg-canvas);
+}
+
+.irsa-sidebar {
+  width: 256px;
+  background-color: var(--irsa-bg-sidebar);
+  border-right: 1px solid var(--irsa-border-light);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 16px;
+}
+
+.irsa-main-content {
+  flex: 1;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Menu Điều Hướng */
+.irsa-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: var(--irsa-radius-lg);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--irsa-text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 150ms ease;
+
+  &:hover {
+    background-color: #FAFAFA;
+    color: var(--irsa-text-primary);
+  }
+
+  &.active {
+    background-color: var(--irsa-bg-nav-active);
+    color: var(--irsa-text-primary);
+    font-weight: 600;
+  }
+}
+
+/* Top Search Bar */
+.irsa-top-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #FFFFFF;
+  border: 1px solid var(--irsa-border-light);
+  border-radius: var(--irsa-radius-pill);
+  padding: 8px 18px;
+  width: 380px;
+
+  input {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    font-size: 13.5px;
+    color: var(--irsa-text-primary);
+
+    &::placeholder {
+      color: var(--irsa-text-muted);
+    }
+  }
+}
+
+/* Khối KPI */
+.irsa-kpi-card {
+  background: var(--irsa-bg-card);
+  border: 1px solid var(--irsa-border-light);
+  border-radius: var(--irsa-radius-xl);
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .kpi-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--irsa-text-secondary);
+  }
+
+  .kpi-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+
+    .kpi-value {
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--irsa-text-primary);
+      line-height: 1.1;
+    }
+
+    .kpi-unit {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--irsa-text-primary);
+    }
+  }
+
+  .kpi-trend {
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 4px;
+
+    &.positive {
+      color: var(--irsa-trend-positive);
+    }
+    &.negative {
+      color: var(--irsa-trend-negative);
+    }
+  }
+}
+
+/* Badge trạng thái */
+.irsa-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--irsa-radius-pill);
+  font-size: 12.5px;
+  font-weight: 500;
+  user-select: none;
+
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  &.active {
+    background-color: var(--irsa-badge-active-bg);
+    color: var(--irsa-badge-active-text);
+    .badge-dot { background-color: var(--irsa-badge-active-dot); }
+  }
+
+  &.pending {
+    background-color: var(--irsa-badge-pending-bg);
+    color: var(--irsa-badge-pending-text);
+    .badge-dot { background-color: var(--irsa-badge-pending-dot); }
+  }
+
+  &.closed {
+    background-color: var(--irsa-badge-closed-bg);
+    color: var(--irsa-badge-closed-text);
+    .badge-dot { background-color: var(--irsa-badge-closed-dot); }
+  }
+}
+
+/* Card Chứa Bảng */
+.irsa-card-table {
+  background: var(--irsa-bg-card);
+  border: 1px solid var(--irsa-border-light);
+  border-radius: var(--irsa-radius-xl);
+  padding: 24px;
+}
+
+/* Đảm bảo mọi lớp host/layout của Admin cùng ăn màu canvas warm-slate. */
+html,
+body,
+app-root,
+nz-layout,
+.ant-layout,
+.ant-layout-content,
+.ant-layout-header,
+.irsa-admin-layout,
+.admin-layout-wrapper,
+main {
+  background-color: #F3F0E6 !important;
+}

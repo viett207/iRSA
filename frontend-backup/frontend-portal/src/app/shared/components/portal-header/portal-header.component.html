@@ -1,0 +1,198 @@
+<header class="header">
+  <div class="header-inner">
+    <!-- Logo -->
+    <a routerLink="/" class="logo">
+      <span class="logo-icon">
+        <span nz-icon nzType="thunderbolt" nzTheme="fill"></span>
+      </span>
+      <span class="logo-text">iRSA</span>
+    </a>
+
+    <!-- Desktop Nav -->
+    <nav class="nav hide-mobile">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">
+        <span nz-icon nzType="home" nzTheme="outline"></span>
+        Trang chủ
+      </a>
+      <a routerLink="/jobs" routerLinkActive="active" class="nav-link">
+        <span nz-icon nzType="search" nzTheme="outline"></span>
+        Tìm việc
+      </a>
+    </nav>
+
+    <!-- Right Section -->
+    <div class="header-right">
+      @if (authService.isAuthenticated()) {
+        <!-- One notification trigger for every viewport. -->
+        <div
+          class="notif-bell"
+          nz-dropdown
+          [nzDropdownMenu]="notifMenu"
+          nzTrigger="click"
+          nzPlacement="bottomRight"
+        >
+          <nz-badge [nzCount]="notificationSvc.unreadCount()" [nzOverflowCount]="9" nzSize="small">
+            <span nz-icon nzType="bell" nzTheme="outline"></span>
+          </nz-badge>
+        </div>
+        <nz-dropdown-menu #notifMenu>
+          <div class="notif-dropdown">
+            <div class="notif-dropdown-header">
+              <strong>Thông báo</strong>
+              <button type="button" class="notif-mark-all" (click)="notificationSvc.markAllAsRead()">Đã đọc tất cả</button>
+            </div>
+            <div class="notif-list">
+              @for (n of notificationSvc.notifications(); track n.id) {
+                <div
+                  (click)="onNotifClick(n)"
+                  class="notif-item"
+                  [class.unread]="!n.is_read"
+                >
+                  <div class="notif-message irsa-text-justify">{{ n.message }}</div>
+                  <div class="notif-time">{{ formatTime(n.created_at) }}</div>
+                </div>
+              }
+              @if (notificationSvc.notifications().length === 0) {
+                <div class="notif-empty">Không có thông báo</div>
+              }
+            </div>
+          </div>
+        </nz-dropdown-menu>
+
+        <!-- User Menu (Desktop) -->
+        <div
+          class="user-trigger hide-mobile"
+          nz-dropdown
+          [nzDropdownMenu]="userMenu"
+          nzPlacement="bottomRight"
+        >
+          <nz-avatar
+            [nzText]="getInitials()"
+            nzSize="small"
+            class="user-avatar"
+          ></nz-avatar>
+          <span class="user-name">{{ authService.user()?.full_name }}</span>
+          <span nz-icon nzType="down" nzTheme="outline" class="arrow"></span>
+        </div>
+        <nz-dropdown-menu #userMenu>
+          <ul nz-menu class="user-dropdown">
+            <li nz-menu-item disabled class="dropdown-header">
+              <strong>{{ authService.user()?.full_name }}</strong>
+              <small>{{ authService.user()?.email }}</small>
+            </li>
+            <li nz-menu-divider></li>
+            <li nz-menu-item routerLink="/dashboard/profile">
+              <span nz-icon nzType="user" nzTheme="outline"></span>
+              Hồ sơ cá nhân
+            </li>
+            <li nz-menu-item routerLink="/dashboard/applications">
+              <span nz-icon nzType="file-text" nzTheme="outline"></span>
+              Đơn ứng tuyển
+            </li>
+            <li nz-menu-item routerLink="/dashboard/cv-search">
+              <span nz-icon nzType="file-search" nzTheme="outline"></span>
+              Tìm việc theo CV
+            </li>
+            <li nz-menu-divider></li>
+            <li nz-menu-item (click)="logout()" class="logout-item">
+              <span nz-icon nzType="logout" nzTheme="outline"></span>
+              Đăng xuất
+            </li>
+          </ul>
+        </nz-dropdown-menu>
+
+        <!-- Avatar only (Mobile) -->
+        <nz-avatar
+          class="show-mobile-only user-avatar"
+          [nzText]="getInitials()"
+          nzSize="small"
+          (click)="mobileMenuOpen = true"
+        ></nz-avatar>
+      } @else {
+        <!-- Auth Buttons (Desktop) -->
+        <div class="auth-buttons hide-mobile">
+          <button nz-button nzType="text" routerLink="/login" class="login-btn">
+            Đăng nhập
+          </button>
+          <button nz-button nzType="primary" routerLink="/register">
+            Đăng ký
+          </button>
+        </div>
+      }
+
+      <!-- Mobile Menu Toggle -->
+      <button
+        nz-button
+        nzType="text"
+        class="mobile-toggle show-mobile-only"
+        (click)="mobileMenuOpen = true"
+      >
+        <span nz-icon nzType="menu" nzTheme="outline" class="mobile-toggle-icon"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile Drawer -->
+<nz-drawer
+  [nzVisible]="mobileMenuOpen"
+  nzPlacement="right"
+  nzTitle="Menu"
+  (nzOnClose)="mobileMenuOpen = false"
+  [nzWidth]="280"
+  nzClosable
+>
+  <ng-container *nzDrawerContent>
+    <div class="mobile-menu">
+      @if (authService.isAuthenticated()) {
+        <div class="mobile-user">
+          <nz-avatar [nzText]="getInitials()" [nzSize]="48" class="user-avatar"></nz-avatar>
+          <div>
+            <strong>{{ authService.user()?.full_name }}</strong>
+            <small>{{ authService.user()?.email }}</small>
+          </div>
+        </div>
+      } @else {
+        <div class="mobile-auth">
+          <button nz-button nzType="primary" nzBlock routerLink="/login" (click)="mobileMenuOpen = false">
+            Đăng nhập
+          </button>
+          <button nz-button nzBlock routerLink="/register" (click)="mobileMenuOpen = false">
+            Đăng ký
+          </button>
+        </div>
+      }
+
+      <ul nz-menu nzMode="vertical" class="mobile-nav">
+        <li nz-menu-item routerLink="/" (click)="mobileMenuOpen = false">
+          <span nz-icon nzType="home" nzTheme="outline"></span>
+          Trang chủ
+        </li>
+        <li nz-menu-item routerLink="/jobs" (click)="mobileMenuOpen = false">
+          <span nz-icon nzType="search" nzTheme="outline"></span>
+          Tìm việc
+        </li>
+        @if (authService.isAuthenticated()) {
+          <li nz-menu-divider></li>
+          <li nz-menu-item routerLink="/dashboard/profile" (click)="mobileMenuOpen = false">
+            <span nz-icon nzType="user" nzTheme="outline"></span>
+            Hồ sơ cá nhân
+          </li>
+          <li nz-menu-item routerLink="/dashboard/applications" (click)="mobileMenuOpen = false">
+            <span nz-icon nzType="file-text" nzTheme="outline"></span>
+            Đơn ứng tuyển
+          </li>
+          <li nz-menu-item routerLink="/dashboard/cv-search" (click)="mobileMenuOpen = false">
+            <span nz-icon nzType="file-search" nzTheme="outline"></span>
+            Tìm việc theo CV
+          </li>
+          <li nz-menu-divider></li>
+          <li nz-menu-item (click)="logout(); mobileMenuOpen = false" class="logout-item">
+            <span nz-icon nzType="logout" nzTheme="outline"></span>
+            Đăng xuất
+          </li>
+        }
+      </ul>
+    </div>
+  </ng-container>
+</nz-drawer>

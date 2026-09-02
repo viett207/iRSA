@@ -287,9 +287,9 @@ import { CvJdCompareResponse, EDUCATION_LABELS } from '../models/job.model';
         gap: 20px;
         margin-bottom: 14px;
         padding: 12px 14px;
-        border: 1px solid #d9e8ff;
+        border: 1px solid #e4dfd3;
         border-radius: 8px;
-        background: linear-gradient(135deg, #f0f7ff 0%, #fff 100%);
+        background: linear-gradient(135deg, #fafafa 0%, #fff 100%);
       }
       .overall-score {
         display: flex;
@@ -373,7 +373,7 @@ import { CvJdCompareResponse, EDUCATION_LABELS } from '../models/job.model';
         background: #fff;
       }
       .cv-panel {
-        border-top: 3px solid #1890ff;
+        border-top: 3px solid #18181b;
       }
       .jd-panel {
         border-top: 3px solid #52c41a;
@@ -485,7 +485,7 @@ export class CvJdCompareModalComponent {
 
   getScoreColor(score: number): string {
     if (score >= 80) return '#52c41a';
-    if (score >= 60) return '#1890ff';
+    if (score >= 60) return '#3f3f46';
     if (score >= 40) return '#faad14';
     return '#ff4d4f';
   }

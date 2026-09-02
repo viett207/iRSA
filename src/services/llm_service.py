@@ -41,7 +41,7 @@ def _format_input(input_val: Any) -> str:
 class RotatingGeminiLLM:
     """LLM wrapper that automatically rotates through a list of Gemini API keys when quota/token limits or rate limits are reached."""
 
-    def __init__(self, api_keys: list[str], model_name: str = "gemini-3.6-flash", temperature: float = 0.2):
+    def __init__(self, api_keys: list[str], model_name: str = "gemini-1.5-flash", temperature: float = 0.2):
         self.api_keys = [k.strip() for k in api_keys if k.strip()]
         self.model_name = model_name
         self.temperature = temperature
@@ -73,30 +73,39 @@ class RotatingGeminiLLM:
         num_keys = len(self.api_keys)
         last_exception = None
         start_idx = self.current_index
+        candidate_models = [self.model_name]
+        for fallback_m in ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"]:
+            if fallback_m not in candidate_models:
+                candidate_models.append(fallback_m)
 
         for attempt in range(num_keys):
             idx = (start_idx + attempt) % num_keys
-            try:
-                client = self._client_for_index(idx)
-                logger.info(
-                    f"Invoking Gemini LLM (async) using API Key #{idx + 1}/{num_keys} "
-                    f"(model: {self.model_name})..."
-                )
-                res = await client.aio.models.generate_content(
-                    model=self.model_name,
-                    contents=_format_input(input),
-                    config={"temperature": self.temperature},
-                )
-                self.current_index = idx
-                return LLMResponseWrapper(res.text if hasattr(res, "text") else str(res))
-            except Exception as e:
-                last_exception = e
-                err_str = str(e)
-                logger.warning(
-                    f"Gemini API Key #{idx + 1} failed on attempt {attempt + 1}/{num_keys}: {e}"
-                )
-                if "429" in err_str or "Quota exceeded" in err_str:
-                    logger.info("429 Quota/RateLimit encountered; rotating to the next key.")
+            client = self._client_for_index(idx)
+            for model_name in candidate_models:
+                try:
+                    logger.info(
+                        f"Invoking Gemini LLM (async) using API Key #{idx + 1}/{num_keys} "
+                        f"(model: {model_name})..."
+                    )
+                    res = await client.aio.models.generate_content(
+                        model=model_name,
+                        contents=_format_input(input),
+                        config={"temperature": self.temperature},
+                    )
+                    self.current_index = idx
+                    return LLMResponseWrapper(res.text if hasattr(res, "text") else str(res))
+                except Exception as e:
+                    last_exception = e
+                    err_str = str(e)
+                    logger.warning(
+                        f"Gemini API Key #{idx + 1} (model {model_name}) failed "
+                        f"on attempt {attempt + 1}/{num_keys}: {e}"
+                    )
+                    if "404" in err_str or "not found" in err_str.lower():
+                        continue
+                    if "429" in err_str or "Quota exceeded" in err_str:
+                        logger.info("429 Quota/RateLimit encountered; rotating to the next key.")
+                    break
             self._rotate_key()
 
         logger.error("All Gemini API keys and candidate models in rotation failed!")

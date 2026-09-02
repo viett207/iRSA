@@ -1,0 +1,17 @@
+{
+  "outputDirectory": "dist/frontend-portal/browser",
+  "rewrites": [
+    {
+      "source": "/api/v1/:path*",
+      "destination": "https://irsa-backend-mwz7.onrender.com/api/v1/:path*"
+    },
+    {
+      "source": "/pub/:path*",
+      "destination": "https://irsa-backend-mwz7.onrender.com/pub/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

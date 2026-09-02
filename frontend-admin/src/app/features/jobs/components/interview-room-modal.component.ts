@@ -790,8 +790,8 @@ interface QuestionState {
         width: 44px;
         height: 44px;
         border-radius: 50%;
-        background: #e6f7ff;
-        border: 1px solid #91d5ff;
+        background: #f4f4f5;
+        border: 1px solid #e4dfd3;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -811,7 +811,7 @@ interface QuestionState {
         border: 1px solid #f0f0f0;
       }
       .score-pill.interview-score {
-        border-color: #91d5ff;
+        border-color: #e4dfd3;
         background: #f6ffed;
       }
       .tab-body {
@@ -828,8 +828,8 @@ interface QuestionState {
         gap: 8px;
       }
       .online-hint-box {
-        background: #e6f7ff;
-        border: 1px solid #91d5ff;
+        background: #f4f4f5;
+        border: 1px solid #e4dfd3;
         border-radius: 6px;
         padding: 8px 12px;
         font-size: 12.5px;
@@ -875,7 +875,7 @@ interface QuestionState {
         width: 24px;
         height: 24px;
         border-radius: 50%;
-        background: #1890ff;
+        background: #18181b;
         color: #fff;
         font-weight: 600;
         font-size: 12px;
@@ -1012,8 +1012,8 @@ interface QuestionState {
         margin-bottom: 10px;
       }
       .star-card {
-        background: #e6f7ff;
-        border: 1px solid #91d5ff;
+        background: #f4f4f5;
+        border: 1px solid #e4dfd3;
         border-radius: 6px;
         padding: 8px 12px;
         margin-bottom: 8px;
@@ -1863,9 +1863,9 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
 
   getCategoryColor(cat: string): string {
     const colors: Record<string, string> = {
-      technical: 'blue',
-      architecture: 'geekblue',
-      behavioral: 'purple',
+      technical: 'default',
+      architecture: 'default',
+      behavioral: 'default',
       situational: 'magenta',
     };
     return colors[cat] || 'default';

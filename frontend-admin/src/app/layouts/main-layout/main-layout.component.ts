@@ -1,8 +1,9 @@
-import { Component, signal, computed, OnInit, OnDestroy, DestroyRef, inject } from '@angular/core';
+import { Component, signal, computed, OnInit, OnDestroy, DestroyRef, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval, startWith, switchMap } from 'rxjs';
+import { catchError, interval, of, startWith, switchMap } from 'rxjs';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -21,6 +22,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterModule,
     NzLayoutModule,
     NzMenuModule,
@@ -32,6 +34,8 @@ import { DashboardService } from '../../core/services/dashboard.service';
     NzDividerModule,
     NzBreadCrumbModule,
   ],
+  templateUrl: './main-layout.component.html',
+  styleUrl: './main-layout.component.scss',
   template: `
     <nz-layout class="app-layout">
       <!-- Sidebar -->
@@ -948,6 +952,9 @@ import { DashboardService } from '../../core/services/dashboard.service';
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
   isCollapsed = false;
+  jobsMenuOpen = true;
+  processMenuOpen = true;
+  workspaceSearch = '';
   readonly newApplicationCount = signal(0);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dashboardService = inject(DashboardService);
@@ -961,23 +968,90 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   constructor(
     public authService: AuthService,
     public notificationSvc: NotificationService,
+    private route: ActivatedRoute,
+    private router: Router,
   ) {}
+
+  searchWorkspace(): void {
+    const search = this.workspaceSearch.trim();
+    if (!search) {
+      this.clearWorkspaceSearch();
+      return;
+    }
+    this.router.navigate(['/jobs'], { queryParams: { search } });
+  }
+
+  breadcrumbs(): string[] {
+    const path = this.router.url.split('?')[0];
+    const routes: Array<[RegExp, string[]]> = [
+      [/^\/dashboard\/?$/, ['Hệ thống', 'Bảng điều khiển']],
+      [/^\/reports\/?$/, ['Hệ thống', 'Báo cáo & Thống kê']],
+      [/^\/jobs\/new\/?$/, ['Quản lý tuyển dụng', 'Tin tuyển dụng', 'Tạo tin tuyển dụng mới']],
+      [/^\/jobs\/shortlisted\/?$/, ['Quản lý tuyển dụng', 'Quy trình tuyển dụng AI', '1. Hẹn lịch phỏng vấn']],
+      [/^\/jobs\/interviewing\/?$/, ['Quản lý tuyển dụng', 'Quy trình tuyển dụng AI', '2. Phỏng vấn AI']],
+      [/^\/jobs\/interview-passed\/?$/, ['Quản lý tuyển dụng', 'Quy trình tuyển dụng AI', '3. Đạt phỏng vấn']],
+      [/^\/jobs\/[^/]+\/?$/, ['Quản lý tuyển dụng', 'Tin tuyển dụng', 'Chi tiết tin tuyển dụng']],
+      [/^\/jobs\/?$/, ['Quản lý tuyển dụng', 'Tin tuyển dụng', 'Tất cả tin tuyển dụng']],
+      [/^\/applications\/?$/, ['Quản lý tuyển dụng', 'Tin tuyển dụng', 'Hồ sơ ứng tuyển']],
+      [/^\/candidates\/?$/, ['Quản lý tuyển dụng', 'Tin tuyển dụng', 'Ứng viên']],
+      [/^\/companies\/[^/]+\/?$/, ['Quản trị hệ thống', 'Quản lý Công ty', 'Chi tiết Công ty']],
+      [/^\/companies\/?$/, ['Quản trị hệ thống', 'Quản lý Công ty']],
+      [/^\/users\/?$/, ['Quản trị hệ thống', 'Quản lý Người dùng']],
+      [/^\/approvals\/?$/, ['Quản trị hệ thống', 'Quản lý Người dùng', 'Chờ phê duyệt']],
+    ];
+    return routes.find(([pattern]) => pattern.test(path))?.[1] ?? ['Hệ thống', 'Bảng điều khiển'];
+  }
+
+  isRouteActive(targetPath: string): boolean {
+    const currentPath = (this.router.url.split('?')[0].replace(/\/+$/, '') || '/').toLowerCase();
+    const cleanTarget = (targetPath.replace(/\/+$/, '') || '/').toLowerCase();
+    return currentPath === cleanTarget;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  focusQuickSearch(event: KeyboardEvent): void {
+    if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'k') return;
+    event.preventDefault();
+    document.getElementById('workspace-quick-search')?.focus();
+  }
+
+  onWorkspaceSearchChange(value: string): void {
+    if (!value.trim() && this.router.parseUrl(this.router.url).queryParams['search']) {
+      this.clearWorkspaceSearch();
+    }
+  }
 
   ngOnInit(): void {
     this.notificationSvc.connect();
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        this.workspaceSearch = params.get('search') ?? '';
+      });
+
     interval(30_000)
       .pipe(
         startWith(0),
-        switchMap(() => this.dashboardService.getStats()),
+        switchMap(() => this.dashboardService.getStats().pipe(catchError(() => of(null)))),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (dashboard) => this.updateApplicationAlerts(dashboard.recent_applications),
+        next: (dashboard) => {
+          if (dashboard) this.updateApplicationAlerts(dashboard.recent_applications);
+        },
       });
   }
 
   ngOnDestroy(): void {
     this.notificationSvc.disconnect();
+  }
+
+  private clearWorkspaceSearch(): void {
+    const urlTree = this.router.parseUrl(this.router.url);
+    if (!urlTree.queryParams['search']) return;
+
+    delete urlTree.queryParams['search'];
+    void this.router.navigateByUrl(urlTree, { replaceUrl: true });
   }
 
   /** Marks only the currently visible new applications as read for this HR account. */

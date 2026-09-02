@@ -1,0 +1,94 @@
+.sections-banner {
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #555;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.section { margin-bottom: 4px; }
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.score-breakdown { padding: 0 8px; }
+.score-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.score-label {
+  width: 180px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: #555;
+}
+.score-bar { flex: 1; }
+.total-row .score-label { font-size: 14px; }
+.search-hint {
+  font-size: 11px;
+  color: var(--color-primary-light);
+  margin-left: 4px;
+}
+.skill-group {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.skill-group-label {
+  font-size: 12px;
+  color: #888;
+  min-width: 64px;
+}
+.section-badge {
+  font-size: 10px;
+  margin-left: 4px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: rgba(0,0,0,0.06);
+  color: #666;
+}
+.badge-skills {
+  background: #e6fffb;
+  color: #13c2c2;
+}
+.badge-full_text {
+  background: #fff7e6;
+  color: #fa8c16;
+}
+.search-source {
+  font-size: 11px;
+  color: var(--color-primary-light);
+  margin-left: 6px;
+}
+.snippet-card {
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.snippet-text {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.snippet-section-label {
+  font-size: 11px;
+  color: #8c8c8c;
+  display: flex;
+  align-items: center;
+}

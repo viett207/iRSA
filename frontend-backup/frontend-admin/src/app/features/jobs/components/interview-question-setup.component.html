@@ -1,0 +1,45 @@
+  <div class="section-toolbar">
+    <div>
+      <h4 class="setup-title">Chọn lọc các câu hỏi sẽ dùng trong phỏng vấn</h4>
+      <p class="setup-hint">
+        Tick chọn câu hỏi phù hợp, thêm câu hỏi tự soạn hoặc yêu cầu AI tạo thêm câu hỏi theo chủ đề.
+      </p>
+    </div>
+
+    <div class="action-row">
+      <button nz-button nzType="dashed" (click)="openGenerateAiModal()">
+        <span nz-icon nzType="bulb"></span> AI sinh thêm câu hỏi
+      </button>
+      <button nz-button nzType="default" (click)="openAddCustomModal()">
+        <span nz-icon nzType="plus"></span> Thêm câu hỏi tùy chỉnh
+      </button>
+      <button nz-button nzType="primary" (click)="saveQuestions()">
+        <span nz-icon nzType="save"></span> Xác nhận & Lưu bộ câu hỏi
+      </button>
+    </div>
+  </div>
+
+  <!-- Question Selection List -->
+  <div class="setup-questions-list">
+    @for (qState of allQuestionStates(); track qState.question.question; let i = $index) {
+      <div class="setup-q-row" [class.selected]="qState.selected">
+        <label nz-checkbox [(ngModel)]="qState.selected"></label>
+        <span class="q-index-pill question-index-offset">{{ i + 1 }}</span>
+        <div class="question-details">
+          <div class="tag-row">
+            <nz-tag [nzColor]="getCategoryColor(qState.question.category)">
+              {{ getCategoryLabel(qState.question.category) }}
+            </nz-tag>
+            @if (qState.question.target_skill) {
+              <nz-tag nzColor="geekblue">{{ qState.question.target_skill }}</nz-tag>
+            }
+          </div>
+          <div class="question-copy">{{ qState.question.question }}</div>
+          <div class="question-purpose">Mục đích: {{ qState.question.purpose }}</div>
+        </div>
+        <button nz-button nzType="text" nzDanger (click)="removeQuestion(i)" nz-tooltip nzTooltipTitle="Xóa câu hỏi này">
+          <span nz-icon nzType="delete"></span> Xóa
+        </button>
+      </div>
+    }
+  </div>

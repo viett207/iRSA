@@ -512,7 +512,7 @@ const LEVEL_LABELS: Record<string, string> = {
         color: #222;
       }
       .step-badge {
-        background: #1890ff;
+        background: #18181b;
         color: #fff;
         width: 22px;
         height: 22px;
@@ -530,7 +530,7 @@ const LEVEL_LABELS: Record<string, string> = {
         border-left: 2px solid #faad14;
       }
       .verification-box {
-        background: #f0f5ff;
+        background: #f4f4f5;
         border: 1px solid #adc6ff;
         border-radius: 8px;
         padding: 12px 16px;
@@ -619,7 +619,7 @@ const LEVEL_LABELS: Record<string, string> = {
         margin-bottom: 6px;
       }
       .question-number {
-        background: #1890ff;
+        background: #18181b;
         color: #fff;
         width: 22px;
         height: 22px;
@@ -653,7 +653,7 @@ const LEVEL_LABELS: Record<string, string> = {
       }
       .hr-guide-header {
         font-size: 12px;
-        color: #1890ff;
+        color: #18181b;
         margin-bottom: 6px;
         display: flex;
         align-items: center;
@@ -694,8 +694,8 @@ const LEVEL_LABELS: Record<string, string> = {
       }
       .guide-quick-eval {
         font-size: 12px;
-        color: #096dd9;
-        background: #e6f7ff;
+        color: #18181b;
+        background: #f4f4f5;
         border-radius: 4px;
         padding: 6px 10px;
         margin-top: 6px;
@@ -813,10 +813,10 @@ export class AiEvaluationModalComponent {
 
   getCategoryColor(category: string): string {
     const colors: Record<string, string> = {
-      technical: 'blue',
-      architecture: 'geekblue',
-      behavioral: 'purple',
-      experience: 'cyan',
+      technical: 'default',
+      architecture: 'default',
+      behavioral: 'default',
+      experience: 'default',
       situational: 'magenta',
     };
     return colors[category] || 'default';

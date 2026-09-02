@@ -1,0 +1,88 @@
+<nz-spin [nzSpinning]="loading">
+  @if (company) {
+    <!-- Company Header -->
+    <section class="company-header">
+      <div class="container">
+        <div class="company-profile">
+          <div class="company-avatar">
+            {{ company.company_name.charAt(0) }}
+          </div>
+          <div class="company-info">
+            <h1 class="company-name">{{ company.company_name }}</h1>
+            <div class="company-meta">
+              <span *ngIf="company.industry" class="meta-item">
+                <span nz-icon nzType="bank" nzTheme="outline"></span>
+                {{ company.industry }}
+              </span>
+              <span *ngIf="company.location" class="meta-item">
+                <span nz-icon nzType="environment" nzTheme="outline"></span>
+                {{ company.location }}
+              </span>
+              <span class="meta-item">
+                <span nz-icon nzType="team" nzTheme="outline"></span>
+                {{ company.total_jobs }} vị trí đang tuyển
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Jobs List -->
+    <section class="jobs-section">
+      <div class="container">
+        <h2 class="section-title">
+          <span nz-icon nzType="file-text" nzTheme="outline"></span>
+          Vị trí đang tuyển dụng
+        </h2>
+
+        @if (company.jobs.length > 0) {
+          <div nz-row [nzGutter]="[24, 24]">
+            @for (job of company.jobs; track job.id) {
+              <div nz-col [nzXs]="24" [nzMd]="12" [nzLg]="8">
+                <a class="job-card" [routerLink]="['/jobs', job.slug]">
+                  <div class="job-header">
+                    <div class="job-icon">
+                      <span nz-icon nzType="file-text" nzTheme="outline"></span>
+                    </div>
+                    <div class="job-info">
+                      <div class="job-title">{{ job.title_vi }}</div>
+                      <div class="job-dept" *ngIf="job.department">{{ job.department }}</div>
+                    </div>
+                  </div>
+                  <div class="job-meta">
+                    <span class="job-meta-item" *ngIf="job.location">
+                      <span nz-icon nzType="environment" nzTheme="outline"></span>
+                      {{ job.location }}
+                    </span>
+                    <span class="job-meta-item" *ngIf="job.employment_type">
+                      <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
+                      {{ formatEmploymentType(job.employment_type) }}
+                    </span>
+                  </div>
+                  <div class="job-footer">
+                    <span class="salary" *ngIf="job.salary_min || job.salary_max">
+                      {{ formatSalary(job.salary_min, job.salary_max) }}
+                    </span>
+                    <span class="deadline" *ngIf="job.application_deadline">
+                      <span nz-icon nzType="calendar" nzTheme="outline"></span>
+                      Hạn: {{ job.application_deadline | date:'dd/MM/yyyy' }}
+                    </span>
+                  </div>
+                </a>
+              </div>
+            }
+          </div>
+        } @else {
+          <nz-empty nzNotFoundContent="Chưa có vị trí tuyển dụng nào"></nz-empty>
+        }
+      </div>
+    </section>
+  }
+
+  @if (!loading && !company) {
+    <div class="not-found">
+      <nz-empty nzNotFoundContent="Không tìm thấy công ty"></nz-empty>
+    </div>
+  }
+</nz-spin>

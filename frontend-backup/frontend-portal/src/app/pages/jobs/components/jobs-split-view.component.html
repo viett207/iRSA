@@ -1,0 +1,209 @@
+<div class="split-view-container">
+  <!-- Left: Scrollable List of Jobs -->
+  <div class="split-master-list">
+    @for (job of paginatedJobs; track job.id) {
+      <div
+        class="split-job-item"
+        [class.active]="selectedJobForPreview?.id === job.id"
+        (click)="selectJobForLivePreview(job)"
+      >
+        <div class="split-item-header">
+          <div class="company-mini-avatar" [style.background]="job.companyGradient">
+            {{ job.companyInitial }}
+          </div>
+          <div class="split-item-info">
+            <h4 class="split-item-title">{{ job.title }}</h4>
+            <div class="split-item-company">{{ job.company }}</div>
+          </div>
+          <button
+            type="button"
+            class="split-save-btn"
+            [class.saved]="job.isSaved"
+            (click)="toggleSaveJob($event, job)"
+          >
+            <span nz-icon [nzType]="job.isSaved ? 'heart' : 'heart'" [nzTheme]="job.isSaved ? 'fill' : 'outline'"></span>
+          </button>
+        </div>
+
+        <div class="split-item-meta">
+          <span class="split-salary-pill">{{ job.salaryFormatted }}</span>
+          <span class="split-loc">{{ job.location }}</span>
+          <span class="split-exp">{{ job.experience }}</span>
+        </div>
+
+        <div class="split-item-footer">
+          <span class="split-time">{{ job.postedDate }}</span>
+          @if (job.isNew) {
+            <span class="mini-badge-new irsa-status-badge neutral"><span class="irsa-status-dot" aria-hidden="true"></span>Mới</span>
+          }
+          @if (job.isApplied) {
+            <span class="mini-badge-applied irsa-status-badge success"><span class="irsa-status-dot" aria-hidden="true"></span>Đã nộp</span>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Right: Sticky Live Detail Preview Pane -->
+  <div class="split-detail-pane">
+    @if (selectedJobForPreview) {
+      <div class="live-preview-card">
+        <!-- Live Preview Top Header -->
+        <div class="preview-header">
+          <div class="preview-brand-row">
+            <div class="preview-avatar" [style.background]="selectedJobForPreview.companyGradient">
+              {{ selectedJobForPreview.companyInitial }}
+            </div>
+            <div class="preview-title-info">
+              <h2 class="preview-job-title">{{ selectedJobForPreview.title }}</h2>
+              <div class="preview-company-row">
+                @if (selectedJobForPreview.companyCode) {
+                  <a [routerLink]="['/companies', selectedJobForPreview.companyCode]" class="preview-company-link">
+                    {{ selectedJobForPreview.company }}
+                  </a>
+                } @else {
+                  <span class="preview-company-name">{{ selectedJobForPreview.company }}</span>
+                }
+                <span class="preview-loc-pill">
+                  <span nz-icon nzType="environment" nzTheme="outline"></span>
+                  {{ selectedJobForPreview.location }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sticky Action Bar -->
+          <div class="preview-actions-bar">
+            <a [routerLink]="['/jobs', selectedJobForPreview.slug]" class="preview-apply-btn irsa-btn-primary">
+              <span>Ứng tuyển & Xem đầy đủ</span>
+            </a>
+            <button
+              type="button"
+              class="preview-save-btn irsa-btn-secondary"
+              [class.saved]="selectedJobForPreview.isSaved"
+              (click)="toggleSaveJob($event, selectedJobForPreview)"
+            >
+              <span nz-icon [nzType]="selectedJobForPreview.isSaved ? 'heart' : 'heart'" [nzTheme]="selectedJobForPreview.isSaved ? 'fill' : 'outline'"></span>
+              <span>{{ selectedJobForPreview.isSaved ? 'Đã lưu' : 'Lưu tin' }}</span>
+            </button>
+            <button type="button" class="preview-share-btn irsa-btn-secondary" (click)="copyJobLink(selectedJobForPreview)">
+              <span nz-icon nzType="share-alt" nzTheme="outline"></span>
+              <span>Chia sẻ</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="preview-body">
+          <!-- Key Highlights Grid -->
+          <div class="preview-highlights-grid">
+            <div class="highlight-box">
+              <div class="highlight-icon green">
+                <span nz-icon nzType="dollar" nzTheme="outline"></span>
+              </div>
+              <div class="highlight-info">
+                <span class="highlight-label">Mức lương</span>
+                <strong class="highlight-val green">{{ selectedJobForPreview.salaryFormatted }}</strong>
+              </div>
+            </div>
+
+            <div class="highlight-box">
+              <div class="highlight-icon blue">
+                <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
+              </div>
+              <div class="highlight-info">
+                <span class="highlight-label">Hình thức</span>
+                <strong class="highlight-val">{{ selectedJobForPreview.type }}</strong>
+              </div>
+            </div>
+
+            <div class="highlight-box">
+              <div class="highlight-icon orange">
+                <span nz-icon nzType="trophy" nzTheme="outline"></span>
+              </div>
+              <div class="highlight-info">
+                <span class="highlight-label">Kinh nghiệm</span>
+                <strong class="highlight-val">{{ selectedJobForPreview.experience }}</strong>
+              </div>
+            </div>
+
+            <div class="highlight-box">
+              <div class="highlight-icon purple">
+                <span nz-icon nzType="team" nzTheme="outline"></span>
+              </div>
+              <div class="highlight-info">
+                <span class="highlight-label">Số ứng viên</span>
+                <strong class="highlight-val">{{ selectedJobForPreview.applicants }} người đã nộp</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Skills Section -->
+          @if (selectedJobForPreview.skills && selectedJobForPreview.skills.length > 0) {
+            <div class="preview-section">
+              <h4 class="section-title">
+                <span nz-icon nzType="tags" nzTheme="outline"></span>
+                Kỹ năng bắt buộc & công nghệ
+              </h4>
+              <div class="preview-skills-wrap">
+                @for (s of selectedJobForPreview.skills; track s) {
+                  <span class="preview-skill-pill irsa-tag-outline">{{ s }}</span>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Description & Requirements Section -->
+          @if (previewLoading) {
+            <div class="preview-loading-wrap">
+              <nz-spin nzTip="Đang tải chi tiết công việc..."></nz-spin>
+            </div>
+          } @else if (previewJobDetail) {
+            @if (previewJobDetail.description_vi) {
+              <div class="preview-section">
+                <h4 class="section-title">
+                  <span nz-icon nzType="file-text" nzTheme="outline"></span>
+                  Mô tả công việc
+                </h4>
+                <div class="preview-html-content irsa-text-justify" [innerHTML]="previewJobDetail.description_vi"></div>
+              </div>
+            }
+
+            @if (previewJobDetail.requirements_vi) {
+              <div class="preview-section">
+                <h4 class="section-title">
+                  <span nz-icon nzType="audit" nzTheme="outline"></span>
+                  Yêu cầu ứng viên
+                </h4>
+                <div class="preview-html-content irsa-text-justify" [innerHTML]="previewJobDetail.requirements_vi"></div>
+              </div>
+            }
+          } @else {
+            <div class="preview-section">
+              <h4 class="section-title">Tổng quan công việc</h4>
+              <p class="preview-plain-desc irsa-text-justify">{{ selectedJobForPreview.descriptionSnippet }}</p>
+            </div>
+          }
+
+          <!-- Company Card Mini -->
+          <div class="preview-company-card">
+            <div class="comp-card-header">
+              <div class="comp-icon">
+                <span nz-icon nzType="bank" nzTheme="outline"></span>
+              </div>
+              <div>
+                <h4>{{ selectedJobForPreview.company }}</h4>
+                <p>Doanh nghiệp tuyển dụng hàng đầu</p>
+              </div>
+            </div>
+            @if (selectedJobForPreview.companyCode) {
+              <a [routerLink]="['/companies', selectedJobForPreview.companyCode]" class="comp-card-link">
+                Xem trang thông tin công ty & các vị trí khác
+                <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
+              </a>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

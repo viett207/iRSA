@@ -1,0 +1,91 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-info">
+      <h1 class="page-title">
+        <span nz-icon nzType="audit" nzTheme="outline"></span>
+        Ph&#234; duy&#7879;t t&#224;i kho&#7843;n HR
+      </h1>
+      <p class="page-subtitle">Danh s&#225;ch t&#224;i kho&#7843;n HR &#273;ang ch&#7901; ph&#234; duy&#7879;t</p>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <nz-spin [nzSpinning]="loading">
+      <nz-table
+        #table
+        [nzData]="users"
+        [nzLoading]="loading"
+        [nzTotal]="total"
+        [nzPageSize]="pageSize"
+        [nzPageIndex]="page"
+        (nzPageIndexChange)="onPageChange($event)"
+        nzShowSizeChanger
+        [nzPageSizeOptions]="[10, 20, 50]"
+        (nzPageSizeChange)="onPageSizeChange($event)"
+        nzBordered
+      >
+        <thead>
+          <tr>
+            <th nzWidth="22%">Họ và tên</th>
+            <th nzWidth="25%">Email</th>
+            <th nzWidth="15%">Mã công ty</th>
+            <th nzWidth="18%">Ngày đăng ký</th>
+            <th nzWidth="20%" nzAlign="center">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of table.data; track user.id) {
+            <tr>
+              <td>
+                <div class="user-name">{{ user.full_name }}</div>
+                @if (user.phone) {
+                  <div class="user-phone">{{ user.phone }}</div>
+                }
+              </td>
+              <td>{{ user.email }}</td>
+              <td>
+                @if (user.company_code) {
+                  <nz-tag nzColor="blue">{{ user.company_code }}</nz-tag>
+                } @else {
+                  <span class="no-data">-</span>
+                }
+              </td>
+              <td>{{ user.created_at | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td nzAlign="center">
+                <div class="action-buttons">
+                  <button
+                    nz-button
+                    nzType="primary"
+                    nzSize="small"
+                    [nzLoading]="processingId === user.id"
+                    (click)="confirmApprove(user)"
+                  >
+                    <span nz-icon nzType="check"></span>
+                    Phê duyệt
+                  </button>
+                  <button
+                    nz-button
+                    nzDanger
+                    nzSize="small"
+                    [nzLoading]="processingId === user.id"
+                    (click)="confirmReject(user)"
+                  >
+                    <span nz-icon nzType="close"></span>
+                    Từ chối
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+          @empty {
+            <tr>
+              <td colspan="5">
+                <nz-empty nzNotFoundContent="Không có tài khoản nào đang chờ phê duyệt"></nz-empty>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    </nz-spin>
+  </div>
+</div>

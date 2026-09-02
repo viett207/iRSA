@@ -1,0 +1,11 @@
+
+:host {
+  display: block;
+}
+
+/* Former inline presentation rules */
+.text-muted-sm { color: #666; font-size: 13px; }
+.stack-md { display: flex; flex-direction: column; gap: 12px; }
+.two-column-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-label { font-weight: 500; display: block; margin-bottom: 4px; }
+.full-width { width: 100%; }

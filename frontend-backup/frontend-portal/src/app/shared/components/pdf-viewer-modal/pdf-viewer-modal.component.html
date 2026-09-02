@@ -1,0 +1,26 @@
+<div class="pdf-viewer-wrapper">
+  @if (iframeLoading) {
+    <div class="loading-overlay">
+      <nz-spin nzSize="large" nzTip="Đang tải tài liệu..."></nz-spin>
+    </div>
+  }
+  <iframe
+    [src]="safeUrl"
+    class="pdf-iframe"
+    (load)="onIframeLoad()"
+  ></iframe>
+</div>
+<div class="modal-footer">
+  <a
+    nz-button
+    nzType="default"
+    [href]="data.blobUrl"
+    [download]="data.filename"
+  >
+    <span nz-icon nzType="download" nzTheme="outline"></span>
+    Tải xuống
+  </a>
+  <button nz-button nzType="primary" (click)="modalRef.close()">
+    Đóng
+  </button>
+</div>

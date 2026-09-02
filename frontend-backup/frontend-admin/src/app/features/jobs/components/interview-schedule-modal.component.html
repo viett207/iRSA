@@ -1,0 +1,45 @@
+<div class="schedule-dialog">
+  <section class="schedule-intro">
+    <span class="schedule-intro__icon" nz-icon nzType="calendar"></span>
+    <div><span>ỨNG VIÊN</span><strong>{{ candidateName }}</strong><p>Quản lý lịch đã đặt hoặc tạo một lịch phỏng vấn mới.</p></div>
+  </section>
+
+  <nz-spin [nzSpinning]="loading">
+    @if (interviews.length > 0) {
+      <section class="schedule-section">
+        <header><div><span>LỊCH HIỆN CÓ</span><h4>{{ interviews.length }} lịch phỏng vấn</h4></div></header>
+        <div class="existing-interviews">
+          @for (iv of interviews; track iv.id) {
+            <article class="interview-item" [class.cancelled]="iv.status === 'cancelled'">
+              <div class="interview-date-block"><strong>{{ iv.interview_date | date:'dd' }}</strong><span>{{ iv.interview_date | date:'MM/yyyy' }}</span></div>
+              <div class="interview-info">
+                <div class="interview-time">{{ iv.interview_date | date:'HH:mm' }} · {{ iv.interview_type === 'online' ? 'Trực tuyến' : 'Trực tiếp' }}</div>
+                <div class="interview-meta"><span class="schedule-status" [attr.data-status]="iv.status"><i></i>{{ getStatusLabel(iv.status) }}</span><span *ngIf="iv.scheduler_name" nz-icon nzType="user"></span><small *ngIf="iv.scheduler_name">{{ iv.scheduler_name }}</small></div>
+                <p *ngIf="iv.location"><span nz-icon nzType="environment"></span>{{ iv.location }}</p>
+                <p *ngIf="iv.notes"><span nz-icon nzType="message"></span>{{ iv.notes }}</p>
+              </div>
+              @if (iv.status === 'scheduled') {
+                <div class="interview-actions">
+                  <button nz-button nzSize="small" (click)="markCompleted(iv)"><span nz-icon nzType="check"></span> Hoàn thành</button>
+                  <button nz-button nzSize="small" nzDanger nz-popconfirm nzPopconfirmTitle="Hủy lịch phỏng vấn này?" (nzOnConfirm)="cancelExisting(iv)"><span nz-icon nzType="close"></span><span class="action-label">Hủy</span></button>
+                </div>
+              }
+            </article>
+          }
+        </div>
+      </section>
+    }
+  </nz-spin>
+
+  <section class="schedule-section schedule-form">
+    <header><div><span>TẠO LỊCH</span><h4>Thông tin cuộc phỏng vấn</h4></div></header>
+    <div class="schedule-form__grid">
+      <label class="form-field form-field--wide"><span>Ngày và giờ <b>*</b></span><nz-date-picker [(ngModel)]="form.interview_date" nzShowTime nzFormat="dd/MM/yyyy HH:mm" nzPlaceHolder="Chọn ngày và giờ"></nz-date-picker></label>
+      <label class="form-field"><span>Hình thức</span><nz-select [(ngModel)]="form.interview_type"><nz-option nzValue="online" nzLabel="Trực tuyến"></nz-option><nz-option nzValue="offline" nzLabel="Trực tiếp"></nz-option></nz-select></label>
+      <label class="form-field"><span>{{ form.interview_type === 'online' ? 'Liên kết tham gia' : 'Địa điểm' }}</span><input nz-input [(ngModel)]="form.location" [placeholder]="form.interview_type === 'online' ? 'meet.google.com/...' : 'Nhập địa chỉ phỏng vấn'" /></label>
+      <label class="form-field form-field--wide"><span>Ghi chú gửi ứng viên</span><textarea nz-input [(ngModel)]="form.notes" [nzAutosize]="{ minRows: 3, maxRows: 5 }" placeholder="Nội dung cần chuẩn bị, người liên hệ hoặc hướng dẫn tham gia..."></textarea><small>Thông tin này có thể được gửi kèm thông báo lịch phỏng vấn.</small></label>
+    </div>
+  </section>
+
+  <footer class="modal-footer"><button nz-button (click)="modalRef.close()">Đóng</button><button nz-button nzType="primary" [nzLoading]="submitting" [disabled]="!form.interview_date" (click)="submit()"><span nz-icon nzType="calendar"></span> Xác nhận đặt lịch</button></footer>
+</div>

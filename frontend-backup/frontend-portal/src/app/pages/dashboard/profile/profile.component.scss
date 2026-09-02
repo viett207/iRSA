@@ -1,0 +1,35 @@
+.profile-page {
+  padding: var(--space-8) 0;
+  min-height: 100vh;
+  background: var(--color-bg-primary);
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+}
+
+.page-header {
+  margin-bottom: var(--space-6);
+
+  h1 {
+    font-family: var(--font-heading);
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-2);
+  }
+
+  p { color: var(--color-text-secondary); }
+}
+
+.loading-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-12);
+}
+
+.retry-button {
+  margin-top: var(--space-4);
+}

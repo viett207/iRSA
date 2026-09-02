@@ -1,0 +1,28 @@
+<main class="directory-page">
+  <header class="page-header"><div><h1>Ứng viên</h1><p>Mỗi ứng viên được gộp từ toàn bộ hồ sơ đã nộp để HR xem bức tranh đầy đủ hơn.</p></div><a nz-button routerLink="/applications"><span nz-icon nzType="file-text"></span>Xem hồ sơ ứng tuyển</a></header>
+  <section class="summary-strip static-kpi-grid static-kpi-grid--three" aria-label="Tóm tắt ứng viên">
+    <article class="static-display-card static-kpi-card static-kpi-card--primary">
+      <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="team"></span></span>
+      <span class="static-kpi-content"><span class="static-kpi-label">Tổng ứng viên</span><strong class="static-kpi-value">{{ candidates().length }}</strong></span>
+    </article>
+    <article class="static-display-card static-kpi-card static-kpi-card--success">
+      <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="robot"></span></span>
+      <span class="static-kpi-content"><span class="static-kpi-label">Có đánh giá AI</span><strong class="static-kpi-value">{{ evaluatedCount() }}</strong></span>
+    </article>
+    <article class="static-display-card static-kpi-card static-kpi-card--warning">
+      <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="branches"></span></span>
+      <span class="static-kpi-content"><span class="static-kpi-label">Ứng viên nhiều hơn 1 vị trí</span><strong class="static-kpi-value">{{ multiApplicationCount() }}</strong></span>
+    </article>
+  </section>
+  <section class="directory-card">
+    <div class="toolbar"><label class="search-field"><span nz-icon nzType="search"></span><input nz-input [(ngModel)]="searchTerm" (ngModelChange)="resetPage()" placeholder="Tìm theo họ tên, email hoặc vị trí" aria-label="Tìm ứng viên" /></label><button nz-button (click)="load()" [disabled]="loading()"><span nz-icon nzType="reload"></span>Làm mới</button></div>
+    @if (loading()) { <div class="skeleton-list"><nz-skeleton [nzActive]="true" [nzParagraph]="{ rows: 6 }"></nz-skeleton></div> }
+    @else if (loadError()) { <div class="load-error" role="alert"><span nz-icon nzType="exclamation-circle"></span><div><strong>Không thể tải danh sách ứng viên</strong><span>Kiểm tra kết nối rồi thử lại.</span></div><button nz-button nzSize="small" (click)="load()"><span nz-icon nzType="reload"></span>Thử lại</button></div> }
+    @else if (filteredCandidates().length) {
+      <nz-table #candidatesTable [nzData]="pagedCandidates()" [nzShowPagination]="false" nzSize="middle"><thead><tr><th>Ứng viên</th><th>Vị trí đã ứng tuyển</th><th>Hồ sơ</th><th>Cập nhật gần nhất</th><th>Điểm AI tốt nhất</th><th></th></tr></thead><tbody>
+        @for (candidate of candidatesTable.data; track candidate.key) { <tr><td><div class="person"><span class="avatar">{{ initials(candidate.name) }}</span><div><strong>{{ candidate.name }}</strong><small>{{ candidate.email }}</small></div></div></td><td><div class="job-list">@for (title of candidate.jobTitles.slice(0, 2); track title) { <span>{{ title }}</span> } @if (candidate.jobTitles.length > 2) { <small>+{{ candidate.jobTitles.length - 2 }} vị trí khác</small> }</div></td><td><strong>{{ candidate.applications.length }}</strong></td><td><div>{{ candidate.latestApplication.submitted_at | date:'dd/MM/yyyy' }}</div><span class="irsa-status-badge" [ngClass]="statusTone(candidate.latestApplication.status)"><span class="irsa-status-dot" aria-hidden="true"></span>{{ statusLabel(candidate.latestApplication.status) }}</span></td><td><strong class="score" [class.score--empty]="candidate.bestAiScore === null">{{ candidate.bestAiScore ?? '—' }}</strong></td><td class="actions"><a nz-button nzType="link" routerLink="/applications" [queryParams]="{ candidate: candidate.email }" nz-tooltip nzTooltipTitle="Xem hồ sơ của ứng viên"><span nz-icon nzType="right"></span></a></td></tr> }
+      </tbody></nz-table>
+      <footer class="table-footer"><span>{{ filteredCandidates().length }} ứng viên phù hợp</span><div><button nz-button nzSize="small" (click)="previousPage()" [disabled]="page() === 1">Trước</button><span>Trang {{ page() }}/{{ totalPages() }}</span><button nz-button nzSize="small" (click)="nextPage()" [disabled]="page() === totalPages()">Sau</button></div></footer>
+    } @else { <nz-empty nzNotFoundContent="Chưa tìm thấy ứng viên phù hợp"></nz-empty> }
+  </section>
+</main>

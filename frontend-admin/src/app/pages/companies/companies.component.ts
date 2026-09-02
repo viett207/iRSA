@@ -242,7 +242,7 @@ import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industr
 
     .page-title {
       font-family: var(--font-heading);
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 700;
       color: var(--color-text-primary);
       margin: 0 0 4px 0;
@@ -276,9 +276,7 @@ import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industr
       flex-direction: column;
       gap: 4px;
 
-      &--primary {
-        border-left: 3px solid var(--color-primary);
-      }
+      &--primary { border-left: 1px solid var(--color-border-light); }
     }
 
     .stat-value {

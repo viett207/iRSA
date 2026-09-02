@@ -1,0 +1,486 @@
+<div class="evaluation-workspace">
+  <aside
+    class="cv-pane"
+    nz-resizable
+    nzBounds="parent"
+    [nzMinWidth]="320"
+    [nzMaxWidth]="720"
+    [style.--cv-pane-width]="cvPaneWidth + 'px'"
+    (nzResizeEnd)="onCvResize($event)"
+    aria-label="CV ứng viên"
+  >
+    <header class="pane-header">
+      <div class="pane-title-group">
+        <svg class="pane-icon lucide-icon" aria-hidden="true"><use href="assets/icons/lucide.svg#file-text"></use></svg>
+        <div>
+          <strong>CV ứng viên</strong>
+          <span>{{ resumeFilename }}</span>
+        </div>
+      </div>
+      <div class="pane-actions">
+        <button
+          nz-button
+          nzType="text"
+          nzSize="small"
+          [disabled]="!resumeUrl"
+          (click)="openResumeInNewTab()"
+          nz-tooltip
+          nzTooltipTitle="Mở CV trong tab mới"
+          aria-label="Mở CV trong tab mới"
+        >
+          <span nz-icon nzType="export"></span>
+        </button>
+        <button
+          nz-button
+          nzType="text"
+          nzSize="small"
+          [disabled]="!resumeUrl"
+          (click)="downloadResume()"
+          nz-tooltip
+          nzTooltipTitle="Tải CV"
+          aria-label="Tải CV"
+        >
+          <span nz-icon nzType="download"></span>
+        </button>
+      </div>
+    </header>
+
+    <div class="cv-viewer">
+      @if (resumeLoading) {
+        <div class="pane-state">
+          <nz-spin nzSimple></nz-spin>
+          <span>Đang tải bản xem trước CV...</span>
+        </div>
+      } @else if (resumeError) {
+        <div class="pane-state pane-state--error">
+          <span nz-icon nzType="file-exclamation" nzTheme="outline"></span>
+          <strong>Chưa thể hiển thị CV</strong>
+          <span>{{ resumeError }}</span>
+          <button nz-button nzSize="small" (click)="retryResume()">Thử lại</button>
+        </div>
+      } @else if (resumeUrl) {
+        <iframe [src]="resumeUrl" [title]="'CV của ' + candidateName"></iframe>
+      }
+    </div>
+
+    <nz-resize-handle nzDirection="right">
+      <div class="split-handle" aria-hidden="true"></div>
+    </nz-resize-handle>
+  </aside>
+
+  <section class="analysis-pane" aria-label="Phân tích ứng viên bằng AI">
+    <header class="analysis-heading">
+      <div>
+        <span class="analysis-eyebrow">Candidate Evaluation</span>
+        <h3>{{ candidateName }}</h3>
+      </div>
+      <span class="ai-badge"><svg class="lucide-icon" aria-hidden="true"><use href="assets/icons/lucide.svg#sparkles"></use></svg>Phân tích AI có đối chiếu bằng chứng</span>
+    </header>
+
+    @if (loading) {
+      <div class="analysis-state">
+        <nz-spin nzSimple></nz-spin>
+        <p>Đang tải kết quả và quá trình phân tích AI...</p>
+      </div>
+    } @else if (error) {
+      <nz-alert nzType="error" [nzMessage]="error" nzShowIcon></nz-alert>
+    } @else if (eval) {
+      <div class="evaluation-container">
+    <!-- Top Overall Summary Card -->
+    <div class="overview-card">
+      <div class="overview-score">
+        <nz-progress
+          [nzPercent]="eval.overall_score"
+          nzType="circle"
+          [nzWidth]="85"
+          [nzStrokeColor]="getScoreColor(eval.overall_score)"
+        ></nz-progress>
+      </div>
+      <div class="overview-info">
+        <div class="overview-badges">
+          <nz-tag [nzColor]="getRecommendationColor(eval.recommendation)" class="recommendation-tag">
+            {{ getRecommendationLabel(eval.recommendation) }}
+          </nz-tag>
+          <nz-tag nzColor="geekblue">
+            <span nz-icon nzType="safety-certificate"></span> Đã qua kiểm chứng chống ảo giác
+          </nz-tag>
+        </div>
+        <p class="assessment-text text-justify leading-relaxed tracking-wide text-slate-600">{{ eval.overall_assessment }}</p>
+      </div>
+    </div>
+
+    <!-- Tabset: 3 Sections -->
+    <nz-tabset
+      class="analysis-tabs"
+      [nzSelectedIndex]="activeTabIndex"
+      (nzSelectedIndexChange)="activeTabIndex = $event"
+    >
+      
+      <!-- TAB 1: Quá trình phân tích & Chấm điểm CV (User Request) -->
+      <nz-tab [nzTitle]="tabProcessTitle" [nzForceRender]="false">
+        <ng-template #tabProcessTitle>
+          <span nz-icon nzType="apartment" nzTheme="outline"></span>
+          Bảng quá trình phân tích & Chấm điểm CV
+        </ng-template>
+
+        <div class="process-tab-content">
+          <!-- Multi-Agent Workflow Pipeline Header -->
+          <div class="pipeline-header-box">
+            <div class="pipeline-title">
+              <svg class="lucide-icon icon-primary" aria-hidden="true"><use href="assets/icons/lucide.svg#sparkles"></use></svg>
+              <strong>Quy trình phân tích Đa tác tử AI (Multi-Agent LangGraph Pipeline)</strong>
+            </div>
+            <p class="supporting-copy text-justify leading-relaxed tracking-wide text-slate-600">
+              Hồ sơ ứng viên được xử lý tuần tự qua 4 tác tử AI chuyên biệt nhằm đảm bảo tính chính xác, kiểm chứng bằng chứng thực tế và loại trừ suy diễn sai lệch (Anti-Hallucination).
+            </p>
+          </div>
+
+          <!-- Process Steps Table -->
+          <h4 class="sub-heading sub-heading--spaced">
+            <svg class="lucide-icon icon-primary" aria-hidden="true"><use href="assets/icons/lucide.svg#target"></use></svg>
+            Chi tiết 4 giai đoạn phân tích & Chấm điểm
+          </h4>
+
+          <nz-table
+            #processTable
+            [nzData]="getProcessSteps()"
+            [nzFrontPagination]="false"
+            [nzShowPagination]="false"
+            nzSize="small"
+            nzBordered
+            class="process-table"
+          >
+            <thead>
+              <tr>
+                <th nzWidth="6%" class="cell-center">Bước</th>
+                <th nzWidth="22%">Tác tử AI (Agent Node)</th>
+                <th nzWidth="12%" class="cell-center">Trạng thái</th>
+                <th nzWidth="32%">Tóm tắt kết quả phân tích</th>
+                <th nzWidth="28%">Chi tiết cơ chế xử lý</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (step of processTable.data; track step.step_number) {
+                <tr>
+                  <td class="cell-center">
+                    <span class="step-badge">{{ step.step_number }}</span>
+                  </td>
+                  <td>
+                    <strong class="agent-name">{{ step.agent_node }}</strong>
+                    <div class="agent-step">{{ step.step_name }}</div>
+                  </td>
+                  <td class="cell-center">
+                    @if (step.status === 'completed') {
+                      <nz-tag nzColor="success">
+                        <span nz-icon nzType="check-circle"></span> Hoàn thành
+                      </nz-tag>
+                    } @else if (step.status === 'warning') {
+                      <nz-tag nzColor="warning">
+                        <span nz-icon nzType="exclamation-circle"></span> Đã hiệu chỉnh
+                      </nz-tag>
+                    } @else {
+                      <nz-tag nzColor="blue">
+                        <span nz-icon nzType="sync" [nzSpin]="true"></span> Đang xử lý
+                      </nz-tag>
+                    }
+                  </td>
+                  <td class="table-copy text-justify leading-relaxed text-slate-600">
+                    {{ step.summary }}
+                  </td>
+                  <td class="table-copy table-copy--muted text-justify leading-relaxed text-slate-600">
+                    {{ step.details || '—' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </nz-table>
+
+          <!-- Evidence Grounding Table (Đối chiếu bằng chứng thực tế từ CV) -->
+          <h4 class="sub-heading">
+            <svg class="lucide-icon icon-success" aria-hidden="true"><use href="assets/icons/lucide.svg#file-text"></use></svg>
+            Bảng đối chiếu bằng chứng trích xuất từ CV (Evidence Grounding Audit)
+          </h4>
+          <p class="supporting-copy supporting-copy--bottom text-justify leading-relaxed tracking-wide text-slate-600">
+            Từng kỹ năng được đối chiếu trực tiếp với các trích đoạn văn bản trong CV để đảm bảo không bị ảo giác điểm số.
+          </p>
+
+          <nz-table
+            #skillsTable
+            [nzData]="eval.skill_assessments"
+            [nzFrontPagination]="false"
+            [nzShowPagination]="false"
+            nzSize="small"
+            nzBordered
+          >
+            <thead>
+              <tr>
+                <th nzWidth="20%">Kỹ năng yêu cầu</th>
+                <th nzWidth="12%" class="cell-center">Tìm thấy?</th>
+                <th nzWidth="12%" class="cell-center">Cấp độ</th>
+                <th nzWidth="16%">
+                  Độ tin cậy bằng chứng
+                  <span
+                    nz-icon
+                    nzType="info-circle"
+                    nzTheme="outline"
+                    class="confidence-help"
+                    nz-tooltip
+                    nzTooltipTitle="Mức độ xác thực và rõ ràng của bằng chứng trích xuất từ CV (90-100%: Rất rõ ràng trong dự án/kinh nghiệm; 70-85%: Có ghi nhận trong CV; <50%: Nhắc thoáng qua/cần phỏng vấn thêm)"
+                  ></span>
+                </th>
+                <th nzWidth="40%">Trích đoạn bằng chứng đối chiếu từ CV</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (skill of skillsTable.data; track skill.skill) {
+                <tr>
+                  <td>
+                    <strong>{{ skill.skill }}</strong>
+                  </td>
+                  <td class="cell-center">
+                    <nz-tag [nzColor]="skill.found ? 'success' : 'error'">
+                      <span nz-icon [nzType]="skill.found ? 'check' : 'close'"></span>
+                      {{ skill.found ? 'Có trong CV' : 'Không thấy' }}
+                    </nz-tag>
+                  </td>
+                  <td class="cell-center">
+                    <nz-tag nzColor="default" class="compact-tag">
+                      {{ getLevelLabel(skill.level) }}
+                    </nz-tag>
+                  </td>
+                  <td>
+                    @if (skill.found) {
+                      <nz-progress
+                        [nzPercent]="skill.confidence"
+                        nzSize="small"
+                        [nzStrokeColor]="getScoreColor(skill.confidence)"
+                        [nzFormat]="confidenceFormat"
+                      ></nz-progress>
+                    } @else {
+                      <nz-progress
+                        [nzPercent]="0"
+                        nzSize="small"
+                        nzStrokeColor="#d9d9d9"
+                        [nzFormat]="zeroFormat"
+                      ></nz-progress>
+                    }
+                  </td>
+                  <td class="evidence-cell text-justify leading-relaxed text-slate-600">
+                    @if (skill.evidence && skill.evidence !== 'Không tìm thấy trong CV') {
+                      <span class="evidence-quote">"{{ skill.evidence }}"</span>
+                    } @else {
+                      <span class="empty-evidence">Không tìm thấy minh chứng trong CV</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </nz-table>
+
+          <!-- Self-Reflection & Verification Box -->
+          <div class="verification-box verification-box--spaced">
+            <div class="verification-header">
+              <svg class="lucide-icon icon-success" aria-hidden="true"><use href="assets/icons/lucide.svg#target"></use></svg>
+              <strong>Kết quả Kiểm chứng & Tự phản biện (Verifier Agent Audit)</strong>
+            </div>
+            <div class="verification-copy text-justify leading-relaxed tracking-wide text-slate-600">
+              {{ eval.verification_feedback || 'Toàn bộ dữ liệu kỹ năng, kinh nghiệm và bằng chứng đã được Verifier Agent kiểm chứng đối chiếu chính xác với CV gốc và không phát hiện ảo giác (Hallucination).' }}
+            </div>
+            <div class="verification-meta">
+              Số vòng phản biện tự sửa: <strong>{{ eval.reflection_attempts || 0 }}</strong> | Trạng thái: <strong>{{ eval.verification_passed !== false ? 'Đạt kiểm chứng chất lượng' : 'Đã hiệu chỉnh' }}</strong>
+            </div>
+          </div>
+        </div>
+      </nz-tab>
+
+      <!-- TAB 2: Đánh giá Năng lực chi tiết (Overview, Skills, Experience, Education) -->
+      <nz-tab [nzTitle]="tabSkillsTitle" [nzForceRender]="false">
+        <ng-template #tabSkillsTitle>
+          <span nz-icon nzType="solution" nzTheme="outline"></span>
+          Đánh giá Năng lực chi tiết
+        </ng-template>
+
+        <div class="competency-tab-content">
+          <!-- Experience & Education -->
+          <section class="section section--spaced">
+            <h4 class="section-title">
+              <svg class="lucide-icon icon-primary" aria-hidden="true"><use href="assets/icons/lucide.svg#briefcase"></use></svg>
+              Kinh nghiệm & Học vấn
+            </h4>
+            <nz-descriptions nzBordered [nzColumn]="2" nzSize="small">
+              <nz-descriptions-item nzTitle="Kinh nghiệm phát hiện">
+                <strong>{{ eval.experience_assessment.detected_years }} năm</strong>
+                (liên quan trực tiếp: <strong>{{ eval.experience_assessment.relevant_years }} năm</strong>)
+              </nz-descriptions-item>
+              <nz-descriptions-item nzTitle="Độ tin cậy kinh nghiệm">
+                <nz-progress
+                  [nzPercent]="eval.experience_assessment.confidence"
+                  nzSize="small"
+                  [nzStrokeColor]="getScoreColor(eval.experience_assessment.confidence)"
+                  class="confidence-progress"
+                ></nz-progress>
+              </nz-descriptions-item>
+              <nz-descriptions-item nzTitle="Trình độ học vấn">
+                {{ getEducationLabel(eval.education_assessment.detected_level) }}
+                @if (eval.education_assessment.field_relevant) {
+                  <nz-tag nzColor="green" class="field-match-tag">Đúng chuyên ngành</nz-tag>
+                }
+              </nz-descriptions-item>
+              <nz-descriptions-item nzTitle="Nhận xét kinh nghiệm & học vấn">
+                <span class="text-justify leading-relaxed tracking-wide text-slate-600">{{ eval.experience_assessment.summary || eval.education_assessment.summary }}</span>
+              </nz-descriptions-item>
+            </nz-descriptions>
+          </section>
+
+          <!-- Strengths & Concerns -->
+          <div class="assessment-grid">
+            <section class="section">
+              <h4 class="section-title section-title--success">
+                <span nz-icon nzType="like" nzTheme="outline"></span>
+                Điểm mạnh nổi bật ({{ eval.strengths.length }})
+              </h4>
+              @for (s of eval.strengths; track s) {
+                <div class="bullet-item success text-justify leading-relaxed text-slate-600">{{ s }}</div>
+              }
+              @if (eval.strengths.length === 0) {
+                <p class="empty-note">Không có ghi nhận đặc biệt</p>
+              }
+            </section>
+
+            <section class="section">
+              <h4 class="section-title section-title--danger">
+                <span nz-icon nzType="warning" nzTheme="outline"></span>
+                Điểm cần lưu ý / Rủi ro ({{ eval.concerns.length }})
+              </h4>
+              @for (c of eval.concerns; track c) {
+                <div class="bullet-item warning text-justify leading-relaxed text-slate-600">{{ c }}</div>
+              }
+              @if (eval.concerns.length === 0) {
+                <p class="empty-note">Không có rủi ro đáng kể</p>
+              }
+            </section>
+          </div>
+
+          <!-- Skills List Summary -->
+          <section class="section">
+            <h4 class="section-title">
+              <svg class="lucide-icon icon-primary" aria-hidden="true"><use href="assets/icons/lucide.svg#target"></use></svg>
+              Bảng kỹ năng chuyên môn
+            </h4>
+            @for (skill of eval.skill_assessments; track skill.skill) {
+              <div class="skill-row">
+                <div class="skill-info">
+                  <nz-tag [nzColor]="skill.found ? 'success' : 'error'">
+                    <span nz-icon [nzType]="skill.found ? 'check' : 'close'" class="tag-leading-icon"></span>
+                    {{ skill.skill }}
+                  </nz-tag>
+                  <nz-tag nzColor="default" class="compact-tag">
+                    {{ getLevelLabel(skill.level) }}
+                  </nz-tag>
+                </div>
+                <div class="skill-bar">
+                  @if (skill.found) {
+                    <nz-progress
+                      [nzPercent]="skill.confidence"
+                      nzSize="small"
+                      [nzStrokeColor]="getScoreColor(skill.confidence)"
+                      [nzFormat]="confidenceFormat"
+                    ></nz-progress>
+                  } @else {
+                    <nz-progress
+                      [nzPercent]="0"
+                      nzSize="small"
+                      nzStrokeColor="#d9d9d9"
+                      [nzFormat]="zeroFormat"
+                    ></nz-progress>
+                  }
+                </div>
+                <div class="skill-evidence text-justify leading-relaxed tracking-wide text-slate-600">{{ skill.evidence }}</div>
+              </div>
+            }
+          </section>
+        </div>
+      </nz-tab>
+
+      <!-- TAB 3: Bộ câu hỏi phỏng vấn & Cẩm nang chấm cho HR -->
+      <nz-tab [nzTitle]="tabQuestionsTitle" [nzForceRender]="false">
+        <ng-template #tabQuestionsTitle>
+          <span nz-icon nzType="question-circle" nzTheme="outline"></span>
+          Bộ câu hỏi & Cẩm nang HR ({{ eval.interview_questions?.length || 0 }})
+        </ng-template>
+
+        @if (eval.interview_questions && eval.interview_questions.length > 0) {
+          <div class="questions-section">
+            @for (q of eval.interview_questions; track q.question; let i = $index) {
+              <div class="question-card">
+                <div class="question-header">
+                  <span class="question-number">{{ i + 1 }}</span>
+                  <nz-tag [nzColor]="getCategoryColor(q.category)">
+                    {{ getCategoryLabel(q.category) }}
+                  </nz-tag>
+                  @if (q.target_skill) {
+                    <nz-tag nzColor="geekblue" class="compact-tag">{{ q.target_skill }}</nz-tag>
+                  }
+                </div>
+                <p class="question-text text-justify leading-relaxed tracking-wide">{{ q.question }}</p>
+                <p class="question-purpose text-justify leading-relaxed tracking-wide text-slate-600">
+                  <span nz-icon nzType="bulb" nzTheme="outline" class="icon-warning tag-leading-icon"></span>
+                  <strong>Mục đích:</strong> {{ q.purpose }}
+                </p>
+
+                <!-- Non-Tech HR Evaluation Guide -->
+                <div class="hr-guide-box">
+                  <div class="hr-guide-header">
+                    <svg class="lucide-icon icon-primary" aria-hidden="true"><use href="assets/icons/lucide.svg#target"></use></svg>
+                    <strong>Cẩm nang cho HR đánh giá câu trả lời</strong>
+                  </div>
+
+                  @if (q.good_signs && q.good_signs.length > 0) {
+                    <div class="guide-sign-block good-signs">
+                      <div class="guide-sign-title good">
+                        <span nz-icon nzType="check-circle" class="icon-success"></span>
+                        Dấu hiệu ĐẠT / Câu trả lời tốt:
+                      </div>
+                      <ul class="guide-list">
+                        @for (g of q.good_signs; track g) {
+                          <li>{{ g }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+
+                  @if (q.red_flags && q.red_flags.length > 0) {
+                    <div class="guide-sign-block red-flags">
+                      <div class="guide-sign-title warn">
+                        <span nz-icon nzType="warning" class="icon-danger"></span>
+                        Cảnh báo / Trả lời kém (Red flags):
+                      </div>
+                      <ul class="guide-list">
+                        @for (r of q.red_flags; track r) {
+                          <li>{{ r }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+
+                  @if (q.grading_guide) {
+                    <div class="guide-quick-eval">
+                      <span nz-icon nzType="check-square" class="icon-primary tag-leading-icon"></span>
+                      <strong>Gợi ý chấm nhanh:</strong> {{ q.grading_guide }}
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <nz-empty nzNotFoundContent="Chưa có bộ câu hỏi phỏng vấn gợi ý"></nz-empty>
+        }
+      </nz-tab>
+        </nz-tabset>
+      </div>
+    } @else {
+      <nz-empty nzNotFoundContent="Chưa có kết quả đánh giá AI"></nz-empty>
+    }
+  </section>
+</div>

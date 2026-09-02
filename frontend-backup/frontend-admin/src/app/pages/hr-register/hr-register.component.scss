@@ -1,0 +1,244 @@
+.register-page {
+  display: flex;
+  min-height: 100vh;
+}
+
+.branding-panel {
+  flex: 1;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary) 50%, var(--color-primary) 100%);
+  color: #fff;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+}
+
+.branding-content { position: relative; z-index: 1; }
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 64px;
+  svg { width: 48px; height: 48px; }
+}
+
+.brand-text { display: flex; flex-direction: column; }
+.brand-name { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+.brand-tagline { font-size: 13px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
+
+.hero-section { margin-bottom: 48px; }
+
+.hero-title {
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 20px 0;
+  .highlight { color: var(--color-primary-light); }
+}
+
+.hero-description { font-size: 15px; line-height: 1.7; opacity: 0.85; max-width: 420px; margin: 0; }
+
+.steps-list { display: flex; flex-direction: column; gap: 20px; }
+
+.step-item { display: flex; align-items: flex-start; gap: 16px; }
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.step-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  strong { font-size: 15px; font-weight: 600; }
+  span { font-size: 13px; opacity: 0.75; }
+}
+
+.branding-footer {
+  position: relative;
+  z-index: 1;
+  p { margin: 0; font-size: 13px; opacity: 0.6; }
+}
+
+.form-panel {
+  flex: 0 0 540px;
+  background: var(--color-bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  overflow-y: auto;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 400px;
+}
+
+.form-header { margin-bottom: 28px; }
+
+.form-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 8px 0;
+}
+
+.form-subtitle { font-size: 14px; color: var(--color-text-secondary); margin: 0; }
+
+.optional { font-size: 12px; color: var(--color-text-tertiary); font-weight: 400; }
+
+.register-form { margin-bottom: 16px; }
+
+.toggle-pw {
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  &:hover { color: var(--color-text-primary); }
+}
+
+.submit-btn {
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  margin-top: 8px;
+}
+
+.login-link {
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  a { color: var(--color-primary-light); }
+}
+
+/* Warm Slate authentication surface */
+.register-page {
+  color: #18181b;
+  background: #f3f0e6;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.branding-panel {
+  color: #fff;
+  background: #18181b;
+
+  &::before {
+    background: radial-gradient(circle, rgb(255 255 255 / 8%) 0%, transparent 70%);
+  }
+}
+
+.hero-title {
+  color: #fff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: clamp(2.35rem, 3vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+
+  .highlight { color: #d4d4d8; }
+}
+
+.hero-description { color: rgb(244 244 245 / 82%); opacity: 1; }
+.step-number {
+  color: #18181b;
+  background: #fff;
+  font-family: 'Geist Mono', 'SFMono-Regular', Consolas, monospace;
+}
+
+.form-panel {
+  flex-basis: 620px;
+  padding: 36px 48px;
+  background: #f3f0e6;
+}
+
+.form-container {
+  max-width: 460px;
+  padding: 32px 34px;
+  border: 1px solid #e4dfd3;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgb(24 24 27 / 6%);
+}
+
+.form-title {
+  color: #18181b;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 28px;
+  letter-spacing: -0.035em;
+}
+
+.form-subtitle { color: #71717a; }
+
+.auth-mascot { width: 76px; height: 76px; margin: 0 0 14px; }
+.auth-mascot svg { display: block; width: 100%; height: 100%; }
+.mascot-halo { fill: #f3f0e6; stroke: #e4dfd3; }
+.mascot-spark { stroke: #a1a1aa; stroke-width: 2; stroke-linecap: round; }
+.mascot-antenna { stroke: #18181b; stroke-width: 3; stroke-linecap: round; }
+.mascot-antenna-dot,
+.mascot-face { fill: #18181b; }
+.mascot-eye { fill: #fff; }
+.mascot-smile { stroke: #fff; stroke-width: 2.5; stroke-linecap: round; }
+.mascot-cv { fill: #fff; stroke: #18181b; stroke-width: 2; }
+.mascot-cv-line { stroke: #71717a; stroke-width: 2; stroke-linecap: round; }
+.mascot-check-dot { fill: #10b981; }
+.mascot-check { stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+:host ::ng-deep nz-input-group.ant-input-affix-wrapper {
+  border-color: #e4dfd3 !important;
+  border-radius: 10px !important;
+  background: #fafafa !important;
+
+  &:hover { border-color: #a1a1aa !important; }
+
+  &:focus-within,
+  &.ant-input-affix-wrapper-focused {
+    border-color: #18181b !important;
+    background: #fff !important;
+    box-shadow: 0 0 0 3px rgb(24 24 27 / 10%) !important;
+  }
+}
+
+.submit-btn {
+  border-color: #18181b !important;
+  color: #fff !important;
+  background: #18181b !important;
+  box-shadow: none !important;
+
+  &:hover { background: #27272a !important; }
+}
+
+.login-link a { color: #18181b; font-weight: 600; }
+
+@media (max-width: 1024px) {
+  .branding-panel { flex: 0 0 380px; padding: 40px; }
+  .form-panel { flex: 1; }
+}
+
+@media (max-width: 768px) {
+  .register-page { flex-direction: column; }
+  .branding-panel { display: none; }
+  .form-panel { flex: 1; padding: 24px; }
+  .form-container { max-width: 100%; padding: 24px; }
+}

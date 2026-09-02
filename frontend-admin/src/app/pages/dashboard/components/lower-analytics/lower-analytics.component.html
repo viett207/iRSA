@@ -1,0 +1,212 @@
+<div class="lower-analytics">
+  <!-- Nửa trên: Grid chia tỷ lệ 2fr - 1fr -->
+  <div class="analytics-top-grid">
+    <!-- Cột trái (2/3): Card Sơ đồ Phễu Chuyển Đổi Tuyển Dụng AI -->
+    <section class="analytics-card funnel-card" aria-labelledby="funnel-title">
+      <header class="card-header">
+        <div class="header-text">
+          <span class="card-eyebrow">Quy trình tuyển dụng thông minh</span>
+          <h2 id="funnel-title" class="card-title">Sơ đồ Phễu Chuyển Đổi Tuyển Dụng AI</h2>
+          <p class="card-subtitle">Theo dõi tỷ lệ chuyển đổi và rơi rụng hồ sơ qua 5 tầng sàng lọc tự động</p>
+        </div>
+        <div class="header-badge">
+          <span class="pulse-indicator"></span>
+          <span class="badge-text">Tỷ lệ hoàn thành: <strong class="mono-num">4.8%</strong></span>
+        </div>
+      </header>
+
+      <div class="funnel-content">
+        <div class="funnel-list">
+          @for (stage of funnelStages; track stage.id) {
+            <div class="funnel-stage-row">
+              <div class="stage-info">
+                <div class="stage-number-badge">{{ stage.stageNumber }}</div>
+                <div class="stage-meta">
+                  <div class="stage-header-line">
+                    <span class="stage-name">{{ stage.name }}</span>
+                    <span class="stage-step-cr" *ngIf="stage.stageNumber > 1">
+                      (Vượt qua: <strong class="mono-num">{{ stage.stepConversionRate }}%</strong>)
+                    </span>
+                  </div>
+                  <span class="stage-desc">{{ stage.description }}</span>
+                </div>
+              </div>
+
+              <div class="stage-progress-col">
+                <div class="progress-track">
+                  <div
+                    class="progress-fill"
+                    [style.width.%]="stage.percentage"
+                    [attr.aria-valuenow]="stage.percentage"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  ></div>
+                </div>
+              </div>
+
+              <div class="stage-metrics">
+                <div class="metric-count">
+                  <span class="mono-num count-val">{{ formatNumber(stage.count) }}</span>
+                  <span class="metric-unit">hồ sơ</span>
+                </div>
+                <div class="metric-percentage">
+                  <span class="mono-num pct-val">{{ stage.percentage }}%</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="funnel-summary-banner">
+          <div class="summary-stat">
+            <span class="stat-label">Thời gian qua phễu TB</span>
+            <span class="stat-val mono-num">14.2 ngày</span>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-stat">
+            <span class="stat-label">Tỷ lệ AI lọc chuẩn</span>
+            <span class="stat-val mono-num">94.6%</span>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-stat">
+            <span class="stat-label">Chi phí / ứng viên tuyển</span>
+            <span class="stat-val mono-num">-32.5%</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cột phải (1/3): Card Ma Trận Nhu Cầu Kỹ Năng -->
+    <section class="analytics-card skills-card" aria-labelledby="skills-title">
+      <header class="card-header">
+        <div class="header-text">
+          <span class="card-eyebrow">Phân tích thị trường & JD</span>
+          <h2 id="skills-title" class="card-title">Ma Trận Nhu Cầu Kỹ Năng</h2>
+          <p class="card-subtitle">Mức độ săn đón trong các vị trí mở</p>
+        </div>
+        <span class="tag-pill">Realtime</span>
+      </header>
+
+      <div class="skills-content">
+        <div class="skills-list">
+          @for (skill of skillDemands; track skill.id) {
+            <div class="skill-row">
+              <div class="skill-header">
+                <div class="skill-identity">
+                  <span class="skill-name">{{ skill.name }}</span>
+                  <span class="skill-category-tag">{{ skill.category }}</span>
+                </div>
+                <div class="skill-trend-wrap">
+                  <span class="trend-badge" [class.trend-badge--up]="skill.trend === 'up'">
+                    <span class="trend-arrow">↗</span>
+                    <span class="mono-num">{{ skill.trendValue }}</span>
+                  </span>
+                </div>
+              </div>
+
+              <div class="skill-bar-wrap">
+                <div class="skill-bar-track">
+                  <div class="skill-bar-fill" [style.width.%]="skill.demandPercentage"></div>
+                </div>
+              </div>
+
+              <div class="skill-footer-meta">
+                <span class="job-count-text">
+                  <strong class="mono-num">{{ skill.jobCount }}</strong> vị trí đang cần
+                </span>
+                <span class="demand-pct mono-num">{{ skill.demandPercentage }}%</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Nửa dưới: Card Đánh Giá Hiệu Suất Nguồn Tuyển Dụng (Full Width) -->
+  <div class="analytics-bottom-full">
+    <section class="analytics-card sources-card" aria-labelledby="sources-title">
+      <header class="card-header">
+        <div class="header-text">
+          <span class="card-eyebrow">Báo cáo đa kênh ứng tuyển</span>
+          <h2 id="sources-title" class="card-title">Đánh Giá Hiệu Suất Nguồn Tuyển Dụng</h2>
+          <p class="card-subtitle">Thống kê toàn diện về lưu lượng ứng viên, tỷ lệ vượt qua vòng AI và chi phí thời gian theo nguồn</p>
+        </div>
+        <div class="header-meta-note">
+          <span class="update-dot"></span>
+          <span>Cập nhật 5 phút trước</span>
+        </div>
+      </header>
+
+      <div class="table-responsive-wrapper">
+        <table class="metrics-table" role="table">
+          <thead>
+            <tr>
+              <th scope="col" class="th-source">Nguồn tuyển dụng</th>
+              <th scope="col" class="th-channel">Phân loại kênh</th>
+              <th scope="col" class="th-num">Tổng hồ sơ</th>
+              <th scope="col" class="th-num">Đạt chuẩn AI</th>
+              <th scope="col" class="th-num">Tỷ lệ AI Pass</th>
+              <th scope="col" class="th-num">Đã tuyển</th>
+              <th scope="col" class="th-num">Tỷ lệ C.R</th>
+              <th scope="col" class="th-num">T/g Tuyển TB</th>
+              <th scope="col" class="th-num">Điểm CL AI</th>
+              <th scope="col" class="th-status">Đánh giá</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (src of sourceMetrics; track src.id) {
+              <tr class="table-row">
+                <td class="td-source">
+                  <div class="source-cell-wrap">
+                    <div class="source-avatar-icon">
+                      <span>{{ src.sourceName.charAt(0) }}</span>
+                    </div>
+                    <div class="source-names">
+                      <span class="source-title">{{ src.sourceName }}</span>
+                      <span class="source-code">ID: {{ src.id }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="td-channel">
+                  <span class="channel-badge">{{ src.channelType }}</span>
+                </td>
+                <td class="td-num">
+                  <span class="mono-num table-num">{{ formatNumber(src.totalCandidates) }}</span>
+                </td>
+                <td class="td-num">
+                  <span class="mono-num table-num">{{ formatNumber(src.aiPassedCount) }}</span>
+                </td>
+                <td class="td-num">
+                  <div class="mini-rate-cell">
+                    <span class="mono-num table-pct">{{ src.aiPassRate }}%</span>
+                    <div class="mini-bar-track">
+                      <div class="mini-bar-fill" [style.width.%]="src.aiPassRate"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="td-num">
+                  <span class="mono-num table-hired">{{ src.hiredCount }}</span>
+                </td>
+                <td class="td-num">
+                  <span class="mono-num table-cr">{{ src.conversionRate }}%</span>
+                </td>
+                <td class="td-num">
+                  <span class="mono-num table-time">{{ src.avgTimeToHireDays }} ngày</span>
+                </td>
+                <td class="td-num">
+                  <span class="mono-num table-score">{{ src.qualityScore }}</span>
+                </td>
+                <td class="td-status">
+                  <span [class]="getStatusBadgeClass(src.performanceStatus)">
+                    {{ src.performanceStatus }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>

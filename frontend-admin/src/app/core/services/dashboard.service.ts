@@ -8,10 +8,16 @@ export interface DashboardStats {
     active_jobs: number;
     total_applications: number;
     total_candidates: number;
+    pending_applications?: number;
+    avg_time_to_fill?: number | null;
+    jobs_trend?: number | null;
+    apps_trend?: number | null;
+    time_trend?: number | null;
   };
   application_status_counts: Record<string, number>;
   job_status_counts: Record<string, number>;
   recent_applications: RecentApplication[];
+  recent_ai_interviews: RecentAIInterview[];
   pending_approvals: PendingApproval[];
 }
 
@@ -20,8 +26,24 @@ export interface RecentApplication {
   job_id: number;
   candidate_name: string;
   job_title: string;
+  department?: string | null;
+  employment_type?: string | null;
   submitted_at: string | null;
   status: string;
+  ai_score: number | null;
+  ai_evaluated_at: string | null;
+}
+
+export interface RecentAIInterview {
+  interview_id: number;
+  application_id: number;
+  job_id: number;
+  candidate_name: string;
+  job_title: string;
+  interview_date: string;
+  overall_score: number | null;
+  recommendation: string | null;
+  has_minutes: boolean;
 }
 
 export interface PendingApproval {

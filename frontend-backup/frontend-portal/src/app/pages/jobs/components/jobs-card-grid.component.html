@@ -1,0 +1,147 @@
+<div class="jobs-cards-grid">
+  @for (job of paginatedJobs; track job.id) {
+    <article
+      class="job-card-item irsa-job-card"
+      [class.is-applied]="job.isApplied"
+      (click)="navigateToJob(job)"
+    >
+      <!-- Card Top Header -->
+      <div class="card-header-row">
+        <div class="company-avatar-box">
+          <span class="avatar-letter">{{ job.companyInitial }}</span>
+        </div>
+
+        <div class="job-title-block">
+          <div class="title-top-row">
+            <h3 class="job-card-title" [title]="job.title">
+              <a [routerLink]="['/jobs', job.slug]" (click)="$event.stopPropagation()">
+                {{ job.title }}
+              </a>
+            </h3>
+            <button
+              type="button"
+              class="bookmark-btn"
+              [class.saved]="job.isSaved"
+              (click)="toggleSaveJob($event, job)"
+              nz-tooltip
+              [nzTooltipTitle]="job.isSaved ? 'Bỏ lưu tin tuyển dụng' : 'Lưu tin tuyển dụng'"
+            >
+              <span nz-icon [nzType]="job.isSaved ? 'heart' : 'heart'" [nzTheme]="job.isSaved ? 'fill' : 'outline'"></span>
+            </button>
+          </div>
+
+          <div class="company-meta-row">
+            @if (job.companyCode) {
+              <a
+                [routerLink]="['/companies', job.companyCode]"
+                (click)="$event.stopPropagation()"
+                class="company-link"
+              >
+                <span nz-icon nzType="bank" nzTheme="outline"></span>
+                {{ job.company }}
+              </a>
+            } @else {
+              <span class="company-name-text">
+                <span nz-icon nzType="bank" nzTheme="outline"></span>
+                {{ job.company }}
+              </span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Badges Row: Hot, New, Applied, Salary -->
+      <div class="card-badges-row">
+        @if (job.salaryFormatted) {
+          <div class="salary-pill-badge irsa-mono">
+            <strong>{{ job.salaryFormatted }}</strong>
+          </div>
+        }
+        @if (job.isHot) {
+          <span class="irsa-status-badge warning">
+            <span class="irsa-status-dot" aria-hidden="true"></span>
+            Tuyển gấp
+          </span>
+        }
+        @if (job.isNew) {
+          <span class="irsa-status-badge neutral">
+            <span class="irsa-status-dot" aria-hidden="true"></span>
+            Mới đăng
+          </span>
+        }
+        @if (job.isApplied) {
+          <span class="applied-status">
+            <span nz-icon nzType="check-circle" nzTheme="fill" aria-hidden="true"></span>
+            Đã ứng tuyển
+          </span>
+        }
+      </div>
+
+      <!-- Key Metadata Grid -->
+      <div class="card-meta-grid">
+        <div class="meta-item" [title]="'Địa điểm: ' + job.location">
+          <span nz-icon nzType="environment" nzTheme="outline" class="meta-icon"></span>
+          <span class="meta-text">{{ job.location }}</span>
+        </div>
+        <div class="meta-item" [title]="'Hình thức: ' + job.type">
+          <span nz-icon nzType="clock-circle" nzTheme="outline" class="meta-icon"></span>
+          <span class="meta-text">{{ job.type }}</span>
+        </div>
+        <div class="meta-item" [title]="'Kinh nghiệm: ' + job.experience">
+          <span nz-icon nzType="trophy" nzTheme="outline" class="meta-icon"></span>
+          <span class="meta-text">{{ job.experience }}</span>
+        </div>
+        @if (job.applicants > 0) {
+          <div class="meta-item applicants-item">
+            <span nz-icon nzType="team" nzTheme="outline" class="meta-icon"></span>
+            <span class="meta-text">{{ job.applicants }} ứng viên</span>
+          </div>
+        }
+      </div>
+
+      <!-- Skills Chips Row -->
+      @if (job.skills && job.skills.length > 0) {
+        <div class="card-skills-row">
+          @for (skill of job.skills; track skill) {
+            <span class="skill-tag-pill irsa-tag-outline">{{ skill }}</span>
+          }
+        </div>
+      }
+
+      <!-- Description Snippet Preview -->
+      <p class="card-description-snippet irsa-text-justify">
+        {{ job.descriptionSnippet }}
+      </p>
+
+      <!-- Card Footer Actions -->
+      <div class="card-footer-row">
+        <div class="posted-date-block">
+          <span nz-icon nzType="calendar" nzTheme="outline"></span>
+          <span>{{ job.postedDate }}</span>
+          @if (job.deadlineDate) {
+            <span class="deadline-note"> · Hạn nộp: {{ job.deadlineDate }}</span>
+          }
+        </div>
+
+        <div class="card-action-buttons">
+          <button
+            type="button"
+            class="quick-view-btn irsa-btn-secondary"
+            (click)="openQuickPreview($event, job)"
+            nz-tooltip
+            nzTooltipTitle="Xem nhanh nội dung công việc"
+          >
+            Xem nhanh
+          </button>
+          <a
+            [routerLink]="['/jobs', job.slug]"
+            (click)="$event.stopPropagation()"
+            class="card-primary-cta irsa-btn-primary"
+          >
+            <span>Xem chi tiết</span>
+          </a>
+        </div>
+      </div>
+    </article>
+  }
+</div>

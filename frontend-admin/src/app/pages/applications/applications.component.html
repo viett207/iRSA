@@ -1,0 +1,31 @@
+<main class="directory-page">
+  <header class="page-header"><div><h1>Hồ sơ ứng tuyển</h1><p>Theo dõi toàn bộ hồ sơ từ các vị trí tuyển dụng của công ty.</p></div><a nz-button nzType="primary" routerLink="/jobs/new"><span nz-icon nzType="plus"></span>Tạo tin tuyển dụng</a></header>
+  <section class="application-summary" aria-label="Tóm tắt hồ sơ">
+    <button type="button" class="application-stat-card" [class.application-stat-card--active]="quickFilter() === 'all'" [attr.aria-pressed]="quickFilter() === 'all'" (click)="setQuickFilter('all')">
+      <span class="application-stat-label">Tổng hồ sơ</span>
+      <strong class="application-stat-value">{{ applications().length }}</strong>
+      <span class="application-stat-description">Tất cả hồ sơ trong hệ thống</span>
+    </button>
+    <button type="button" class="application-stat-card" [class.application-stat-card--active]="quickFilter() === 'pending'" [attr.aria-pressed]="quickFilter() === 'pending'" (click)="setQuickFilter('pending')">
+      <span class="application-stat-label">Chờ xem xét</span>
+      <strong class="application-stat-value">{{ pendingCount() }}</strong>
+      <span class="application-stat-description">Đã nộp hoặc đang xem xét</span>
+    </button>
+    <button type="button" class="application-stat-card" [class.application-stat-card--active]="quickFilter() === 'evaluated'" [attr.aria-pressed]="quickFilter() === 'evaluated'" (click)="setQuickFilter('evaluated')">
+      <span class="application-stat-label">Đã có điểm AI</span>
+      <strong class="application-stat-value">{{ evaluatedCount() }}</strong>
+      <span class="application-stat-description">Hồ sơ đã được AI đánh giá</span>
+    </button>
+  </section>
+  <section class="directory-card">
+    <div class="toolbar"><label class="search-field"><span nz-icon nzType="search"></span><input nz-input [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event); resetPage()" placeholder="Tìm theo ứng viên, email hoặc vị trí" aria-label="Tìm hồ sơ" /></label><nz-select [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)" nzPlaceHolder="Tất cả trạng thái" nzAllowClear>@for (status of statusOptions; track status.value) { <nz-option [nzValue]="status.value" [nzLabel]="status.label"></nz-option> }</nz-select><button nz-button (click)="load()" [disabled]="loading()"><span nz-icon nzType="reload"></span>Làm mới</button></div>
+    @if (loading()) { <div class="skeleton-list"><nz-skeleton [nzActive]="true" [nzParagraph]="{ rows: 6 }"></nz-skeleton></div> }
+    @else if (loadError()) { <div class="load-error" role="alert"><span nz-icon nzType="exclamation-circle"></span><div><strong>Không thể tải hồ sơ ứng tuyển</strong><span>Kiểm tra kết nối rồi thử lại.</span></div><button nz-button nzSize="small" (click)="load()"><span nz-icon nzType="reload"></span>Thử lại</button></div> }
+    @else if (filteredApplications().length) {
+      <nz-table #applicationsTable [nzData]="pagedApplications()" [nzShowPagination]="false" nzSize="middle"><thead><tr><th nzAlign="left">Ứng viên</th><th nzAlign="left">Vị trí ứng tuyển</th><th nzAlign="left">Ngày nộp</th><th nzAlign="left" nzWidth="230px">Tiến trình</th><th nzAlign="left">Điểm AI</th><th nzAlign="right"><span class="sr-only">Tùy chọn</span></th></tr></thead><tbody>
+        @for (application of applicationsTable.data; track application.id) { <tr><td><div class="person"><span class="avatar">{{ initials(application.candidate_name) }}</span><div><strong>{{ application.candidate_name }}</strong><small>{{ application.candidate_email }}</small></div></div></td><td><strong class="job-title">{{ application.jobTitle }}</strong><small>{{ application.department || 'Chưa phân phòng ban' }}</small></td><td>{{ application.submitted_at | date:'dd/MM/yyyy' }}</td><td>@if (application.status === 'rejected') { <span class="pipeline-rejected" nz-tooltip [nzTooltipTitle]="statusLabel(application.status)"><span aria-hidden="true">×</span> Không đạt</span> } @else { <div class="mini-pipeline" [class.mini-pipeline--hired]="application.status === 'hired'" [attr.aria-label]="'Tiến trình: ' + statusLabel(application.status)"><div class="mini-pipeline__track">@for (stage of pipelineStages; track stage.status; let index = $index; let last = $last) { <span class="mini-pipeline__step" [class.mini-pipeline__step--passed]="index < pipelineStageIndex(application.status)" [class.mini-pipeline__step--current]="index === pipelineStageIndex(application.status)" nz-tooltip [nzTooltipTitle]="stage.label"><span class="mini-pipeline__dot"></span>@if (!last) { <span class="mini-pipeline__line"></span> }</span> }</div><span class="mini-pipeline__label">{{ statusShortLabel(application.status) }}</span></div> }</td><td><strong class="score" [class.score--empty]="application.ai_score === null || application.ai_score === undefined">{{ application.ai_score ?? '—' }}</strong></td><td class="actions"><a nz-button nzType="link" [routerLink]="['/jobs', application.jobId]" nz-tooltip nzTooltipTitle="Mở vị trí tuyển dụng"><span nz-icon nzType="right"></span></a></td></tr> }
+      </tbody></nz-table>
+      <footer class="table-footer"><span>{{ filteredApplications().length }} hồ sơ phù hợp</span><div><button nz-button nzSize="small" (click)="previousPage()" [disabled]="page() === 1">Trước</button><span>Trang {{ page() }}/{{ totalPages() }}</span><button nz-button nzSize="small" (click)="nextPage()" [disabled]="page() === totalPages()">Sau</button></div></footer>
+    } @else { <nz-empty nzNotFoundContent="Chưa tìm thấy hồ sơ phù hợp"></nz-empty> }
+  </section>
+</main>
