@@ -286,7 +286,7 @@ const SECTION_LABELS: Record<string, string> = {
   styles: [
     `
       .sections-banner {
-        background: #f0f5ff;
+        background: #f4f4f5;
         border: 1px solid #d6e4ff;
         border-radius: 6px;
         padding: 8px 12px;
@@ -322,7 +322,7 @@ const SECTION_LABELS: Record<string, string> = {
       .total-row .score-label { font-size: 14px; }
       .search-hint {
         font-size: 11px;
-        color: #1890ff;
+        color: #18181b;
         margin-left: 4px;
       }
       .skill-group {
@@ -355,7 +355,7 @@ const SECTION_LABELS: Record<string, string> = {
       }
       .search-source {
         font-size: 11px;
-        color: #1890ff;
+        color: #18181b;
         margin-left: 6px;
       }
       .snippet-card {

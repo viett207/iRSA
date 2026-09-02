@@ -25,6 +25,9 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzStepsModule } from 'ng-zorro-antd/steps';
 import { NzSliderModule } from 'ng-zorro-antd/slider';
 
+import { NzUploadModule } from 'ng-zorro-antd/upload';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
+
 import { JobService } from '../../services/job.service';
 import {
   Job,
@@ -62,596 +65,23 @@ import { Company } from '../../../../pages/companies/models/company-api.model';
     NzDividerModule,
     NzStepsModule,
     NzSliderModule,
+    NzUploadModule,
+    NzAlertModule,
   ],
-  template: `
-    <div class="job-form-page">
-      <nz-spin [nzSpinning]="loading()">
-        <div class="page-header">
-          <div class="header-left">
-            <button nz-button nzType="text" (click)="onBack()" class="back-btn">
-              <span nz-icon nzType="arrow-left"></span> Quay lại
-            </button>
-            <div class="header-content">
-              <h1 class="page-title">
-                {{ isEditMode() ? 'Chỉnh sửa việc làm' : 'Tạo việc làm mới' }}
-              </h1>
-              <p class="page-subtitle">
-                {{ isEditMode() ? 'Cập nhật thông tin tin tuyển dụng' : 'Điền đầy đủ thông tin để tạo tin tuyển dụng' }}
-              </p>
-            </div>
-          </div>
-          <div class="header-actions">
-            <button nz-button (click)="saveDraft()" [disabled]="saving()">
-              <span nz-icon nzType="save"></span>
-              Lưu nháp
-            </button>
-            <button
-              nz-button
-              nzType="primary"
-              (click)="saveAndSubmit()"
-              [disabled]="saving()"
-            >
-              <span nz-icon nzType="send"></span>
-              Lưu & Gửi duyệt
-            </button>
-          </div>
-        </div>
-
-        <div class="progress-container">
-          <div class="progress-section">
-            <nz-steps [nzCurrent]="currentStep" nzSize="small">
-              <nz-step nzTitle="Thông tin cơ bản"></nz-step>
-              <nz-step nzTitle="Tiêu chí sàng lọc"></nz-step>
-            </nz-steps>
-          </div>
-        </div>
-
-        <form nz-form [formGroup]="form" nzLayout="vertical" class="form-container">
-          @if (currentStep === 0) {
-            <div class="form-step">
-              <div nz-row nzJustify="center">
-                <div nz-col [nzXs]="24" [nzSm]="22" [nzMd]="20" [nzLg]="18">
-                  <nz-card class="form-card main-content-card">
-                    <div class="card-header">
-                      <span class="card-icon">
-                        <span nz-icon nzType="flag" nzTheme="outline"></span>
-                      </span>
-                      <div>
-                        <h3 class="card-title">Nội dung</h3>
-                        <p class="card-subtitle">Thông tin bắt buộc</p>
-                      </div>
-                    </div>
-
-                    <nz-form-item>
-                      <nz-form-label nzRequired>Tiêu đề</nz-form-label>
-                      <nz-form-control nzErrorTip="Vui lòng nhập tiêu đề">
-                        <input
-                          nz-input
-                          nzSize="large"
-                          formControlName="title_vi"
-                          placeholder="VD: Kỹ sư phần mềm Senior"
-                        />
-                      </nz-form-control>
-                    </nz-form-item>
-
-                    <nz-form-item>
-                      <nz-form-label>Mô tả công việc</nz-form-label>
-                      <nz-form-control>
-                        <textarea
-                          nz-input
-                          formControlName="description_vi"
-                          [nzAutosize]="{ minRows: 6, maxRows: 15 }"
-                          placeholder="Mô tả chi tiết công việc, trách nhiệm..."
-                        ></textarea>
-                      </nz-form-control>
-                    </nz-form-item>
-
-                    <nz-form-item>
-                      <nz-form-label>Yêu cầu ứng viên</nz-form-label>
-                      <nz-form-control>
-                        <textarea
-                          nz-input
-                          formControlName="requirements_vi"
-                          [nzAutosize]="{ minRows: 5, maxRows: 12 }"
-                          placeholder="Các yêu cầu về kỹ năng, kinh nghiệm..."
-                        ></textarea>
-                      </nz-form-control>
-                    </nz-form-item>
-                  </nz-card>
-                </div>
-              </div>
-
-              <div nz-row nzJustify="center">
-                <div nz-col [nzXs]="24" [nzSm]="22" [nzMd]="20" [nzLg]="18">
-                  <nz-card class="form-card details-card">
-                    <div class="card-header">
-                      <span class="card-icon card-icon--info">
-                        <span nz-icon nzType="info-circle" nzTheme="outline"></span>
-                      </span>
-                      <div>
-                        <h3 class="card-title">Thông tin chi tiết</h3>
-                        <p class="card-subtitle">Địa điểm, lương, hình thức làm việc</p>
-                      </div>
-                    </div>
-
-                    <div nz-row [nzGutter]="[24, 16]">
-                      <div nz-col [nzXs]="24" [nzLg]="24">
-                        <nz-form-item>
-                          <nz-form-label nzRequired>Công ty đăng tuyển</nz-form-label>
-                          <nz-form-control nzErrorTip="Vui lòng chọn công ty đăng tuyển">
-                            <nz-select
-                              formControlName="company_code"
-                              nzShowSearch
-                              nzPlaceHolder="Chọn công ty cho JD này"
-                            >
-                              @for (company of companyList(); track company.company_code) {
-                                <nz-option
-                                  [nzValue]="company.company_code"
-                                  [nzLabel]="company.company_name + ' (' + company.company_code + ')'"
-                                ></nz-option>
-                              }
-                            </nz-select>
-                          </nz-form-control>
-                        </nz-form-item>
-                      </div>
-                      <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
-                        <nz-form-item>
-                          <nz-form-label>Lĩnh vực</nz-form-label>
-                          <nz-form-control>
-                            <nz-select
-                              formControlName="department"
-                              nzPlaceHolder="Chọn lĩnh vực"
-                              nzAllowClear
-                              nzShowSearch
-                            >
-                              @for (ind of industries; track ind) {
-                                <nz-option [nzValue]="ind" [nzLabel]="ind"></nz-option>
-                              }
-                            </nz-select>
-                          </nz-form-control>
-                        </nz-form-item>
-                      </div>
-                      <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
-                        <nz-form-item>
-                          <nz-form-label>Địa điểm</nz-form-label>
-                          <nz-form-control>
-                            <nz-select
-                              formControlName="location"
-                              nzShowSearch
-                              nzAllowClear
-                              nzPlaceHolder="Chọn địa điểm"
-                            >
-                              @for (loc of locations; track loc) {
-                                <nz-option [nzValue]="loc" [nzLabel]="loc"></nz-option>
-                              }
-                            </nz-select>
-                          </nz-form-control>
-                        </nz-form-item>
-                      </div>
-                      <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
-                        <nz-form-item>
-                          <nz-form-label>Hình thức</nz-form-label>
-                          <nz-form-control>
-                            <nz-select formControlName="employment_type" nzAllowClear nzPlaceHolder="Chọn">
-                              @for (item of employmentTypes; track item.value) {
-                                <nz-option
-                                  [nzValue]="item.value"
-                                  [nzLabel]="item.label"
-                                ></nz-option>
-                              }
-                            </nz-select>
-                          </nz-form-control>
-                        </nz-form-item>
-                      </div>
-                      <div nz-col [nzXs]="12" [nzLg]="6">
-                        <nz-form-item>
-                          <nz-form-label>Lương tối thiểu (triệu)</nz-form-label>
-                          <nz-form-control>
-                            <nz-input-number
-                              formControlName="salary_min"
-                              [nzMin]="0"
-                              [nzMax]="999"
-                              [nzStep]="1"
-                              nzPlaceHolder="VD: 15"
-                              style="width: 100%"
-                            ></nz-input-number>
-                          </nz-form-control>
-                        </nz-form-item>
-                      </div>
-                      <div nz-col [nzXs]="12" [nzLg]="6">
-                        <nz-form-item>
-                          <nz-form-label>Lương tối đa (triệu)</nz-form-label>
-                          <nz-form-control>
-                            <nz-input-number
-                              formControlName="salary_max"
-                              [nzMin]="0"
-                              [nzMax]="999"
-                              [nzStep]="1"
-                              nzPlaceHolder="VD: 30"
-                              style="width: 100%"
-                            ></nz-input-number>
-                          </nz-form-control>
-                        </nz-form-item>
-                      </div>
-                      <div nz-col [nzXs]="24" [nzLg]="12">
-                        <nz-form-item>
-                          <nz-form-label>Hạn nộp hồ sơ</nz-form-label>
-                          <nz-form-control>
-                            <nz-date-picker
-                              formControlName="application_deadline"
-                              style="width: 100%"
-                              nzPlaceHolder="Chọn ngày"
-                            ></nz-date-picker>
-                          </nz-form-control>
-                        </nz-form-item>
-                      </div>
-                    </div>
-                  </nz-card>
-                </div>
-              </div>
-            </div>
-          }
-
-          @if (currentStep === 1) {
-            <div class="form-step">
-              <div nz-row nzJustify="center">
-                <div nz-col [nzXs]="24" [nzSm]="22" [nzMd]="20" [nzLg]="18">
-                  <nz-card class="form-card">
-                    <div class="card-header">
-                      <span class="card-icon card-icon--success">
-                        <span nz-icon nzType="tool" nzTheme="outline"></span>
-                      </span>
-                      <div>
-                        <h3 class="card-title">Kỹ năng yêu cầu</h3>
-                        <p class="card-subtitle">Định nghĩa kỹ năng cần thiết cho vị trí</p>
-                      </div>
-                    </div>
-
-                    <div nz-row [nzGutter]="24">
-                      <div nz-col [nzXs]="24" [nzLg]="12">
-                        <nz-form-item>
-                          <nz-form-label>Kỹ năng bắt buộc</nz-form-label>
-                          <nz-form-control>
-                            <nz-select
-                              formControlName="must_have_skills"
-                              nzMode="tags"
-                              nzPlaceHolder="Nhập kỹ năng và nhấn Enter"
-                            ></nz-select>
-                          </nz-form-control>
-                        </nz-form-item>
-                      </div>
-                      <div nz-col [nzXs]="24" [nzLg]="12">
-                        <nz-form-item>
-                          <nz-form-label>Kỹ năng ưu tiên</nz-form-label>
-                          <nz-form-control>
-                            <nz-select
-                              formControlName="nice_to_have_skills"
-                              nzMode="tags"
-                              nzPlaceHolder="Nhập kỹ năng và nhấn Enter"
-                            ></nz-select>
-                          </nz-form-control>
-                        </nz-form-item>
-                      </div>
-                    </div>
-                  </nz-card>
-
-                  <nz-card class="form-card" style="margin-top: 24px">
-                    <div class="card-header">
-                      <span class="card-icon card-icon--warning">
-                        <span nz-icon nzType="trophy" nzTheme="outline"></span>
-                      </span>
-                      <div>
-                        <h3 class="card-title">Kinh nghiệm & Học vấn</h3>
-                        <p class="card-subtitle">Yêu cầu kinh nghiệm và trình độ</p>
-                      </div>
-                    </div>
-
-                    <div nz-row [nzGutter]="24">
-                      <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
-                        <nz-form-item>
-                          <nz-form-label>Kinh nghiệm tối thiểu (năm)</nz-form-label>
-                          <nz-form-control>
-                            <nz-input-number
-                              formControlName="min_experience_years"
-                              [nzMin]="0"
-                              [nzMax]="30"
-                              style="width: 100%"
-                            ></nz-input-number>
-                          </nz-form-control>
-                        </nz-form-item>
-                      </div>
-                      
-                      <div nz-col [nzXs]="24" [nzSm]="12" [nzLg]="8">
-                        <nz-form-item>
-                          <nz-form-label>Học vấn tối thiểu</nz-form-label>
-                          <nz-form-control>
-                            <nz-select formControlName="min_education" nzAllowClear nzPlaceHolder="Chọn">
-                              @for (item of educationLevels; track item.value) {
-                                <nz-option
-                                  [nzValue]="item.value"
-                                  [nzLabel]="item.label"
-                                ></nz-option>
-                              }
-                            </nz-select>
-                          </nz-form-control>
-                        </nz-form-item>
-                      </div>
-                    </div>
-                  </nz-card>
-
-                  <nz-card class="form-card" style="margin-top: 24px">
-                    <div class="card-header">
-                      <span class="card-icon card-icon--info">
-                        <span nz-icon nzType="sliders" nzTheme="outline"></span>
-                      </span>
-                      <div>
-                        <h3 class="card-title">Trọng số sàng lọc</h3>
-                        <p class="card-subtitle">Tùy chỉnh mức độ quan trọng của từng tiêu chí (tổng = 100%)</p>
-                      </div>
-                    </div>
-
-                    <div class="weights-grid">
-                      <div class="weight-item">
-                        <div class="weight-label">
-                          <span>Kỹ năng</span>
-                          <strong>{{ form.get('weight_skills')?.value }}%</strong>
-                        </div>
-                        <nz-slider
-                          formControlName="weight_skills"
-                          [nzMin]="0"
-                          [nzMax]="100"
-                          [nzStep]="5"
-                          (nzOnAfterChange)="onWeightChange('weight_skills')"
-                        ></nz-slider>
-                      </div>
-                      <div class="weight-item">
-                        <div class="weight-label">
-                          <span>Kinh nghiệm</span>
-                          <strong>{{ form.get('weight_experience')?.value }}%</strong>
-                        </div>
-                        <nz-slider
-                          formControlName="weight_experience"
-                          [nzMin]="0"
-                          [nzMax]="100"
-                          [nzStep]="5"
-                          (nzOnAfterChange)="onWeightChange('weight_experience')"
-                        ></nz-slider>
-                      </div>
-                      <div class="weight-item">
-                        <div class="weight-label">
-                          <span>Học vấn</span>
-                          <strong>{{ form.get('weight_education')?.value }}%</strong>
-                        </div>
-                        <nz-slider
-                          formControlName="weight_education"
-                          [nzMin]="0"
-                          [nzMax]="100"
-                          [nzStep]="5"
-                          (nzOnAfterChange)="onWeightChange('weight_education')"
-                        ></nz-slider>
-                      </div>
-                      <div class="weight-total" [class.invalid]="getWeightsTotal() !== 100">
-                        Tổng: {{ getWeightsTotal() }}%
-                        @if (getWeightsTotal() !== 100) {
-                          <span class="weight-error">— phải bằng 100%</span>
-                        }
-                      </div>
-                    </div>
-                  </nz-card>
-                </div>
-              </div>
-            </div>
-          }
-
-          <div nz-row nzJustify="center">
-            <div nz-col [nzXs]="24" [nzSm]="22" [nzMd]="20" [nzLg]="18">
-              <div class="form-navigation">
-                @if (currentStep > 0) {
-                  <button nz-button (click)="prevStep()">
-                    <span nz-icon nzType="left"></span>
-                    Quay lại
-                  </button>
-                }
-                @if (currentStep < 1) {
-                  <button nz-button nzType="primary" (click)="nextStep()" class="next-btn">
-                    Tiếp theo
-                    <span nz-icon nzType="right"></span>
-                  </button>
-                }
-              </div>
-            </div>
-          </div>
-        </form>
-      </nz-spin>
-    </div>
-  `,
-  styles: [`
-    .job-form-page {
-      animation: fadeIn 0.3s ease-out;
-      padding-bottom: 40px;
-    }
-
-    /* Page Header */
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 24px;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
-    .back-btn {
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      margin-top: 4px;
-    }
-
-    .page-title {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--color-text-primary);
-      margin: 0 0 4px 0;
-    }
-
-    .page-subtitle {
-      font-size: 14px;
-      color: var(--color-text-secondary);
-      margin: 0;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 12px;
-    }
-
-    /* Progress Steps */
-    .progress-container {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 32px;
-    }
-
-    .progress-section {
-      width: 100%;
-      max-width: 900px; /* Khớp với [nzLg]="18" */
-      padding: 20px 32px;
-      background: #fff;
-      border-radius: 12px;
-      border: 1px solid #f0f0f0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    }
-
-    /* Form Cards */
-    .form-card {
-      border-radius: 12px !important;
-      border: 1px solid #f0f0f0;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-    }
-
-    .card-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .card-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #e6f7ff;
-      color: #1890ff;
-      flex-shrink: 0;
-      font-size: 20px;
-
-      &--success { background: #f6ffed; color: #52c41a; }
-      &--warning { background: #fffbe6; color: #faad14; }
-      &--info { background: #e6f7ff; color: #1890ff; }
-    }
-
-    .card-title {
-      font-size: 17px;
-      font-weight: 600;
-      margin: 0;
-    }
-
-    .card-subtitle {
-      font-size: 13px;
-      color: #8c8c8c;
-      margin: 2px 0 0 0;
-    }
-
-    /* Navigation */
-    .form-navigation {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 24px;
-      padding-top: 24px;
-      border-top: 1px solid #f0f0f0;
-    }
-
-    .next-btn {
-      margin-left: auto;
-    }
-
-    /* Weights */
-    .weights-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .weight-item {
-      padding: 0 4px;
-    }
-
-    .weight-label {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-      font-size: 14px;
-      color: #595959;
-
-      strong {
-        color: #1890ff;
-        font-size: 15px;
-      }
-    }
-
-    .weight-total {
-      text-align: center;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 8px 16px;
-      background: #f6ffed;
-      border: 1px solid #b7eb8f;
-      border-radius: 8px;
-      color: #52c41a;
-
-      &.invalid {
-        background: #fff2f0;
-        border-color: #ffccc7;
-        color: #ff4d4f;
-      }
-    }
-
-    .weight-error {
-      font-weight: 400;
-      margin-left: 4px;
-    }
-
-    /* Animation */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @media (max-width: 767px) {
-      .header-actions { width: 100%; }
-      .header-actions button { flex: 1; }
-    }
-  `],
+  templateUrl: './job-form.component.html',
+  styleUrl: './job-form.component.scss',
 })
 export class JobFormComponent implements OnInit {
   form!: FormGroup;
   loading = signal(false);
   saving = signal(false);
   currentStep = 0;
+
+  // AI JD Upload & Parsing state
+  parsingJd = signal(false);
+  uploadedJdFilename = signal<string | null>(null);
+  parsedSummary = signal<{ skillsCount: number; exp: number } | null>(null);
+  isDragOver = false;
 
   jobId: number | null = null;
   job: Job | null = null;
@@ -790,14 +220,18 @@ export class JobFormComponent implements OnInit {
       salary_max: v.salary_max ?? undefined,
       application_deadline: v.application_deadline ? this.formatDate(v.application_deadline) : undefined,
       criteria: {
-        must_have_skills: v.must_have_skills || [],
-        nice_to_have_skills: v.nice_to_have_skills || [],
-        min_experience_years: v.min_experience_years,
-        max_experience_years: v.max_experience_years || undefined,
+        must_have_skills: Array.isArray(v.must_have_skills)
+          ? v.must_have_skills.map((s: any) => String(s).trim()).filter((s: string) => !!s)
+          : [],
+        nice_to_have_skills: Array.isArray(v.nice_to_have_skills)
+          ? v.nice_to_have_skills.map((s: any) => String(s).trim()).filter((s: string) => !!s)
+          : [],
+        min_experience_years: v.min_experience_years != null ? +v.min_experience_years : 0,
+        max_experience_years: v.max_experience_years ? +v.max_experience_years : undefined,
         min_education: v.min_education || undefined,
-        weight_skills: v.weight_skills,
-        weight_experience: v.weight_experience,
-        weight_education: v.weight_education,
+        weight_skills: +v.weight_skills,
+        weight_experience: +v.weight_experience,
+        weight_education: +v.weight_education,
       },
     };
   }
@@ -943,5 +377,115 @@ export class JobFormComponent implements OnInit {
 
   onBack(): void {
     this.router.navigate(['/jobs']);
+  }
+
+  // --- AI JD Upload & Autofill Handlers ---
+
+  onFileInputChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      this.processJdFile(file);
+      input.value = '';
+    }
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+
+    if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+      const file = event.dataTransfer.files[0];
+      this.processJdFile(file);
+    }
+  }
+
+  processJdFile(file: File): void {
+    const fn = file.name.toLowerCase();
+    if (!fn.endsWith('.pdf') && !fn.endsWith('.docx') && !fn.endsWith('.doc')) {
+      this.message.error('Vui lòng chọn file Word (.docx, .doc) hoặc file PDF (.pdf)');
+      return;
+    }
+
+    this.parsingJd.set(true);
+    this.jobService.parseJdFile(file).subscribe({
+      next: (res) => {
+        this.parsingJd.set(false);
+        this.uploadedJdFilename.set(res.filename);
+
+        const d = res.data;
+        if (!d) {
+          this.message.warning('Không tìm thấy thông tin phù hợp trong file JD');
+          return;
+        }
+
+        // Auto-fill basic info
+        const patchData: Record<string, any> = {};
+        if (d.title_vi) patchData['title_vi'] = d.title_vi;
+        if (d.department) patchData['department'] = d.department;
+        if (d.location) patchData['location'] = d.location;
+        if (d.employment_type) patchData['employment_type'] = d.employment_type;
+        if (d.salary_min != null) patchData['salary_min'] = d.salary_min;
+        if (d.salary_max != null) patchData['salary_max'] = d.salary_max;
+        if (d.description_vi) patchData['description_vi'] = d.description_vi;
+        if (d.requirements_vi) patchData['requirements_vi'] = d.requirements_vi;
+
+        // Auto-fill screening criteria
+        if (d.criteria) {
+          if (Array.isArray(d.criteria.must_have_skills)) {
+            patchData['must_have_skills'] = d.criteria.must_have_skills;
+          }
+          if (Array.isArray(d.criteria.nice_to_have_skills)) {
+            patchData['nice_to_have_skills'] = d.criteria.nice_to_have_skills;
+          }
+          if (d.criteria.min_experience_years != null) {
+            patchData['min_experience_years'] = d.criteria.min_experience_years;
+          }
+          if (d.criteria.max_experience_years != null) {
+            patchData['max_experience_years'] = d.criteria.max_experience_years;
+          }
+          if (d.criteria.min_education) {
+            patchData['min_education'] = d.criteria.min_education;
+          }
+        }
+
+        this.form.patchValue(patchData);
+
+        const mustCount = d.criteria?.must_have_skills?.length || 0;
+        const niceCount = d.criteria?.nice_to_have_skills?.length || 0;
+        this.parsedSummary.set({
+          skillsCount: mustCount + niceCount,
+          exp: d.criteria?.min_experience_years || 0,
+        });
+
+        this.message.success(
+          `✨ AI đã trích xuất thông tin từ JD thành công (${mustCount + niceCount} kỹ năng gợi ý)! Bạn có thể kiểm tra và tùy chỉnh lại các tiêu chí bên dưới.`,
+          { nzDuration: 5500 }
+        );
+      },
+      error: (err) => {
+        this.parsingJd.set(false);
+        const detail = err?.error?.detail || 'Không thể trích xuất nội dung từ file JD. Vui lòng kiểm tra lại file.';
+        this.message.error(detail);
+      },
+    });
+  }
+
+  clearJdUpload(): void {
+    this.uploadedJdFilename.set(null);
+    this.parsedSummary.set(null);
   }
 }

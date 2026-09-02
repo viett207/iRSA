@@ -595,6 +595,81 @@ import { AuthService } from '../../core/auth/auth.service';
           display: none !important;
         }
       }
+
+      /* Warm Slate authentication layout */
+      .auth-page {
+        align-items: stretch;
+        padding: 32px;
+        background: #f3f0e6;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+
+      .auth-container {
+        grid-template-columns: minmax(360px, .9fr) minmax(500px, 1.1fr);
+        max-width: 1180px;
+        min-height: calc(100vh - 64px);
+        margin: auto;
+        border: 1px solid #e4dfd3;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 12px 36px rgb(24 24 27 / 7%);
+      }
+
+      .auth-branding {
+        align-items: flex-start;
+        justify-content: center;
+        padding: 56px;
+        background: #18181b;
+      }
+
+      .branding-content { max-width: 410px; }
+      .branding-content h2 { color: #fff; font-size: 32px; letter-spacing: -.035em; }
+      .branding-content p { color: rgb(244 244 245 / 82%); }
+      .feature-item { color: #e4e4e7; }
+      .feature-item span:first-child { color: #10b981; }
+
+      .auth-form-section {
+        align-items: flex-start;
+        justify-content: flex-start;
+        max-height: none;
+        padding: 44px 64px;
+        background: #fff;
+      }
+
+      .auth-card { max-width: 460px; margin: auto 0; }
+      .auth-header { text-align: left; margin-bottom: 24px; }
+      .auth-logo { justify-content: flex-start; color: #18181b; }
+      .auth-title { color: #18181b; font-size: 30px; letter-spacing: -.035em; }
+      .auth-subtitle { color: #71717a; }
+
+      ::ng-deep .ant-input-affix-wrapper-lg {
+        border-color: #e4dfd3 !important;
+        background: #fafafa !important;
+      }
+
+      ::ng-deep .ant-input-affix-wrapper-focused,
+      ::ng-deep .ant-input-affix-wrapper:focus-within {
+        border-color: #18181b !important;
+        background: #fff !important;
+        box-shadow: 0 0 0 3px rgb(24 24 27 / 10%) !important;
+      }
+
+      .submit-btn {
+        border-color: #18181b !important;
+        color: #fff !important;
+        background: #18181b !important;
+      }
+
+      .auth-footer { text-align: left; }
+      .auth-footer a { color: #18181b; }
+      .success-state { text-align: left; }
+      .success-icon { margin-left: 0; }
+
+      @media (max-width: 899px) {
+        .auth-page { padding: 0; background: #fff; }
+        .auth-container { display: block; min-height: 100vh; border: 0; border-radius: 0; }
+        .auth-form-section { padding: 32px 24px; }
+      }
     `,
   ],
 })

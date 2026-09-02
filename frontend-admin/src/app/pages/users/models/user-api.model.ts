@@ -25,7 +25,7 @@ export interface UserCreate {
   phone?: string;
   password: string;
   role: 'candidate' | 'recruiter' | 'leader' | 'admin';
-  company_code?: string;
+  company_code?: string | null;
 }
 
 // PUT body for updating user
@@ -36,5 +36,5 @@ export interface UserUpdate {
   role?: 'candidate' | 'recruiter' | 'leader' | 'admin';
   is_active?: boolean;
   password?: string;
-  company_code?: string;
+  company_code?: string | null;
 }

@@ -183,6 +183,7 @@ export interface Applicant {
   total_score?: number | null;
   skill_match_score?: number | null;
   experience_score?: number | null;
+  detected_experience_years?: number | null;
   education_score?: number | null;
   ai_score?: number | null;
   ai_evaluated_at?: string | null;
@@ -298,6 +299,9 @@ export interface ShortlistedApplicant {
   ai_score: number | null;
   ai_evaluated_at: string | null;
   has_ai_evaluation: boolean;
+  interview_date: string | null;
+  interview_type: string | null;
+  interview_status: string | null;
 }
 
 export interface ShortlistedListResponse {
@@ -305,6 +309,23 @@ export interface ShortlistedListResponse {
   total: number;
   page: number;
   size: number;
+}
+
+export interface CalendarInterviewEvent {
+  id: number;
+  application_id: number;
+  job_id: number;
+  job_title: string;
+  candidate_id: number | null;
+  candidate_name: string;
+  candidate_email: string;
+  interview_date: string;
+  interview_type: string;
+  location: string | null;
+  status: string;
+  notes: string | null;
+  scheduler_name: string | null;
+  ai_score: number | null;
 }
 
 export interface InterviewingApplicant {

@@ -15,7 +15,7 @@ from sqlalchemy.orm import joinedload
 
 from app.core.database import get_db
 from app.api.deps import CurrentUser
-from app.models import Job, Application
+from app.models import Job, Application, Interview
 from app.models.user import User
 
 
@@ -37,8 +37,12 @@ class RecentApplication(BaseModel):
     job_id: int
     candidate_name: str
     job_title: str
+    department: str | None = None
+    employment_type: str | None = None
     submitted_at: datetime | None
     status: str
+    ai_score: float | None = None
+    ai_evaluated_at: datetime | None = None
 
 
 class PendingApproval(BaseModel):
@@ -48,11 +52,24 @@ class PendingApproval(BaseModel):
     created_at: datetime | None
 
 
+class RecentAIInterview(BaseModel):
+    interview_id: int
+    application_id: int
+    job_id: int
+    candidate_name: str
+    job_title: str
+    interview_date: datetime
+    overall_score: float | None
+    recommendation: str | None
+    has_minutes: bool
+
+
 class DashboardResponse(BaseModel):
     stats: DashboardStats
     application_status_counts: dict[str, int]
     job_status_counts: dict[str, int]
     recent_applications: list[RecentApplication]
+    recent_ai_interviews: list[RecentAIInterview]
     pending_approvals: list[PendingApproval]
 
 
@@ -139,11 +156,13 @@ async def get_dashboard_stats(
     status_counts = {row[0]: row[1] for row in status_rows}
     pending_applications = status_counts.get("submitted", 0) + status_counts.get("reviewing", 0)
 
-    # Real weekly trends. These values are based on persisted timestamps rather
-    # than UI-generated placeholders.
     period_end = datetime.now(timezone.utc)
     current_week_start = period_end - timedelta(days=7)
     previous_week_start = current_week_start - timedelta(days=7)
+
+    # Convert to naive UTC datetimes for columns defined as TIMESTAMP WITHOUT TIME ZONE (e.g. applications.submitted_at)
+    current_week_start_naive = current_week_start.replace(tzinfo=None)
+    previous_week_start_naive = previous_week_start.replace(tzinfo=None)
 
     current_jobs = await db.scalar(
         select(func.count(Job.id)).where(
@@ -164,14 +183,14 @@ async def get_dashboard_stats(
     current_apps = await db.scalar(
         select(func.count(Application.id)).where(
             Application.job_id.in_(company_jobs_sq),
-            Application.submitted_at >= current_week_start,
+            Application.submitted_at >= current_week_start_naive,
         )
     ) or 0
     previous_apps = await db.scalar(
         select(func.count(Application.id)).where(
             Application.job_id.in_(company_jobs_sq),
-            Application.submitted_at >= previous_week_start,
-            Application.submitted_at < current_week_start,
+            Application.submitted_at >= previous_week_start_naive,
+            Application.submitted_at < current_week_start_naive,
         )
     ) or 0
 
@@ -224,6 +243,7 @@ async def get_dashboard_stats(
         .options(
             joinedload(Application.candidate),
             joinedload(Application.job),
+            joinedload(Application.scoring_result),
         )
         .where(Application.job_id.in_(company_jobs_sq))
         .order_by(Application.submitted_at.desc())
@@ -236,11 +256,57 @@ async def get_dashboard_stats(
             id=app.id,
             job_id=app.job_id,
             candidate_name=app.candidate.full_name if app.candidate else "N/A",
-            job_title=(app.job.title_vi or "N/A") if app.job else "N/A",
+            job_title=(app.job.title_vi or "Chưa đặt tên vị trí") if app.job else "Vị trí không xác định",
+            department=app.job.department if app.job else None,
+            employment_type=app.job.employment_type if app.job else None,
             submitted_at=app.submitted_at,
             status=app.status,
+            ai_score=app.scoring_result.ai_score if app.scoring_result else None,
+            ai_evaluated_at=app.scoring_result.ai_evaluated_at if app.scoring_result else None,
         )
         for app in recent_apps
+    ]
+
+    # Latest completed AI interviews. A minutes/report flag is only exposed
+    # when persisted evaluation content exists; the UI must not infer one.
+    interview_result = await db.execute(
+        select(Interview)
+        .options(
+            joinedload(Interview.application).joinedload(Application.candidate),
+            joinedload(Interview.application).joinedload(Application.job),
+        )
+        .join(Application, Interview.application_id == Application.id)
+        .where(
+            Application.job_id.in_(company_jobs_sq),
+            Interview.status == "completed",
+        )
+        .order_by(Interview.interview_date.desc())
+        .limit(10)
+    )
+    recent_interviews = interview_result.scalars().unique().all()
+    recent_interview_items = [
+        RecentAIInterview(
+            interview_id=interview.id,
+            application_id=interview.application_id,
+            job_id=interview.application.job_id,
+            candidate_name=(
+                interview.application.candidate.full_name
+                if interview.application.candidate else "N/A"
+            ),
+            job_title=(
+                interview.application.job.title_vi
+                if interview.application.job and interview.application.job.title_vi else "N/A"
+            ),
+            interview_date=interview.interview_date,
+            overall_score=interview.overall_score,
+            recommendation=interview.recommendation,
+            has_minutes=bool(
+                interview.answers
+                or interview.overall_feedback
+                or interview.overall_score is not None
+            ),
+        )
+        for interview in recent_interviews
     ]
 
     # Pending approval jobs (company-scoped) - use joinedload for 1 roundtrip
@@ -290,6 +356,7 @@ async def get_dashboard_stats(
         application_status_counts=status_counts,
         job_status_counts=job_status_counts,
         recent_applications=recent_items,
+        recent_ai_interviews=recent_interview_items,
         pending_approvals=pending_items,
     )
 

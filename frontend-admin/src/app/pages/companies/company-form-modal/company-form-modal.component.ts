@@ -236,9 +236,9 @@ import { VIETNAMESE_INDUSTRIES } from '../../../shared/constants/vietnamese-indu
         bottom: -48px;
         width: 132px;
         height: 132px;
-        border: 1px solid hsl(211 62% 72% / 0.28);
+        border: 1px solid rgb(161 161 170 / 0.28);
         border-radius: 50%;
-        box-shadow: 0 0 0 18px hsl(211 62% 72% / 0.08);
+        box-shadow: 0 0 0 18px rgb(161 161 170 / 0.08);
         pointer-events: none;
       }
     }
@@ -252,7 +252,7 @@ import { VIETNAMESE_INDUSTRIES } from '../../../shared/constants/vietnamese-indu
       border-radius: 11px;
       color: var(--color-primary);
       background: hsl(0 0% 100% / 0.82);
-      box-shadow: 0 5px 12px hsl(215 55% 34% / 0.1);
+      box-shadow: 0 5px 12px rgb(24 24 27 / 0.08);
       font-size: 19px;
     }
 
@@ -421,7 +421,7 @@ import { VIETNAMESE_INDUSTRIES } from '../../../shared/constants/vietnamese-indu
         width: 108px;
         height: 108px;
         border-radius: 50%;
-        background: hsl(211 78% 50% / 0.06);
+        background: rgb(244 244 245 / 0.9);
         pointer-events: none;
       }
 

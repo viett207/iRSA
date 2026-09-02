@@ -108,6 +108,23 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
               </div>
             </nz-result>
           } @else {
+            <div class="auth-mascot" aria-hidden="true">
+              <svg viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle class="mascot-halo" cx="48" cy="48" r="45"/>
+                <path class="mascot-spark" d="M17 24v8M13 28h8M75 15v6M72 18h6"/>
+                <path class="mascot-antenna" d="M48 22v-7"/>
+                <circle class="mascot-antenna-dot" cx="48" cy="12" r="4"/>
+                <rect class="mascot-face" x="22" y="23" width="52" height="44" rx="16"/>
+                <circle class="mascot-eye" cx="39" cy="43" r="4"/>
+                <circle class="mascot-eye" cx="57" cy="43" r="4"/>
+                <path class="mascot-smile" d="M40 55c5 5 11 5 16 0"/>
+                <rect class="mascot-cv" x="58" y="56" width="29" height="27" rx="8"/>
+                <path class="mascot-cv-line" d="M65 64h11M65 69h8"/>
+                <circle class="mascot-check-dot" cx="78" cy="76" r="5"/>
+                <path class="mascot-check" d="m75.5 76 1.7 1.7 3.2-3.6"/>
+              </svg>
+            </div>
+
             <!-- Form Header -->
             <div class="form-header">
               <h2 class="form-title">Đăng ký tài khoản HR</h2>
@@ -339,6 +356,98 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
       a { color: var(--color-primary-light); }
     }
 
+    /* Warm Slate authentication surface */
+    .register-page {
+      color: #18181B;
+      background: #F3F0E6;
+    }
+
+    .branding-panel {
+      color: #FFFFFF;
+      background: #18181B;
+
+      &::before {
+        background: radial-gradient(circle, rgb(255 255 255 / .08) 0%, transparent 70%);
+      }
+    }
+
+    .hero-title {
+      color: #FFFFFF;
+      font-family: var(--font-heading);
+      font-size: clamp(2.35rem, 3vw, 3.25rem);
+      font-weight: 800;
+      letter-spacing: -.04em;
+
+      .highlight { color: #D4D4D8; }
+    }
+
+    .hero-description { color: rgb(244 244 245 / .82); opacity: 1; }
+    .step-number { color: #18181B; background: #FFFFFF; font-family: var(--font-mono); }
+
+    .form-panel {
+      flex-basis: 620px;
+      padding: 36px 48px;
+      background: #F3F0E6;
+    }
+
+    .form-container {
+      max-width: 460px;
+      padding: 32px 34px;
+      border: 1px solid #E4DFD3;
+      border-radius: 16px;
+      background: #FFFFFF;
+      box-shadow: 0 10px 30px rgb(24 24 27 / .06);
+    }
+
+    .form-title {
+      color: #18181B;
+      font-family: var(--font-heading);
+      font-size: 28px;
+      letter-spacing: -.035em;
+    }
+
+    .form-subtitle { color: #71717A; }
+
+    .auth-mascot { width: 76px; height: 76px; margin: 0 0 14px; }
+    .auth-mascot svg { display: block; width: 100%; height: 100%; }
+    .mascot-halo { fill: #F3F0E6; stroke: #E4DFD3; }
+    .mascot-spark { stroke: #A1A1AA; stroke-width: 2; stroke-linecap: round; }
+    .mascot-antenna { stroke: #18181B; stroke-width: 3; stroke-linecap: round; }
+    .mascot-antenna-dot,
+    .mascot-face { fill: #18181B; }
+    .mascot-eye { fill: #FFFFFF; }
+    .mascot-smile { stroke: #FFFFFF; stroke-width: 2.5; stroke-linecap: round; }
+    .mascot-cv { fill: #FFFFFF; stroke: #18181B; stroke-width: 2; }
+    .mascot-cv-line { stroke: #71717A; stroke-width: 2; stroke-linecap: round; }
+    .mascot-check-dot { fill: #10B981; }
+    .mascot-check { stroke: #FFFFFF; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+    :host ::ng-deep nz-input-group.ant-input-affix-wrapper {
+      border-color: #E4DFD3 !important;
+      border-radius: 10px !important;
+      background: #FAFAFA !important;
+
+      &:hover { border-color: #A1A1AA !important; }
+
+      &:focus-within,
+      &.ant-input-affix-wrapper-focused {
+        border-color: #18181B !important;
+        background: #FFFFFF !important;
+        box-shadow: 0 0 0 3px rgb(24 24 27 / .1) !important;
+      }
+    }
+
+    .submit-btn {
+      border-color: #18181B !important;
+      color: #FFFFFF !important;
+      background: #18181B !important;
+      box-shadow: none !important;
+
+      &:hover { background: #27272A !important; }
+    }
+
+    .login-link a { color: #18181B; font-weight: 600; }
+
     @media (max-width: 1024px) {
       .branding-panel { flex: 0 0 380px; padding: 40px; }
       .form-panel { flex: 1; }
@@ -348,7 +457,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
       .register-page { flex-direction: column; }
       .branding-panel { display: none; }
       .form-panel { flex: 1; padding: 24px; }
-      .form-container { max-width: 100%; }
+      .form-container { max-width: 100%; padding: 24px; }
     }
   `],
 })

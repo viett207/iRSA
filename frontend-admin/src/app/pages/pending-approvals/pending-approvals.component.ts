@@ -123,7 +123,7 @@ import { User } from '../../shared/models/user.model';
     }
 
     .page-title {
-      font-size: 22px;
+      font-size: 26px;
       font-weight: 700;
       color: var(--color-text-primary);
       margin: 0 0 4px 0;
@@ -144,9 +144,10 @@ import { User } from '../../shared/models/user.model';
 
     .table-card {
       background: #fff;
-      border-radius: 12px;
+      border: 1px solid var(--color-border-light);
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      box-shadow: var(--shadow-card);
     }
 
     .user-name {

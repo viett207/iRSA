@@ -66,7 +66,7 @@ export interface StageInfo {
         </div>
         <nz-progress
           [nzPercent]="progressPercent"
-          [nzStrokeColor]="progressPercent === 100 ? '#52c41a' : { '0%': '#108ee9', '100%': '#87d068' }"
+          [nzStrokeColor]="progressPercent === 100 ? '#10b981' : { '0%': '#3f3f46', '100%': '#18181b' }"
           [nzShowInfo]="false"
           nzStatus="active"
         ></nz-progress>
@@ -180,8 +180,8 @@ export interface StageInfo {
         width: 44px;
         height: 44px;
         border-radius: 8px;
-        background: #e6f7ff;
-        border: 1px solid #91d5ff;
+        background: #f4f4f5;
+        border: 1px solid #e4dfd3;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -207,8 +207,8 @@ export interface StageInfo {
         transition: background-color 0.2s;
       }
       .stage-item.running {
-        background: #e6f7ff;
-        border: 1px solid #91d5ff;
+        background: #f4f4f5;
+        border: 1px solid #e4dfd3;
       }
       .stage-item.done {
         background: #fcfcfc;
@@ -235,7 +235,7 @@ export interface StageInfo {
       }
       .icon-circle.running {
         background: #fff;
-        border: 1px solid #1890ff;
+        border: 1px solid #18181b;
       }
       .icon-circle.done {
         background: #52c41a;
@@ -265,7 +265,7 @@ export interface StageInfo {
         color: #555;
       }
       .stage-name.active {
-        color: #096dd9;
+        color: #18181b;
       }
       .stage-name.done {
         color: #222;

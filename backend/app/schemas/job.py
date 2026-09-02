@@ -131,6 +131,7 @@ class JobResponse(BaseModel):
     # Related
     criteria: JobCriteriaResponse | None = None
     applications_count: int = 0
+    avg_ai_score: float | None = None
 
     # Timestamps
     created_at: datetime

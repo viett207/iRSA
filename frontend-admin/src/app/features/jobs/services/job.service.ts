@@ -21,6 +21,7 @@ import {
   InterviewPassedListResponse,
   AiEvaluationResponse,
   CvJdCompareResponse,
+  CalendarInterviewEvent,
 } from '../models/job.model';
 
 export interface JobListParams {
@@ -120,12 +121,13 @@ export class JobService {
 
   getApplications(
     jobId: number,
-    params: { page?: number; size?: number; sort_by?: string } = {}
+    params: { page?: number; size?: number; sort_by?: string; submitted_date?: string } = {}
   ): Observable<ApplicantListResponse> {
     let httpParams = new HttpParams();
     if (params.page) httpParams = httpParams.set('page', params.page);
     if (params.size) httpParams = httpParams.set('size', params.size);
     if (params.sort_by) httpParams = httpParams.set('sort_by', params.sort_by);
+    if (params.submitted_date) httpParams = httpParams.set('submitted_date', params.submitted_date);
 
     return this.http.get<ApplicantListResponse>(
       `${this.baseUrl}/${jobId}/applications`,
@@ -204,15 +206,20 @@ export class JobService {
   // --- Shortlisted / AI Evaluation ---
 
   getShortlisted(
-    params: { page?: number; size?: number; sort_by?: string } = {}
+    params: { job_id?: number; page?: number; size?: number; sort_by?: string } = {}
   ): Observable<ShortlistedListResponse> {
     let httpParams = new HttpParams();
+    if (params.job_id) httpParams = httpParams.set('job_id', params.job_id);
     if (params.page) httpParams = httpParams.set('page', params.page);
     if (params.size) httpParams = httpParams.set('size', params.size);
     if (params.sort_by) httpParams = httpParams.set('sort_by', params.sort_by);
 
     const url = `${environment.apiUrl}/shortlisted`;
     return this.http.get<ShortlistedListResponse>(url, { params: httpParams });
+  }
+
+  getCalendarInterviews(): Observable<CalendarInterviewEvent[]> {
+    return this.http.get<CalendarInterviewEvent[]>(`${environment.apiUrl}/interviews/calendar`);
   }
 
   triggerAiEvaluation(
@@ -368,6 +375,15 @@ export class JobService {
   cancelInterview(jobId: number, appId: number, interviewId: number): Observable<void> {
     return this.http.delete<void>(
       `${this.baseUrl}/${jobId}/applications/${appId}/interviews/${interviewId}`
+    );
+  }
+
+  parseJdFile(file: File): Observable<{ success: boolean; filename: string; data: any }> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http.post<{ success: boolean; filename: string; data: any }>(
+      `${this.baseUrl}/parse-jd`,
+      formData
     );
   }
 }

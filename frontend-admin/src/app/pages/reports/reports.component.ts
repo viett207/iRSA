@@ -22,15 +22,6 @@ import {
   ScoreBucket,
 } from '../../core/services/report.service';
 
-const JOB_STATUS_ORDER = [
-  'draft',
-  'pending_approval',
-  'approved',
-  'rejected',
-  'active',
-  'closed',
-] as const;
-
 @Component({
   selector: 'app-reports',
   standalone: true,
@@ -55,7 +46,7 @@ const JOB_STATUS_ORDER = [
       <!-- Page Header -->
       <div class="page-header">
         <div class="header-content">
-          <h1 class="page-title">Báo cáo tuyển dụng</h1>
+          <h1 class="page-title">Báo cáo &amp; Thống kê Tuyển dụng</h1>
           <p class="page-subtitle">
             Thống kê tuyển dụng của công ty bạn
           </p>
@@ -107,7 +98,10 @@ const JOB_STATUS_ORDER = [
                   <span nz-icon nzType="line-chart" nzTheme="outline"></span>
                   Xu hướng ứng tuyển
                 </h3>
-                <span class="card-subtitle">{{ selectedDays }} ngày gần đây</span>
+                <div class="trend-legend" aria-label="Chú giải biểu đồ">
+                  <span><i class="trend-legend-bar"></i>Hồ sơ/ngày</span>
+                  @if (showTrendAverage()) { <span><i class="trend-legend-line"></i>TB 7 ngày</span> }
+                </div>
               </div>
               <div class="trend-chart">
                 @if (trendData().length === 0) {
@@ -126,10 +120,10 @@ const JOB_STATUS_ORDER = [
                         <div class="grid-line"></div>
                       </div>
                       <div class="trend-bars" [class.trend-bars--sparse]="trendActiveCount() <= 10">
-                        @for (item of trendData(); track item.date) {
+                        @for (item of trendSeries(); track item.date) {
                           <div
                             class="trend-bar-col"
-                            [nz-tooltip]="item.date + ': ' + item.count + ' hồ sơ'"
+                            [nz-tooltip]="getTrendTooltip(item)"
                             [class.trend-bar-col--active]="item.count > 0"
                           >
                             <div
@@ -144,6 +138,11 @@ const JOB_STATUS_ORDER = [
                           </div>
                         }
                       </div>
+                      @if (showTrendAverage()) {
+                        <svg class="trend-average-layer" viewBox="0 0 1000 200" preserveAspectRatio="none" aria-hidden="true">
+                          <polyline class="trend-average-line" [attr.points]="trendAveragePoints()"></polyline>
+                        </svg>
+                      }
                       <div class="trend-x-axis">
                         @for (label of trendXLabels(); track label.index) {
                           <span class="x-label" [style.left.%]="label.position">{{ label.text }}</span>
@@ -276,7 +275,7 @@ const JOB_STATUS_ORDER = [
               <div class="card-header">
                 <h3 class="card-title">
                   <span nz-icon nzType="trophy" nzTheme="outline"></span>
-                  Top vị trí tuyển dụng
+                  Hiệu suất vị trí tuyển dụng
                 </h3>
                 <span class="card-subtitle">Theo số lượng hồ sơ</span>
               </div>
@@ -386,6 +385,7 @@ const JOB_STATUS_ORDER = [
   styles: [`
     .reports {
       animation: fadeIn 0.3s ease-out;
+      margin-top: -16px;
     }
 
     /* Page Header */
@@ -488,17 +488,17 @@ const JOB_STATUS_ORDER = [
         color: var(--color-error);
       }
       .kpi-card--info & {
-        background: var(--color-info-bg);
-        color: var(--color-info);
+        background: #f4f4f5;
+        color: #18181b;
       }
       .kpi-card--purple & {
-        background: #F9F0FF;
-        color: #722ED1;
+        background: #f4f4f5;
+        color: #18181b;
       }
     }
 
     .kpi-value {
-      font-family: var(--font-heading);
+      font-family: var(--font-mono);
       font-size: 25px;
       font-weight: 700;
       color: var(--color-text-primary);
@@ -605,6 +605,12 @@ const JOB_STATUS_ORDER = [
       color: var(--color-text-tertiary);
     }
 
+    .trend-legend { display: flex; align-items: center; gap: 14px; color: #71717a; font-size: 11px; }
+    .trend-legend span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+    .trend-legend i { display: inline-block; flex: 0 0 auto; }
+    .trend-legend-bar { width: 8px; height: 12px; border-radius: 2px 2px 0 0; background: #d4d4d8; }
+    .trend-legend-line { width: 18px; height: 2px; border-radius: 999px; background: #18181b; }
+
     /* Trend Chart */
     .trend-chart-container {
       display: flex;
@@ -679,24 +685,24 @@ const JOB_STATUS_ORDER = [
     }
 
     .trend-bars--sparse .trend-bar-col--active {
-      flex: 0 0 clamp(22px, 2.7vw, 30px);
-      max-width: 30px;
-      min-width: 22px;
+      flex: 1 1 0;
+      max-width: 22px;
+      min-width: 4px;
     }
 
     .trend-bar {
       position: relative;
       width: 100%;
-      background: linear-gradient(180deg, hsl(208 82% 62%), hsl(214 78% 47%));
+      background: #d4d4d8;
       border-radius: 6px 6px 2px 2px;
       min-height: 0;
-      box-shadow: 0 5px 12px hsl(215 75% 45% / 0.2);
+      box-shadow: none;
       transform-origin: bottom;
       animation: trend-bar-enter 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
       transition: height 0.3s ease, background 0.15s ease, transform 0.2s ease;
 
       .trend-bar-col:hover & {
-        background: linear-gradient(180deg, hsl(207 88% 58%), hsl(220 80% 43%));
+        background: #a1a1aa;
         transform: scaleX(1.08);
       }
 
@@ -708,12 +714,31 @@ const JOB_STATUS_ORDER = [
       }
     }
 
+    .trend-average-layer {
+      position: absolute;
+      z-index: 2;
+      inset: 16px 0 28px;
+      width: 100%;
+      height: calc(100% - 44px);
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .trend-average-line {
+      fill: none;
+      stroke: #18181b;
+      stroke-width: 2.25;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+
     .trend-value {
       position: absolute;
       left: 50%;
       bottom: calc(100% + 5px);
       transform: translateX(-50%);
-      color: hsl(218 35% 31%);
+      color: #3f3f46;
       font-size: 10px;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
@@ -855,16 +880,16 @@ const JOB_STATUS_ORDER = [
       font-family: var(--font-heading);
 
       &--0 {
-        background: #FFF7E6;
-        color: #D46B08;
+        background: #18181b;
+        color: #fff;
       }
       &--1 {
-        background: #F0F5FF;
-        color: #2F54EB;
+        background: #3f3f46;
+        color: #fff;
       }
       &--2 {
-        background: #FFF1F0;
-        color: #CF1322;
+        background: #71717a;
+        color: #fff;
       }
       &--default {
         background: var(--color-bg-tertiary);
@@ -1015,6 +1040,9 @@ const JOB_STATUS_ORDER = [
 
     /* Responsive */
     @media (max-width: 767px) {
+      .reports {
+        margin-top: 0;
+      }
       .page-header {
         flex-direction: column;
         align-items: stretch;
@@ -1076,6 +1104,29 @@ export class ReportsComponent implements OnInit {
   });
 
   trendData = computed(() => this.data()?.application_trend ?? []);
+  trendSeries = computed(() => {
+    const items = this.trendData();
+    return items.map((item, index) => {
+      if (index < 6) return { ...item, movingAverage: null as number | null };
+      const window = items.slice(index - 6, index + 1);
+      const movingAverage = window.reduce((sum, point) => sum + point.count, 0) / 7;
+      return { ...item, movingAverage };
+    });
+  });
+  showTrendAverage = computed(() => this.selectedDays >= 30 && this.trendSeries().length >= 7);
+  trendAveragePoints = computed(() => {
+    if (!this.showTrendAverage()) return '';
+    const items = this.trendSeries();
+    const max = this.trendMax();
+    return items
+      .map((item, index) => item.movingAverage == null ? null : {
+        x: ((index + 0.5) / items.length) * 1000,
+        y: 200 - (item.movingAverage / max) * 200,
+      })
+      .filter((point): point is { x: number; y: number } => point !== null)
+      .map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`)
+      .join(' ');
+  });
   trendMax = computed(() => {
     const items = this.trendData();
     const max = items.reduce((m, i) => Math.max(m, i.count), 0);
@@ -1102,6 +1153,12 @@ export class ReportsComponent implements OnInit {
     return labels;
   });
 
+  getTrendTooltip(item: DailyCount & { movingAverage: number | null }): string {
+    const daily = `${item.date}: ${item.count} hồ sơ`;
+    if (!this.showTrendAverage() || item.movingAverage == null) return daily;
+    return `${daily} · Trung bình 7 ngày: ${item.movingAverage.toFixed(1)}`;
+  }
+
   scoreData = computed(() => this.data()?.score_distribution ?? []);
   scoreMax = computed(() =>
     this.scoreData().reduce((m, b) => Math.max(m, b.count), 0) || 1
@@ -1113,15 +1170,7 @@ export class ReportsComponent implements OnInit {
   });
 
   jobStatusData = computed(() => {
-    const countsByStatus = new Map(
-      (this.data()?.job_by_status ?? []).map((item) => [item.status, item.count]),
-    );
-
-    // Luôn hiển thị đủ vòng đời tin tuyển dụng, kể cả khi trạng thái chưa có dữ liệu.
-    return JOB_STATUS_ORDER.map((status) => ({
-      status,
-      count: countsByStatus.get(status) ?? 0,
-    }));
+    return [...(this.data()?.job_by_status ?? [])].sort((a, b) => b.count - a.count);
   });
 
   topJobs = computed(() => this.data()?.top_jobs ?? []);
@@ -1216,23 +1265,23 @@ export class ReportsComponent implements OnInit {
 
   getAppStatusHex(status: string): string {
     const map: Record<string, string> = {
-      submitted: '#8C8C8C',
-      reviewing: '#1890FF',
-      shortlisted: '#52C41A',
-      interviewing: '#2F54EB',
-      offered: '#FA8C16',
-      hired: '#52C41A',
-      rejected: '#FF4D4F',
-      error: '#FA541C',
+      submitted: '#18181B',
+      reviewing: '#3F3F46',
+      shortlisted: '#71717A',
+      interviewing: '#71717A',
+      offered: '#A1A1AA',
+      hired: '#10B981',
+      rejected: '#FB7185',
+      error: '#FB7185',
     };
-    return map[status] || '#8C8C8C';
+    return map[status] || '#71717A';
   }
 
   getJobStatusColor(status: string): string {
     const map: Record<string, string> = {
       draft: 'default',
       pending_approval: 'gold',
-      approved: 'blue',
+      approved: 'default',
       rejected: 'error',
       active: 'success',
       closed: 'default',
@@ -1254,13 +1303,13 @@ export class ReportsComponent implements OnInit {
 
   getJobStatusHex(status: string): string {
     const map: Record<string, string> = {
-      draft: '#8C8C8C',
-      pending_approval: '#FA8C16',
-      approved: '#1890FF',
-      rejected: '#FF4D4F',
-      active: '#52C41A',
-      closed: '#BFBFBF',
+      draft: '#A1A1AA',
+      pending_approval: '#71717A',
+      approved: '#52525B',
+      rejected: '#FB7185',
+      active: '#10B981',
+      closed: '#71717A',
     };
-    return map[status] || '#8C8C8C';
+    return map[status] || '#A1A1AA';
   }
 }

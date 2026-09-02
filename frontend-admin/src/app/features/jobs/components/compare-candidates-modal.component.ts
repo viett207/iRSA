@@ -444,7 +444,7 @@ export class CompareCandidatesModalComponent implements OnInit {
   getRecommendationColor(rec: string): string {
     const map: Record<string, string> = {
       strong_yes: 'green',
-      yes: 'cyan',
+      yes: 'default',
       maybe: 'orange',
       no: 'red',
       strong_no: 'red',

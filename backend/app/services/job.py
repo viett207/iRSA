@@ -11,6 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.core.exceptions import BadRequestException, NotFoundException, ForbiddenException
 from app.models.job import Job, JobCriteria
 from app.models.application import Application
+from app.models.scoring_result import ScoringResult
 from app.models.audit import AuditLog
 from app.models.user import User
 from app.schemas.job import (
@@ -85,7 +86,12 @@ class JobService:
                 min_education=job.criteria.min_education,
             )
 
-    def _build_job_response(self, job: Job, applications_count: int | None = None) -> JobResponse:
+    def _build_job_response(
+        self,
+        job: Job,
+        applications_count: int | None = None,
+        avg_ai_score: float | None = None,
+    ) -> JobResponse:
         """Helper to build JobResponse from Job model."""
         criteria_response = None
         if job.criteria:
@@ -126,6 +132,7 @@ class JobService:
             approved_at=job.approved_at,
             criteria=criteria_response,
             applications_count=applications_count,
+            avg_ai_score=round(avg_ai_score, 1) if avg_ai_score is not None else None,
             created_at=job.created_at,
             updated_at=job.updated_at,
         )
@@ -206,6 +213,13 @@ class JobService:
             .correlate(Job)
             .scalar_subquery()
         )
+        avg_ai_score_sub = (
+            select(func.avg(ScoringResult.total_score))
+            .join(Application, ScoringResult.application_id == Application.id)
+            .where(Application.job_id == Job.id)
+            .correlate(Job)
+            .scalar_subquery()
+        )
 
         if has_applications is True:
             query = query.where(app_count_sub > 0)
@@ -229,7 +243,10 @@ class JobService:
 
         offset = (page - 1) * page_size
         query = (
-            query.add_columns(app_count_sub.label("app_count"))
+            query.add_columns(
+                app_count_sub.label("app_count"),
+                avg_ai_score_sub.label("avg_ai_score"),
+            )
             .offset(offset)
             .limit(page_size)
             .order_by(order_clause)
@@ -239,7 +256,10 @@ class JobService:
         rows = result.all()
 
         return JobListResponse(
-            items=[self._build_job_response(job, app_count) for job, app_count in rows],
+            items=[
+                self._build_job_response(job, app_count, avg_ai_score)
+                for job, app_count, avg_ai_score in rows
+            ],
             total=total,
             page=page,
             page_size=page_size,
@@ -271,7 +291,17 @@ class JobService:
             select(func.count(Application.id)).where(Application.job_id == job_id)
         )
         app_count = count_res.scalar() or 0
-        return self._build_job_response(job, applications_count=app_count)
+        avg_score_res = await self.db.execute(
+            select(func.avg(ScoringResult.total_score))
+            .join(Application, ScoringResult.application_id == Application.id)
+            .where(Application.job_id == job_id)
+        )
+        avg_ai_score = avg_score_res.scalar()
+        return self._build_job_response(
+            job,
+            applications_count=app_count,
+            avg_ai_score=avg_ai_score,
+        )
 
     async def create_job(self, data: JobCreate, user_id: int) -> JobResponse:
         """Create a new job in draft status."""

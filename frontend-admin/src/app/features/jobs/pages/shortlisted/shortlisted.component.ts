@@ -1,5 +1,7 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -18,11 +20,16 @@ import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
-import { RouterLink } from '@angular/router';
+import { NzCalendarModule } from 'ng-zorro-antd/calendar';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzCardModule } from 'ng-zorro-antd/card';
+
 import { JobService } from '../../services/job.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {
   ShortlistedApplicant,
+  CalendarInterviewEvent,
   AiEvaluationResponse,
   CvJdCompareResponse,
   APPLICATION_STATUS_COLORS,
@@ -33,11 +40,18 @@ import { CvJdCompareModalComponent } from '../../components/cv-jd-compare-modal.
 import { InterviewScheduleModalComponent } from '../../components/interview-schedule-modal.component';
 import { InterviewRoomModalComponent } from '../../components/interview-room-modal.component';
 
+export interface JobApplicantGroup {
+  jobId: number;
+  jobTitle: string;
+  applicants: ShortlistedApplicant[];
+}
+
 @Component({
   selector: 'app-shortlisted',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterLink,
     NzTableModule,
     NzTagModule,
@@ -56,206 +70,104 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
     NzDropDownModule,
     NzPopconfirmModule,
     NzCheckboxModule,
+    NzCalendarModule,
+    NzInputModule,
+    NzSelectModule,
+    NzCardModule,
   ],
-  template: `
-    <div class="page-header">
-      <h2>
-        <span nz-icon nzType="calendar" nzTheme="outline" style="color: #1890ff; margin-right: 8px"></span>
-        Vòng 1 - Hẹn lịch phỏng vấn
-      </h2>
-      <p style="color: #888; margin: 4px 0 16px">
-        Danh sách ứng viên đã vượt qua vòng sơ loại CV. Thiết lập lịch hẹn hoặc bắt đầu phỏng vấn trực tiếp.
-      </p>
-    </div>
-
-    <!-- Toolbar -->
-    <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center">
-      <nz-space [nzSize]="8">
-        <button *nzSpaceItem nz-button nzSize="small"
-          [nzType]="sortBy === 'date' ? 'primary' : 'default'"
-          (click)="changeSortBy('date')">
-          <span nz-icon nzType="calendar"></span> Ngày cập nhật
-        </button>
-        <button *nzSpaceItem nz-button nzSize="small"
-          [nzType]="sortBy === 'ai_score' ? 'primary' : 'default'"
-          (click)="changeSortBy('ai_score')">
-          <span nz-icon nzType="robot"></span> Điểm AI CV
-        </button>
-      </nz-space>
-
-      <nz-space [nzSize]="8">
-        <button *nzSpaceItem nz-button nzSize="small"
-          [disabled]="compareSelected.size !== 2 || !canCompare()"
-          (click)="openCompare()"
-          nz-tooltip
-          [nzTooltipTitle]="!canCompare() ? 'Chọn 2 ứng viên cùng vị trí' : 'So sánh 2 ứng viên'">
-          <span nz-icon nzType="swap"></span>
-          So sánh ({{ compareSelected.size }}/2)
-        </button>
-        <nz-tag *nzSpaceItem nzColor="cyan">{{ total() }} ứng viên chờ hẹn lịch</nz-tag>
-      </nz-space>
-    </div>
-
-    <!-- Table -->
-    <nz-table
-      #shortlistedTable
-      [nzData]="applicants()"
-      [nzLoading]="loading()"
-      [nzTotal]="total()"
-      [nzPageIndex]="page"
-      [nzPageSize]="20"
-      [nzFrontPagination]="false"
-      (nzPageIndexChange)="onPageChange($event)"
-      nzSize="middle"
-    >
-      <thead>
-        <tr>
-          <th nzWidth="4%"></th>
-          <th nzWidth="20%">Ứng viên</th>
-          <th nzWidth="18%">Vị trí</th>
-          <th nzWidth="14%">Đánh giá AI CV</th>
-          <th nzWidth="12%">Ngày nộp</th>
-          <th nzWidth="16%">Hẹn lịch phỏng vấn</th>
-          <th nzWidth="16%">Chuyển bước</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (app of shortlistedTable.data; track app.id) {
-          <tr>
-            <!-- Compare checkbox -->
-            <td>
-              <label nz-checkbox
-                [nzChecked]="compareSelected.has(app.id)"
-                [nzDisabled]="!compareSelected.has(app.id) && compareSelected.size >= 2"
-                (nzCheckedChange)="toggleCompare(app.id, $event)">
-              </label>
-            </td>
-            <!-- Candidate -->
-            <td>
-              <strong>{{ app.candidate_name }}</strong><br />
-              <small style="color: #888">{{ app.candidate_email }}</small>
-            </td>
-
-            <!-- Job title (linked) -->
-            <td>
-              <a [routerLink]="['/jobs', app.job_id]"><strong>{{ app.job_title }}</strong></a>
-            </td>
-
-            <!-- AI score -->
-            <td>
-              @if (app.ai_score != null) {
-                <div style="cursor: pointer; display: flex; align-items: center; gap: 8px"
-                  (click)="viewAiDetails(app)"
-                  nz-tooltip nzTooltipTitle="Nhấn để xem đánh giá chi tiết của AI Agent">
-                  <nz-progress
-                    [nzPercent]="app.ai_score"
-                    nzType="circle"
-                    [nzWidth]="38"
-                    [nzStrokeColor]="getScoreColor(app.ai_score)"
-                    [nzFormat]="scoreFormat"
-                  ></nz-progress>
-                  <span style="font-size: 11px; color: #1890ff; font-weight: 500">Xem phân tích</span>
-                </div>
-              } @else {
-                <nz-tag>Chưa chấm AI</nz-tag>
-              }
-            </td>
-
-            <!-- Date -->
-            <td>{{ formatDate(app.submitted_at) }}</td>
-
-            <!-- Scheduling Action Only -->
-            <td>
-              <button
-                nz-button
-                nzSize="small"
-                nzType="primary"
-                (click)="openScheduleInterview(app)"
-                nz-tooltip
-                nzTooltipTitle="Thiết lập thời gian và hình thức phỏng vấn"
-              >
-                <span nz-icon nzType="calendar"></span>
-                📅 Đặt lịch PV
-              </button>
-            </td>
-
-            <!-- Decision: status transition (owner only) -->
-            <td>
-              @if (isOwner(app)) {
-                <div style="display: flex; gap: 4px; align-items: center">
-                  @if (transitioningApplicationId() === app.id) {
-                    <span class="status-updating" aria-live="polite"><span nz-icon nzType="loading"></span> Đang cập nhật</span>
-                  }
-                  <button
-                    nz-button
-                    nzSize="small"
-                    nzType="dashed"
-                    style="color: #722ed1; border-color: #d3adf7; font-weight: 600"
-                    nz-popconfirm
-                    nzPopconfirmTitle="Xác nhận chuyển ứng viên này sang Vòng 2: Phỏng vấn?"
-                    (nzOnConfirm)="updateStatus(app, 'interviewing')"
-                    [disabled]="transitioningApplicationId() !== null"
-                    nz-tooltip
-                    nzTooltipTitle="Chuyển sang Vòng 2: Phòng phỏng vấn AI"
-                  >
-                    <span nz-icon nzType="arrow-right"></span>
-                    Sang PV
-                  </button>
-
-                  <button nz-button nzSize="small" nz-dropdown [nzDropdownMenu]="statusMenu" nzTrigger="click" [disabled]="transitioningApplicationId() !== null">
-                    <span nz-icon nzType="ellipsis"></span> Thao tác
-                  </button>
-                  <nz-dropdown-menu #statusMenu="nzDropdownMenu">
-                    <ul nz-menu>
-                      <li nz-menu-item
-                        nz-popconfirm nzPopconfirmTitle="Chuyển sang Vòng 2 - Phỏng vấn?"
-                        (nzOnConfirm)="updateStatus(app, 'interviewing')">
-                        <nz-tag [nzColor]="getStatusColor('interviewing')">Phỏng vấn</nz-tag>
-                      </li>
-                      <li nz-menu-item
-                        nz-popconfirm nzPopconfirmTitle="Từ chối ứng viên này?"
-                        (nzOnConfirm)="updateStatus(app, 'rejected')">
-                        <nz-tag [nzColor]="getStatusColor('rejected')">Không đạt</nz-tag>
-                      </li>
-                      <li nz-menu-item
-                        nz-popconfirm nzPopconfirmTitle="Đưa về xem xét lại?"
-                        (nzOnConfirm)="updateStatus(app, 'reviewing')">
-                        <nz-tag [nzColor]="getStatusColor('reviewing')">Xem xét lại</nz-tag>
-                      </li>
-                    </ul>
-                  </nz-dropdown-menu>
-                </div>
-              } @else {
-                <span style="color: #999">—</span>
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </nz-table>
-  `,
-  styles: [`
-    .page-header { margin-bottom: 8px; }
-    .page-header h2 {
-      font-size: 20px;
-      font-weight: 600;
-      margin-bottom: 0;
-      display: flex;
-      align-items: center;
-    }
-    :host ::ng-deep .ant-table-cell { vertical-align: middle; }
-  `],
+  templateUrl: './shortlisted.component.html',
+  styleUrl: './shortlisted.component.scss',
 })
 export class ShortlistedComponent implements OnInit {
   applicants = signal<ShortlistedApplicant[]>([]);
+  calendarEvents = signal<CalendarInterviewEvent[]>([]);
   total = signal(0);
   loading = signal(false);
+  calendarLoading = signal(false);
   transitioningApplicationId = signal<number | null>(null);
-  page = 1;
+
+  // View state: 'grouped' (Mặc định: Gom theo việc làm), 'calendar' (Xem Lịch), 'flat' (Bảng phẳng)
+  viewMode = signal<'grouped' | 'calendar' | 'flat'>('grouped');
+  calendarDisplayMode = signal<'month' | 'day'>('month');
+  expandedJobIds = signal<Set<number>>(new Set());
+  selectedCalendarDate = signal<Date>(new Date());
+
+  // Filters & Search
+  searchQuery = signal('');
+  selectedJobFilter = signal<number | null>(null);
+  scheduleFilter = signal<'all' | 'scheduled' | 'unscheduled'>('all');
   sortBy = 'date';
+  page = 1;
   compareSelected = new Set<number>();
 
   scoreFormat = (percent: number): string => `${Math.round(percent)}`;
+
+  // KPI Metrics
+  scheduledCount = computed(() => this.applicants().filter((a) => a.interview_date != null).length);
+  unscheduledCount = computed(() => this.applicants().filter((a) => a.interview_date == null).length);
+
+  // Filtered applicants
+  filteredApplicants = computed(() => {
+    let list = this.applicants();
+    const q = this.searchQuery().trim().toLowerCase();
+    const jf = this.selectedJobFilter();
+    const sf = this.scheduleFilter();
+
+    if (jf !== null) {
+      list = list.filter((a) => a.job_id === jf);
+    }
+    if (sf === 'scheduled') {
+      list = list.filter((a) => a.interview_date != null);
+    } else if (sf === 'unscheduled') {
+      list = list.filter((a) => a.interview_date == null);
+    }
+    if (q) {
+      list = list.filter(
+        (a) =>
+          a.candidate_name.toLowerCase().includes(q) ||
+          a.candidate_email.toLowerCase().includes(q) ||
+          a.job_title.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  });
+
+  // Grouped by Job
+  groupedJobs = computed<JobApplicantGroup[]>(() => {
+    const list = this.filteredApplicants();
+    const map = new Map<number, JobApplicantGroup>();
+
+    for (const app of list) {
+      if (!map.has(app.job_id)) {
+        map.set(app.job_id, {
+          jobId: app.job_id,
+          jobTitle: app.job_title,
+          applicants: [],
+        });
+      }
+      map.get(app.job_id)!.applicants.push(app);
+    }
+
+    return Array.from(map.values());
+  });
+
+  // Unique list of jobs for filter dropdown
+  jobsOptions = computed(() => {
+    const map = new Map<number, string>();
+    for (const app of this.applicants()) {
+      map.set(app.job_id, app.job_title);
+    }
+    return Array.from(map.entries()).map(([id, title]) => ({ id, title }));
+  });
+
+  // Events on selected calendar date
+  selectedDateEvents = computed(() => {
+    const d = this.selectedCalendarDate();
+    const dateStr = this.toDateKey(d);
+    return this.calendarEvents()
+      .filter((e) => this.toDateKey(new Date(e.interview_date)) === dateStr)
+      .sort((a, b) => new Date(a.interview_date).getTime() - new Date(b.interview_date).getTime());
+  });
 
   constructor(
     private jobService: JobService,
@@ -266,6 +178,14 @@ export class ShortlistedComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadShortlisted();
+    this.loadCalendarEvents();
+  }
+
+  toDateKey(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   loadShortlisted(): void {
@@ -275,12 +195,119 @@ export class ShortlistedComponent implements OnInit {
         this.applicants.set(res.items);
         this.total.set(res.total);
         this.loading.set(false);
+
+        // Auto-expand all jobs by default
+        const jobIds = new Set<number>(res.items.map((a) => a.job_id));
+        this.expandedJobIds.set(jobIds);
       },
       error: () => {
         this.message.error('Không thể tải danh sách ứng viên đạt');
         this.loading.set(false);
       },
     });
+  }
+
+  loadCalendarEvents(): void {
+    this.calendarLoading.set(true);
+    this.jobService.getCalendarInterviews().subscribe({
+      next: (events) => {
+        this.calendarEvents.set(events);
+        this.calendarLoading.set(false);
+      },
+      error: () => {
+        this.calendarLoading.set(false);
+      },
+    });
+  }
+
+  setViewMode(mode: 'grouped' | 'calendar' | 'flat'): void {
+    this.viewMode.set(mode);
+    if (mode === 'calendar') {
+      this.loadCalendarEvents();
+    }
+  }
+
+  toggleJobExpanded(jobId: number): void {
+    this.expandedJobIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(jobId)) {
+        next.delete(jobId);
+      } else {
+        next.add(jobId);
+      }
+      return next;
+    });
+  }
+
+  isJobExpanded(jobId: number): boolean {
+    return this.expandedJobIds().has(jobId);
+  }
+
+  isAllExpanded = computed(() => {
+    const groups = this.groupedJobs();
+    if (groups.length === 0) return false;
+    const current = this.expandedJobIds();
+    return groups.every((g) => current.has(g.jobId));
+  });
+
+  toggleExpandAll(): void {
+    if (this.isAllExpanded()) {
+      this.expandedJobIds.set(new Set());
+    } else {
+      const ids = new Set<number>(this.groupedJobs().map((g) => g.jobId));
+      this.expandedJobIds.set(ids);
+    }
+  }
+
+  expandAll(): void {
+    const ids = new Set<number>(this.groupedJobs().map((g) => g.jobId));
+    this.expandedJobIds.set(ids);
+  }
+
+  collapseAll(): void {
+    this.expandedJobIds.set(new Set());
+  }
+
+  onCalendarSelect(date: Date): void {
+    this.selectedCalendarDate.set(date);
+  }
+
+  setCalendarDisplayMode(mode: 'month' | 'day'): void {
+    this.calendarDisplayMode.set(mode);
+  }
+
+  moveSelectedDay(offset: number): void {
+    const date = new Date(this.selectedCalendarDate());
+    date.setDate(date.getDate() + offset);
+    this.selectedCalendarDate.set(date);
+  }
+
+  moveSelectedMonth(offset: number): void {
+    const current = this.selectedCalendarDate();
+    const target = new Date(current.getFullYear(), current.getMonth() + offset, 1);
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(Math.min(current.getDate(), lastDay));
+    this.selectedCalendarDate.set(target);
+  }
+
+  selectToday(): void {
+    this.selectedCalendarDate.set(new Date());
+  }
+
+  formatWeekday(date: Date): string {
+    const value = new Intl.DateTimeFormat('vi-VN', { weekday: 'long' }).format(date);
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
+  formatMonthLabel(date: Date): string {
+    return `Tháng ${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+  }
+
+  getEventsOnDate(date: Date): CalendarInterviewEvent[] {
+    const key = this.toDateKey(date);
+    return this.calendarEvents().filter(
+      (e) => this.toDateKey(new Date(e.interview_date)) === key
+    );
   }
 
   changeSortBy(sort: string): void {
@@ -370,7 +397,7 @@ export class ShortlistedComponent implements OnInit {
       nzTitle: `Đặt lịch phỏng vấn: ${app.candidate_name}`,
       nzContent: InterviewScheduleModalComponent,
       nzFooter: null,
-      nzWidth: 560,
+      nzWidth: 580,
     });
     const instance = modalRef.componentInstance;
     if (instance) {
@@ -378,8 +405,12 @@ export class ShortlistedComponent implements OnInit {
       instance.appId = app.id;
       instance.candidateName = app.candidate_name;
     }
-    modalRef.afterClose.subscribe(() => {
+    modalRef.afterClose.subscribe((res) => {
       this.loadShortlisted();
+      this.loadCalendarEvents();
+      if (res) {
+        this.message.success(`Đã cập nhật lịch phỏng vấn cho ứng viên "${app.candidate_name}"`);
+      }
     });
   }
 
@@ -399,8 +430,50 @@ export class ShortlistedComponent implements OnInit {
     });
 
     modalRef.afterClose.subscribe((res) => {
-      if (res?.statusUpdated) {
-        this.loadShortlisted();
+      this.loadShortlisted();
+      this.loadCalendarEvents();
+    });
+  }
+
+  openCalendarEventRoom(ev: CalendarInterviewEvent): void {
+    const modalRef = this.modal.create({
+      nzTitle: `Phòng phỏng vấn AI - ${ev.candidate_name}`,
+      nzContent: InterviewRoomModalComponent,
+      nzData: {
+        jobId: ev.job_id,
+        appId: ev.application_id,
+        candidateName: ev.candidate_name,
+      },
+      nzFooter: null,
+      nzWidth: '94vw',
+      nzStyle: { top: '20px', maxWidth: '1400px' },
+      nzMaskClosable: false,
+    });
+
+    modalRef.afterClose.subscribe(() => {
+      this.loadShortlisted();
+      this.loadCalendarEvents();
+    });
+  }
+
+  openCalendarEventReschedule(ev: CalendarInterviewEvent): void {
+    const modalRef = this.modal.create({
+      nzTitle: `Đặt lại lịch phỏng vấn: ${ev.candidate_name}`,
+      nzContent: InterviewScheduleModalComponent,
+      nzFooter: null,
+      nzWidth: 580,
+    });
+    const instance = modalRef.componentInstance;
+    if (instance) {
+      instance.jobId = ev.job_id;
+      instance.appId = ev.application_id;
+      instance.candidateName = ev.candidate_name;
+    }
+    modalRef.afterClose.subscribe((res) => {
+      this.loadShortlisted();
+      this.loadCalendarEvents();
+      if (res) {
+        this.message.success(`Đã cập nhật lịch phỏng vấn cho ${ev.candidate_name}`);
       }
     });
   }
@@ -437,13 +510,18 @@ export class ShortlistedComponent implements OnInit {
       data: null as AiEvaluationResponse | null,
       loading: true,
       error: null as string | null,
+      jobId: app.job_id,
+      appId: app.id,
+      candidateName: app.candidate_name,
+      resumeFilename: app.resume_filename,
     };
     this.modal.create({
       nzTitle: `Đánh giá AI - ${app.candidate_name}`,
       nzContent: AiEvaluationModalComponent,
       nzData: modalData,
       nzFooter: null,
-      nzWidth: 'min(1200px, calc(100vw - 48px))',
+      nzWidth: 'min(1440px, calc(100vw - 32px))',
+      nzBodyStyle: { padding: '16px', overflow: 'hidden' },
       nzCentered: true,
     });
 

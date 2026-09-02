@@ -8,7 +8,6 @@ import { ReportsComponent } from './pages/reports/reports.component';
 import { UsersComponent } from './pages/users/users.component';
 import { CompaniesComponent } from './pages/companies/companies.component';
 import { CompanyDetailComponent } from './pages/company-detail/company-detail.component';
-import { PendingApprovalsComponent } from './pages/pending-approvals/pending-approvals.component';
 import { ApplicationsComponent } from './pages/applications/applications.component';
 import { CandidatesComponent } from './pages/candidates/candidates.component';
 
@@ -40,7 +39,7 @@ export const routes: Routes = [
       { path: 'users', component: UsersComponent, canActivate: [adminGuard] },
       { path: 'companies', component: CompaniesComponent, canActivate: [adminGuard] },
       { path: 'companies/:id', component: CompanyDetailComponent, canActivate: [adminGuard] },
-      { path: 'approvals', component: PendingApprovalsComponent, canActivate: [adminGuard] },
+      { path: 'approvals', component: UsersComponent, canActivate: [adminGuard], data: { accountMode: 'pending' } },
     ],
   },
   { path: '**', redirectTo: '' },

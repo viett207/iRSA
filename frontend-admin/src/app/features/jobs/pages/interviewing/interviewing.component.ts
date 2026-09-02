@@ -45,7 +45,7 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
   template: `
     <div class="page-header">
       <h2>
-        <span nz-icon nzType="audio" nzTheme="outline" style="color: #722ed1; margin-right: 8px"></span>
+        <span nz-icon nzType="audio" nzTheme="outline" style="color: #18181b; margin-right: 8px"></span>
         Vòng 2 - Phòng phỏng vấn & Chấm điểm AI
       </h2>
       <p style="color: #888; margin: 4px 0 16px">
@@ -145,7 +145,7 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
                 nz-button
                 nzType="primary"
                 class="interview-room-button"
-                style="background: #722ed1; border-color: #722ed1; font-weight: 600"
+                style="background: #18181b; border-color: #18181b; font-weight: 600"
                 (click)="openInterviewRoom(app)"
                 nz-tooltip
                 nzTooltipTitle="Vào phòng phỏng vấn: Ghi âm từng câu, bóc băng & AI chấm điểm"
@@ -211,8 +211,8 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
   `,
   styles: [`
     .page-header h2 {
-      font-size: 20px;
-      font-weight: 600;
+      font-size: 26px;
+      font-weight: 700;
       margin-bottom: 0;
       display: flex;
       align-items: center;

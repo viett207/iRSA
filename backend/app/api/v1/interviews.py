@@ -43,6 +43,26 @@ class InterviewUpdateRequest(BaseModel):
     status: str | None = None  # scheduled|completed|cancelled
 
 
+class CalendarInterviewEvent(BaseModel):
+    id: int
+    application_id: int
+    job_id: int
+    job_title: str
+    candidate_id: int | None = None
+    candidate_name: str
+    candidate_email: str
+    interview_date: datetime
+    interview_type: str = "online"
+    location: str | None = None
+    status: str
+    notes: str | None = None
+    scheduler_name: str | None = None
+    ai_score: float | None = None
+
+    class Config:
+        from_attributes = True
+
+
 class InterviewResponse(BaseModel):
     id: int
     application_id: int
@@ -733,6 +753,58 @@ async def schedule_interview(
         created_at=interview.created_at,
         updated_at=interview.updated_at,
     )
+
+
+@router.get("/interviews/calendar", response_model=list[CalendarInterviewEvent])
+@router.get("/calendar", response_model=list[CalendarInterviewEvent])
+async def list_calendar_interviews(
+    current_user: HRUser,
+    db: DBSession,
+):
+    """List all scheduled interviews for calendar display with candidate and job metadata."""
+    query = (
+        select(Interview)
+        .join(Application, Interview.application_id == Application.id)
+        .join(Job, Application.job_id == Job.id)
+        .options(
+            selectinload(Interview.scheduler),
+            selectinload(Interview.application).selectinload(Application.candidate),
+            selectinload(Interview.application).selectinload(Application.job),
+            selectinload(Interview.application).selectinload(Application.scoring_result),
+        )
+        .order_by(Interview.interview_date.asc())
+    )
+
+    if current_user.role in ("recruiter", "leader") and current_user.company_code:
+        query = query.where(Job.company_code == current_user.company_code)
+
+    result = await db.execute(query)
+    interviews = result.scalars().all()
+
+    events = []
+    for iv in interviews:
+        app = iv.application
+        if not app:
+            continue
+        events.append(
+            CalendarInterviewEvent(
+                id=iv.id,
+                application_id=iv.application_id,
+                job_id=app.job_id,
+                job_title=app.job.title_vi if app.job else "Vị trí tuyển dụng",
+                candidate_id=app.candidate.id if app.candidate else None,
+                candidate_name=app.candidate.full_name if app.candidate else "N/A",
+                candidate_email=app.candidate.email if app.candidate else "N/A",
+                interview_date=iv.interview_date,
+                interview_type=iv.interview_type or "online",
+                location=iv.location,
+                status=iv.status,
+                notes=iv.notes,
+                scheduler_name=iv.scheduler.full_name if iv.scheduler else None,
+                ai_score=app.scoring_result.ai_score if app.scoring_result else None,
+            )
+        )
+    return events
 
 
 @router.get(

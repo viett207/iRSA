@@ -1,6 +1,6 @@
 """Job API endpoints for CRUD and workflow operations."""
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, UploadFile, File, HTTPException
 
 from app.api.deps import DBSession, CurrentUser, HRUser, require_roles
 from app.schemas.job import (
@@ -147,3 +147,42 @@ async def close_job(job_id: int, db: DBSession, current_user: HRUser):
     """Close active job (no more applications)."""
     service = JobService(db)
     return await service.close_job(job_id, current_user)
+
+
+@router.post("/parse-jd")
+async def parse_jd_file(
+    file: UploadFile = File(...),
+    current_user: HRUser = None,
+):
+    """Upload a JD file (Word .docx, .doc, or PDF) and extract structured job fields using AI."""
+    from app.services.jd_parser import extract_raw_jd_text, parse_jd_content
+
+    filename = file.filename or "jd_document.docx"
+    ext = filename.lower().split(".")[-1] if "." in filename else ""
+    if ext not in ["pdf", "docx", "doc"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Định dạng file không được hỗ trợ. Vui lòng tải lên file Word (.docx, .doc) hoặc PDF (.pdf).",
+        )
+    file_bytes = await file.read()
+    if not file_bytes or len(file_bytes) < 10:
+        raise HTTPException(
+            status_code=400,
+            detail="File tải lên rỗng hoặc không có dữ liệu.",
+        )
+
+    try:
+        raw_text = extract_raw_jd_text(file_bytes, filename, file.content_type or "")
+        parsed_data = await parse_jd_content(raw_text)
+        return {
+            "success": True,
+            "filename": filename,
+            "data": parsed_data,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Lỗi trong quá trình trích xuất thông tin từ file JD: {str(e)}",
+        )

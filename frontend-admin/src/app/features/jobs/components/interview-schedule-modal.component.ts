@@ -228,7 +228,7 @@ export class InterviewScheduleModalComponent implements OnInit {
   }
 
   getStatusColor(status: string): string {
-    return { scheduled: 'blue', completed: 'green', cancelled: 'default' }[status] || 'default';
+    return { scheduled: 'default', completed: 'green', cancelled: 'default' }[status] || 'default';
   }
 
   getStatusLabel(status: string): string {
