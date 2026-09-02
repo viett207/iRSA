@@ -1,0 +1,487 @@
+/*
+ * iRSA shared design foundation
+ *
+ * This is the single source of truth for both Angular applications. It serves
+ * two consumers at once:
+ * 1. LESS variables configure NG-ZORRO while its stylesheet is compiled.
+ * 2. CSS custom properties style application-owned layouts and components.
+ */
+
+/* Brand and semantic palette */
+@brand-50: #E6F4FF;
+@brand-100: #BAE0FF;
+@brand-200: #91CAFF;
+@brand-300: #69B1FF;
+@brand-400: #4096FF;
+@brand-500: #1890FF;
+@brand-600: #096DD9;
+@brand-700: #0050B3;
+@brand-800: #003A82;
+@brand-900: #002766;
+
+@success-50: #F6FFED;
+@success-500: #73D13D;
+@success-600: #52C41A;
+@success-700: #389E0D;
+@warning-50: #FFFBE6;
+@warning-100: #FFF1B8;
+@warning-500: #FFA940;
+@warning-600: #FA8C16;
+@warning-700: #D46B08;
+@danger-50: #FFF2F0;
+@danger-500: #FF7875;
+@danger-600: #FF4D4F;
+@danger-700: #CF1322;
+
+@neutral-0: #ffffff;
+@neutral-25: #FCFDFE;
+@neutral-50: #F8FAFC;
+@neutral-100: #F1F5F9;
+@neutral-200: #E2E8F0;
+@neutral-300: #CBD5E1;
+@neutral-500: #64748B;
+@neutral-600: #475569;
+@neutral-700: #334155;
+@neutral-900: #1E293B;
+@sidebar-surface: #001529;
+
+/* NG-ZORRO compile-time theme */
+@primary-color: @brand-700;
+@success-color: @success-600;
+@warning-color: @warning-600;
+@error-color: @danger-600;
+@info-color: @primary-color;
+
+@font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+@font-size-base: 15px;
+@font-size-sm: 13px;
+@line-height-base: 1.6;
+@text-color: @neutral-900;
+@text-color-secondary: @neutral-500;
+@heading-color: @neutral-900;
+
+@body-background: @neutral-50;
+@layout-body-background: @neutral-50;
+@component-background: @neutral-0;
+@background-color-light: @neutral-50;
+@background-color-base: @neutral-100;
+@border-color-base: @neutral-200;
+@border-color-split: @neutral-100;
+
+@border-radius-base: 8px;
+@border-radius-sm: 6px;
+@height-base: 40px;
+@height-lg: 48px;
+@height-sm: 32px;
+@control-padding-horizontal: 12px;
+
+@layout-header-height: 64px;
+@layout-header-background: @neutral-0;
+@layout-sider-background: @sidebar-surface;
+@menu-dark-bg: @sidebar-surface;
+@menu-dark-inline-submenu-bg: #111c30;
+@menu-dark-item-active-bg: @primary-color;
+@menu-dark-item-hover-bg: rgba(255, 255, 255, 0.08);
+
+@card-radius: 12px;
+@card-head-height: 56px;
+@card-head-padding: 20px;
+@card-padding-base: 20px;
+@card-shadow: 0 3px 12px rgba(15, 23, 42, 0.05);
+
+@table-header-bg: @neutral-50;
+@table-header-color: @neutral-600;
+@table-row-hover-bg: @brand-50;
+@table-border-color: @neutral-200;
+@table-padding-vertical: 13px;
+@table-padding-horizontal: 16px;
+
+@form-item-margin-bottom: 16px;
+@modal-border-radius: 12px;
+@modal-body-padding: 24px;
+@modal-header-border-color-split: @neutral-100;
+@modal-footer-border-color-split: @neutral-100;
+
+@tabs-ink-bar-color: @primary-color;
+@tabs-highlight-color: @primary-color;
+@tabs-title-font-size: 15px;
+@tabs-horizontal-gutter: 24px;
+@tabs-horizontal-padding: 10px 0;
+
+@outline-width: 2px;
+@outline-color: fade(@primary-color, 22%);
+
+/* Runtime design tokens shared by Admin and Portal */
+:root {
+  color-scheme: light;
+
+  --color-white: @neutral-0;
+  --color-black: @neutral-900;
+
+  --color-primary: @brand-700;
+  --color-primary-light: @brand-500;
+  --color-primary-dark: @brand-800;
+  --color-primary-50: @brand-50;
+  --color-primary-100: @brand-100;
+  --color-primary-200: @brand-200;
+  --color-primary-300: @brand-300;
+  --color-primary-400: @brand-400;
+  --color-primary-500: @brand-500;
+  --color-primary-600: @brand-600;
+  --color-primary-700: @brand-700;
+  --color-primary-800: @brand-800;
+  --color-primary-900: @brand-900;
+
+  --color-success: @success-600;
+  --color-success-50: @success-50;
+  --color-success-light: @success-500;
+  --color-success-dark: @success-700;
+  --color-success-bg: @success-50;
+  --color-warning: @warning-600;
+  --color-warning-100: @warning-100;
+  --color-warning-light: @warning-500;
+  --color-warning-dark: @warning-700;
+  --color-warning-bg: @warning-50;
+  --color-error: @danger-600;
+  --color-error-light: @danger-500;
+  --color-error-dark: @danger-700;
+  --color-error-bg: @danger-50;
+  --color-info: @brand-600;
+  --color-info-bg: @brand-50;
+
+  --color-bg-primary: @neutral-50;
+  --color-bg-secondary: @neutral-0;
+  --color-bg-tertiary: @neutral-100;
+  --color-bg-dark: @sidebar-surface;
+  --color-bg-card: @neutral-0;
+  --color-text: @neutral-900;
+  --color-text-primary: @neutral-900;
+  --color-text-secondary: @neutral-600;
+  --color-text-tertiary: @neutral-500;
+  --color-text-inverse: @neutral-0;
+  --color-border: @neutral-200;
+  --color-border-light: @neutral-100;
+  --color-border-dark: @neutral-300;
+
+  --sidebar-bg: @sidebar-surface;
+  --sidebar-text: rgba(255, 255, 255, 0.72);
+  --sidebar-text-active: @neutral-0;
+  --sidebar-item-hover: rgba(255, 255, 255, 0.08);
+  --sidebar-item-active: @brand-700;
+
+  --font-heading: @font-family;
+  --font-body: @font-family;
+  --font-mono: 'Geist Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 24px;
+  --text-4xl: 30px;
+  --text-5xl: 40px;
+  --text-6xl: 48px;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+  --leading-loose: 1.75;
+
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 2px 5px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 7px 18px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 16px 32px rgba(15, 23, 42, 0.10);
+  --shadow-xl: 0 24px 44px rgba(15, 23, 42, 0.13);
+  --shadow-2xl: 0 32px 58px rgba(15, 23, 42, 0.16);
+  --shadow-inner: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-header: 0 1px 0 rgba(15, 23, 42, 0.07), 0 8px 22px rgba(15, 23, 42, 0.04);
+  --shadow-card: 0 3px 12px rgba(15, 23, 42, 0.05);
+  --shadow-card-hover: 0 12px 28px rgba(15, 23, 42, 0.10);
+  --focus-ring: 0 0 0 3px rgba(24, 144, 255, 0.20);
+
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+
+  --control-height-sm: 32px;
+  --control-height: 40px;
+  --control-height-lg: 48px;
+  --header-height: 64px;
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 64px;
+  --container-max: 1200px;
+  --container-padding: 24px;
+  --content-max-width: 1400px;
+  --page-title-size: clamp(24px, 2.35vw, 30px);
+  --page-subtitle-size: 15px;
+  --section-title-size: 16px;
+  --surface-hover: @brand-50;
+
+  /* Compatibility aliases for application components; kept here so both
+     frontends consume one foundation without a separate token stylesheet. */
+  --irsa-font-sans: var(--font-body);
+  --irsa-font-mono: var(--font-mono);
+  --irsa-font-weight-display: var(--font-bold);
+  --irsa-palette-primary: var(--color-primary);
+  --irsa-palette-action: var(--color-primary-600);
+  --irsa-palette-info: var(--color-primary-300);
+  --irsa-palette-border: var(--color-border);
+  --irsa-palette-surface: var(--color-border-light);
+  --irsa-palette-plum: var(--color-primary);
+  --irsa-palette-berry: var(--color-primary-600);
+  --irsa-palette-berry-soft: var(--color-border-light);
+  --irsa-palette-amber: var(--color-border-light);
+  --irsa-color-primary: var(--color-primary);
+  --irsa-color-on-primary: var(--color-white);
+  --irsa-color-canvas-soft: var(--color-bg-primary);
+  --irsa-surface-blue: var(--color-primary-50);
+  --irsa-surface-blue-soft: var(--color-bg-primary);
+  --irsa-surface-canvas: var(--color-bg-primary);
+  --irsa-bg-canvas: var(--color-bg-primary);
+  --irsa-bg-card: var(--color-bg-card);
+  --irsa-border-light: var(--color-border);
+  --irsa-border-muted: var(--color-border-light);
+  --irsa-text-primary: var(--color-text-primary);
+  --irsa-text-secondary: var(--color-text-secondary);
+  --irsa-text-muted: var(--color-text-tertiary);
+  --irsa-brand-accent: var(--color-primary);
+  --irsa-brand-hover: var(--color-primary-600);
+  --irsa-brand-light: var(--color-primary-50);
+  --irsa-space-xxs: var(--space-1);
+  --irsa-space-xs: var(--space-2);
+  --irsa-space-sm: var(--space-3);
+  --irsa-space-md: var(--space-4);
+  --irsa-space-lg: var(--space-6);
+  --irsa-space-xl: var(--space-8);
+  --irsa-space-xxl: var(--space-12);
+  --irsa-space-section: var(--space-20);
+  --irsa-radius-md: var(--radius-lg);
+  --irsa-radius-lg: var(--radius-xl);
+  --irsa-radius-xl: var(--radius-2xl);
+  --irsa-radius-full: var(--radius-full);
+  --irsa-shadow-sm: var(--shadow-sm);
+  --irsa-shadow-md: var(--shadow-md);
+  --irsa-status-active-dot: var(--color-success);
+  --irsa-status-success-dot: var(--color-success);
+}
+
+/* Portal palette restored from the original DESIGN.md direction. The body
+   scope keeps Admin on its own theme while retaining one token source. */
+body.portal-app {
+  --color-primary: #2563eb;
+  --color-primary-light: #3b82f6;
+  --color-primary-dark: #1d4ed8;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-success: #059669;
+  --color-success-light: #10b981;
+  --color-success-dark: #047857;
+  --color-success-bg: #ecfdf5;
+  --color-warning: #d97706;
+  --color-warning-light: #f59e0b;
+  --color-warning-dark: #b45309;
+  --color-warning-bg: #fffbeb;
+  --color-error: #dc2626;
+  --color-error-light: #ef4444;
+  --color-error-dark: #b91c1c;
+  --color-error-bg: #fef2f2;
+  --color-bg-primary: #f9fafb;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #f1f5f9;
+  --color-bg-card: #ffffff;
+  --color-text: #0f172a;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #64748b;
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+  --color-border-dark: #cbd5e1;
+  --irsa-surface-blue: #eff6ff;
+  --irsa-surface-blue-soft: #f8fafc;
+  --irsa-surface-canvas: #f9fafb;
+  --irsa-border-light: #e2e8f0;
+  --irsa-border-muted: #f1f5f9;
+  --irsa-brand-light: #eff6ff;
+}
+
+.irsa-text-justify {
+  text-align: justify;
+  text-justify: inter-word;
+  line-height: 1.625;
+  letter-spacing: .01em;
+}
+
+.irsa-text-ellipsis {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.irsa-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: max-content;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-success-bg);
+  color: var(--color-success-dark);
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: var(--font-semibold);
+  line-height: 1.33;
+  cursor: default;
+  user-select: none;
+}
+
+.irsa-status-badge.pending,
+.irsa-status-badge.warning { background: var(--color-warning-bg); color: var(--color-warning-dark); }
+.irsa-status-badge.disqualified,
+.irsa-status-badge.error { background: var(--color-error-bg); color: var(--color-error-dark); }
+.irsa-status-badge.neutral { background: var(--color-bg-tertiary); color: var(--color-text-secondary); }
+
+.irsa-status-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+  animation: irsa-status-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes irsa-status-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .45; transform: scale(.82); }
+}
+
+.irsa-status-badge.pending .irsa-status-dot,
+.irsa-status-badge.warning .irsa-status-dot { background: var(--color-warning); }
+.irsa-status-badge.disqualified .irsa-status-dot,
+.irsa-status-badge.error .irsa-status-dot { background: var(--color-error); }
+.irsa-status-badge.neutral .irsa-status-dot { background: var(--color-text-tertiary); }
+
+.irsa-search-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--irsa-border-light);
+  border-radius: var(--radius-2xl);
+  background: var(--color-white);
+  box-shadow: none;
+}
+
+.irsa-search-field { border: 0; outline: 0; background: transparent; box-shadow: none; }
+
+.irsa-btn-primary,
+.irsa-btn-secondary,
+.irsa-btn-danger,
+.irsa-btn-applied {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  box-shadow: none;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: var(--font-semibold);
+}
+
+.irsa-btn-primary { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+.irsa-btn-primary:hover,
+.irsa-btn-primary:focus-visible { border-color: var(--color-primary-600); background: var(--color-primary-600); color: #fff; }
+.irsa-btn-secondary,
+.irsa-btn-danger { border-color: var(--irsa-border-light); background: #fff; color: var(--color-primary); }
+.irsa-btn-applied { border-color: var(--color-border); background: var(--color-border-light); color: var(--color-primary); cursor: default; pointer-events: none; }
+
+.irsa-job-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  background: #fff;
+  box-shadow: none;
+}
+
+.irsa-tag-outline {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: #fff;
+  color: var(--color-text-secondary);
+}
+
+/* Shared typography and overflow primitives. */
+.text-justify {
+  text-align: justify;
+}
+
+.leading-relaxed {
+  line-height: 1.625;
+}
+
+.tracking-wide {
+  letter-spacing: 0.025em;
+}
+
+.text-slate-600 {
+  color: @neutral-600;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

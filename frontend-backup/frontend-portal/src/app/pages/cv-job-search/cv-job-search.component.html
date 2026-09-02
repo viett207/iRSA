@@ -1,0 +1,234 @@
+<div class="cv-search-page">
+  <div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>
+        <span nz-icon nzType="file-search" nzTheme="outline"></span>
+        Tìm việc làm phù hợp với CV
+      </h1>
+      <p>Hệ thống sẽ phân tích CV của bạn và gợi ý những vị trí phù hợp nhất</p>
+    </div>
+
+    <!-- CV Selection Card -->
+    <nz-card class="search-card">
+      <div class="search-options">
+        <!-- Option 1: Use default CV -->
+        <div class="option-block">
+          <h3>Sử dụng CV mặc định</h3>
+          @if (defaultResume) {
+            <div class="default-cv-info">
+              <span nz-icon nzType="file-pdf" nzTheme="outline" class="file-icon"></span>
+              <span class="filename">{{ defaultResume.original_filename }}</span>
+            </div>
+            <button
+              nz-button
+              nzType="primary"
+              [nzLoading]="searching"
+              (click)="searchWithDefault()"
+              class="search-btn"
+            >
+              <span nz-icon nzType="search" nzTheme="outline"></span>
+              Tìm việc với CV này
+            </button>
+          } @else {
+            <div class="no-cv-hint">
+              <span nz-icon nzType="info-circle" nzTheme="outline"></span>
+              Bạn chưa có CV mặc định.
+              <a routerLink="/dashboard/profile">Tải lên CV tại đây</a>
+            </div>
+          }
+        </div>
+
+        <nz-divider nzType="vertical" class="divider-vertical"></nz-divider>
+        <div class="divider-label">hoặc</div>
+        <nz-divider nzType="vertical" class="divider-vertical"></nz-divider>
+
+        <!-- Option 2: Upload new CV -->
+        <div class="option-block">
+          <h3>Tải lên CV mới</h3>
+          <div class="upload-area">
+            <input
+              type="file"
+              #fileInput
+              accept=".pdf,.doc,.docx"
+              style="display:none"
+              (change)="onFileSelected($event)"
+            />
+            @if (selectedFile) {
+              <div class="selected-file">
+                <span nz-icon nzType="file" nzTheme="outline" class="file-icon"></span>
+                <span class="filename">{{ selectedFile.name }}</span>
+                <span
+                  nz-icon nzType="close-circle" nzTheme="outline"
+                  class="remove-btn"
+                  (click)="clearFile()"
+                ></span>
+              </div>
+              <button
+                nz-button
+                nzType="primary"
+                [nzLoading]="searching"
+                (click)="searchWithFile()"
+                class="search-btn"
+              >
+                <span nz-icon nzType="search" nzTheme="outline"></span>
+                Tìm việc với CV này
+              </button>
+            } @else {
+              <button
+                nz-button
+                nzType="dashed"
+                (click)="fileInput.click()"
+                class="upload-btn"
+              >
+                <span nz-icon nzType="upload" nzTheme="outline"></span>
+                Chọn file CV (PDF, DOC, DOCX)
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </nz-card>
+
+    <!-- Results -->
+    @if (searching) {
+      <div class="loading-state">
+        <nz-spin nzSize="large" nzTip="Đang phân tích CV..."></nz-spin>
+      </div>
+    } @else if (searched) {
+      <div class="results-section">
+        <div class="results-header">
+          <h2>Kết quả sàng lọc</h2>
+          <span class="result-count">{{ filteredJobs.length }}/{{ allJobs.length }} vị trí</span>
+        </div>
+
+        <!-- Score Threshold Filter -->
+        <nz-card class="threshold-card">
+          <div class="threshold-control">
+            <div class="threshold-label">
+              <span nz-icon nzType="filter" nzTheme="outline"></span>
+              <span>Điểm tối thiểu:</span>
+              <strong class="threshold-value" [class]="getScoreClass(scoreThreshold)">
+                {{ scoreThreshold }}%
+              </strong>
+            </div>
+            <div class="threshold-slider">
+              <nz-slider
+                [(ngModel)]="scoreThreshold"
+                [nzMin]="0"
+                [nzMax]="100"
+                [nzStep]="5"
+                [nzTipFormatter]="thresholdFormatter"
+                (nzOnAfterChange)="onThresholdChange()"
+              ></nz-slider>
+            </div>
+            <nz-input-number
+              [(ngModel)]="scoreThreshold"
+              [nzMin]="0"
+              [nzMax]="100"
+              [nzStep]="5"
+              nzSize="small"
+              (ngModelChange)="onThresholdChange()"
+              class="threshold-input"
+            ></nz-input-number>
+          </div>
+        </nz-card>
+
+        @if (filteredJobs.length === 0) {
+          <nz-empty
+            nzNotFoundContent="Không có vị trí nào đạt điểm tối thiểu. Hãy giảm ngưỡng điểm."
+          ></nz-empty>
+        } @else {
+          <div class="job-list">
+            @for (job of paginatedJobs; track job.id) {
+              <nz-card
+                class="job-card"
+                [nzHoverable]="true"
+                (click)="goToJob(job.slug)"
+              >
+                <div class="job-card-inner">
+                  <!-- Score Badge -->
+                  <div class="score-section">
+                    <div class="score-badge" [class]="getScoreClass(job.total_score)">
+                      {{ job.total_score | number:'1.0-0' }}%
+                    </div>
+                    <span class="score-label">Phù hợp</span>
+                  </div>
+
+                  <!-- Job Info -->
+                  <div class="job-info">
+                    <h3 class="job-title">{{ job.title_vi }}</h3>
+                    <div class="job-meta">
+                      @if (job.department) {
+                        <span class="meta-item">
+                          <span nz-icon nzType="team" nzTheme="outline"></span>
+                          {{ job.department }}
+                        </span>
+                      }
+                      @if (job.location) {
+                        <span class="meta-item">
+                          <span nz-icon nzType="environment" nzTheme="outline"></span>
+                          {{ job.location }}
+                        </span>
+                      }
+                      @if (job.employment_type) {
+                        <span class="meta-item">
+                          <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
+                          {{ job.employment_type }}
+                        </span>
+                      }
+                      @if (job.salary_min || job.salary_max) {
+                        <span class="meta-item salary">
+                          <span nz-icon nzType="dollar" nzTheme="outline"></span>
+                          {{ formatSalary(job.salary_min, job.salary_max) }}
+                        </span>
+                      }
+                    </div>
+
+                    <!-- Score breakdown -->
+                    <div class="score-breakdown">
+                      <span class="breakdown-item">
+                        Kỹ năng: <strong>{{ job.skill_score | number:'1.0-0' }}%</strong>
+                      </span>
+                      <span class="breakdown-item">
+                        Kinh nghiệm: <strong>{{ job.experience_score | number:'1.0-0' }}%</strong>
+                      </span>
+                      <span class="breakdown-item">
+                        Học vấn: <strong>{{ job.education_score | number:'1.0-0' }}%</strong>
+                      </span>
+                    </div>
+
+                    <!-- Matched skills -->
+                    @if (job.matched_skills.length > 0) {
+                      <div class="matched-skills">
+                        <span class="skills-label">Kỹ năng phù hợp:</span>
+                        @for (skill of job.matched_skills.slice(0, 6); track skill) {
+                          <nz-tag nzColor="blue">{{ skill }}</nz-tag>
+                        }
+                        @if (job.matched_skills.length > 6) {
+                          <nz-tag>+{{ job.matched_skills.length - 6 }}</nz-tag>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              </nz-card>
+            }
+          </div>
+
+          <!-- Pagination -->
+          @if (filteredJobs.length > pageSize) {
+            <div class="pagination-wrapper">
+              <nz-pagination
+                [nzTotal]="filteredJobs.length"
+                [nzPageIndex]="currentPage"
+                [nzPageSize]="pageSize"
+                (nzPageIndexChange)="onPageChange($event)"
+              ></nz-pagination>
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
+</div>

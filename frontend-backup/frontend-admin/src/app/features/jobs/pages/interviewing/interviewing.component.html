@@ -1,0 +1,165 @@
+<div class="page-header">
+  <h2>
+    <span nz-icon nzType="audio" nzTheme="outline" style="color: var(--color-primary-light); margin-right: 8px"></span>
+    Vòng 2 - Phòng phỏng vấn & Chấm điểm AI
+  </h2>
+  <p style="color: #888; margin: 4px 0 16px">
+    Quản lý ứng viên đang phỏng vấn. Bấm "Vào phòng PV" để sử dụng bộ câu hỏi AI, ghi âm câu trả lời, bóc băng STT và chấm điểm STAR.
+  </p>
+</div>
+
+<!-- Stats -->
+<div class="static-kpi-grid static-kpi-grid--one">
+  <div class="static-display-card static-kpi-card static-kpi-card--primary">
+    <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="team"></span></span>
+    <div class="static-kpi-content">
+      <span class="static-kpi-label">Ứng viên đang trong vòng phỏng vấn</span>
+      <strong class="static-kpi-value">{{ total() }}</strong>
+    </div>
+  </div>
+</div>
+
+<!-- Sort toolbar -->
+<div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center">
+  <div style="display: flex; gap: 8px">
+    <button nz-button nzSize="small"
+      [nzType]="sortBy === 'date' ? 'primary' : 'default'"
+      (click)="changeSortBy('date')">
+      <span nz-icon nzType="calendar"></span> Ngày cập nhật
+    </button>
+    <button nz-button nzSize="small"
+      [nzType]="sortBy === 'score' ? 'primary' : 'default'"
+      (click)="changeSortBy('score')">
+      <span nz-icon nzType="sort-descending"></span> Điểm sàng lọc
+    </button>
+    <button nz-button nzSize="small"
+      [nzType]="sortBy === 'ai_score' ? 'primary' : 'default'"
+      (click)="changeSortBy('ai_score')">
+      <span nz-icon nzType="robot"></span> Điểm AI
+    </button>
+  </div>
+  <button nz-button nzSize="small"
+    [disabled]="compareSelected.size !== 2 || !canCompare()"
+    (click)="openCompare()"
+    nz-tooltip
+    [nzTooltipTitle]="!canCompare() ? 'Chọn 2 ứng viên cùng vị trí' : 'So sánh 2 ứng viên'">
+    <span nz-icon nzType="swap"></span>
+    So sánh ({{ compareSelected.size }}/2)
+  </button>
+</div>
+
+<!-- Table -->
+<nz-table
+  #interviewTable
+  [nzData]="applicants()"
+  [nzLoading]="loading()"
+  [nzTotal]="total()"
+  [nzPageIndex]="page"
+  [nzPageSize]="20"
+  [nzFrontPagination]="false"
+  (nzPageIndexChange)="onPageChange($event)"
+  nzSize="middle"
+>
+  <thead>
+    <tr>
+      <th nzWidth="4%"></th>
+      <th nzWidth="18%">Ứng viên</th>
+      <th nzWidth="15%">Vị trí</th>
+      <th nzWidth="10%">Điểm AI CV</th>
+      <th nzWidth="10%">Cập nhật</th>
+      <th nzWidth="18%">Phòng phỏng vấn AI</th>
+      <th nzWidth="25%">Chốt kết quả & Thao tác</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (app of interviewTable.data; track app.id) {
+      <tr>
+        <td>
+          <label nz-checkbox
+            [nzChecked]="compareSelected.has(app.id)"
+            [nzDisabled]="!compareSelected.has(app.id) && compareSelected.size >= 2"
+            (nzCheckedChange)="toggleCompare(app.id, $event)">
+          </label>
+        </td>
+        <td>
+          <strong>{{ app.candidate_name }}</strong><br />
+          <small style="color: #888">{{ app.candidate_email }}</small>
+        </td>
+        <td><a [routerLink]="['/jobs', app.job_id]"><strong>{{ app.job_title }}</strong></a></td>
+        <td>
+          @if (app.ai_score != null) {
+            <nz-progress nzType="circle" [nzPercent]="app.ai_score"
+              [nzWidth]="38" [nzStrokeColor]="getScoreColor(app.ai_score)"
+              [nzFormat]="scoreFormat"></nz-progress>
+          } @else { <nz-tag>N/A</nz-tag> }
+        </td>
+        <td>{{ formatDate(app.updated_at) }}</td>
+        <td>
+          <!-- Prominent Interview Room Button -->
+          <button
+            nz-button
+            nzType="primary"
+            class="interview-room-button"
+            style="background: var(--color-primary-light); border-color: var(--color-primary-light); font-weight: 600"
+            (click)="openInterviewRoom(app)"
+            nz-tooltip
+            nzTooltipTitle="Vào phòng phỏng vấn: Ghi âm từng câu, bóc băng & AI chấm điểm"
+          >
+            <span nz-icon nzType="audio"></span>
+            🎙️ Vào phòng PV
+          </button>
+        </td>
+        <td>
+          @if (isOwner(app) && app.has_completed_interview) {
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+              @if (transitioningApplicationId() === app.id) {
+                <span class="status-updating" aria-live="polite"><span nz-icon nzType="loading"></span> Đang cập nhật</span>
+              }
+              <button nz-button nzSize="small" nzType="primary"
+                style="background: #52c41a; border-color: #52c41a; font-weight: 600"
+                nz-popconfirm nzPopconfirmTitle="Phỏng vấn ĐẠT - Chuyển sang Vòng 3: Đã Pass phỏng vấn (Đề xuất tuyển dụng)?"
+                (nzOnConfirm)="updateStatus(app, 'offered')"
+                [disabled]="transitioningApplicationId() !== null"
+                nz-tooltip nzTooltipTitle="Đạt PV ➔ Chuyển sang Vòng 3: Đã Pass phỏng vấn">
+                <span nz-icon nzType="like"></span> Đạt PV
+              </button>
+
+              <button nz-button nzSize="small" nzDanger
+                nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên này KHÔNG ĐẠT phỏng vấn?"
+                (nzOnConfirm)="updateStatus(app, 'rejected')"
+                [disabled]="transitioningApplicationId() !== null"
+                nz-tooltip nzTooltipTitle="Không đạt">
+                <span nz-icon nzType="dislike"></span> Không đạt
+              </button>
+
+              <button nz-button nzSize="small" nzType="default"
+                (click)="openScheduleInterview(app)"
+                nz-tooltip nzTooltipTitle="Xem / Đổi lịch phỏng vấn">
+                <span nz-icon nzType="calendar"></span> Đổi lịch
+              </button>
+
+              <button nz-button nzSize="small"
+                nz-popconfirm nzPopconfirmTitle="Đưa ứng viên quay lại Vòng 1: Hẹn lịch phỏng vấn?"
+                (nzOnConfirm)="updateStatus(app, 'shortlisted')"
+                [disabled]="transitioningApplicationId() !== null"
+                nz-tooltip nzTooltipTitle="Quay lại Hẹn lịch">
+                <span nz-icon nzType="rollback"></span> Quay lại vòng 1
+              </button>
+            </div>
+          } @else if (isOwner(app)) {
+            <span
+              class="finalization-locked"
+              nz-tooltip
+              nzTooltipTitle="Hoàn thành buổi phỏng vấn trong Phòng PV trước khi chốt kết quả"
+            >
+              <span nz-icon nzType="lock"></span>
+              Chờ hoàn thành PV
+            </span>
+          } @else {
+            <span style="color: #999">—</span>
+          }
+        </td>
+      </tr>
+    }
+  </tbody>
+</nz-table>

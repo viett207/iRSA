@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iRSA Admin - Báo cáo & Thống kê</title>
+    <!-- Nhúng Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Nhúng Google Fonts: Inter & Geist Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Geist+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['"Geist Mono"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F3F0E6;
+        }
+        .mono-text {
+            font-family: 'Geist Mono', monospace;
+        }
+        /* Loại bỏ các thanh cuộn thô thiển */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E4DFD3;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #D5CFAF;
+        }
+    </style>
+</head>
+<body class="text-[#18181B] min-h-screen flex flex-col antialiased">
+
+    <!-- BỐ CỤC TOÀN MÀN HÌNH -->
+    <div class="flex flex-1 overflow-hidden h-screen">
+        
+        <!-- SIDEBAR TRÁI (Rộng 240px) -->
+        <aside class="w-60 bg-[#FFFFFF] border-r border-[#E4DFD3] flex flex-col justify-between select-none">
+            <div class="p-6">
+                <!-- LOGO iRSA -->
+                <div class="flex items-center space-x-3 mb-8">
+                    <div class="w-7 h-7 bg-[#18181B] rounded flex items-center justify-center">
+                        <span class="text-[#FFFFFF] font-mono text-sm font-bold">i</span>
+                    </div>
+                    <span class="font-mono text-base font-bold tracking-tight text-[#18181B]">iRSA Admin</span>
+                </div>
+
+                <!-- HỆ THỐNG MENU (Theo đúng full menu.png) -->
+                <nav class="space-y-6">
+                    <!-- PHÂN NHÓM 1: TỔNG QUAN -->
+                    <div>
+                        <span class="text-[10px] font-bold tracking-widest text-[#71717A] block mb-3 uppercase">Tổng Quan</span>
+                        <div class="space-y-1">
+                            <a href="#" class="flex items-center px-3 py-2 text-xs font-medium text-[#71717A] hover:text-[#18181B] hover:bg-[#F3F0E6]/40 rounded-lg transition-all duration-150">
+                                Bảng điều khiển
+                            </a>
+                            <a href="#" class="flex items-center px-3 py-2 text-xs font-semibold text-[#18181B] bg-[#F3F0E6]/60 border-l-2 border-[#18181B] rounded-r-lg transition-all duration-150">
+                                Báo cáo & Thống kê
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- PHÂN NHÓM 2: QUẢN LÝ TUYỂN DỤNG -->
+                    <div>
+                        <span class="text-[10px] font-bold tracking-widest text-[#71717A] block mb-3 uppercase">Quản Lý Tuyển Dụng</span>
+                        <div class="space-y-1">
+                            <a href="#" class="flex items-center px-3 py-2 text-xs font-medium text-[#71717A] hover:text-[#18181B] hover:bg-[#F3F0E6]/40 rounded-lg transition-all duration-150">
+                                Tin tuyển dụng
+                            </a>
+                            <a href="#" class="flex items-center px-3 py-2 text-xs font-medium text-[#71717A] hover:text-[#18181B] hover:bg-[#F3F0E6]/40 rounded-lg transition-all duration-150">
+                                Quy trình phỏng vấn AI
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- PHÂN NHÓM 3: QUẢN TRỊ HỆ THỐNG -->
+                    <div>
+                        <span class="text-[10px] font-bold tracking-widest text-[#71717A] block mb-3 uppercase">Quản Trị Hệ Thống</span>
+                        <div class="space-y-1">
+                            <a href="#" class="flex items-center px-3 py-2 text-xs font-medium text-[#71717A] hover:text-[#18181B] hover:bg-[#F3F0E6]/40 rounded-lg transition-all duration-150">
+                                Quản lý Công ty
+                            </a>
+                            <a href="#" class="flex items-center px-3 py-2 text-xs font-medium text-[#71717A] hover:text-[#18181B] hover:bg-[#F3F0E6]/40 rounded-lg transition-all duration-150">
+                                Quản lý Người dùng
+                            </a>
+                            <a href="#" class="flex items-center px-3 py-2 text-xs font-medium text-[#71717A] hover:text-[#18181B] hover:bg-[#F3F0E6]/40 rounded-lg transition-all duration-150">
+                                Phê duyệt tài khoản
+                            </a>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- PHẦN CHÂN SIDEBAR -->
+            <div class="p-6 border-t border-[#E4DFD3] bg-[#FAFAFA]">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-[#18181B] text-[#FFFFFF] font-bold flex items-center justify-center text-xs">
+                        AD
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-[#18181B]">Quản trị viên</p>
+                        <p class="text-[10px] text-[#71717A]">admin@irsa.edu.vn</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- KHU VỰC NỘI DUNG CHÍNH (Workspace) -->
+        <main class="flex-1 flex flex-col overflow-y-auto px-10 py-8">
+            
+            <!-- HEADER WORKSPACE -->
+            <header class="flex justify-between items-center mb-8 pb-4 border-b border-[#E4DFD3]">
+                <div>
+                    <!-- BREADCRUMB -->
+                    <div class="flex items-center space-x-2 text-[10px] text-[#71717A] uppercase tracking-wider mb-1">
+                        <span>Tổng Quan</span>
+                        <span>/</span>
+                        <span class="text-[#18181B] font-medium">Báo cáo & Thống kê</span>
+                    </div>
+                    <h1 class="text-2xl font-bold tracking-tight text-[#18181B]">Báo cáo & Thống kê Tuyển dụng</h1>
+                </div>
+
+                <!-- BỘ LỌC THỜI GIAN & HÀNH ĐỘNG -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-[#FFFFFF] border border-[#E4DFD3] rounded-lg px-3 py-1.5 flex items-center space-x-2 text-xs font-medium text-[#18181B]">
+                        <span>Thời gian:</span>
+                        <select class="bg-transparent border-none focus:outline-none cursor-pointer font-medium text-[#18181B]">
+                            <option>30 ngày qua</option>
+                            <option>Quý này</option>
+                            <option>Năm nay</option>
+                        </select>
+                    </div>
+                    <button onclick="alert('Đang tải xuống báo cáo định dạng Excel...')" class="bg-[#18181B] text-[#FFFFFF] hover:bg-[#27272A] px-4 py-2 text-xs font-medium rounded-lg transition-all duration-150 shadow-sm">
+                        Xuất báo cáo (.XLSX)
+                    </button>
+                </div>
+            </header>
+
+            <!-- KHU VỰC THẺ CHỈ SỐ KPI ĐẲNG CẤP (Grid 4 cột) -->
+            <section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <!-- Thẻ 1 -->
+                <div class="bg-[#FFFFFF] border border-[#E4DFD3] rounded-[16px] p-6 shadow-sm">
+                    <span class="text-[11px] font-medium text-[#71717A] uppercase tracking-wider block mb-2">Thời gian tuyển dụng TB</span>
+                    <div class="flex items-baseline space-x-2">
+                        <span class="text-2xl font-bold mono-text tracking-tight text-[#18181B]">18.5</span>
+                        <span class="text-xs text-[#71717A]">ngày</span>
+                    </div>
+                    <div class="mt-2 text-[10px] text-[#10B981] font-medium flex items-center">
+                        <span>↓ 2.4 ngày so với quý trước</span>
+                    </div>
+                </div>
+
+                <!-- Thẻ 2 -->
+                <div class="bg-[#FFFFFF] border border-[#E4DFD3] rounded-[16px] p-6 shadow-sm">
+                    <span class="text-[11px] font-medium text-[#71717A] uppercase tracking-wider block mb-2">Tỷ lệ vượt qua vòng AI</span>
+                    <div class="flex items-baseline space-x-2">
+                        <span class="text-2xl font-bold mono-text tracking-tight text-[#18181B]">34.2%</span>
+                    </div>
+                    <div class="mt-2 text-[10px] text-[#71717A] font-medium flex items-center">
+                        <span>● Phù hợp với chất lượng CV đầu vào</span>
+                    </div>
+                </div>
+
+                <!-- Thẻ 3 -->
+                <div class="bg-[#FFFFFF] border border-[#E4DFD3] rounded-[16px] p-6 shadow-sm">
+                    <span class="text-[11px] font-medium text-[#71717A] uppercase tracking-wider block mb-2">Chi phí tiết kiệm (ước tính)</span>
+                    <div class="flex items-baseline space-x-2">
+                        <span class="text-2xl font-bold mono-text tracking-tight text-[#18181B]">12,450</span>
+                        <span class="text-xs text-[#18181B]">USD</span>
+                    </div>
+                    <div class="mt-2 text-[10px] text-[#10B981] font-medium flex items-center">
+                        <span>↑ 15% hiệu quả quy trình</span>
+                    </div>
+                </div>
+
+                <!-- Thẻ 4 -->
+                <div class="bg-[#FFFFFF] border border-[#E4DFD3] rounded-[16px] p-6 shadow-sm">
+                    <span class="text-[11px] font-medium text-[#71717A] uppercase tracking-wider block mb-2">Điểm Match trung bình</span>
+                    <div class="flex items-baseline space-x-2">
+                        <span class="text-2xl font-bold mono-text tracking-tight text-[#18181B]">78.4%</span>
+                    </div>
+                    <div class="mt-2 text-[10px] text-[#10B981] font-medium flex items-center">
+                        <span>Đạt chuẩn yêu cầu của doanh nghiệp</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PHẦN ĐỒ THỊ BIỂU DIỄN TRỰC QUAN KHOA HỌC (Grid 2 cột bất đối xứng) -->
+            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                
+                <!-- BÊN TRÁI: PHỄU CHUYỂN ĐỔI TUYỂN DỤNG AI (2/3 chiều rộng) -->
+                <div class="bg-[#FFFFFF] border border-[#E4DFD3] rounded-[16px] p-6 shadow-sm lg:col-span-2">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-sm font-bold text-[#18181B]">Phễu Chuyển Đổi Tuyển Dụng AI</h3>
+                            <p class="text-[11px] text-[#71717A]">Đo lường mức độ hao hụt ứng viên qua từng phân đoạn tự động hóa.</p>
+                        </div>
+                        <span class="text-[11px] font-mono bg-[#FAFAFA] border border-[#E4DFD3] px-2 py-0.5 rounded text-[#71717A]">Thời gian thực</span>
+                    </div>
+
+                    <!-- CÁC BƯỚC PHỄU -->
+                    <div class="space-y-4">
+                        <!-- Bước 1 -->
+                        <div>
+                            <div class="flex justify-between items-center text-xs mb-1.5">
+                                <span class="font-medium text-[#18181B]">1. Hồ sơ đã tiếp nhận</span>
+                                <span class="mono-text text-[#71717A]">1,420 hồ sơ (100%)</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-[#F3F0E6] rounded-full overflow-hidden">
+                                <div class="h-full bg-[#18181B] rounded-full transition-all duration-1000" style="width: 100%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bước 2 -->
+                        <div>
+                            <div class="flex justify-between items-center text-xs mb-1.5">
+                                <span class="font-medium text-[#18181B]">2. Sàng lọc đạt chuẩn AI (>70 điểm)</span>
+                                <span class="mono-text text-[#71717A]">912 hồ sơ (64.2%)</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-[#F3F0E6] rounded-full overflow-hidden">
+                                <div class="h-full bg-[#3F3F46] rounded-full transition-all duration-1000" style="width: 64.2%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bước 3 -->
+                        <div>
+                            <div class="flex justify-between items-center text-xs mb-1.5">
+                                <span class="font-medium text-[#18181B]">3. Hoàn thành Phỏng vấn Sơ bộ AI</span>
+                                <span class="mono-text text-[#71717A]">342 hồ sơ (24.1%)</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-[#F3F0E6] rounded-full overflow-hidden">
+                                <div class="h-full bg-[#71717A] rounded-full transition-all duration-1000" style="width: 24.1%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bước 4 -->
+                        <div>
+                            <div class="flex justify-between items-center text-xs mb-1.5">
+                                <span class="font-medium text-[#18181B]">4. Qua vòng Phỏng vấn Chuyên sâu</span>
+                                <span class="mono-text text-[#71717A]">114 hồ sơ (8.0%)</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-[#F3F0E6] rounded-full overflow-hidden">
+                                <div class="h-full bg-[#A1A1AA] rounded-full transition-all duration-1000" style="width: 8%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bước 5 -->
+                        <div>
+                            <div class="flex justify-between items-center text-xs mb-1.5">
+                                <span class="font-medium text-[#18181B] flex items-center">
+                                    5. Nhận lời mời nhận việc (Offer Accepted)
+                                    <span class="w-1.5 h-1.5 rounded-full bg-[#10B981] inline-block ml-1.5 animate-pulse"></span>
+                                </span>
+                                <span class="mono-text font-semibold text-[#10B981]">60 hồ sơ (4.2%)</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-[#F3F0E6] rounded-full overflow-hidden">
+                                <div class="h-full bg-[#10B981] rounded-full transition-all duration-1000" style="width: 4.2%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BÊN PHẢI: MA TRẬN NHU CẦU KỸ NĂNG (1/3 chiều rộng) -->
+                <div class="bg-[#FFFFFF] border border-[#E4DFD3] rounded-[16px] p-6 shadow-sm">
+                    <div class="mb-5">
+                        <h3 class="text-sm font-bold text-[#18181B]">Kỹ Năng Đang Tìm Kiếm</h3>
+                        <p class="text-[11px] text-[#71717A]">Tự động trích xuất từ dữ liệu tuyển dụng hệ thống.</p>
+                    </div>
+
+                    <!-- DANH SÁCH MA TRẬN KỸ NĂNG -->
+                    <div class="space-y-4">
+                        <!-- Kỹ năng 1 -->
+                        <div class="flex justify-between items-center pb-2 border-b border-[#F3F0E6]">
+                            <div>
+                                <span class="text-xs font-semibold text-[#18181B] block">Angular (Frontend)</span>
+                                <span class="text-[10px] text-[#71717A]">Nhu cầu: Rất cao (Active)</span>
+                            </div>
+                            <span class="px-2 py-0.5 text-[9px] font-bold uppercase rounded bg-[#18181B] text-[#FFFFFF]">Ưu tiên</span>
+                        </div>
+
+                        <!-- Kỹ năng 2 -->
+                        <div class="flex justify-between items-center pb-2 border-b border-[#F3F0E6]">
+                            <div>
+                                <span class="text-xs font-semibold text-[#18181B] block">FastAPI / Python Agents</span>
+                                <span class="text-[10px] text-[#71717A]">Nhu cầu: Cao</span>
+                            </div>
+                            <span class="px-2 py-0.5 text-[9px] font-semibold uppercase rounded bg-[#F4F4F5] text-[#18181B] border border-[#E4E4E7]">Bổ trợ</span>
+                        </div>
+
+                        <!-- Kỹ năng 3 -->
+                        <div class="flex justify-between items-center pb-2 border-b border-[#F3F0E6]">
+                            <div>
+                                <span class="text-xs font-semibold text-[#18181B] block">LangGraph / AI Agent RAG</span>
+                                <span class="text-[10px] text-[#71717A]">Nhu cầu: Rất cao (Active)</span>
+                            </div>
+                            <span class="px-2 py-0.5 text-[9px] font-bold uppercase rounded bg-[#18181B] text-[#FFFFFF]">Ưu tiên</span>
+                        </div>
+
+                        <!-- Kỹ năng 4 -->
+                        <div class="flex justify-between items-center pb-2">
+                            <div>
+                                <span class="text-xs font-semibold text-[#18181B] block">Tailwind CSS & SCSS</span>
+                                <span class="text-[10px] text-[#71717A]">Nhu cầu: Trung bình</span>
+                            </div>
+                            <span class="px-2 py-0.5 text-[9px] font-semibold uppercase rounded bg-[#F4F4F5] text-[#18181B] border border-[#E4E4E7]">Cơ bản</span>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- BẢNG ĐÁNH GIÁ HIỆU SUẤT NGUỒN TUYỂN DỤNG & NHẬT KÝ TẢI BÁO CÁO -->
+            <section class="bg-[#FFFFFF] border border-[#E4DFD3] rounded-[16px] p-6 shadow-sm overflow-hidden mb-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-sm font-bold text-[#18181B]">Hiệu Suất Nguồn Tuyển Dụng</h3>
+                        <p class="text-[11px] text-[#71717A]">Phân tích chất lượng CV nộp vào dựa trên các kênh kết nối.</p>
+                    </div>
+                </div>
+
+                <!-- BẢNG PHẲNG TỐI GIẢN -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-[#F3F0E6] text-[10px] uppercase text-[#71717A] tracking-wider">
+                                <th class="pb-3 font-semibold">Kênh nguồn CV</th>
+                                <th class="pb-3 font-semibold text-center">Hồ sơ đã nộp</th>
+                                <th class="pb-3 font-semibold text-center">Điểm AI Match TB</th>
+                                <th class="pb-3 font-semibold text-center">Tỷ lệ tuyển dụng</th>
+                                <th class="pb-3 font-semibold text-right">Đánh giá nguồn</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#F3F0E6] text-xs">
+                            <tr>
+                                <td class="py-3.5 font-medium text-[#18181B]">LinkedIn Jobs Campaign</td>
+                                <td class="py-3.5 text-center mono-text text-[#71717A]">642</td>
+                                <td class="py-3.5 text-center font-semibold text-[#18181B]">82.4 điểm</td>
+                                <td class="py-3.5 text-center mono-text text-[#71717A]">5.2%</td>
+                                <td class="py-3.5 text-right">
+                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-[#F0FDF4] text-[#15803D] rounded-full">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#10B981] mr-1.5"></span>
+                                        Chất lượng cao
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="py-3.5 font-medium text-[#18181B]">iRSA Candidate Portal</td>
+                                <td class="py-3.5 text-center mono-text text-[#71717A]">412</td>
+                                <td class="py-3.5 text-center font-semibold text-[#18181B]">79.1 điểm</td>
+                                <td class="py-3.5 text-center mono-text text-[#71717A]">4.1%</td>
+                                <td class="py-3.5 text-right">
+                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-[#F0FDF4] text-[#15803D] rounded-full">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#10B981] mr-1.5"></span>
+                                        Ổn định
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="py-3.5 font-medium text-[#18181B]">Giới thiệu nội bộ (Referral)</td>
+                                <td class="py-3.5 text-center mono-text text-[#71717A]">84</td>
+                                <td class="py-3.5 text-center font-semibold text-[#18181B]">88.5 điểm</td>
+                                <td class="py-3.5 text-center mono-text text-[#71717A]">12.4%</td>
+                                <td class="py-3.5 text-right">
+                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-[#F0FDF4] text-[#15803D] rounded-full">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#10B981] mr-1.5"></span>
+                                        Xuất sắc
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="py-3.5 font-medium text-[#18181B]">GitHub Developer Sourcing</td>
+                                <td class="py-3.5 text-center mono-text text-[#71717A]">282</td>
+                                <td class="py-3.5 text-center font-semibold text-[#18181B]">64.2 điểm</td>
+                                <td class="py-3.5 text-center mono-text text-[#71717A]">1.8%</td>
+                                <td class="py-3.5 text-right">
+                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-[#FFF1F2] text-[#B91C1C] rounded-full">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#F43F5E] mr-1.5 animate-pulse"></span>
+                                        Cần tối ưu hóa
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+</body>
+</html>

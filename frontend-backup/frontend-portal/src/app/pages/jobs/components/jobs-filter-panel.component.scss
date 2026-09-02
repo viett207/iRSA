@@ -1,0 +1,211 @@
+/* ==========================================================================
+   4. Sidebar Facet Filters (Desktop)
+   ========================================================================== */
+:host {
+  display: block;
+}
+
+.filter-sidebar {
+  position: sticky;
+  top: 80px;
+  z-index: 10;
+}
+
+.filter-card {
+  background: var(--irsa-bg-card);
+  border-radius: var(--irsa-radius-xl);
+  border: 1px solid var(--irsa-border-light);
+  box-shadow: var(--irsa-shadow-sm);
+  overflow: hidden;
+}
+
+.filter-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--irsa-bg-canvas);
+  border-bottom: 1px solid var(--irsa-border-light);
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .filter-title-icon {
+      color: var(--irsa-text-secondary);
+      font-size: 16px;
+    }
+
+    h3 {
+      font-family: var(--font-heading, 'Be Vietnam Pro', sans-serif);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--irsa-text-primary);
+      margin: 0;
+    }
+  }
+
+  .filter-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: var(--irsa-brand-accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 50%;
+  }
+
+  .reset-btn {
+    font-size: 12px;
+    color: #64748B;
+    padding: 0;
+    height: auto;
+
+    &:hover:not(:disabled) {
+      color: var(--irsa-text-primary);
+    }
+  }
+}
+
+.filter-card-body {
+  padding: 16px 20px;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 4px;
+  }
+}
+
+.saved-facet {
+  .saved-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #1E293B;
+
+    .heart-icon {
+      color: #FF4D4F;
+      font-size: 14px;
+    }
+  }
+}
+
+.facet-divider {
+  margin: 14px 0;
+  border-top-color: #F1F5F9;
+}
+
+.filter-facet {
+  .facet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .facet-title {
+    font-family: var(--font-heading, 'Be Vietnam Pro', sans-serif);
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #334155;
+    margin: 0 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    span {
+      color: var(--color-primary);
+    }
+  }
+
+  .salary-dynamic-text {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #52C41A;
+    background: #F6FFED;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid #D9F7BE;
+  }
+}
+
+.salary-slider-box {
+  padding: 0 6px;
+
+  .slider-boundary-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #94A3B8;
+    margin-top: 2px;
+  }
+}
+
+.salary-quick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.salary-quick-pill {
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: #F1F5F9;
+  border: 1px solid transparent;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #E2E8F0;
+    color: #1E293B;
+  }
+
+  &.active {
+    background: var(--irsa-brand-accent);
+    border-color: var(--irsa-brand-accent);
+    color: #fff;
+    font-weight: 700;
+  }
+}
+
+.facet-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.full-select {
+  width: 100%;
+}
+
+/* ==========================================================================
+
+/* Utility Media Queries */
+@media (max-width: 767px) {
+  .hide-mobile {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .show-mobile-only {
+    display: none;
+  }
+}

@@ -1,0 +1,32 @@
+<div class="profile-page">
+  <div class="container">
+    <div class="page-header">
+      <h1>Hồ sơ cá nhân</h1>
+      <p>Quản lý thông tin cá nhân của bạn</p>
+    </div>
+
+    @if (loadingProfile) {
+      <nz-card>
+        <div class="loading-wrapper">
+          <nz-spin nzSize="large"></nz-spin>
+        </div>
+      </nz-card>
+    } @else if (profile) {
+      <app-profile-info
+        [profile]="profile"
+        [saving]="savingProfile"
+        (save)="saveProfile()"
+      ></app-profile-info>
+    } @else if (profileError) {
+      <nz-alert
+        nzType="error"
+        nzShowIcon
+        nzMessage="Không thể hiển thị hồ sơ cá nhân"
+        [nzDescription]="profileError"
+      ></nz-alert>
+      <button nz-button nzType="primary" class="retry-button" (click)="loadProfile()">
+        Thử tải lại
+      </button>
+    }
+  </div>
+</div>

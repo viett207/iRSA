@@ -1,0 +1,180 @@
+<!-- Mobile Filter Drawer -->
+<nz-drawer
+  [nzVisible]="filterDrawerOpen"
+  nzPlacement="right"
+  nzTitle="Bộ lọc việc làm"
+  (nzOnClose)="filterDrawerOpen = false"
+  [nzWidth]="320"
+  nzClosable
+  [nzFooter]="mobileFilterFooter"
+>
+  <ng-container *nzDrawerContent>
+    <div class="mobile-drawer-content">
+      <!-- Saved Jobs Toggle -->
+      <div class="mobile-facet">
+        <label nz-checkbox [(ngModel)]="onlySavedFilter">
+          Chỉ xem việc đã lưu ({{ savedJobIds.size }})
+        </label>
+      </div>
+
+      <nz-divider></nz-divider>
+
+      <!-- Location -->
+      <div class="mobile-facet">
+        <h4 class="mobile-facet-title">Địa điểm</h4>
+        <nz-select
+          [(ngModel)]="selectedLocation"
+          nzPlaceHolder="Tất cả địa điểm"
+          nzAllowClear
+          class="full-select"
+        >
+          @for (location of locations; track location) {
+            <nz-option [nzValue]="location" [nzLabel]="location"></nz-option>
+          }
+        </nz-select>
+      </div>
+
+      <nz-divider></nz-divider>
+
+      <!-- Salary Slider -->
+      <div class="mobile-facet">
+        <h4 class="mobile-facet-title">
+          Mức lương ({{ salaryRange[0] }}tr - {{ salaryRange[1] === 100 ? '100tr+' : salaryRange[1] + 'tr' }})
+        </h4>
+        <nz-slider
+          [(ngModel)]="salaryRange"
+          [nzRange]="true"
+          [nzMin]="0"
+          [nzMax]="100"
+          [nzStep]="5"
+        ></nz-slider>
+      </div>
+
+      <nz-divider></nz-divider>
+
+      <!-- Job Type -->
+      <div class="mobile-facet">
+        <h4 class="mobile-facet-title">Hình thức làm việc</h4>
+        @for (type of jobTypes; track type.value) {
+          <label nz-checkbox [(ngModel)]="type.checked" class="mobile-checkbox">
+            {{ type.label }}
+          </label>
+        }
+      </div>
+
+      <nz-divider></nz-divider>
+
+      <!-- Experience -->
+      <div class="mobile-facet">
+        <h4 class="mobile-facet-title">Kinh nghiệm</h4>
+        @for (exp of experienceLevels; track exp.value) {
+          <label nz-checkbox [(ngModel)]="exp.checked" class="mobile-checkbox">
+            {{ exp.label }}
+          </label>
+        }
+      </div>
+
+      <nz-divider></nz-divider>
+
+      <!-- Industry -->
+      <div class="mobile-facet">
+        <h4 class="mobile-facet-title">Ngành nghề</h4>
+        <nz-select
+          [(ngModel)]="selectedCategory"
+          nzPlaceHolder="Chọn ngành nghề..."
+          nzAllowClear
+          nzShowSearch
+          class="full-select"
+        >
+          @for (cat of categories; track cat.value) {
+            <nz-option [nzValue]="cat.value" [nzLabel]="cat.label"></nz-option>
+          }
+        </nz-select>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #mobileFilterFooter>
+    <div class="mobile-drawer-footer">
+      <button nz-button class="irsa-btn-secondary" (click)="clearFilters()">Xóa tất cả</button>
+      <button nz-button class="irsa-btn-primary" (click)="applyFilters()">
+        Áp dụng bộ lọc
+      </button>
+    </div>
+  </ng-template>
+</nz-drawer>
+
+<!-- Quick Preview Drawer (Grid View Modal / Inspection) -->
+<nz-drawer
+  [nzVisible]="quickPreviewDrawerOpen"
+  [nzTitle]="quickPreviewJob?.title || 'Chi tiết công việc'"
+  nzPlacement="right"
+  (nzOnClose)="quickPreviewDrawerOpen = false"
+  [nzWidth]="640"
+  nzClosable
+  [nzFooter]="quickPreviewFooter"
+>
+  <ng-container *nzDrawerContent>
+    @if (quickPreviewJob) {
+      <div class="drawer-preview-content">
+        <div class="drawer-header-brand">
+          <div class="preview-avatar" [style.background]="quickPreviewJob.companyGradient">
+            {{ quickPreviewJob.companyInitial }}
+          </div>
+          <div>
+            <h3>{{ quickPreviewJob.title }}</h3>
+            <p class="drawer-company">{{ quickPreviewJob.company }} · {{ quickPreviewJob.location }}</p>
+          </div>
+        </div>
+
+        <div class="preview-highlights-grid">
+          <div class="highlight-box">
+            <div class="highlight-icon green">
+              <span nz-icon nzType="dollar" nzTheme="outline"></span>
+            </div>
+            <div class="highlight-info">
+              <span class="highlight-label">Mức lương</span>
+              <strong class="highlight-val green">{{ quickPreviewJob.salaryFormatted }}</strong>
+            </div>
+          </div>
+          <div class="highlight-box">
+            <div class="highlight-icon blue">
+              <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
+            </div>
+            <div class="highlight-info">
+              <span class="highlight-label">Hình thức</span>
+              <strong class="highlight-val">{{ quickPreviewJob.type }}</strong>
+            </div>
+          </div>
+        </div>
+
+        @if (quickPreviewJob.skills && quickPreviewJob.skills.length > 0) {
+          <div class="drawer-section">
+            <h4>Kỹ năng yêu cầu</h4>
+            <div class="preview-skills-wrap">
+              @for (s of quickPreviewJob.skills; track s) {
+                <span class="preview-skill-pill irsa-tag-outline">{{ s }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="drawer-section">
+          <h4>Mô tả công việc tóm tắt</h4>
+          <p class="drawer-desc irsa-text-justify">{{ quickPreviewJob.descriptionSnippet }}</p>
+        </div>
+      </div>
+    }
+  </ng-container>
+  <ng-template #quickPreviewFooter>
+    <div class="drawer-footer-actions">
+      <button nz-button class="irsa-btn-secondary" (click)="quickPreviewDrawerOpen = false">Đóng</button>
+      @if (quickPreviewJob) {
+        <a [routerLink]="['/jobs', quickPreviewJob.slug]" nz-button class="irsa-btn-primary" (click)="quickPreviewDrawerOpen = false">
+          Xem trang chi tiết & Ứng tuyển
+          <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
+        </a>
+      }
+    </div>
+  </ng-template>
+</nz-drawer>

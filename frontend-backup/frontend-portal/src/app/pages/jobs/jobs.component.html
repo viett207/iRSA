@@ -1,0 +1,18 @@
+<div class="jobs-page">
+  <app-jobs-search-hero [page]="view" />
+
+  <section class="jobs-main-wrapper">
+    <div class="widescreen-container">
+      <div class="jobs-layout-grid" [class.split-layout-active]="viewMode === 'split'">
+        <app-jobs-filter-panel [page]="view" />
+
+        <main class="jobs-main-content">
+          <app-jobs-results-toolbar [page]="view" />
+          <app-jobs-results [page]="view" />
+        </main>
+      </div>
+    </div>
+  </section>
+
+  <app-jobs-drawers [page]="view" />
+</div>

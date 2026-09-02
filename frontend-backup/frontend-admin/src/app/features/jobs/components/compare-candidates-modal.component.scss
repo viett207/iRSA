@@ -1,0 +1,179 @@
+.compare-container {
+  min-width: 500px;
+  color: #3f3f46;
+  background: #fff;
+}
+
+.compare-row {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0eee8;
+}
+
+.compare-label {
+  width: 150px;
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #52525b;
+  padding-top: 4px;
+  font-size: 13px;
+}
+
+.compare-cell {
+  flex: 1;
+  padding: 0 8px;
+  color: #3f3f46;
+  text-align: center;
+}
+
+.header-row .compare-cell { text-align: center; }
+
+.header-row {
+  padding: 0 0 10px;
+  border-bottom: 0;
+}
+
+.candidate-header {
+  border: 1px solid #e4dfd3;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 0 4px;
+  background: #faf9f6;
+}
+
+.candidate-name {
+  color: #18181b;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.candidate-email {
+  margin-top: 2px;
+  color: #8b8b93;
+  font-size: 12px;
+}
+
+.score-big {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.secondary-copy {
+  color: #8b8b93;
+}
+
+.compare-cell--copy,
+.compare-cell--assessment {
+  color: #52525b;
+  font-size: 12px;
+  line-height: 1.55;
+  text-align: left;
+}
+
+.evidence-line {
+  display: flex;
+  margin-bottom: 5px;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.evidence-line [nz-icon] {
+  margin-top: 3px;
+  color: #71717a;
+}
+
+.evidence-line--positive [nz-icon] {
+  color: #52705c;
+}
+
+.evidence-line--warning [nz-icon] {
+  color: #8a7654;
+}
+
+nz-tag {
+  margin-bottom: 4px;
+}
+
+nz-divider {
+  margin: 18px 0 8px;
+}
+
+:host ::ng-deep .ant-divider-inner-text {
+  color: #27272a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+:host ::ng-deep .ant-divider-horizontal.ant-divider-with-text::before,
+:host ::ng-deep .ant-divider-horizontal.ant-divider-with-text::after {
+  border-top-color: #e4dfd3;
+}
+
+:host ::ng-deep .ant-progress-circle-trail {
+  stroke: #eeece6;
+}
+
+:host ::ng-deep .ant-progress-text {
+  color: #3f3f46;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+}
+
+/* Muted semantic palette aligned with the admin frontend. */
+:host ::ng-deep .ant-tag {
+  border-color: #dedbd3;
+  border-radius: 6px;
+  color: #52525b;
+  background: #f7f5ef;
+  font-weight: 600;
+}
+
+:host ::ng-deep .ant-tag-green,
+:host ::ng-deep .ant-tag-cyan {
+  border-color: #cdd8cf;
+  color: #41604a;
+  background: #f1f6f2;
+}
+
+:host ::ng-deep .ant-tag-red {
+  border-color: #ead4d1;
+  color: #8f514a;
+  background: #fbf3f2;
+}
+
+:host ::ng-deep .ant-tag-orange,
+:host ::ng-deep .ant-tag-gold {
+  border-color: #eadfd0;
+  color: #80633e;
+  background: #fbf7f0;
+}
+
+:host ::ng-deep .ant-tag-blue {
+  border-color: #d9d9dd;
+  color: #52525b;
+  background: #f4f4f5;
+}
+
+:host ::ng-deep .ant-alert-info {
+  border-color: #e4dfd3;
+  color: #52525b;
+  background: #faf9f6;
+}
+
+@media (max-width: 760px) {
+  .compare-container {
+    min-width: 0;
+  }
+
+  .compare-label {
+    width: 112px;
+  }
+
+  .candidate-name {
+    font-size: 13px;
+  }
+}

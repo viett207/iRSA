@@ -1,0 +1,161 @@
+:host {
+  display: block;
+}
+
+/* ==========================================================================
+   8. Skeletons & Loading States
+   ========================================================================== */
+.skeleton-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+  gap: 20px;
+
+  &.split-skeleton {
+    grid-template-columns: 1fr;
+  }
+}
+
+.job-skeleton-card {
+  background: #FFFFFF;
+  border-radius: 18px;
+  border: 1px solid #E2E8F0;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.skeleton-header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.skeleton-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: #E2E8F0;
+  animation: skeleton-pulse 1.5s infinite;
+}
+
+.skeleton-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-line {
+  background: #E2E8F0;
+  border-radius: 6px;
+  animation: skeleton-pulse 1.5s infinite;
+
+  &.skeleton-title {
+    height: 18px;
+    width: 75%;
+  }
+
+  &.skeleton-sub {
+    height: 14px;
+    width: 45%;
+  }
+}
+
+.skeleton-meta-row {
+  display: flex;
+  gap: 10px;
+}
+
+.skeleton-pill {
+  height: 24px;
+  width: 80px;
+  border-radius: 6px;
+  background: #F1F5F9;
+  animation: skeleton-pulse 1.5s infinite;
+}
+
+.skeleton-desc {
+  height: 36px;
+  background: #F8FAFC;
+  border-radius: 6px;
+  animation: skeleton-pulse 1.5s infinite;
+}
+
+.skeleton-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+}
+
+.skeleton-button {
+  height: 32px;
+  width: 110px;
+  border-radius: 8px;
+  background: #E2E8F0;
+  animation: skeleton-pulse 1.5s infinite;
+}
+
+@keyframes skeleton-pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* ==========================================================================
+   9. Empty State
+   ========================================================================== */
+.no-results-card {
+  background: #FFFFFF;
+  border-radius: 18px;
+  border: 1px solid #E2E8F0;
+  padding: 60px 24px;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+
+  .empty-illustration {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #F1F5F9;
+    color: #64748B;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 18px;
+  }
+
+  .empty-title {
+    font-family: var(--font-heading, 'Be Vietnam Pro', sans-serif);
+    font-size: 19px;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 8px;
+  }
+
+  .empty-desc {
+    font-size: 14.5px;
+    color: #64748B;
+    max-width: 520px;
+    margin: 0 auto 24px auto;
+    line-height: 1.55;
+  }
+
+  .empty-actions button {
+    height: 46px;
+    padding: 0 24px;
+    border-radius: 12px;
+    font-weight: 600;
+  }
+}
+
+/* ==========================================================================
+   10. Pagination Footer
+   ========================================================================== */
+.pagination-footer-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 36px;
+}

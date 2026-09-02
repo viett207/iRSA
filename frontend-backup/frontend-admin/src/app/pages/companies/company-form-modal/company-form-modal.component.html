@@ -1,0 +1,157 @@
+<nz-modal
+  [(nzVisible)]="visible"
+  [nzTitle]="company ? 'Chỉnh sửa công ty' : 'Tạo công ty mới'"
+  (nzOnCancel)="close()"
+  (nzOnOk)="submit()"
+  [nzOkLoading]="saving"
+  [nzOkDisabled]="formGroup.invalid"
+  [nzOkText]="company ? 'Lưu thay đổi' : 'Tạo công ty'"
+  nzCancelText="Hủy"
+  [nzWidth]="760"
+>
+  <ng-container *nzModalContent>
+    <div class="company-form-shell">
+      <header class="company-form-intro">
+        <div class="intro-icon" aria-hidden="true"><span nz-icon nzType="bank"></span></div>
+        <div>
+          <p class="intro-kicker">Hồ sơ nhà tuyển dụng</p>
+          <h3>{{ company ? 'Cập nhật thông tin công ty' : 'Tạo hồ sơ công ty' }}</h3>
+          <p>Thông tin này sẽ là nền tảng để quản lý tin tuyển dụng và nhận diện doanh nghiệp trong hệ thống.</p>
+        </div>
+      </header>
+
+      <div class="company-form-layout">
+        <form class="company-form" nz-form [formGroup]="formGroup" nzLayout="vertical" autocomplete="off">
+      <div class="form-section-heading">
+        <span>01</span>
+        <div><strong>Nhận diện doanh nghiệp</strong><small>Thông tin cốt lõi để tìm và quản lý công ty.</small></div>
+      </div>
+      <!-- Company Code -->
+      <nz-form-item>
+        <nz-form-label nzRequired>Mã công ty</nz-form-label>
+        <nz-form-control [nzErrorTip]="codeErrorTpl">
+          <input
+            nz-input
+            formControlName="company_code"
+            placeholder="VD: COMP-001"
+          />
+          <ng-template #codeErrorTpl let-control>
+            @if (control.hasError('required')) {
+              Mã công ty là bắt buộc
+            } @else if (control.hasError('minlength')) {
+              Mã công ty phải có ít nhất 2 ký tự
+            } @else if (control.hasError('maxlength')) {
+              Mã công ty không được quá 50 ký tự
+            }
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+
+      <!-- Company Name -->
+      <nz-form-item>
+        <nz-form-label nzRequired>Tên công ty</nz-form-label>
+        <nz-form-control [nzErrorTip]="nameErrorTpl">
+          <input
+            nz-input
+            formControlName="company_name"
+            placeholder="Nhập tên công ty"
+          />
+          <ng-template #nameErrorTpl let-control>
+            @if (control.hasError('required')) {
+              Tên công ty là bắt buộc
+            } @else if (control.hasError('minlength')) {
+              Tên công ty phải có ít nhất 2 ký tự
+            } @else if (control.hasError('maxlength')) {
+              Tên công ty không được quá 255 ký tự
+            }
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+
+      <div class="form-section-heading form-section-heading--details">
+        <span>02</span>
+        <div><strong>Ngành nghề & khu vực</strong><small>Giúp phân loại tin tuyển dụng và thống kê chính xác hơn.</small></div>
+      </div>
+      <!-- Location -->
+      <nz-form-item>
+        <nz-form-label>Địa điểm</nz-form-label>
+        <nz-form-control>
+          <nz-select
+            formControlName="location"
+            nzPlaceHolder="Chọn tỉnh/thành phố"
+            nzAllowClear
+            nzShowSearch
+          >
+            @for (province of provinces; track province) {
+              <nz-option [nzValue]="province" [nzLabel]="province"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <!-- Industry -->
+      <nz-form-item>
+        <nz-form-label>Ngành nghề</nz-form-label>
+        <nz-form-control>
+          <nz-select
+            formControlName="industry"
+            nzPlaceHolder="Chọn ngành nghề"
+            nzAllowClear
+            nzShowSearch
+          >
+            @for (industry of industries; track industry) {
+              <nz-option [nzValue]="industry" [nzLabel]="industry"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <div class="form-section-heading form-section-heading--description">
+        <span>03</span>
+        <div><strong>Giới thiệu doanh nghiệp</strong><small>Giúp ứng viên hiểu rõ hơn về công ty và môi trường làm việc.</small></div>
+      </div>
+      <nz-form-item class="company-description-field">
+        <nz-form-label>Giới thiệu công ty</nz-form-label>
+        <nz-form-control [nzErrorTip]="descriptionErrorTpl">
+          <textarea
+            nz-input
+            formControlName="description"
+            rows="5"
+            maxlength="2000"
+            placeholder="Chia sẻ ngắn gọn về lĩnh vực hoạt động, văn hóa hoặc điểm nổi bật của công ty..."
+          ></textarea>
+          <div class="field-counter">{{ formValue('description').length }}/2000 ký tự</div>
+          <ng-template #descriptionErrorTpl let-control>
+            @if (control.hasError('maxlength')) {
+              Giới thiệu công ty không được quá 2.000 ký tự
+            }
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+        </form>
+
+        <aside class="company-preview" aria-label="Xem trước hồ sơ công ty">
+          <p class="preview-label">Xem trước hồ sơ</p>
+          <div class="preview-status"><span></span> Thông tin hiển thị sau khi lưu</div>
+          <article class="company-preview-card">
+            <div class="company-avatar">{{ companyInitial() }}</div>
+            <h4>{{ companyNamePreview() }}</h4>
+            <span class="company-code-preview">{{ companyCodePreview() }}</span>
+            <p class="company-summary">{{ companySummary() }}</p>
+            <dl>
+              <div>
+                <dt><span nz-icon nzType="apartment"></span> Ngành nghề</dt>
+                <dd>{{ industryPreview() }}</dd>
+              </div>
+              <div>
+                <dt><span nz-icon nzType="environment"></span> Địa điểm</dt>
+                <dd>{{ locationPreview() }}</dd>
+              </div>
+            </dl>
+          </article>
+          <p class="preview-hint">Bạn có thể chỉnh sửa thông tin này sau khi tạo công ty.</p>
+        </aside>
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>

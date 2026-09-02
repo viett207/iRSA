@@ -1,0 +1,138 @@
+<!-- Hero Search Section -->
+<section class="jobs-hero">
+  <div class="hero-container">
+    <!-- Hero Eyebrow Branding & Live Stats (Typography Branding, Non-button) -->
+    <div class="hero-eyebrow" aria-label="Thông tin nền tảng tuyển dụng">
+      <span class="eyebrow-tag">
+        <span nz-icon nzType="thunderbolt" nzTheme="fill" class="eyebrow-icon"></span>
+        CỔNG TUYỂN DỤNG THÔNG MINH iRSA
+      </span>
+      @if (totalJobs > 0) {
+        <span class="eyebrow-sep">·</span>
+        <span class="eyebrow-stat">
+          <span class="live-dot"></span>
+          <strong>{{ totalJobs }}</strong> việc làm đang mở
+        </span>
+      }
+    </div>
+
+    <h1 class="hero-title">Tìm Kiếm Cơ Hội Nghề Nghiệp Đột Phá</h1>
+    <p class="hero-subtitle text-justify leading-relaxed tracking-wide">
+      Khám phá hàng ngàn vị trí việc làm chất lượng cao từ các doanh nghiệp hàng đầu với mức đãi ngộ hấp dẫn
+    </p>
+
+    <!-- Integrated Multi-Criteria Search Console -->
+    <div class="search-console-wrapper">
+      <div class="search-console irsa-search-container">
+        <!-- Keyword Input with Autocomplete -->
+        <div class="console-field field-keyword irsa-search-field">
+          <svg class="field-icon lucide-icon" aria-hidden="true"><use href="assets/icons/lucide.svg#search"></use></svg>
+          <input
+            type="text"
+            nz-input
+            [placeholder]="isKeywordFocused ? 'Ví dụ: AI Engineer, Python, React, Backend...' : 'Vị trí, kỹ năng hoặc từ khóa'"
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearchInput($event)"
+            (keyup.enter)="onSearch()"
+            (focus)="isKeywordFocused = true"
+            (blur)="isKeywordFocused = false"
+            [nzAutocomplete]="autoComplete"
+            class="console-input irsa-search-field"
+          />
+        </div>
+
+        <nz-autocomplete #autoComplete [nzWidth]="440">
+          @if (suggestionsLoading) {
+            <nz-auto-option disabled [nzValue]="searchQuery">
+              <div class="suggestion-loading">
+                <span nz-icon nzType="loading" nzTheme="outline"></span>
+                Đang tìm kiếm vị trí phù hợp...
+              </div>
+            </nz-auto-option>
+          } @else {
+            @for (suggestion of suggestions; track suggestion.id) {
+              <nz-auto-option
+                [nzValue]="suggestion.title_vi"
+                [nzLabel]="suggestion.title_vi"
+                (click)="selectSuggestion(suggestion)"
+              >
+                <div class="suggestion-item">
+                  <div class="suggestion-title">{{ suggestion.title_vi }}</div>
+                  <div class="suggestion-meta">
+                    <span>{{ suggestion.company_name || suggestion.department || 'iRSA Tech' }}</span>
+                    @if (suggestion.location) {
+                      <span> · {{ suggestion.location }}</span>
+                    }
+                    @if (suggestion.salary_max) {
+                      <span class="suggestion-salary"> · Tới {{ suggestion.salary_max }}tr</span>
+                    }
+                  </div>
+                </div>
+              </nz-auto-option>
+            }
+            @if (suggestions.length === 0 && searchQuery.length >= 2) {
+              <nz-auto-option disabled [nzValue]="searchQuery">
+                <div class="suggestion-empty">Không tìm thấy gợi ý phù hợp</div>
+              </nz-auto-option>
+            }
+          }
+        </nz-autocomplete>
+
+        <!-- Location Select -->
+        <div class="console-field field-location irsa-search-field">
+          <span nz-icon nzType="environment" nzTheme="outline" class="field-icon"></span>
+          <nz-select
+            [(ngModel)]="selectedLocation"
+            nzPlaceHolder="Địa điểm"
+            nzAllowClear
+            (ngModelChange)="onFilterChange()"
+            class="console-select irsa-search-field"
+          >
+            @for (location of locations; track location) {
+              <nz-option [nzValue]="location" [nzLabel]="location"></nz-option>
+            }
+          </nz-select>
+        </div>
+
+        <!-- Industry / Category Select -->
+        <div class="console-field field-category irsa-search-field">
+          <svg class="field-icon lucide-icon" aria-hidden="true"><use href="assets/icons/lucide.svg#briefcase"></use></svg>
+          <nz-select
+            [(ngModel)]="selectedCategory"
+            nzPlaceHolder="Ngành nghề"
+            nzAllowClear
+            nzShowSearch
+            (ngModelChange)="onFilterChange()"
+            class="console-select irsa-search-field irsa-text-ellipsis"
+          >
+            @for (cat of categories; track cat.value) {
+              <nz-option [nzValue]="cat.value" [nzLabel]="cat.label"></nz-option>
+            }
+          </nz-select>
+        </div>
+
+        <!-- Action Button -->
+        <button nz-button nzSize="large" class="console-search-btn irsa-btn-primary" (click)="onSearch()">
+          <span>Tìm việc ngay</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Filter Chips -->
+    <div class="quick-chips-bar">
+      @for (chip of quickChips; track chip.id) {
+        <button
+          type="button"
+          class="quick-chip-btn"
+          [class.active]="chip.active"
+          (click)="toggleQuickChip(chip)"
+        >
+          <span class="chip-text">{{ chip.label }}</span>
+          @if (chip.nzIcon) {
+            <span nz-icon [nzType]="chip.nzIcon" nzTheme="outline" class="chip-icon"></span>
+          }
+        </button>
+      }
+    </div>
+  </div>
+</section>

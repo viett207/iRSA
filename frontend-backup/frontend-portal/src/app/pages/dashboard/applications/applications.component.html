@@ -1,0 +1,92 @@
+<div class="applications-page">
+  <div class="container">
+    <div class="page-header">
+      <h1>Hồ sơ ứng tuyển</h1>
+      <p>Theo dõi trạng thái các hồ sơ bạn đã nộp</p>
+    </div>
+
+    <nz-card>
+      <nz-table
+        #basicTable
+        [nzData]="applications"
+        [nzLoading]="loading"
+        [nzPageSize]="pageSize"
+        [nzTotal]="total"
+        [nzFrontPagination]="false"
+        (nzPageIndexChange)="onPageChange($event)"
+        [nzShowPagination]="total > pageSize"
+        nzShowSizeChanger
+        [nzPageSizeOptions]="[10, 20, 50]"
+        (nzPageSizeChange)="onPageSizeChange($event)"
+      >
+        <thead>
+          <tr>
+            <th>Vị trí</th>
+            <th class="hide-mobile">Phòng ban</th>
+            <th class="hide-mobile">Địa điểm</th>
+            <th>Trạng thái</th>
+            <th class="hide-mobile">Ngày nộp</th>
+            <th nzWidth="180px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (app of applications; track app.id) {
+            <tr>
+              <td>
+                <div class="job-title">{{ app.job_title }}</div>
+                <div class="mobile-meta show-mobile-only">
+                  {{ app.submitted_at | date: 'dd/MM/yyyy' }}
+                </div>
+              </td>
+              <td class="hide-mobile">{{ app.job_department || '-' }}</td>
+              <td class="hide-mobile">{{ app.job_location || '-' }}</td>
+              <td>
+                <nz-tag [nzColor]="getStatusColor(app.public_status)">
+                  {{ getStatusLabel(app.public_status) }}
+                </nz-tag>
+              </td>
+              <td class="hide-mobile">{{ app.submitted_at | date: 'dd/MM/yyyy' }}</td>
+              <td class="actions-cell">
+                <button
+                  nz-button
+                  nzType="link"
+                  nzSize="small"
+                  nz-tooltip
+                  nzTooltipTitle="Xem CV đã nộp"
+                  (click)="openPdfViewer(app)"
+                >
+                  <span nz-icon nzType="file-pdf" nzTheme="outline"></span>
+                  <span class="hide-mobile">Xem CV</span>
+                </button>
+                <a
+                  [routerLink]="['/jobs', app.job_slug]"
+                  nz-button
+                  nzType="link"
+                  nzSize="small"
+                  nz-tooltip
+                  nzTooltipTitle="Xem tin tuyển dụng"
+                >
+                  <span nz-icon nzType="eye" nzTheme="outline"></span>
+                  <span class="hide-mobile">Xem tin</span>
+                </a>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6">
+                <nz-empty
+                  nzNotFoundImage="simple"
+                  nzNotFoundContent="Bạn chưa có hồ sơ ứng tuyển nào"
+                >
+                  <a routerLink="/jobs" nz-button nzType="primary">
+                    Tìm việc làm
+                  </a>
+                </nz-empty>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    </nz-card>
+  </div>
+</div>

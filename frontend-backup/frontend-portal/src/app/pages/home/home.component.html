@@ -1,0 +1,136 @@
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-container">
+    <div class="hero-content">
+      <p class="hero-eyebrow">
+        <span class="live-dot" aria-hidden="true"></span>
+        {{ totalJobs || 'Nhiều' }} cơ hội đang tuyển dụng
+      </p>
+      <h1 class="hero-title">Tìm công việc <span class="hero-highlight">phù hợp với bạn</span></h1>
+      <p class="hero-trust">Tìm kiếm nhanh, thông tin minh bạch và ứng tuyển trực tiếp trên iRSA.</p>
+
+      <!-- Search Box -->
+      <div class="search-box">
+        <div class="search-input">
+          <nz-input-group [nzPrefix]="searchIcon" nzSize="large">
+            <input
+              type="text"
+              nz-input
+              placeholder="Tìm kiếm vị trí, kỹ năng..."
+              [(ngModel)]="searchQuery"
+              (keyup.enter)="onSearch()"
+            />
+          </nz-input-group>
+          <ng-template #searchIcon>
+            <svg class="lucide-icon" aria-hidden="true"><use href="assets/icons/lucide.svg#search"></use></svg>
+          </ng-template>
+        </div>
+        <button nz-button nzType="primary" nzSize="large" class="search-btn irsa-btn-primary" (click)="onSearch()">
+          Tìm việc ngay
+        </button>
+      </div>
+
+      <!-- Category Quick Filters -->
+      <div class="category-chips">
+        @for (category of categories; track category.name) {
+          <button class="category-chip" routerLink="/jobs" [queryParams]="{department: category.name}">
+            <span nz-icon [nzType]="category.icon" nzTheme="outline"></span>
+            {{ category.label }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Latest Jobs -->
+<section class="jobs-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Việc làm mới nhất</h2>
+      <span class="job-count irsa-status-badge active" *ngIf="totalJobs > 0"><span class="irsa-status-dot" aria-hidden="true"></span>{{ totalJobs }} vị trí đang tuyển</span>
+    </div>
+
+    <nz-spin [nzSpinning]="loading">
+      @if (jobs.length > 0) {
+        <div nz-row [nzGutter]="[24, 24]">
+          @for (job of jobs; track job.id) {
+            <div nz-col [nzXs]="24" [nzMd]="12" [nzLg]="8">
+              <div class="job-card irsa-job-card" [routerLink]="['/jobs', job.slug]">
+                <div class="job-header">
+                  <div class="job-icon">
+                    <svg class="lucide-icon" aria-hidden="true"><use href="assets/icons/lucide.svg#file-text"></use></svg>
+                  </div>
+                  <div class="job-info">
+                    <div class="job-title">{{ job.title_vi }}</div>
+                    <div class="job-dept">{{ job.company_name || job.company_code || 'Doanh nghiệp tuyển dụng' }}</div>
+                  </div>
+                </div>
+                <div class="job-meta">
+                  <span class="meta-item" *ngIf="job.location">
+                    <span nz-icon nzType="environment" nzTheme="outline"></span>
+                    {{ job.location }}
+                  </span>
+                  <span class="meta-item" *ngIf="job.employment_type">
+                    <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
+                    {{ formatEmploymentType(job.employment_type) }}
+                  </span>
+                </div>
+                <div class="job-footer">
+                  <span class="salary" *ngIf="job.salary_min || job.salary_max">
+                    {{ formatSalary(job.salary_min, job.salary_max) }}
+                  </span>
+                  <span class="posted-date" *ngIf="job.published_at">
+                    {{ job.published_at | date:'dd/MM/yyyy' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else if (!loading) {
+        <nz-empty nzNotFoundContent="Chưa có việc làm nào được đăng tuyển"></nz-empty>
+      }
+    </nz-spin>
+
+    <div class="section-cta" *ngIf="totalJobs > 6">
+      <button nz-button nzType="primary" nzSize="large" class="irsa-btn-primary" routerLink="/jobs">
+        Xem tất cả việc làm
+        <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Active Companies -->
+@if (activeCompanies.length > 0) {
+  <section class="companies-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Doanh nghiệp đang tuyển dụng</h2>
+      </div>
+      <div class="companies-grid">
+        @for (company of activeCompanies; track company.company_code) {
+          <a class="company-card" [routerLink]="['/companies', company.company_code]">
+            <div class="company-avatar">
+              {{ company.company_name.charAt(0) }}
+            </div>
+            <div class="company-info">
+              <div class="company-name">{{ company.company_name }}</div>
+              <div class="company-meta">
+                <span *ngIf="company.industry">{{ company.industry }}</span>
+                <span *ngIf="company.location">
+                  <span nz-icon nzType="environment" nzTheme="outline"></span>
+                  {{ company.location }}
+                </span>
+              </div>
+            </div>
+            <div class="company-badge irsa-tag-outline">
+              {{ company.job_count }} vị trí
+            </div>
+          </a>
+        }
+      </div>
+    </div>
+  </section>
+}

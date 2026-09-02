@@ -1,0 +1,108 @@
+<!-- Results Toolbar -->
+<div class="results-toolbar-card">
+  <div class="toolbar-top-row">
+    <div class="results-count-wrap">
+      <h2 class="results-headline">
+        Tìm thấy <span class="highlight-count">{{ filteredJobs.length }}</span> vị trí phù hợp
+      </h2>
+      @if (totalJobs > filteredJobs.length) {
+        <span class="total-note">trong tổng số {{ totalJobs }} tin tuyển dụng</span>
+      }
+    </div>
+
+    <!-- Toolbar Controls Right -->
+    <div class="toolbar-controls-right">
+      <!-- Mobile Filter Button -->
+      <button
+        nz-button
+        class="mobile-filter-btn show-mobile-only"
+        (click)="filterDrawerOpen = true"
+      >
+        <span nz-icon nzType="filter" nzTheme="outline"></span>
+        <span>Bộ lọc</span>
+        @if (getActiveFiltersCount() > 0) {
+          <span class="badge-mini">{{ getActiveFiltersCount() }}</span>
+        }
+      </button>
+
+      <!-- View Mode Toggle (Grid vs Split Mode) - Clearly separated Display Control -->
+      <div class="display-mode-control hide-mobile">
+        <span class="control-label">Hiển thị:</span>
+        <div class="view-mode-toggle" role="group" aria-label="Kiểu hiển thị danh sách">
+          <button
+            type="button"
+            class="view-mode-btn"
+            [class.active]="viewMode === 'grid'"
+            (click)="setViewMode('grid')"
+            nz-tooltip
+            nzTooltipTitle="Chế độ lưới thẻ (Grid View)"
+          >
+            <span nz-icon nzType="appstore" nzTheme="outline"></span>
+            <span class="btn-text">Lưới</span>
+          </button>
+          <button
+            type="button"
+            class="view-mode-btn"
+            [class.active]="viewMode === 'split'"
+            (click)="setViewMode('split')"
+            nz-tooltip
+            nzTooltipTitle="Chế độ chia đôi xem trực tiếp (Split View)"
+          >
+            <span nz-icon nzType="layout" nzTheme="outline"></span>
+            <span class="btn-text">Chi tiết</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sort Dropdown -->
+      <div class="sort-selector-wrap">
+        <span class="sort-label hide-mobile">Sắp xếp:</span>
+        <nz-select
+          [(ngModel)]="sortBy"
+          (ngModelChange)="onFilterChange()"
+          class="sort-select"
+        >
+          <nz-option nzValue="newest" nzLabel="Mới nhất"></nz-option>
+          <nz-option nzValue="salary_desc" nzLabel="Lương cao nhất"></nz-option>
+          <nz-option nzValue="salary_asc" nzLabel="Lương thấp nhất"></nz-option>
+          <nz-option nzValue="popular" nzLabel="Nhiều ứng viên"></nz-option>
+        </nz-select>
+      </div>
+
+      <!-- Page Size Changer -->
+      <div class="page-size-wrap hide-mobile">
+        <nz-select
+          [(ngModel)]="pageSize"
+          (ngModelChange)="onPageSizeChange($event)"
+          class="size-select"
+        >
+          <nz-option [nzValue]="10" nzLabel="10 / trang"></nz-option>
+          <nz-option [nzValue]="20" nzLabel="20 / trang"></nz-option>
+          <nz-option [nzValue]="50" nzLabel="50 / trang"></nz-option>
+        </nz-select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Filter Badges Bar -->
+  @if (hasActiveFilters()) {
+    <div class="active-filter-tags-row">
+      <span class="active-filter-label">Đang lọc:</span>
+      <div class="tags-container">
+        @for (filter of getActiveFilters(); track filter.key + filter.value) {
+          <nz-tag
+            nzMode="closeable"
+            class="active-filter-pill"
+            (nzOnClose)="removeFilter(filter.key, filter.value)"
+          >
+            {{ filter.label }}
+          </nz-tag>
+        }
+        <button nz-button nzType="link" nzSize="small" class="clear-all-tag-btn" (click)="clearFilters()">
+          Xóa tất cả bộ lọc
+        </button>
+      </div>
+    </div>
+  }
+</div>
+

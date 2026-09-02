@@ -1,0 +1,239 @@
+@if (loading) {
+  <div style="text-align: center; padding: 40px">
+    <nz-spin nzSimple></nz-spin>
+    <p style="margin-top: 12px; color: #888">Đang tải chi tiết...</p>
+  </div>
+} @else if (error) {
+  <nz-alert nzType="error" [nzMessage]="error" nzShowIcon></nz-alert>
+} @else if (data) {
+  <!-- Sections Detected Banner -->
+  @if (data.match_details.sections_found.length > 0) {
+    <div class="sections-banner">
+      <span nz-icon nzType="partition" nzTheme="outline" style="margin-right: 6px"></span>
+      Phát hiện:
+      @for (s of data.match_details.sections_found; track s) {
+        <nz-tag nzColor="geekblue" style="margin-left: 4px">{{ getSectionLabel(s) }}</nz-tag>
+      }
+    </div>
+  } @else {
+    <nz-alert
+      nzType="warning"
+      nzMessage="Không phát hiện phân mục trong CV. Tìm kiếm toàn văn."
+      nzShowIcon
+      style="margin-bottom: 16px"
+    ></nz-alert>
+  }
+
+  <!-- Score Breakdown -->
+  <section class="section">
+    <h4 class="section-title">
+      <span nz-icon nzType="bar-chart" nzTheme="outline"></span>
+      Phân tích điểm
+    </h4>
+    <div class="score-breakdown">
+      <div class="score-row">
+        <div class="score-label">
+          Kỹ năng ({{ getWeight('skills') }}%)
+          <span class="search-hint">{{ getSectionHint(data.match_details.skills.search_section) }}</span>
+        </div>
+        <div class="score-bar">
+          <nz-progress
+            [nzPercent]="data.skill_match_score"
+            [nzStrokeColor]="getScoreColor(data.skill_match_score)"
+            [nzFormat]="formatWeighted(data.skill_match_score, getWeight('skills') / 100, getWeight('skills'))"
+            nzSize="small"
+          ></nz-progress>
+        </div>
+      </div>
+      <div class="score-row">
+        <div class="score-label">
+          Kinh nghiệm ({{ getWeight('experience') }}%)
+          <span class="search-hint">{{ getSectionHint(data.match_details.experience.search_section) }}</span>
+        </div>
+        <div class="score-bar">
+          <nz-progress
+            [nzPercent]="data.experience_score"
+            [nzStrokeColor]="getScoreColor(data.experience_score)"
+            [nzFormat]="formatWeighted(data.experience_score, getWeight('experience') / 100, getWeight('experience'))"
+            nzSize="small"
+          ></nz-progress>
+        </div>
+      </div>
+      <div class="score-row">
+        <div class="score-label">
+          Học vấn ({{ getWeight('education') }}%)
+          <span class="search-hint">{{ getSectionHint(data.match_details.education.search_section) }}</span>
+        </div>
+        <div class="score-bar">
+          <nz-progress
+            [nzPercent]="data.education_score"
+            [nzStrokeColor]="getScoreColor(data.education_score)"
+            [nzFormat]="formatWeighted(data.education_score, getWeight('education') / 100, getWeight('education'))"
+            nzSize="small"
+          ></nz-progress>
+        </div>
+      </div>
+      <nz-divider style="margin: 8px 0"></nz-divider>
+      <div class="score-row total-row">
+        <div class="score-label"><strong>Tổng điểm</strong></div>
+        <div class="score-bar">
+          <nz-progress
+            [nzPercent]="data.total_score"
+            [nzStrokeColor]="getScoreColor(data.total_score)"
+            nzSize="small"
+          ></nz-progress>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <nz-divider></nz-divider>
+
+  <!-- Skills Matched -->
+  <section class="section">
+    <h4 class="section-title">
+      <span nz-icon nzType="check-circle" nzTheme="outline" style="color: #52c41a"></span>
+      Kỹ năng khớp
+    </h4>
+
+    @if (data.match_details.skills.matched_must.length > 0) {
+      <div class="skill-group">
+        <span class="skill-group-label">Bắt buộc:</span>
+        @for (skill of data.match_details.skills.matched_must; track skill) {
+          <nz-tag nzColor="success"
+            nz-tooltip
+            [nzTooltipTitle]="'Tìm thấy trong ' + getSectionLabel(getSkillSection(skill))"
+          >
+            <span nz-icon nzType="check" style="margin-right: 4px"></span>
+            {{ skill }}
+            <span class="section-badge" [class]="'badge-' + getSkillSection(skill)">
+              {{ getSectionLabel(getSkillSection(skill)) }}
+            </span>
+          </nz-tag>
+        }
+      </div>
+    }
+
+    @if (data.match_details.skills.matched_nice.length > 0) {
+      <div class="skill-group">
+        <span class="skill-group-label">Ưu tiên:</span>
+        @for (skill of data.match_details.skills.matched_nice; track skill) {
+          <nz-tag nzColor="green"
+            nz-tooltip
+            [nzTooltipTitle]="'Tìm thấy trong ' + getSectionLabel(getSkillSection(skill))"
+          >
+            <span nz-icon nzType="check" style="margin-right: 4px"></span>
+            {{ skill }}
+            <span class="section-badge" [class]="'badge-' + getSkillSection(skill)">
+              {{ getSectionLabel(getSkillSection(skill)) }}
+            </span>
+          </nz-tag>
+        }
+      </div>
+    }
+
+    @if (
+      data.match_details.skills.matched_must.length === 0 &&
+      data.match_details.skills.matched_nice.length === 0
+    ) {
+      <p style="color: #999; font-style: italic">Không tìm thấy kỹ năng khớp.</p>
+    }
+  </section>
+
+  <!-- Skills Missing -->
+  @if (
+    data.match_details.skills.missing_must.length > 0 ||
+    data.match_details.skills.missing_nice.length > 0
+  ) {
+    <section class="section" style="margin-top: 12px">
+      <h4 class="section-title">
+        <span nz-icon nzType="close-circle" nzTheme="outline" style="color: #ff4d4f"></span>
+        Kỹ năng thiếu
+      </h4>
+
+      @if (data.match_details.skills.missing_must.length > 0) {
+        <div class="skill-group">
+          <span class="skill-group-label">Bắt buộc:</span>
+          @for (skill of data.match_details.skills.missing_must; track skill) {
+            <nz-tag nzColor="error">
+              <span nz-icon nzType="close" style="margin-right: 4px"></span>
+              {{ skill }}
+            </nz-tag>
+          }
+        </div>
+      }
+
+      @if (data.match_details.skills.missing_nice.length > 0) {
+        <div class="skill-group">
+          <span class="skill-group-label">Ưu tiên:</span>
+          @for (skill of data.match_details.skills.missing_nice; track skill) {
+            <nz-tag nzColor="orange">
+              <span nz-icon nzType="minus" style="margin-right: 4px"></span>
+              {{ skill }}
+            </nz-tag>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  <nz-divider></nz-divider>
+
+  <!-- Experience & Education -->
+  <section class="section">
+    <h4 class="section-title">
+      <span nz-icon nzType="solution" nzTheme="outline"></span>
+      Kinh nghiệm & Học vấn
+    </h4>
+    <nz-descriptions nzBordered [nzColumn]="2" nzSize="small">
+      <nz-descriptions-item nzTitle="Kinh nghiệm phát hiện">
+        <nz-tag [nzColor]="data.match_details.experience.score >= 100 ? 'success' : 'warning'">
+          {{ data.match_details.experience.detected_years }} năm
+        </nz-tag>
+        <span class="search-source">
+          {{ getSectionLabel(data.match_details.experience.search_section) }}
+        </span>
+      </nz-descriptions-item>
+      <nz-descriptions-item nzTitle="Yêu cầu">
+        {{ data.match_details.experience.required_min }} năm
+        @if (data.match_details.experience.required_max) {
+          - {{ data.match_details.experience.required_max }} năm
+        }
+      </nz-descriptions-item>
+      <nz-descriptions-item nzTitle="Học vấn phát hiện">
+        <nz-tag [nzColor]="data.match_details.education.score >= 100 ? 'success' : 'warning'">
+          {{ getEducationLabel(data.match_details.education.detected_level) }}
+        </nz-tag>
+        <span class="search-source">
+          {{ getSectionLabel(data.match_details.education.search_section) }}
+        </span>
+      </nz-descriptions-item>
+      <nz-descriptions-item nzTitle="Yêu cầu">
+        {{ getEducationLabel(data.match_details.education.required_level) }}
+      </nz-descriptions-item>
+    </nz-descriptions>
+  </section>
+
+  <!-- Resume Snippets -->
+  @if (data.resume_snippets.length > 0) {
+    <nz-divider></nz-divider>
+    <section class="section">
+      <h4 class="section-title">
+        <span nz-icon nzType="file-search" nzTheme="outline"></span>
+        Trích dẫn từ CV
+      </h4>
+      @for (snippet of data.resume_snippets; track snippet.keyword) {
+        <div class="snippet-card">
+          <div style="margin-bottom: 4px; display: flex; align-items: center; gap: 6px">
+            <nz-tag nzColor="blue">{{ snippet.keyword }}</nz-tag>
+            <span class="snippet-section-label">
+              <span nz-icon nzType="environment" nzTheme="outline" style="margin-right: 2px"></span>
+              {{ getSectionLabel(snippet.section) }}
+            </span>
+          </div>
+          <p class="snippet-text" [innerHTML]="highlightKeyword(snippet.context, snippet.keyword)"></p>
+        </div>
+      }
+    </section>
+  }
+}

@@ -1,0 +1,58 @@
+@if (loading) {
+<div class="skeleton-cards-grid" [class.split-skeleton]="viewMode === 'split'">
+  @for (item of [1, 2, 3, 4, 5, 6]; track item) {
+    <div class="job-skeleton-card">
+      <div class="skeleton-header">
+        <div class="skeleton-avatar"></div>
+        <div class="skeleton-info">
+          <div class="skeleton-line skeleton-title"></div>
+          <div class="skeleton-line skeleton-sub"></div>
+        </div>
+      </div>
+      <div class="skeleton-meta-row">
+        <div class="skeleton-pill"></div>
+        <div class="skeleton-pill"></div>
+        <div class="skeleton-pill"></div>
+      </div>
+      <div class="skeleton-desc"></div>
+      <div class="skeleton-footer">
+        <div class="skeleton-pill"></div>
+        <div class="skeleton-button"></div>
+      </div>
+    </div>
+  }
+</div>
+} @else if (filteredJobs.length > 0) {
+  @if (viewMode === 'grid') {
+    <app-jobs-card-grid [page]="page" />
+  } @else {
+    <app-jobs-split-view [page]="page" />
+  }
+<!-- Pagination Bar -->
+<div class="pagination-footer-wrapper">
+  <nz-pagination
+    [(nzPageIndex)]="currentPage"
+    [nzTotal]="totalJobs"
+    [nzPageSize]="pageSize"
+    nzShowSizeChanger
+    [nzPageSizeOptions]="[10, 20, 50]"
+    (nzPageIndexChange)="onPageChange($event)"
+    (nzPageSizeChange)="onPageSizeChange($event)"
+  ></nz-pagination>
+</div>
+} @else {
+<div class="no-results-card">
+  <div class="empty-illustration">
+    <span nz-icon nzType="search" nzTheme="outline" class="big-empty-icon"></span>
+  </div>
+  <h3 class="empty-title">Không tìm thấy vị trí việc làm phù hợp</h3>
+  <p class="empty-desc irsa-text-justify">
+    Thử thay đổi từ khóa tìm kiếm, điều chỉnh mức lương hoặc xóa các bộ lọc đang chọn để tìm thêm nhiều cơ hội hấp dẫn.
+  </p>
+  <div class="empty-actions">
+    <button nz-button nzSize="large" class="irsa-btn-primary" (click)="clearFilters()">
+      Xóa tất cả bộ lọc & Tải lại
+    </button>
+  </div>
+</div>
+}

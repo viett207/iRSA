@@ -1,0 +1,433 @@
+:host {
+  display: block;
+}
+
+/* Widescreen Fluid Containers */
+.hero-container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 48px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.widescreen-container {
+  max-width: 1760px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 48px);
+}
+
+/* ==========================================================================
+   1. Hero Search Section
+   ========================================================================== */
+.jobs-hero {
+  background: var(--irsa-bg-canvas);
+  padding: clamp(24px, 3vw, 38px) 0 clamp(26px, 3vw, 40px);
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  cursor: default;
+  user-select: none;
+
+  .eyebrow-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--irsa-text-secondary);
+    text-shadow: none;
+
+    .eyebrow-icon {
+      font-size: 14px;
+      color: var(--irsa-text-secondary);
+      filter: none;
+    }
+  }
+
+  .eyebrow-sep {
+    color: var(--irsa-text-muted);
+    font-size: 14px;
+    font-weight: 300;
+  }
+
+  .eyebrow-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--irsa-text-secondary);
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      background-color: var(--irsa-status-success-dot);
+      border-radius: 50%;
+      box-shadow: none;
+      animation: livePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    strong {
+      color: var(--irsa-text-primary);
+      font-weight: 700;
+    }
+  }
+}
+
+@keyframes livePulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+}
+
+.hero-title {
+  font-family: var(--font-heading, 'Be Vietnam Pro', sans-serif);
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 800; /* Extra Bold */
+  color: var(--irsa-text-primary);
+  line-height: 1.15;
+  margin: 0 auto 10px;
+  letter-spacing: -0.02em;
+  text-align: center;
+  max-width: 1000px;
+  
+  @media (min-width: 992px) {
+    white-space: nowrap; /* Prevent unnecessary wrapping on desktop */
+  }
+}
+
+.hero-subtitle {
+  font-size: clamp(15px, 1.5vw, 17px);
+  font-weight: 400; /* Lighter than headline */
+  color: var(--irsa-text-secondary);
+  max-width: 760px; /* Constrain for 1-2 lines */
+  margin: 0 auto 26px;
+  line-height: 1.55; /* Spacious */
+  text-align: center;
+}
+
+/* ==========================================================================
+   2. Integrated Multi-Criteria Search Console
+   ========================================================================== */
+.search-console-wrapper {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto 18px;
+}
+
+.search-console {
+  background: var(--color-bg-secondary);
+  border: 0;
+  border-radius: var(--irsa-radius-lg);
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  box-shadow: var(--irsa-shadow-md);
+
+  @media (max-width: 992px) {
+    gap: 0;
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    padding: 8px;
+    gap: var(--space-2);
+  }
+}
+
+.console-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--color-border-light);
+  border-radius: 0;
+  height: 48px;
+  transition: all 0.2s ease;
+
+  &:focus-within {
+    background: var(--irsa-brand-light);
+    box-shadow: inset 0 -1px 0 var(--irsa-text-muted);
+  }
+
+  .field-icon {
+    color: #64748B;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  &.field-keyword {
+    flex: 2.5;
+    min-width: 0;
+  }
+
+  &.field-location {
+    flex: 1;
+    min-width: 160px;
+    max-width: 240px;
+  }
+
+  &.field-category {
+    flex: 1;
+    min-width: 160px;
+    max-width: 240px;
+  }
+
+  @media (max-width: 992px) {
+    &.field-location,
+    &.field-category {
+      max-width: 180px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    max-width: none;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+}
+
+.console-input {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 0;
+  color: var(--irsa-text-primary);
+  width: 100%;
+
+  &::placeholder {
+    color: var(--irsa-text-muted);
+    font-weight: 400;
+    font-size: 14.5px;
+  }
+}
+
+.console-select {
+  width: 100%;
+  min-width: 0;
+  max-width: 180px;
+}
+
+.lucide-icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.console-search-btn {
+  height: 48px;
+  padding: 0 24px;
+  margin-left: var(--irsa-space-xs);
+  border-radius: var(--irsa-radius-md);
+  background: var(--irsa-brand-accent);
+  border: none;
+  font-weight: 600; /* Semibold */
+  font-size: 14px;
+  color: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: background 150ms ease, border-color 150ms ease;
+
+  &:hover:not(:disabled) {
+    background: var(--irsa-brand-hover);
+    box-shadow: none;
+  }
+
+  &:active:not(:disabled) {
+    box-shadow: none;
+  }
+
+  &:disabled,
+  &[disabled] {
+    background: #E2E8F0;
+    color: #94A3B8;
+    box-shadow: none;
+    transform: none;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* Autocomplete Suggestion styling */
+.suggestion-loading,
+.suggestion-empty {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.suggestion-item {
+  padding: 6px 0;
+
+  .suggestion-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1E293B;
+    line-height: 1.4;
+  }
+
+  .suggestion-meta {
+    font-size: 12px;
+    color: #64748B;
+    margin-top: 2px;
+
+    .suggestion-salary {
+      color: #52C41A;
+      font-weight: 600;
+    }
+  }
+}
+
+/* Quick Filter Chips */
+.quick-chips-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 10px;
+  width: 100%;
+  max-width: 1140px;
+  margin: 0 auto;
+  min-width: 0;
+
+  @media (max-width: 1200px) {
+    gap: 8px;
+  }
+
+  @media (max-width: 992px) {
+    gap: 6px;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 2px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+.quick-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px; /* Space between text and icon */
+  height: 36px; /* Uniform touch-friendly height */
+  background: var(--irsa-bg-card);
+  border: 1px solid var(--irsa-border-light);
+  color: var(--irsa-text-secondary);
+  padding: 0 13px;
+  border-radius: 9999px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.2, 0, 0, 1);
+  flex-shrink: 0;
+  white-space: nowrap;
+  user-select: none;
+
+  @media (max-width: 1200px) {
+    padding: 0 11px;
+    font-size: 13px;
+  }
+
+  .chip-icon {
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    opacity: 0.9;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover {
+    background: var(--irsa-brand-light);
+    border-color: var(--irsa-text-muted);
+    color: var(--irsa-text-primary);
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    .chip-icon {
+      transform: scale(1.1);
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &.active {
+    background: var(--irsa-brand-accent);
+    color: #fff;
+    font-weight: 700;
+    border-color: var(--irsa-brand-accent);
+    box-shadow: none;
+    transform: translateY(-1px);
+
+    .chip-icon {
+      color: #fff;
+      opacity: 1;
+    }
+
+    &:hover {
+      background: var(--irsa-brand-hover);
+      border-color: var(--irsa-brand-hover);
+      color: #fff;
+    }
+  }
+}

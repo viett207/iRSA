@@ -1,0 +1,120 @@
+<div class="progress-modal-container">
+  <!-- Header Info -->
+  <div class="header-section">
+    <div class="header-avatar">
+      <span nz-icon nzType="robot" nzTheme="outline" style="font-size: 28px; color: var(--color-primary-light)"></span>
+    </div>
+    <div class="header-details">
+      <h3 style="margin: 0; font-size: 16px; font-weight: 600">
+        Tiến trình AI Phân tích & Chấm điểm CV
+      </h3>
+      <div style="font-size: 13px; color: #666; margin-top: 2px">
+        Ứng viên: <strong style="color: #222">{{ candidateName }}</strong> | Vị trí: <strong>{{ jobTitle }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Progress Bar -->
+  <div class="progress-bar-box">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; font-weight: 500">
+      <span>{{ currentStatusMessage }}</span>
+      <span style="color: var(--color-primary-light); font-weight: 600">{{ progressPercent }}%</span>
+    </div>
+    <nz-progress
+      [nzPercent]="progressPercent"
+      [nzStrokeColor]="progressPercent === 100 ? '#52c41a' : { '0%': 'var(--color-primary-light)', '100%': '#87d068' }"
+      [nzShowInfo]="false"
+      nzStatus="active"
+    ></nz-progress>
+  </div>
+
+  <!-- Steps Pipeline List -->
+  <div class="steps-pipeline-list">
+    @for (stage of stages; track stage.step) {
+      <div class="stage-item" [ngClass]="stage.status">
+        <!-- Icon State Indicator -->
+        <div class="stage-icon-col">
+          @if (stage.status === 'done') {
+            <div class="icon-circle done">
+              <span nz-icon nzType="check" nzTheme="outline"></span>
+            </div>
+          } @else if (stage.status === 'running') {
+            <div class="icon-circle running">
+              <nz-spin nzSimple nzSize="small"></nz-spin>
+            </div>
+          } @else {
+            <div class="icon-circle waiting">
+              <span>{{ stage.step }}</span>
+            </div>
+          }
+          @if (stage.step < stages.length) {
+            <div class="vertical-connector" [ngClass]="{ active: stage.status === 'done' }"></div>
+          }
+        </div>
+
+        <!-- Content Details -->
+        <div class="stage-content-col">
+          <div class="stage-header">
+            <span class="stage-name" [ngClass]="{ active: stage.status === 'running', done: stage.status === 'done' }">
+              Bước {{ stage.step }}: {{ stage.name }}
+            </span>
+            <nz-tag [nzColor]="getStageBadgeColor(stage.status)" style="font-size: 11px">
+              {{ getStageStatusLabel(stage.status) }}
+            </nz-tag>
+          </div>
+          <div class="stage-agent">
+            <span nz-icon nzType="cluster" style="margin-right: 4px; color: var(--color-primary-light)"></span>
+            Phụ trách: <strong>{{ stage.agent }}</strong>
+          </div>
+          <div class="stage-desc">
+            {{ stage.desc }}
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Final Evaluation Result Card (When Complete) -->
+  @if (completed && resultData?.ai_evaluation) {
+    <div class="final-result-box">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span nz-icon nzType="check-circle" nzTheme="fill" style="color: #52c41a; font-size: 20px"></span>
+          <strong style="font-size: 14px; color: #135200">Đã hoàn tất phân tích & Đánh giá CV!</strong>
+        </div>
+        <nz-tag [nzColor]="getRecColor(resultData!.ai_evaluation!.recommendation)">
+          {{ getRecLabel(resultData!.ai_evaluation!.recommendation) }}
+        </nz-tag>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 16px; margin: 10px 0">
+        <nz-progress
+          [nzPercent]="resultData!.ai_score || 0"
+          nzType="circle"
+          [nzWidth]="60"
+          [nzStrokeColor]="getScoreColor(resultData!.ai_score || 0)"
+        ></nz-progress>
+        <div style="flex: 1; font-size: 13px; color: #333; line-height: 1.5">
+          {{ resultData!.ai_evaluation!.overall_assessment }}
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (errorMessage) {
+    <nz-alert nzType="error" [nzMessage]="errorMessage" nzShowIcon style="margin-top: 12px"></nz-alert>
+  }
+
+  <!-- Footer Buttons -->
+  <div class="footer-actions">
+    @if (completed && resultData?.ai_evaluation) {
+      <button nz-button nzType="primary" (click)="openFullEvaluation()">
+        <span nz-icon nzType="profile"></span>
+        Xem toàn bộ bảng phân tích chi tiết & Cẩm nang HR
+      </button>
+    }
+    <button nz-button nzType="default" (click)="closeModal()">
+      {{ completed ? 'Đóng' : 'Chạy ngầm & Đóng' }}
+    </button>
+  </div>
+</div>

@@ -1,0 +1,78 @@
+<!-- Modal: Thêm câu hỏi tùy chỉnh -->
+<nz-modal
+  [(nzVisible)]="customModalVisible"
+  nzTitle="Thêm câu hỏi phỏng vấn tùy chỉnh"
+  (nzOnCancel)="customModalVisible = false"
+  (nzOnOk)="submitCustomQuestion()"
+>
+  <ng-container *nzModalContent>
+    <div class="stack-md">
+      <div>
+        <label class="field-label">Nội dung câu hỏi *</label>
+        <textarea
+          nz-input
+          [(ngModel)]="newQuestion.question"
+          [nzAutosize]="{ minRows: 2, maxRows: 4 }"
+          placeholder="Nhập câu hỏi phỏng vấn..."
+        ></textarea>
+      </div>
+
+      <div class="two-column-fields">
+        <div>
+          <label class="field-label">Phân loại</label>
+          <nz-select [(ngModel)]="newQuestion.category" class="full-width">
+            <nz-option nzValue="technical" nzLabel="Kỹ thuật"></nz-option>
+            <nz-option nzValue="architecture" nzLabel="Kiến trúc hệ thống"></nz-option>
+            <nz-option nzValue="behavioral" nzLabel="Hành vi & Văn hóa"></nz-option>
+            <nz-option nzValue="situational" nzLabel="Xử lý tình huống"></nz-option>
+          </nz-select>
+        </div>
+        <div>
+          <label class="field-label">Kỹ năng mục tiêu</label>
+          <input nz-input [(ngModel)]="newQuestion.target_skill" placeholder="Ví dụ: PostgreSQL, React..." />
+        </div>
+      </div>
+
+      <div>
+        <label class="field-label">Mục đích câu hỏi</label>
+        <input nz-input [(ngModel)]="newQuestion.purpose" placeholder="Ví dụ: Kiểm tra tư duy tối ưu DB..." />
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>
+
+<!-- Modal: AI Sinh thêm câu hỏi -->
+<nz-modal
+  [(nzVisible)]="aiGenModalVisible"
+  nzTitle="AI Sinh thêm bộ câu hỏi phỏng vấn"
+  (nzOnCancel)="aiGenModalVisible = false"
+  (nzOnOk)="submitGenerateAiQuestions()"
+  [nzOkLoading]="aiGenerating"
+>
+  <ng-container *nzModalContent>
+    <div class="stack-md">
+      <p class="text-muted-sm">
+        AI sẽ dựa trên hồ sơ của ứng viên <strong>{{ data()?.candidate?.name }}</strong> và tiêu chuẩn vị trí <strong>{{ data()?.job_title }}</strong> để tạo ra các câu hỏi chuyên sâu.
+      </p>
+
+      <div>
+        <label class="field-label">Chủ đề trọng tâm</label>
+        <nz-select [(ngModel)]="aiGenTopic" class="full-width">
+          <nz-option nzValue="technical" nzLabel="Kỹ thuật & Công nghệ lõi"></nz-option>
+          <nz-option nzValue="system_design" nzLabel="Thiết kế hệ thống & Kiến trúc"></nz-option>
+          <nz-option nzValue="problem_solving" nzLabel="Giải quyết sự cố & Tối ưu hiệu năng"></nz-option>
+          <nz-option nzValue="behavioral" nzLabel="Giao tiếp & Làm việc nhóm"></nz-option>
+        </nz-select>
+      </div>
+
+      <div>
+        <label class="field-label">Số lượng câu hỏi</label>
+        <nz-select [(ngModel)]="aiGenCount" class="full-width">
+          <nz-option [nzValue]="2" nzLabel="2 câu hỏi"></nz-option>
+          <nz-option [nzValue]="3" nzLabel="3 câu hỏi (Khuyến nghị)"></nz-option>
+          <nz-option [nzValue]="5" nzLabel="5 câu hỏi"></nz-option>
+        </nz-select>
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>

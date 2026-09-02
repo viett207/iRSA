@@ -1,0 +1,54 @@
+<div class="resend-container">
+  <div class="resend-card">
+    <h2>Gửi lại email xác thực</h2>
+    <p class="subtitle">Nhập email bạn đã đăng ký để nhận lại link xác thực</p>
+
+    @if (message) {
+      <nz-alert
+        [nzType]="messageType"
+        [nzMessage]="message"
+        nzShowIcon
+        style="margin-bottom: 16px;"
+      ></nz-alert>
+    }
+
+    <form (ngSubmit)="onSubmit()">
+      <nz-form-item>
+        <nz-form-label>Email</nz-form-label>
+        <nz-form-control>
+          <nz-input-group [nzPrefix]="emailIcon">
+            <input
+              nz-input
+              type="email"
+              placeholder="email@example.com"
+              [(ngModel)]="email"
+              name="email"
+              required
+            />
+          </nz-input-group>
+          <ng-template #emailIcon>
+            <span nz-icon nzType="mail" nzTheme="outline"></span>
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+
+      <button
+        nz-button
+        nzType="primary"
+        nzBlock
+        nzSize="large"
+        [nzLoading]="loading"
+        [disabled]="!email"
+      >
+        Gửi lại email xác thực
+      </button>
+    </form>
+
+    <div class="back-link">
+      <a routerLink="/login">
+        <span nz-icon nzType="arrow-left" nzTheme="outline"></span>
+        Quay lại đăng nhập
+      </a>
+    </div>
+  </div>
+</div>

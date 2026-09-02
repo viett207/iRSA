@@ -1,0 +1,138 @@
+<div class="dashboard-page">
+  <div class="container">
+    <div class="page-header">
+      <h1>Xin chào, {{ authService.user()?.full_name }}!</h1>
+      <p>Quản lý hồ sơ ứng tuyển và theo dõi tiến độ của bạn</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div nz-row [nzGutter]="[16, 16]" class="stats-row">
+      <div nz-col [nzXs]="12" [nzSm]="6">
+        <nz-card class="stat-card">
+          <nz-statistic
+            nzTitle="Đã ứng tuyển"
+            [nzValue]="stats.total"
+            [nzPrefix]="totalPrefix"
+          ></nz-statistic>
+          <ng-template #totalPrefix>
+            <span nz-icon nzType="file-text" nzTheme="outline"></span>
+          </ng-template>
+        </nz-card>
+      </div>
+      <div nz-col [nzXs]="12" [nzSm]="6">
+        <nz-card class="stat-card in-review">
+          <nz-statistic
+            nzTitle="Đang xem xét"
+            [nzValue]="stats.inReview"
+            [nzPrefix]="reviewPrefix"
+          ></nz-statistic>
+          <ng-template #reviewPrefix>
+            <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
+          </ng-template>
+        </nz-card>
+      </div>
+      <div nz-col [nzXs]="12" [nzSm]="6">
+        <nz-card class="stat-card shortlisted">
+          <nz-statistic
+            nzTitle="Vòng tiếp theo"
+            [nzValue]="stats.shortlisted"
+            [nzPrefix]="shortlistPrefix"
+          ></nz-statistic>
+          <ng-template #shortlistPrefix>
+            <span nz-icon nzType="star" nzTheme="outline"></span>
+          </ng-template>
+        </nz-card>
+      </div>
+      <div nz-col [nzXs]="12" [nzSm]="6">
+        <nz-card class="stat-card selected">
+          <nz-statistic
+            nzTitle="Đã tuyển"
+            [nzValue]="stats.selected"
+            [nzPrefix]="selectedPrefix"
+          ></nz-statistic>
+          <ng-template #selectedPrefix>
+            <span nz-icon nzType="trophy" nzTheme="outline"></span>
+          </ng-template>
+        </nz-card>
+      </div>
+    </div>
+
+    <!-- Recent Applications -->
+    <nz-card class="section-card">
+      <div class="section-header">
+        <h2>Ứng tuyển gần đây</h2>
+        <a routerLink="/dashboard/applications" nz-button nzType="link">
+          Xem tất cả
+          <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
+        </a>
+      </div>
+
+      @if (loading) {
+        <div class="loading-wrapper">
+          <nz-spin nzSize="default"></nz-spin>
+        </div>
+      } @else if (recentApplications.length === 0) {
+        <nz-empty
+          nzNotFoundImage="simple"
+          nzNotFoundContent="Bạn chưa có hồ sơ ứng tuyển nào"
+        >
+          <a routerLink="/jobs" nz-button nzType="primary">
+            Tìm việc làm
+          </a>
+        </nz-empty>
+      } @else {
+        <div class="applications-list">
+          @for (app of recentApplications; track app.id) {
+            <div class="application-item" [routerLink]="['/dashboard/applications', app.id]">
+              <div class="app-info">
+                <div class="job-title">{{ app.job_title }}</div>
+                <div class="job-meta">
+                  @if (app.job_department) {
+                    <span>{{ app.job_department }}</span>
+                  }
+                  @if (app.job_location) {
+                    <span>{{ app.job_location }}</span>
+                  }
+                </div>
+              </div>
+              <div class="app-status">
+                <nz-tag [nzColor]="getStatusColor(app.public_status)">
+                  {{ getStatusLabel(app.public_status) }}
+                </nz-tag>
+              </div>
+              <div class="app-date">
+                {{ app.submitted_at | date: 'dd/MM/yyyy' }}
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </nz-card>
+
+    <!-- Quick Actions -->
+    <div nz-row [nzGutter]="16" class="actions-row">
+      <div nz-col [nzXs]="24" [nzSm]="12">
+        <nz-card class="action-card" routerLink="/dashboard/profile">
+          <div class="action-content">
+            <span nz-icon nzType="user" nzTheme="outline" class="action-icon"></span>
+            <div>
+              <h3>Hồ sơ cá nhân</h3>
+              <p>Cập nhật thông tin và CV của bạn</p>
+            </div>
+          </div>
+        </nz-card>
+      </div>
+      <div nz-col [nzXs]="24" [nzSm]="12">
+        <nz-card class="action-card" routerLink="/jobs">
+          <div class="action-content">
+            <span nz-icon nzType="search" nzTheme="outline" class="action-icon"></span>
+            <div>
+              <h3>Tìm việc làm</h3>
+              <p>Khám phá cơ hội nghề nghiệp mới</p>
+            </div>
+          </div>
+        </nz-card>
+      </div>
+    </div>
+  </div>
+</div>

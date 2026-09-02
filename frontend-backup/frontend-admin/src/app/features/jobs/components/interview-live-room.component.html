@@ -1,0 +1,363 @@
+  <!-- Interview Mode Selection Banner -->
+  <div class="interview-mode-banner">
+    <div class="row-between-wrap">
+      <div class="inline-row-md-wrap">
+        <span class="mode-label">
+          <span nz-icon nzType="setting" class="text-primary"></span> Hình thức phỏng vấn:
+        </span>
+        <nz-radio-group [(ngModel)]="interviewMode" nzButtonStyle="solid" nzSize="small">
+          <label nz-radio-button nzValue="offline">
+            <span nz-icon nzType="team"></span> 🏢 Trực tiếp (Chỉ Mic)
+          </label>
+          <label nz-radio-button nzValue="online">
+            <span nz-icon nzType="video-camera"></span> 🌐 Online (Google Meet + Mic)
+          </label>
+        </nz-radio-group>
+      </div>
+
+      @if (interviewMode === 'online') {
+        <nz-tag nzColor="blue">
+          <span nz-icon nzType="sound"></span> Ghi âm đồng thời: Tab Meet & Mic
+        </nz-tag>
+      } @else {
+        <nz-tag nzColor="green">
+          <span nz-icon nzType="audio"></span> Ghi âm: Microphone phòng
+        </nz-tag>
+      }
+    </div>
+
+    @if (interviewMode === 'online') {
+      <div class="online-hint-box">
+        <span nz-icon nzType="info-circle" class="info-icon"></span>
+        <div>
+          <strong>Hướng dẫn phỏng vấn Online:</strong> Khi bấm <em>"Bắt đầu ghi âm"</em>, trình duyệt sẽ mở cửa sổ chia sẻ. Bạn hãy chọn <strong>Tab Google Meet</strong> (hoặc Toàn màn hình) và <strong>tick chọn "Chia sẻ âm thanh tab" (Share tab audio)</strong>. Hệ thống sẽ tự động hòa âm giọng ứng viên và microphone của bạn vào cùng 1 bản ghi!
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Quick Stats & Actions Header -->
+  <div class="room-action-bar">
+    <div class="inline-row-sm">
+      <nz-tag nzColor="blue">
+        <span nz-icon nzType="check-circle"></span>
+        Đã chấm: {{ answeredCount() }}/{{ activeQuestions().length }} câu
+      </nz-tag>
+      @if (answeredCount() > 0) {
+        <nz-tag nzColor="green">
+          Điểm TB tạm tính: <strong>{{ averageAnswerScore() }}/100</strong>
+        </nz-tag>
+      }
+    </div>
+
+    <div class="action-row">
+      <button nz-button nzSize="small" nzType="default" (click)="openAddCustomModal()">
+        <span nz-icon nzType="plus"></span> Thêm câu hỏi nhanh
+      </button>
+      <button
+        nz-button
+        nzSize="small"
+        nzType="primary"
+        [nzLoading]="summarizing"
+        [disabled]="answeredCount() === 0"
+        (click)="triggerSummary()"
+      >
+        <span nz-icon nzType="radar-chart"></span> Tổng kết phỏng vấn bằng AI
+      </button>
+    </div>
+  </div>
+
+  <!-- Question Cards List -->
+  @if (activeQuestions().length === 0) {
+    <div class="empty-state">
+      <span nz-icon nzType="question-circle" class="empty-icon"></span>
+      <p class="empty-copy">Chưa có câu hỏi phỏng vấn nào được chọn.</p>
+      <button nz-button nzType="primary" (click)="activeTabIndex = 1">
+        <span nz-icon nzType="form"></span> Sang tab "Quản lý câu hỏi" để thiết lập
+      </button>
+    </div>
+  } @else {
+    <div class="questions-stream">
+      @for (qState of activeQuestions(); track qState.question.question; let i = $index) {
+        <div class="question-eval-card" [class.evaluated]="!!qState.answer">
+          
+          <!-- Card Header -->
+          <div class="q-header">
+            <div class="inline-row-fill">
+              <span class="q-index-pill">{{ i + 1 }}</span>
+              <nz-tag [nzColor]="getCategoryColor(qState.question.category)">
+                {{ getCategoryLabel(qState.question.category) }}
+              </nz-tag>
+              @if (qState.question.target_skill) {
+                <nz-tag nzColor="geekblue">{{ qState.question.target_skill }}</nz-tag>
+              }
+              @if (qState.answer) {
+                <nz-tag nzColor="success">
+                  <span nz-icon nzType="check"></span> Đã chấm: <strong>{{ qState.answer.score }}/100</strong>
+                </nz-tag>
+              }
+            </div>
+
+            <button
+              nz-button
+              nzType="link"
+              nzSize="small"
+              (click)="qState.showGuide = !qState.showGuide" class="compact-button"
+             
+            >
+              <span nz-icon [nzType]="qState.showGuide ? 'up' : 'down'"></span>
+              {{ qState.showGuide ? 'Ẩn cẩm nang HR' : 'Xem cẩm nang HR' }}
+            </button>
+          </div>
+
+          <!-- Question Content -->
+          <div class="q-content">
+            <p class="q-text">{{ qState.question.question }}</p>
+            <div class="q-purpose">
+              <span nz-icon nzType="bulb" class="guide-icon"></span>
+              <strong>Mục đích:</strong> {{ qState.question.purpose }}
+            </div>
+          </div>
+
+          <!-- Non-Tech HR Guide Box -->
+          @if (qState.showGuide) {
+            <div class="guide-collapsible">
+              @if (qState.question.good_signs && qState.question.good_signs.length > 0) {
+                <div class="guide-sub-block good">
+                  <strong class="text-success">
+                    <span nz-icon nzType="check-circle"></span> Dấu hiệu ĐẠT / Câu trả lời tốt:
+                  </strong>
+                  <ul class="guide-list">
+                    @for (g of qState.question.good_signs; track g) {
+                      <li>{{ g }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+              @if (qState.question.red_flags && qState.question.red_flags.length > 0) {
+                <div class="guide-sub-block warn">
+                  <strong class="text-danger">
+                    <span nz-icon nzType="warning"></span> Cảnh báo / Trả lời kém (Red flags):
+                  </strong>
+                  <ul class="guide-list">
+                    @for (r of qState.question.red_flags; track r) {
+                      <li>{{ r }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Recording & Audio Toolset -->
+          <div class="audio-control-bar">
+            <!-- Record Action Buttons -->
+            <div class="inline-row-sm-wrap">
+              @if (!qState.recording) {
+                <button
+                  nz-button
+                  nzType="primary"
+                  nzDanger
+                  (click)="startRecording(qState)"
+                  [disabled]="isAnyRecording() && !qState.recording"
+                >
+                  <span nz-icon [nzType]="interviewMode === 'online' ? 'video-camera' : 'audio'"></span>
+                  @if (qState.localAudioUrl || qState.rawAudioUrl || qState.audioUrl) {
+                    {{ interviewMode === 'online' ? 'Ghi âm lại Online (Meet + Mic)' : 'Ghi âm lại câu này' }}
+                  } @else {
+                    {{ interviewMode === 'online' ? 'Bắt đầu ghi âm Online (Meet + Mic)' : 'Bắt đầu ghi âm câu trả lời' }}
+                  }
+                </button>
+              } @else {
+                <button nz-button nzType="primary" nzDanger (click)="stopRecording(qState)">
+                  <span nz-icon nzType="pause-circle"></span>
+                  Dừng ghi âm ({{ formatSeconds(qState.recordingSeconds) }})
+                </button>
+                <span class="recording-pulse">
+                  <span class="dot"></span> {{ interviewMode === 'online' ? 'Đang thu Meet & Mic...' : 'Đang thu mic...' }}
+                </span>
+              }
+
+              <!-- Upload file audio button -->
+              <label class="custom-file-upload">
+                <input
+                  type="file"
+                  accept="audio/*"
+                 
+                  (change)="onFileSelected($event, qState)" class="hidden-control"
+                />
+                <span nz-button nzType="default" nzSize="middle">
+                  <span nz-icon nzType="upload"></span> Tải file ghi âm (.mp3/.wav/.webm)
+                </span>
+              </label>
+            </div>
+
+            <!-- Real-time Volume Level Meter Bar when Recording -->
+            @if (qState.recording) {
+              <div class="live-volume-meter">
+                <span class="caption-strong">
+                  <span nz-icon nzType="sound"></span> Âm lượng Mic:
+                </span>
+                <div class="meter-track">
+                  <div
+                    class="meter-fill"
+                    [style.width.%]="qState.volumeLevel"
+                    [class.high]="qState.volumeLevel > 70"
+                    [class.med]="qState.volumeLevel > 30 && qState.volumeLevel <= 70"
+                  ></div>
+                </div>
+                <span class="meter-value">
+                  {{ qState.volumeLevel }}%
+                </span>
+              </div>
+            }
+
+            <!-- Audio Playback Controls -->
+            @if (qState.localAudioUrl || qState.rawAudioUrl || qState.audioUrl) {
+              <div class="audio-player-wrapper">
+                <button
+                  nz-button
+                  nzType="primary"
+                  nzSize="small"
+                  (click)="togglePlayAudio(qState, i)" class="action-ai"
+                 
+                >
+                  <span nz-icon [nzType]="playingIndex === i ? 'pause-circle' : 'play-circle'"></span>
+                  {{ playingIndex === i ? 'Tạm dừng' : '▶️ Nghe lại' }}
+                </button>
+
+                <audio
+                  [src]="getAudioSrc(qState, i)"
+                  controls
+                  preload="auto" class="transcript-field"
+                 
+                ></audio>
+              </div>
+            }
+          </div>
+
+          <!-- Transcript & Transcription / Scoring Action Row -->
+          <div class="evaluation-action-row">
+            <div class="flex-stack-sm">
+              <div class="row-between">
+                <span class="field-caption">
+                  <span nz-icon nzType="file-text"></span> Nội dung câu trả lời (Transcript):
+                </span>
+
+                <!-- Dedicated Speech-to-Text Button -->
+                @if (qState.audioBlob || qState.localAudioUrl || qState.rawAudioUrl || qState.audioUrl) {
+                  <button
+                    nz-button
+                    nzSize="small"
+                    nzType="dashed"
+                    [nzLoading]="qState.transcribing"
+                    (click)="transcribeAudioOnly(qState, i)" class="action-transcribe"
+                   
+                  >
+                    <span nz-icon nzType="translation"></span>
+                    Bóc băng lời nói sang văn bản (STT)
+                  </button>
+                }
+              </div>
+
+              <textarea
+                nz-input
+                [(ngModel)]="qState.transcript"
+                [nzAutosize]="{ minRows: 2, maxRows: 4 }"
+                placeholder="Văn bản bóc băng câu trả lời sẽ hiển thị tại đây sau khi bấm 'Bóc băng' hoặc 'Chấm điểm'. Bạn có thể xem và chỉnh sửa trực tiếp..." class="text-sm"
+               
+              ></textarea>
+            </div>
+
+            <div class="stack-actions">
+              <button
+                nz-button
+                nzType="primary"
+                [nzLoading]="qState.evaluating"
+                [disabled]="!qState.audioBlob && !qState.localAudioUrl && !qState.rawAudioUrl && !qState.audioUrl && !qState.transcript.trim()"
+                (click)="evaluateAnswer(qState, i)" class="action-score"
+               
+              >
+                <span nz-icon nzType="robot"></span>
+                {{ qState.answer ? 'Chấm điểm lại' : 'Chấm điểm câu này' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- AI Evaluation Results Box -->
+          @if (qState.answer) {
+            <div class="ai-answer-result-box">
+              <div class="result-top-line">
+                <div class="inline-row-md">
+                  <nz-progress
+                    [nzPercent]="qState.answer.score"
+                    nzType="circle"
+                    [nzWidth]="48"
+                    [nzStrokeColor]="getScoreColor(qState.answer.score)"
+                    [nzFormat]="scoreFormat"
+                  ></nz-progress>
+                  <div>
+                    <strong class="evaluation-title">Đánh giá câu trả lời:</strong>
+                    <p class="evaluation-copy">
+                      {{ qState.answer.assessment }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Strengths & Improvements -->
+              <div class="strengths-weakness-grid">
+                <div class="sw-col">
+                  <strong class="caption-success">
+                    <span nz-icon nzType="like"></span> Điểm mạnh:
+                  </strong>
+                  <ul class="answer-list">
+                    @for (s of qState.answer.strengths; track s) {
+                      <li>{{ s }}</li>
+                    }
+                  </ul>
+                </div>
+
+                <div class="sw-col">
+                  <strong class="caption-warning">
+                    <span nz-icon nzType="warning"></span> Điểm cần đào sâu / Thiếu sót:
+                  </strong>
+                  <ul class="answer-list">
+                    @for (w of qState.answer.improvements; track w) {
+                      <li>{{ w }}</li>
+                    }
+                  </ul>
+                </div>
+              </div>
+
+              <!-- STAR Analysis if present -->
+              @if (qState.answer.star_analysis && (qState.answer.star_analysis.situation || qState.answer.star_analysis.action)) {
+                <div class="star-card">
+                  <div class="star-label">
+                    <span nz-icon nzType="compass"></span> Mô hình STAR phát hiện từ câu trả lời:
+                  </div>
+                  <div class="star-grid">
+                    <div><strong>Tình huống (S):</strong> {{ qState.answer.star_analysis.situation || '—' }}</div>
+                    <div><strong>Nhiệm vụ (T):</strong> {{ qState.answer.star_analysis.task || '—' }}</div>
+                    <div><strong>Hành động (A):</strong> {{ qState.answer.star_analysis.action || '—' }}</div>
+                    <div><strong>Kết quả (R):</strong> {{ qState.answer.star_analysis.result || '—' }}</div>
+                  </div>
+                </div>
+              }
+
+              <!-- Follow-up Question Suggestion -->
+              @if (qState.answer.follow_up_question) {
+                <div class="follow-up-box">
+                  <span nz-icon nzType="question" class="text-primary"></span>
+                  <strong>Gợi ý câu hỏi đào sâu tiếp theo:</strong>
+                  <span class="follow-up-copy">
+                    "{{ qState.answer.follow_up_question }}"
+                  </span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }

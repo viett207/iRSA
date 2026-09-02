@@ -1,0 +1,542 @@
+<div class="job-list-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Quản lý Tin tuyển dụng</h1>
+      <p class="page-subtitle">Quản lý các tin tuyển dụng và theo dõi số lượng ứng viên theo thời gian thực</p>
+    </div>
+    <div class="header-actions">
+      <button nz-button nzType="primary" routerLink="/jobs/new" class="create-btn">
+        <span nz-icon nzType="plus"></span>
+        Tạo tin mới
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Filter Cards (Single source of status filtering) -->
+  <div class="stats-grid">
+    @for (stat of jobStats; track stat.label) {
+      <div
+        class="stat-card"
+        [class.stat-card--selected]="isStatusActive(stat.statusKey)"
+        [class]="'stat-card stat-card--' + stat.color"
+        (click)="selectStatus(stat.statusKey)"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="'Lọc theo ' + stat.label"
+      >
+        <div class="stat-card-header">
+          <span class="stat-label">{{ stat.label }}</span>
+        </div>
+        <div class="stat-value mono-num">{{ stat.value }}</div>
+        <div class="stat-desc">{{ stat.description }}</div>
+      </div>
+    }
+  </div>
+
+  <!-- Filter Card -->
+  <nz-card class="content-card filter-card">
+    <!-- Structured Filter Grid -->
+    <div class="filter-section">
+      <!-- Row 1: Search (span 2), Department (span 1), Location (span 1) -->
+      <div class="filter-grid-row">
+        <!-- Search Keyword -->
+        <div class="filter-col filter-col--search">
+          <label class="filter-label">Tìm kiếm từ khóa</label>
+          <nz-input-group [nzPrefix]="searchIcon" [nzSuffix]="clearSearchIcon" class="search-input-group">
+            <input
+              nz-input
+              [(ngModel)]="searchText"
+              placeholder="Tìm theo tiêu đề, kỹ năng, phòng ban, địa điểm..."
+              (keyup.enter)="onSearch()"
+            />
+          </nz-input-group>
+          <ng-template #searchIcon>
+            <svg class="lucide-icon" aria-hidden="true"><use href="assets/icons/lucide.svg#search"></use></svg>
+          </ng-template>
+          <ng-template #clearSearchIcon>
+            @if (searchText) {
+              <button type="button" class="clear-search" (click)="searchText = ''; onSearch()" aria-label="Xóa từ khóa">×</button>
+            }
+          </ng-template>
+        </div>
+
+        <!-- Department / Industry -->
+        <div class="filter-col">
+          <label class="filter-label">Phòng ban / Ngành nghề</label>
+          <nz-select
+            [(ngModel)]="departmentFilter"
+            nzPlaceHolder="Tất cả phòng ban"
+            nzAllowClear
+            nzShowSearch
+            class="w-full"
+            (ngModelChange)="onFilterChange()"
+          >
+            @for (dept of allDepartments; track dept) {
+              <nz-option [nzValue]="dept" [nzLabel]="dept"></nz-option>
+            }
+          </nz-select>
+        </div>
+
+        <!-- Location -->
+        <div class="filter-col">
+          <label class="filter-label">Địa điểm làm việc</label>
+          <nz-select
+            [(ngModel)]="locationFilter"
+            nzPlaceHolder="Tất cả địa điểm"
+            nzAllowClear
+            nzShowSearch
+            class="w-full"
+            (ngModelChange)="onFilterChange()"
+          >
+            @for (loc of locationOptions; track loc) {
+              <nz-option [nzValue]="loc" [nzLabel]="loc"></nz-option>
+            }
+          </nz-select>
+        </div>
+      </div>
+
+      <!-- Row 2: Employment Type, Salary, Experience, Sort -->
+      <div class="filter-grid-row">
+        <!-- Employment Type -->
+        <div class="filter-col">
+          <label class="filter-label">Hình thức làm việc</label>
+          <nz-select
+            [(ngModel)]="employmentTypeFilter"
+            nzPlaceHolder="Tất cả hình thức"
+            nzAllowClear
+            class="w-full"
+            (ngModelChange)="onFilterChange()"
+          >
+            @for (type of employmentTypeOptions; track type.value) {
+              <nz-option [nzValue]="type.value" [nzLabel]="type.label"></nz-option>
+            }
+          </nz-select>
+        </div>
+
+        <!-- Salary -->
+        <div class="filter-col">
+          <label class="filter-label">Mức lương</label>
+          <nz-select
+            [(ngModel)]="salaryPresetFilter"
+            nzPlaceHolder="Tất cả mức lương"
+            nzAllowClear
+            class="w-full"
+            (ngModelChange)="onFilterChange()"
+          >
+            @for (sal of salaryPresets; track sal.value) {
+              <nz-option [nzValue]="sal.value" [nzLabel]="sal.label"></nz-option>
+            }
+          </nz-select>
+        </div>
+
+        <!-- Experience -->
+        <div class="filter-col">
+          <label class="filter-label">Kinh nghiệm</label>
+          <nz-select
+            [(ngModel)]="experienceFilter"
+            nzPlaceHolder="Tất cả kinh nghiệm"
+            nzAllowClear
+            class="w-full"
+            (ngModelChange)="onFilterChange()"
+          >
+            @for (exp of experienceOptions; track exp.value) {
+              <nz-option [nzValue]="exp.value" [nzLabel]="exp.label"></nz-option>
+            }
+          </nz-select>
+        </div>
+
+        <!-- Sort By -->
+        <div class="filter-col">
+          <label class="filter-label">Sắp xếp</label>
+          <nz-select
+            [(ngModel)]="sortBy"
+            class="w-full"
+            (ngModelChange)="onFilterChange()"
+          >
+            <nz-option nzValue="newest" nzLabel="Mới nhất trước"></nz-option>
+            <nz-option nzValue="oldest" nzLabel="Cũ nhất trước"></nz-option>
+            <nz-option nzValue="applicants_desc" nzLabel="Nhiều ứng viên nhất"></nz-option>
+            <nz-option nzValue="salary_desc" nzLabel="Lương cao nhất"></nz-option>
+            <nz-option nzValue="salary_asc" nzLabel="Lương thấp nhất"></nz-option>
+          </nz-select>
+        </div>
+      </div>
+
+      <!-- Filter Bottom Bar: Results & Reset Actions -->
+      <div class="filter-bottom-bar">
+        <div class="filter-result-info">
+          @if (hasActiveFilters) {
+            <span class="filter-result-badge">
+              Kết quả lọc: <strong>{{ total() }}</strong> tin phù hợp
+            </span>
+          } @else {
+            <span class="filter-result-text">
+              Đang hiển thị <strong>{{ total() }}</strong> tin tuyển dụng
+            </span>
+          }
+        </div>
+
+        @if (hasActiveFilters) {
+          <div class="filter-actions-group">
+            <button nz-button nzType="default" (click)="clearFilters()" class="reset-filter-btn">
+              <span nz-icon nzType="reload"></span>
+              Đặt lại bộ lọc
+            </button>
+          </div>
+        }
+
+        <div class="view-switch" role="group" aria-label="Kiểu hiển thị danh sách tin tuyển dụng">
+          <button
+            type="button"
+            class="view-switch-btn"
+            [class.view-switch-btn--active]="viewMode === 'list'"
+            (click)="setViewMode('list')"
+            nz-tooltip
+            nzTooltipTitle="Xem dạng danh sách"
+            aria-label="Xem dạng danh sách"
+          >
+            <span nz-icon nzType="unordered-list"></span>
+          </button>
+          <button
+            type="button"
+            class="view-switch-btn"
+            [class.view-switch-btn--active]="viewMode === 'grid'"
+            (click)="setViewMode('grid')"
+            nz-tooltip
+            nzTooltipTitle="Xem dạng lưới"
+            aria-label="Xem dạng lưới"
+          >
+            <span nz-icon nzType="appstore"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nz-card>
+
+  <!-- Results Card -->
+  <nz-card class="content-card results-card">
+    <!-- List View -->
+    @if (viewMode === 'list') {
+    <div class="status-legend" aria-label="Chú thích trạng thái tin tuyển dụng">
+      <span class="status-legend__title">Chú thích</span>
+      @for (item of statusLegend; track item.status) {
+        <span class="status-legend__item">
+          <span
+            class="status-symbol"
+            [class.status-symbol--draft]="item.status === 'draft'"
+            [class.status-symbol--pending]="item.status === 'pending_approval'"
+            [class.status-symbol--approved]="item.status === 'approved'"
+            [class.status-symbol--active]="item.status === 'active'"
+            [class.status-symbol--closed]="item.status === 'closed'"
+            [class.status-symbol--rejected]="item.status === 'rejected'"
+            aria-hidden="true"
+          >{{ item.symbol }}</span>
+          <span>{{ item.label }}</span>
+        </span>
+      }
+    </div>
+
+    <div class="table-wrapper">
+      <nz-table
+        #jobTable
+        [nzData]="jobs()"
+        [nzLoading]="loading()"
+        [nzTotal]="total()"
+        [nzPageSize]="pageSize"
+        [nzPageIndex]="pageIndex"
+        [nzFrontPagination]="false"
+        [nzShowSizeChanger]="true"
+        [nzPageSizeOptions]="[10, 20, 50]"
+        (nzQueryParams)="onQueryParamsChange($event)"
+        nzSize="middle"
+        [nzNoResult]="emptyTemplate"
+      >
+        <thead>
+          <tr>
+            <th nzWidth="66%" nzAlign="left">Tin tuyển dụng</th>
+            <th nzWidth="10%" nzAlign="center">Ứng viên</th>
+            <th nzWidth="16%" nzAlign="left">Người tạo</th>
+            <th nzWidth="8%" nzAlign="right"><span class="sr-only">Tùy chọn</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (job of jobTable.data; track job.id) {
+            <tr class="job-row">
+              <!-- Job Title & Meta Info -->
+              <td>
+                <div class="job-info-cell">
+                  <div class="job-title-row">
+                    <a [routerLink]="['/jobs', job.id]" class="job-title-link">
+                      {{ job.title_vi }}
+                    </a>
+                    <span
+                      class="status-symbol status-symbol--title"
+                      [class.status-symbol--draft]="job.status === 'draft'"
+                      [class.status-symbol--pending]="job.status === 'pending_approval'"
+                      [class.status-symbol--approved]="job.status === 'approved'"
+                      [class.status-symbol--active]="job.status === 'active'"
+                      [class.status-symbol--closed]="job.status === 'closed'"
+                      [class.status-symbol--rejected]="job.status === 'rejected'"
+                      nz-tooltip
+                      [nzTooltipTitle]="getStatusLabel(job.status)"
+                      [attr.aria-label]="getStatusLabel(job.status)"
+                    >{{ getStatusSymbol(job.status) }}</span>
+                  </div>
+                  <div class="job-meta-pills">
+                    @if (job.department) {
+                      <span class="meta-pill meta-pill--dept">{{ job.department }}</span>
+                    }
+                    @if (job.location) {
+                      <span class="meta-pill meta-pill--location">
+                        <span nz-icon nzType="environment" nzTheme="outline" class="meta-pill-icon"></span>
+                        {{ job.location }}
+                      </span>
+                    }
+                    @if (job.employment_type) {
+                      <span class="meta-pill meta-pill--type">
+                        {{ getEmploymentTypeLabel(job.employment_type) }}
+                      </span>
+                    }
+                    @if (job.salary_min != null || job.salary_max != null) {
+                      <span class="meta-pill meta-pill--salary">
+                        {{ formatSalary(job.salary_min, job.salary_max) }}
+                      </span>
+                    }
+                    <span class="meta-date">
+                      Ngày tạo: {{ formatDate(job.created_at) }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Candidate Count (Clean number badge, no spammy repeated text) -->
+              <td nzAlign="center">
+                <a
+                  class="candidate-count-link"
+                  [routerLink]="['/jobs', job.id]"
+                  [attr.aria-label]="'Xem ' + job.applications_count + ' ứng viên'"
+                  [title]="'Xem danh sách ứng viên (' + job.applications_count + ')'"
+                >
+                  <span
+                    class="candidate-count-pill"
+                    [class.candidate-count-pill--active]="job.applications_count > 0"
+                  >
+                    {{ job.applications_count }}
+                  </span>
+                </a>
+              </td>
+
+              <!-- Creator Info -->
+              <td>
+                <div class="creator-cell">
+                  <nz-avatar
+                    [nzText]="getInitial(job.creator_name || 'U')"
+                    [nzSize]="28"
+                    class="creator-avatar"
+                  ></nz-avatar>
+                  <span class="creator-name">{{ job.creator_name || '-' }}</span>
+                </div>
+              </td>
+
+              <!-- Actions -->
+              <td nzAlign="right">
+                <div class="actions-group">
+                  <button nz-button nzType="default" class="action-btn-more" nz-dropdown [nzDropdownMenu]="actionMenu" nzPlacement="bottomRight" aria-label="Mở menu thao tác">
+                    <span nz-icon nzType="ellipsis"></span>
+                  </button>
+
+                  <nz-dropdown-menu #actionMenu="nzDropdownMenu">
+                    <ul nz-menu class="job-action-menu">
+                      <li nz-menu-item [routerLink]="['/jobs', job.id]">
+                        <span nz-icon nzType="eye"></span> Xem chi tiết
+                      </li>
+                      @if (canEdit(job)) {
+                        <li nz-menu-item [routerLink]="['/jobs', job.id, 'edit']">
+                          <span nz-icon nzType="edit"></span> Chỉnh sửa tin
+                        </li>
+                      }
+                      @if (canSubmit(job)) {
+                        <li nz-menu-item (click)="submitJob(job)">
+                          <span nz-icon nzType="send"></span> Gửi phê duyệt
+                        </li>
+                      }
+                      @if (canApprove(job)) {
+                        <li nz-menu-item (click)="approveJob(job)">
+                          <span nz-icon nzType="check"></span> Phê duyệt
+                        </li>
+                        <li nz-menu-item (click)="showRejectModal(job)">
+                          <span nz-icon nzType="close"></span> Từ chối
+                        </li>
+                      }
+                      @if (canPublish(job)) {
+                        <li nz-menu-item (click)="publishJob(job)">
+                          <span nz-icon nzType="global"></span> Đăng lên Portal
+                        </li>
+                      }
+                      @if (canUnpublish(job)) {
+                        <li nz-menu-item (click)="unpublishJob(job)">
+                          <span nz-icon nzType="stop"></span> Gỡ khỏi Portal
+                        </li>
+                      }
+                      @if (canClose(job)) {
+                        <li nz-menu-item (click)="closeJob(job)">
+                          <span nz-icon nzType="poweroff"></span> Đóng tuyển
+                        </li>
+                      }
+                      @if (canDelete(job)) {
+                        <li nz-menu-item nzDanger nz-popconfirm nzPopconfirmTitle="Xóa vĩnh viễn tin tuyển dụng này?" nzOkText="Xóa" nzCancelText="Hủy" (nzOnConfirm)="deleteJob(job)" nzPopconfirmPlacement="left">
+                          <span nz-icon nzType="delete"></span> Xóa tin
+                        </li>
+                      }
+                    </ul>
+                  </nz-dropdown-menu>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    </div>
+    } @else {
+      <!-- Grid View -->
+      @if (loading()) {
+        <div class="grid-loading">
+          <nz-spin nzSimple></nz-spin>
+        </div>
+      } @else if (jobs().length === 0) {
+        <ng-container [ngTemplateOutlet]="emptyTemplate"></ng-container>
+      } @else {
+        <div class="job-grid">
+          @for (job of jobs(); track job.id) {
+            <article class="job-grid-card">
+              <div class="job-grid-card__header">
+                <span
+                  class="status-badge"
+                  [class.status-badge--draft]="job.status === 'draft'"
+                  [class.status-badge--pending]="job.status === 'pending_approval'"
+                  [class.status-badge--approved]="job.status === 'approved'"
+                  [class.status-badge--active]="job.status === 'active'"
+                  [class.status-badge--closed]="job.status === 'closed'"
+                  [class.status-badge--rejected]="job.status === 'rejected'"
+                >
+                  <span class="status-dot" aria-hidden="true"></span>
+                  {{ getStatusLabel(job.status) }}
+                </span>
+
+                <button nz-button nzType="text" class="action-btn-more" nz-dropdown [nzDropdownMenu]="gridActionMenu" nzPlacement="bottomRight" aria-label="Mở menu thao tác">
+                  <span nz-icon nzType="ellipsis"></span>
+                </button>
+
+                <nz-dropdown-menu #gridActionMenu="nzDropdownMenu">
+                  <ul nz-menu class="job-action-menu">
+                    <li nz-menu-item [routerLink]="['/jobs', job.id]">
+                      <span nz-icon nzType="eye"></span> Xem chi tiết
+                    </li>
+                    @if (canEdit(job)) {
+                      <li nz-menu-item [routerLink]="['/jobs', job.id, 'edit']">
+                        <span nz-icon nzType="edit"></span> Chỉnh sửa tin
+                      </li>
+                    }
+                    @if (canSubmit(job)) {
+                      <li nz-menu-item (click)="submitJob(job)"><span nz-icon nzType="send"></span> Gửi phê duyệt</li>
+                    }
+                    @if (canApprove(job)) {
+                      <li nz-menu-item (click)="approveJob(job)"><span nz-icon nzType="check"></span> Phê duyệt</li>
+                      <li nz-menu-item (click)="showRejectModal(job)"><span nz-icon nzType="close"></span> Từ chối</li>
+                    }
+                    @if (canPublish(job)) {
+                      <li nz-menu-item (click)="publishJob(job)"><span nz-icon nzType="global"></span> Đăng lên Portal</li>
+                    }
+                    @if (canUnpublish(job)) {
+                      <li nz-menu-item (click)="unpublishJob(job)"><span nz-icon nzType="stop"></span> Gỡ khỏi Portal</li>
+                    }
+                    @if (canClose(job)) {
+                      <li nz-menu-item (click)="closeJob(job)">
+                        <span nz-icon nzType="poweroff"></span> Đóng tuyển
+                      </li>
+                    }
+                    @if (canDelete(job)) {
+                      <li nz-menu-item nzDanger nz-popconfirm nzPopconfirmTitle="Xóa vĩnh viễn tin tuyển dụng này?" nzOkText="Xóa" nzCancelText="Hủy" (nzOnConfirm)="deleteJob(job)" nzPopconfirmPlacement="left">
+                        <span nz-icon nzType="delete"></span> Xóa tin
+                      </li>
+                    }
+                  </ul>
+                </nz-dropdown-menu>
+              </div>
+
+              <div class="job-grid-card__body">
+                <a [routerLink]="['/jobs', job.id]" class="job-title-link job-grid-title">{{ job.title_vi }}</a>
+                <div class="job-grid-meta">
+                  @if (job.department) { <span class="job-grid-meta__department">{{ job.department }}</span> }
+                  @if (job.location) { <span class="job-grid-meta__location">{{ job.location }}</span> }
+                  @if (job.employment_type) { <span class="job-grid-meta__type">{{ getEmploymentTypeLabel(job.employment_type) }}</span> }
+                </div>
+                @if (job.salary_min != null || job.salary_max != null) {
+                  <div class="job-grid-salary">{{ formatSalary(job.salary_min, job.salary_max) }}</div>
+                }
+              </div>
+
+              <footer class="job-grid-card__footer">
+                <div class="creator-cell">
+                  <nz-avatar [nzText]="getInitial(job.creator_name || 'U')" [nzSize]="26" class="creator-avatar"></nz-avatar>
+                  <span class="creator-name">{{ job.creator_name || '-' }}</span>
+                </div>
+                <a
+                  class="grid-applicant-link"
+                  [class.grid-applicant-link--active]="job.applications_count > 0"
+                  [routerLink]="['/jobs', job.id]"
+                >
+                  <span class="mono-num">{{ job.applications_count }}</span> ứng viên
+                </a>
+              </footer>
+            </article>
+          }
+        </div>
+
+        <div class="grid-pagination">
+          <nz-pagination
+            [nzPageIndex]="pageIndex"
+            [nzPageSize]="pageSize"
+            [nzTotal]="total()"
+            [nzShowSizeChanger]="true"
+            [nzPageSizeOptions]="[18, 36, 72]"
+            (nzPageIndexChange)="onGridPageChange($event)"
+            (nzPageSizeChange)="onGridPageSizeChange($event)"
+          ></nz-pagination>
+        </div>
+      }
+    }
+  </nz-card>
+
+  <!-- Empty State Template -->
+  <ng-template #emptyTemplate>
+    <nz-empty
+      [nzNotFoundImage]="'simple'"
+      [nzNotFoundContent]="emptyContent"
+    >
+      <ng-template #emptyContent>
+        <div class="empty-state">
+          <p class="empty-title">Không tìm thấy tin tuyển dụng nào</p>
+          <p class="empty-desc">
+            @if (hasActiveFilters) {
+              Hãy thử điều chỉnh hoặc đặt lại các bộ lọc tìm kiếm
+            } @else {
+              Chưa có tin tuyển dụng nào được tạo trong danh mục này
+            }
+          </p>
+          @if (hasActiveFilters) {
+            <button nz-button nzType="primary" (click)="clearFilters()">
+              Đặt lại bộ lọc
+            </button>
+          } @else {
+            <button nz-button nzType="primary" routerLink="/jobs/new">
+              <span nz-icon nzType="plus"></span>
+              Tạo tin đầu tiên
+            </button>
+          }
+        </div>
+      </ng-template>
+    </nz-empty>
+  </ng-template>
+</div>

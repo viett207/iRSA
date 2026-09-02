@@ -1,0 +1,167 @@
+<!-- Left Filter Sidebar (Desktop) -->
+<aside class="filter-sidebar hide-mobile">
+  <div class="filter-card">
+    <div class="filter-card-header">
+      <div class="header-left">
+        <span nz-icon nzType="filter" nzTheme="fill" class="filter-title-icon"></span>
+        <h3>Bộ lọc nâng cao</h3>
+        @if (getActiveFiltersCount() > 0) {
+          <span class="filter-count-badge">{{ getActiveFiltersCount() }}</span>
+        }
+      </div>
+      <button
+        nz-button
+        nzType="link"
+        nzSize="small"
+        class="reset-btn"
+        [disabled]="!hasActiveFilters()"
+        (click)="clearFilters()"
+      >
+        Đặt lại
+      </button>
+    </div>
+
+    <div class="filter-card-body">
+      <!-- Quick Switch: Saved Jobs -->
+      <div class="filter-facet saved-facet">
+        <label nz-checkbox [(ngModel)]="onlySavedFilter" (ngModelChange)="onFilterChange()">
+          <span class="saved-label">
+            <span nz-icon nzType="heart" nzTheme="fill" class="heart-icon"></span>
+            Chỉ xem việc đã lưu ({{ savedJobIds.size }})
+          </span>
+        </label>
+      </div>
+
+      <nz-divider class="facet-divider"></nz-divider>
+
+      <!-- Facet 1: Mức Lương (Triệu VNĐ) -->
+      <div class="filter-facet">
+        <div class="facet-header">
+          <h4 class="facet-title">
+            <span nz-icon nzType="dollar" nzTheme="outline"></span>
+            Mức lương (triệu VNĐ)
+          </h4>
+          <span class="salary-dynamic-text">
+            {{ salaryRange[0] }}tr - {{ salaryRange[1] === 100 ? '100tr+' : salaryRange[1] + 'tr' }}
+          </span>
+        </div>
+        <div class="salary-slider-box">
+          <nz-slider
+            [(ngModel)]="salaryRange"
+            [nzRange]="true"
+            [nzMin]="0"
+            [nzMax]="100"
+            [nzStep]="5"
+            (nzOnAfterChange)="onFilterChange()"
+          ></nz-slider>
+          <div class="slider-boundary-labels">
+            <span>0 triệu</span>
+            <span>50 triệu</span>
+            <span>100 triệu+</span>
+          </div>
+        </div>
+
+        <!-- Salary Quick Buttons -->
+        <div class="salary-quick-grid">
+          @for (preset of salaryPresets; track preset.value) {
+            <button
+              type="button"
+              class="salary-quick-pill"
+              [class.active]="salaryRange[0] === preset.range[0] && salaryRange[1] === preset.range[1]"
+              (click)="onSalaryPresetSelect(preset)"
+            >
+              {{ preset.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <nz-divider class="facet-divider"></nz-divider>
+
+      <!-- Facet 2: Hình thức làm việc -->
+      <div class="filter-facet">
+        <h4 class="facet-title">
+          <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
+          Hình thức làm việc
+        </h4>
+        <div class="facet-options-list">
+          @for (type of jobTypes; track type.value) {
+            <label nz-checkbox [(ngModel)]="type.checked" (ngModelChange)="onJobTypeChange(type)" class="facet-checkbox">
+              <span class="checkbox-content">
+                <span class="option-name">{{ type.label }}</span>
+              </span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <nz-divider class="facet-divider"></nz-divider>
+
+      <!-- Facet 3: Kinh nghiệm làm việc -->
+      <div class="filter-facet">
+        <h4 class="facet-title">
+          <span nz-icon nzType="trophy" nzTheme="outline"></span>
+          Kinh nghiệm làm việc
+        </h4>
+        <div class="facet-options-list">
+          @for (exp of experienceLevels; track exp.value) {
+            <label nz-checkbox [(ngModel)]="exp.checked" (ngModelChange)="onExperienceChange(exp)" class="facet-checkbox">
+              <span class="checkbox-content">
+                <span class="option-name">{{ exp.label }}</span>
+              </span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <nz-divider class="facet-divider"></nz-divider>
+
+      <!-- Facet 4: Ngành nghề & Lĩnh vực -->
+      <div class="filter-facet">
+        <h4 class="facet-title">
+          <span nz-icon nzType="appstore" nzTheme="outline"></span>
+          Ngành nghề tuyển dụng
+        </h4>
+        <nz-select
+          [(ngModel)]="selectedCategory"
+          nzPlaceHolder="Chọn ngành nghề..."
+          nzAllowClear
+          nzShowSearch
+          (ngModelChange)="onFilterChange()"
+          class="full-select irsa-text-ellipsis"
+        >
+          @for (cat of categories; track cat.value) {
+            <nz-option [nzValue]="cat.value" [nzLabel]="cat.label"></nz-option>
+          }
+        </nz-select>
+      </div>
+
+      <nz-divider class="facet-divider"></nz-divider>
+
+      <!-- Facet 5: Công ty tuyển dụng -->
+      <div class="filter-facet">
+        <h4 class="facet-title">
+          <span nz-icon nzType="bank" nzTheme="outline"></span>
+          Công ty tuyển dụng
+        </h4>
+        <nz-select
+          [(ngModel)]="companyCodeFilter"
+          nzPlaceHolder="Tìm theo công ty..."
+          nzAllowClear
+          nzShowSearch
+          nzServerSearch
+          (nzOnSearch)="onCompanySearch($event)"
+          (ngModelChange)="onFilterChange()"
+          class="full-select"
+        >
+          @for (c of filteredCompanies; track c.company_code) {
+            <nz-option
+              [nzValue]="c.company_code"
+              [nzLabel]="c.company_name + ' (' + c.job_count + ' việc)'"
+            ></nz-option>
+          }
+        </nz-select>
+      </div>
+    </div>
+  </div>
+</aside>
