@@ -29,4 +29,8 @@ export class ResumeService {
   setDefault(id: number): Observable<Resume> {
     return this.http.post<Resume>(`${this.baseUrl}/${id}/default`, {});
   }
+
+  download(id: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/${id}/file`, { responseType: 'blob' });
+  }
 }

@@ -174,6 +174,12 @@ class PublicJobResponse(BaseModel):
     title_vi: str
     description_vi: str | None = None
     requirements_vi: str | None = None
+    benefits_vi: str | None = None
+
+    # Company info
+    company_name: str | None = None
+    company_code: str | None = None
+    company_logo_url: str | None = None
 
     # Common fields
     department: str | None = None

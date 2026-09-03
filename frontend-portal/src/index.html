@@ -6,10 +6,13 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="iRSA - He thong tuyen dung thong minh su dung AI. Tim viec lam nhanh chong va hieu qua.">
-  <meta name="theme-color" content="#18181B">
+  <meta name="theme-color" content="hsl(213 100% 35%)">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; frame-src 'self' blob:; connect-src 'self' http://localhost:8000 ws://localhost:8000 http://127.0.0.1:8000 ws://127.0.0.1:8000 https: wss:; object-src 'none'; base-uri 'self';">
+    content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https: https://*.googleusercontent.com https://accounts.google.com; frame-src 'self' blob: https://accounts.google.com; connect-src 'self' http://localhost:8000 ws://localhost:8000 http://127.0.0.1:8000 ws://127.0.0.1:8000 https: wss: https://accounts.google.com https://www.googleapis.com https://oauth2.googleapis.com; object-src 'none'; base-uri 'self';">
+
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <!-- Google Fonts - Vietnamese support -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
