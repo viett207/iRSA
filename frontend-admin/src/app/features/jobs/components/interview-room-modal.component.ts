@@ -1,7 +1,10 @@
 import {
   Component,
+  EventEmitter,
+  Input,
   OnInit,
   OnDestroy,
+  Output,
   inject,
   signal,
   computed,
@@ -35,8 +38,7 @@ import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { JobService } from '../services/job.service';
 import { InterviewCandidateBannerComponent } from './interview-candidate-banner.component';
 import { InterviewLiveRoomComponent } from './interview-live-room.component';
-import { InterviewQuestionDialogsComponent } from './interview-question-dialogs.component';
-import { InterviewQuestionSetupComponent } from './interview-question-setup.component';
+import { InterviewScreeningReferenceComponent } from './interview-screening-reference.component';
 import { InterviewSummaryComponent } from './interview-summary.component';
 import {
   AiInterviewQuestion,
@@ -59,6 +61,14 @@ interface QuestionState {
   rawAudioUrl?: string;
   audioUrl?: string;
   transcript: string;
+  liveTranscript: string;
+  interimTranscript: string;
+  liveTranscriptActive: boolean;
+  liveTranscriptSupported: boolean;
+  transcriptFinalized: boolean;
+  transcriptionFailed: boolean;
+  speechRecognition?: any;
+  speechRestartTimer?: ReturnType<typeof setTimeout>;
   transcribing: boolean;
   evaluating: boolean;
   answer?: InterviewAnswer;
@@ -97,8 +107,7 @@ interface QuestionState {
     NzRadioModule,
     InterviewCandidateBannerComponent,
     InterviewLiveRoomComponent,
-    InterviewQuestionDialogsComponent,
-    InterviewQuestionSetupComponent,
+    InterviewScreeningReferenceComponent,
     InterviewSummaryComponent,
   ],
   templateUrl: './interview-room-modal.component.html',
@@ -107,12 +116,17 @@ interface QuestionState {
 export class InterviewRoomModalComponent implements OnInit, OnDestroy {
   readonly view = this;
 
-  readonly modalData = inject(NZ_MODAL_DATA) as {
+  private readonly injectedModalData = inject(NZ_MODAL_DATA, { optional: true }) as {
     jobId: number;
     appId: number;
     candidateName: string;
-  };
-  private modalRef = inject(NzModalRef);
+  } | null;
+  private modalRef = inject(NzModalRef, { optional: true });
+
+  @Input() jobId: number | null = null;
+  @Input() appId: number | null = null;
+  @Input() candidateName = '';
+  @Output() roomClosed = new EventEmitter<{ statusUpdated?: string } | void>();
 
   data = signal<InterviewDataResponse | null>(null);
   loading = signal(true);
@@ -151,13 +165,13 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
   scoreFormat = (p: number) => `${Math.round(p)}`;
 
   answeredCount = computed(() => {
-    return this.activeQuestions().filter((q) => !!q.answer).length;
+    return this.activeQuestions().filter((q) => this.hasAnswerEvaluation(q)).length;
   });
 
   averageAnswerScore = computed(() => {
-    const answered = this.activeQuestions().filter((q) => !!q.answer);
+    const answered = this.activeQuestions().filter((q) => this.hasAnswerEvaluation(q));
     if (answered.length === 0) return 0;
-    const sum = answered.reduce((acc, cur) => acc + (cur.answer?.score || 0), 0);
+    const sum = answered.reduce((acc, cur) => acc + Number(cur.answer!.score), 0);
     return Math.round((sum / answered.length) * 10) / 10;
   });
 
@@ -203,6 +217,7 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
         qState.mediaRecorder.stop();
       } catch (_) {}
     }
+    this.stopLiveTranscription(qState);
     if (qState.activeStreams) {
       this.cleanupActiveStreams(qState.activeStreams);
       qState.activeStreams = [];
@@ -211,8 +226,15 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
   }
 
   loadData(): void {
+    const jobId = this.jobId ?? this.injectedModalData?.jobId;
+    const appId = this.appId ?? this.injectedModalData?.appId;
+    if (!jobId || !appId) {
+      this.loading.set(false);
+      this.message.error('Thiếu thông tin để mở phòng phỏng vấn');
+      return;
+    }
     this.loading.set(true);
-    this.jobService.getInterviewData(this.modalData.jobId, this.modalData.appId).subscribe({
+    this.jobService.getInterviewData(jobId, appId).subscribe({
       next: (res: InterviewDataResponse) => {
         this.data.set(res);
         this.overallScore.set(res.interview?.overall_score ?? null);
@@ -241,9 +263,15 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
             rawAudioUrl: ans?.audio_url || undefined,
             audioUrl: ans?.audio_url || undefined,
             transcript: ans?.transcript || '',
+            liveTranscript: '',
+            interimTranscript: '',
+            liveTranscriptActive: false,
+            liveTranscriptSupported: this.supportsLiveTranscription(),
+            transcriptFinalized: !!ans?.transcript,
+            transcriptionFailed: false,
             transcribing: false,
             evaluating: false,
-            answer: ans,
+            answer: this.isCompleteAnswer(ans) ? ans : undefined,
             showGuide: false,
             volumeLevel: 0,
           };
@@ -263,6 +291,19 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
 
   isAnyRecording(): boolean {
     return this.allQuestionStates().some((q) => q.recording);
+  }
+
+  hasAnswerEvaluation(qState: QuestionState): boolean {
+    return this.isCompleteAnswer(qState.answer);
+  }
+
+  private isCompleteAnswer(answer?: InterviewAnswer): answer is InterviewAnswer {
+    return !!answer
+      && Number.isFinite(Number(answer.score))
+      && typeof answer.assessment === 'string'
+      && answer.assessment.trim().length > 0
+      && Array.isArray(answer.strengths)
+      && Array.isArray(answer.improvements);
   }
 
   getAudioSrc(qState: QuestionState, index?: number): string {
@@ -453,6 +494,11 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
       qState.rawAudioUrl = undefined;
       qState.audioUrl = undefined;
       qState.audioBlob = undefined;
+      qState.transcript = '';
+      qState.liveTranscript = '';
+      qState.interimTranscript = '';
+      qState.transcriptFinalized = false;
+      qState.transcriptionFailed = false;
       qState.activeStreams = activeStreams;
       qState.audioContext = audioCtx || undefined;
       qState.analyser = analyser || undefined;
@@ -512,12 +558,14 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
 
           this.cleanupActiveStreams(qState.activeStreams);
           qState.activeStreams = [];
-          this.message.success('Đã lưu bản ghi âm! Bạn có thể bấm Play nghe lại hoặc bấm Bóc băng/Chấm điểm.');
+          this.message.success('Đã lưu bản ghi âm. Hệ thống đang hoàn thiện bản chép lời...');
           this.cdr.detectChanges();
+          this.transcribeAudioOnly(qState, this.activeQuestions().indexOf(qState), true);
         });
       };
 
       mediaRecorder.start(100);
+      this.startLiveTranscription(qState);
 
       qState.timerInterval = setInterval(() => {
         this.ngZone.run(() => {
@@ -594,6 +642,7 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
   stopRecording(qState: QuestionState): void {
     if (qState.recording) {
       qState.recording = false;
+      this.stopLiveTranscription(qState);
       if (qState.mediaRecorder && qState.mediaRecorder.state === 'recording') {
         try {
           qState.mediaRecorder.requestData();
@@ -625,19 +674,23 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
       qState.localAudioUrl = url;
       qState.rawAudioUrl = url;
       qState.audioUrl = url;
+      qState.transcriptFinalized = false;
+      qState.transcriptionFailed = false;
       this.message.success(`Đã nạp file âm thanh: ${file.name}`);
       this.cdr.detectChanges();
     }
   }
 
-  transcribeAudioOnly(qState: QuestionState, index: number): void {
+  transcribeAudioOnly(qState: QuestionState, index: number, automatic = false): void {
     const d = this.data();
     if (!d || !d.interview?.id || !qState.audioBlob) {
       this.message.warning('Chưa có file ghi âm để bóc băng');
       return;
     }
+    if (qState.transcribing) return;
 
     qState.transcribing = true;
+    qState.transcriptionFailed = false;
     this.cdr.detectChanges();
 
     this.jobService
@@ -654,13 +707,19 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
             qState.transcribing = false;
             if (res.transcript) {
               qState.transcript = res.transcript;
+              qState.liveTranscript = '';
+              qState.interimTranscript = '';
+              qState.transcriptFinalized = true;
               if (res.audio_url) {
                 // Do not overwrite localAudioUrl so user can still listen instantly
                 qState.rawAudioUrl = qState.localAudioUrl || res.audio_url;
                 qState.audioUrl = res.audio_url;
               }
-              this.message.success('Bóc băng lời nói thành văn bản thành công!');
+              this.message.success(automatic
+                ? 'Đã hoàn thiện bản chép lời từ bản ghi âm.'
+                : 'Bóc băng lời nói thành văn bản thành công!');
             } else {
+              qState.transcriptionFailed = true;
               this.message.warning('Không nhận diện được giọng nói trong bản ghi âm.');
             }
             this.cdr.detectChanges();
@@ -669,11 +728,116 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.ngZone.run(() => {
             qState.transcribing = false;
-            this.message.error(err?.error?.detail || 'Lỗi khi bóc băng âm thanh');
+            qState.transcriptionFailed = true;
+            if (err?.status === 503) {
+              this.message.warning(
+                qState.transcript.trim()
+                  ? 'Dịch vụ STT đang bận. Bản nháp trực tiếp đã được giữ lại; bạn có thể thử hoàn thiện sau.'
+                  : 'Dịch vụ STT đang bận. Bản ghi âm đã được giữ lại; vui lòng thử lại sau ít phút.'
+              );
+            } else {
+              this.message.error(err?.error?.detail || 'Không thể hoàn thiện bản chép lời. Bản ghi âm vẫn được giữ để thử lại.');
+            }
             this.cdr.detectChanges();
           });
         },
       });
+  }
+
+  private supportsLiveTranscription(): boolean {
+    const browserWindow = window as any;
+    return !!(browserWindow.SpeechRecognition || browserWindow.webkitSpeechRecognition);
+  }
+
+  private startLiveTranscription(qState: QuestionState): void {
+    const browserWindow = window as any;
+    const Recognition = browserWindow.SpeechRecognition || browserWindow.webkitSpeechRecognition;
+    qState.liveTranscriptSupported = !!Recognition;
+    if (!Recognition) return;
+
+    const recognition = new Recognition();
+    recognition.lang = 'vi-VN';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    qState.speechRecognition = recognition;
+
+    recognition.onstart = () => {
+      this.ngZone.run(() => {
+        qState.liveTranscriptActive = true;
+        this.cdr.detectChanges();
+      });
+    };
+
+    recognition.onresult = (event: any) => {
+      let confirmed = '';
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const text = event.results[i]?.[0]?.transcript || '';
+        if (event.results[i].isFinal) confirmed += text;
+        else interim += text;
+      }
+
+      this.ngZone.run(() => {
+        if (confirmed.trim()) {
+          qState.liveTranscript = `${qState.liveTranscript} ${confirmed}`.trim();
+        }
+        qState.interimTranscript = interim.trim();
+        qState.transcript = [qState.liveTranscript, qState.interimTranscript]
+          .filter(Boolean)
+          .join(' ')
+          .trim();
+        this.cdr.detectChanges();
+      });
+    };
+
+    recognition.onerror = (event: any) => {
+      this.ngZone.run(() => {
+        qState.liveTranscriptActive = false;
+        if (event?.error === 'not-allowed' || event?.error === 'service-not-allowed') {
+          qState.liveTranscriptSupported = false;
+          this.message.warning('Trình duyệt không cho phép nhận dạng trực tiếp. Bản ghi vẫn được bóc băng sau khi dừng.');
+        }
+        this.cdr.detectChanges();
+      });
+    };
+
+    recognition.onend = () => {
+      this.ngZone.run(() => {
+        qState.liveTranscriptActive = false;
+        if (qState.recording && qState.liveTranscriptSupported) {
+          qState.speechRestartTimer = setTimeout(() => {
+            if (!qState.recording) return;
+            try {
+              recognition.start();
+            } catch (_) {}
+          }, 250);
+        }
+        this.cdr.detectChanges();
+      });
+    };
+
+    try {
+      recognition.start();
+    } catch (_) {
+      qState.liveTranscriptActive = false;
+    }
+  }
+
+  private stopLiveTranscription(qState: QuestionState): void {
+    if (qState.speechRestartTimer) {
+      clearTimeout(qState.speechRestartTimer);
+      qState.speechRestartTimer = undefined;
+    }
+    if (qState.speechRecognition) {
+      try {
+        qState.speechRecognition.stop();
+      } catch (_) {}
+      qState.speechRecognition = undefined;
+    }
+    qState.liveTranscriptActive = false;
+    qState.interimTranscript = '';
+    if (qState.liveTranscript.trim()) qState.transcript = qState.liveTranscript.trim();
   }
 
   evaluateAnswer(qState: QuestionState, index: number): void {
@@ -724,6 +888,15 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
   triggerSummary(): void {
     const d = this.data();
     if (!d || !d.interview?.id) return;
+
+    // HR may move to the final decision at any time. AI summary is only
+    // generated when at least one answer has actually been evaluated.
+    this.activeTabIndex = 2;
+    if (this.answeredCount() === 0) {
+      this.message.info('Chưa có câu trả lời được chấm. HR vẫn có thể đưa ra quyết định thủ công.');
+      this.cdr.detectChanges();
+      return;
+    }
 
     this.summarizing = true;
     this.cdr.detectChanges();
@@ -797,6 +970,12 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
               recordingSeconds: 0,
               audioChunks: [],
               transcript: '',
+              liveTranscript: '',
+              interimTranscript: '',
+              liveTranscriptActive: false,
+              liveTranscriptSupported: this.supportsLiveTranscription(),
+              transcriptFinalized: false,
+              transcriptionFailed: false,
               transcribing: false,
               evaluating: false,
               showGuide: false,
@@ -838,6 +1017,12 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
               recordingSeconds: 0,
               audioChunks: [],
               transcript: '',
+              liveTranscript: '',
+              interimTranscript: '',
+              liveTranscriptActive: false,
+              liveTranscriptSupported: this.supportsLiveTranscription(),
+              transcriptFinalized: false,
+              transcriptionFailed: false,
               transcribing: false,
               evaluating: false,
               showGuide: false,
@@ -876,12 +1061,23 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
           shortlisted: 'Quay lại Shortlist',
         };
         this.message.success(`${d.candidate.name}: ${labels[newStatus] || newStatus}`);
-        this.modalRef.close({ statusUpdated: newStatus });
+        const result = { statusUpdated: newStatus };
+        if (this.modalRef) {
+          this.modalRef.close(result);
+        } else {
+          this.roomClosed.emit(result);
+        }
       },
       error: (err) => {
         this.message.error(err?.error?.detail || 'Lỗi cập nhật trạng thái');
       },
     });
+  }
+
+  closeRoom(): void {
+    this.allQuestionStates().forEach((qState) => this.cleanupAudioResources(qState));
+    if (this.modalRef) this.modalRef.close();
+    else this.roomClosed.emit();
   }
 
   formatSeconds(sec: number): string {

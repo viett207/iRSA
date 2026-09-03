@@ -1,5 +1,5 @@
 <div class="shortlisted-page">
-  <!-- Page Header & Quick KPIs -->
+  <!-- Page Header -->
   <div class="page-top-bar">
     <div class="header-content">
       <h2 class="page-title">
@@ -9,34 +9,23 @@
         Danh sách ứng viên đã qua sơ loại CV. Xem báo cáo AI & JD, thiết lập lịch hẹn hoặc bắt đầu phỏng vấn AI trực tiếp.
       </p>
     </div>
+    <nav class="nav-tabs" aria-label="Chế độ quản lý phỏng vấn">
+      <button
+        class="nav-tab-btn"
+        [class.active]="viewMode() === 'flat'"
+        (click)="setViewMode('flat')"
+      >
+        Bảng tổng hợp
+        <span class="tab-badge">{{ jobsOptions().length }} vị trí</span>
+      </button>
 
-    <!-- Quick Stats Cards -->
-    <div class="header-kpis">
-      <div class="kpi-card">
-        <span class="kpi-num">{{ applicants().length }}</span>
-        <span class="kpi-lbl">Tổng ứng viên</span>
-      </div>
-      <div class="kpi-card kpi-card--scheduled">
-        <span class="kpi-num">{{ scheduledCount() }}</span>
-        <span class="kpi-lbl">Đã có lịch hẹn</span>
-      </div>
-      <div class="kpi-card kpi-card--pending">
-        <span class="kpi-num">{{ unscheduledCount() }}</span>
-        <span class="kpi-lbl">Chờ xếp lịch</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main View Navigation Bar -->
-  <div class="view-navigation-bar">
-    <div class="nav-tabs">
       <button
         class="nav-tab-btn"
         [class.active]="viewMode() === 'grouped'"
         (click)="setViewMode('grouped')"
       >
-        Theo vị trí công việc
-        <span class="tab-badge">{{ groupedJobs().length }}</span>
+        Hàng đợi xử lý
+        <span class="tab-badge">{{ applicants().length }} hồ sơ</span>
       </button>
 
       <button
@@ -44,56 +33,21 @@
         [class.active]="viewMode() === 'calendar'"
         (click)="setViewMode('calendar')"
       >
-        Lịch phỏng vấn
-        <span class="tab-badge tab-badge--highlight">{{ calendarEvents().length }}</span>
+        Lịch tổng thể
+        <span class="tab-badge">{{ scheduledCount() }} lịch</span>
       </button>
-
-      <button
-        class="nav-tab-btn"
-        [class.active]="viewMode() === 'flat'"
-        (click)="setViewMode('flat')"
-      >
-        Toàn bộ danh sách
-        <span class="tab-badge">{{ applicants().length }}</span>
-      </button>
-    </div>
+    </nav>
   </div>
 
   <!-- Filters & Toolbar (for Grouped and Flat views) -->
   @if (viewMode() !== 'calendar') {
     <div class="shortlisted-toolbar">
       <div class="toolbar-left">
-        <!-- Status Filter Pills -->
-        <div class="status-pills">
-          <button
-            class="pill-btn"
-            [class.active]="scheduleFilter() === 'all'"
-            (click)="scheduleFilter.set('all')"
-          >
-            Tất cả ({{ applicants().length }})
-          </button>
-          <button
-            class="pill-btn pill-btn--pending"
-            [class.active]="scheduleFilter() === 'unscheduled'"
-            (click)="scheduleFilter.set('unscheduled')"
-          >
-            Chờ xếp lịch ({{ unscheduledCount() }})
-          </button>
-          <button
-            class="pill-btn pill-btn--scheduled"
-            [class.active]="scheduleFilter() === 'scheduled'"
-            (click)="scheduleFilter.set('scheduled')"
-          >
-            Đã có lịch ({{ scheduledCount() }})
-          </button>
-        </div>
-
-        <!-- Search Input -->
         <nz-input-group [nzPrefix]="searchPrefix" class="search-box">
           <input
             type="text"
             nz-input
-            placeholder="Tìm theo tên, email, vị trí..."
+            placeholder="Tìm ứng viên, email hoặc vị trí..."
             [ngModel]="searchQuery()"
             (ngModelChange)="searchQuery.set($event)"
           />
@@ -102,55 +56,525 @@
           <span nz-icon nzType="search"></span>
         </ng-template>
 
-        <!-- Job Filter -->
-        @if (jobsOptions().length > 1) {
-          <nz-select
-            class="job-select-filter"
-            nzPlaceHolder="Tất cả vị trí"
-            nzAllowClear
-            [ngModel]="selectedJobFilter()"
-            (ngModelChange)="selectedJobFilter.set($event)"
-          >
-            @for (job of jobsOptions(); track job.id) {
-              <nz-option [nzValue]="job.id" [nzLabel]="job.title"></nz-option>
-            }
-          </nz-select>
-        }
+        <nz-select
+          class="job-select-filter"
+          nzPlaceHolder="Tất cả vị trí"
+          nzAllowClear
+          [ngModel]="selectedJobFilter()"
+          (ngModelChange)="selectedJobFilter.set($event)"
+        >
+          @for (job of jobsOptions(); track job.id) {
+            <nz-option [nzValue]="job.id" [nzLabel]="job.title"></nz-option>
+          }
+        </nz-select>
+
+        <nz-select
+          class="schedule-select-filter"
+          [ngModel]="scheduleFilter()"
+          (ngModelChange)="scheduleFilter.set($event)"
+        >
+          <nz-option nzValue="all" nzLabel="Tất cả lịch hẹn"></nz-option>
+          <nz-option nzValue="unscheduled" [nzLabel]="'Chờ xếp lịch (' + unscheduledCount() + ')'" ></nz-option>
+          <nz-option nzValue="scheduled" [nzLabel]="'Đã có lịch (' + scheduledCount() + ')'" ></nz-option>
+        </nz-select>
+
+        <nz-select
+          class="priority-select-filter"
+          [ngModel]="aiPriorityFilter()"
+          (ngModelChange)="aiPriorityFilter.set($event)"
+        >
+          <nz-option nzValue="all" nzLabel="Tất cả hồ sơ"></nz-option>
+          <nz-option nzValue="attention" nzLabel="Cần xem xét"></nz-option>
+        </nz-select>
+
+        <nz-select
+          class="question-select-filter"
+          [ngModel]="questionFilter()"
+          (ngModelChange)="questionFilter.set($event)"
+        >
+          <nz-option nzValue="all" nzLabel="Mọi trạng thái câu hỏi AI"></nz-option>
+          <nz-option nzValue="needs-preparation" nzLabel="Chưa chuẩn bị câu hỏi AI"></nz-option>
+          <nz-option nzValue="ready" nzLabel="Đã chuẩn bị câu hỏi AI"></nz-option>
+        </nz-select>
+
+        <nz-select
+          class="sort-select-filter"
+          [ngModel]="sortBy"
+          (ngModelChange)="changeSortBy($event)"
+        >
+          <nz-option nzValue="date" nzLabel="Mới nhất trước"></nz-option>
+          <nz-option nzValue="ai_score" nzLabel="Điểm AI cao nhất"></nz-option>
+          <nz-option nzValue="score" nzLabel="Khớp JD cao nhất"></nz-option>
+        </nz-select>
       </div>
 
       <div class="toolbar-right">
-        @if (viewMode() === 'grouped' && groupedJobs().length > 0) {
-          <button
-            nz-button
-            nzSize="small"
-            nzType="default"
-            class="btn-toggle-expand"
-            (click)="toggleExpandAll()"
-            nz-tooltip
-            [nzTooltipTitle]="isAllExpanded() ? 'Thu gọn tất cả các vị trí tuyển dụng' : 'Mở rộng tất cả các vị trí tuyển dụng'"
-          >
-            <span nz-icon [nzType]="isAllExpanded() ? 'shrink' : 'arrows-alt'"></span>
-            {{ isAllExpanded() ? 'Thu gọn tất cả' : 'Mở rộng tất cả' }}
-          </button>
+        @if (hasWorkspaceFilters()) {
+          <button type="button" class="clear-filter-button" (click)="clearWorkspaceFilters()">Xóa lọc</button>
         }
 
-        <button
-          nz-button
-          nzSize="small"
-          [disabled]="compareSelected.size !== 2 || !canCompare()"
-          (click)="openCompare()"
-          nz-tooltip
-          [nzTooltipTitle]="!canCompare() ? 'Chọn 2 ứng viên cùng vị trí để so sánh' : 'So sánh 2 ứng viên'"
-        >
-          So sánh ({{ compareSelected.size }}/2)
-        </button>
       </div>
     </div>
   }
 
   <nz-spin [nzSpinning]="loading() || calendarLoading()">
-    <!-- 1. GROUPED BY JOB VIEW -->
+    <!-- 1. CANDIDATE QUEUE + DETAIL WORKSPACE -->
     @if (viewMode() === 'grouped') {
+      <section class="candidate-workspace-shell" [class.queue-collapsed]="queueCollapsed()">
+        <aside class="candidate-queue">
+          <header class="candidate-queue__header">
+            <div class="candidate-queue__title">
+              <span>HÀNG ĐỢI ỨNG VIÊN</span>
+              <h3>{{ filteredApplicants().length }} hồ sơ cần xử lý</h3>
+            </div>
+            <div class="candidate-queue__controls">
+              @if (workspaceApplicantId() != null && !queueCollapsed()) {
+                <button type="button" class="queue-overview-btn" (click)="clearWorkspaceApplicant()">Tổng quan</button>
+              }
+              <button
+                type="button"
+                class="queue-collapse-btn"
+                (click)="toggleQueueCollapsed()"
+                [attr.aria-label]="queueCollapsed() ? 'Mở danh sách ứng viên' : 'Thu gọn danh sách ứng viên'"
+                [attr.title]="queueCollapsed() ? 'Mở danh sách ứng viên' : 'Thu gọn danh sách ứng viên'"
+              >{{ queueCollapsed() ? '☰' : '‹' }}</button>
+            </div>
+          </header>
+
+          <div class="candidate-queue__body">
+            @if (filteredApplicants().length === 0) {
+              <div class="queue-empty">Không có ứng viên phù hợp với bộ lọc hiện tại.</div>
+            }
+            @for (app of filteredApplicants(); track app.id) {
+              <button
+                type="button"
+                class="candidate-queue-card"
+                [class.active]="workspaceApplicantId() === app.id"
+                (click)="selectWorkspaceApplicant(app)"
+                [attr.title]="queueCollapsed() ? app.candidate_name : null"
+              >
+                <span class="candidate-avatar">{{ getCandidateInitials(app.candidate_name) }}</span>
+                <span class="candidate-queue-card__content">
+                  <span class="candidate-queue-card__heading">
+                    <strong>{{ app.candidate_name }}</strong>
+                    <span class="queue-status" [attr.data-status]="getScheduleStatusClass(app)">{{ getScheduleStatusLabel(app) }}</span>
+                  </span>
+                  <small class="candidate-job-name">{{ app.job_title }}</small>
+                  <span class="candidate-score-line">
+                    <span>Khớp JD <b>{{ getMatchingScore(app) != null ? getMatchingScore(app) + '/100' : '—' }}</b></span>
+                    <span>AI <b>{{ app.ai_score != null ? (app.ai_score | number:'1.0-0') + '/100' : 'Chưa chấm' }}</b></span>
+                    @if (needsReview(app)) {
+                      <span class="candidate-review-flag">Cần xem xét</span>
+                    }
+                  </span>
+                  <span
+                    class="question-readiness-badge"
+                    [attr.data-status]="getQuestionPreparationStatus(app)"
+                  >{{ getQuestionPreparationLabel(app) }}</span>
+                  @if (app.interview_date && app.interview_status !== 'cancelled') {
+                    <time>{{ app.interview_date | date:'dd/MM/yyyy · HH:mm' }}</time>
+                  } @else {
+                    <time>Nộp {{ formatDate(app.submitted_at) }}</time>
+                  }
+                </span>
+              </button>
+            }
+          </div>
+        </aside>
+
+        <main class="candidate-detail-workspace">
+          @if (selectedWorkspaceApplicant(); as selected) {
+            <header class="workspace-candidate-header">
+              <div>
+                <span class="eyebrow">HỒ SƠ ĐANG XỬ LÝ</span>
+                <h3>{{ selected.candidate_name }}</h3>
+                <p>{{ selected.candidate_email }} · {{ selected.job_title }}</p>
+              </div>
+              <div class="workspace-header-status">
+                <span class="queue-status" [attr.data-status]="getScheduleStatusClass(selected)">{{ getScheduleStatusLabel(selected) }}</span>
+                <span class="question-readiness-badge" [attr.data-status]="getQuestionPreparationStatus(selected)">{{ getQuestionPreparationLabel(selected) }}</span>
+                <button type="button" class="workspace-close" (click)="clearWorkspaceApplicant()">Đóng</button>
+              </div>
+            </header>
+
+            <nav class="workspace-tabs" aria-label="Không gian xử lý ứng viên">
+              <button type="button" [class.active]="workspaceTab() === 'report'" (click)="setWorkspaceTab('report')">Báo cáo hồ sơ</button>
+              <button type="button" [class.active]="workspaceTab() === 'documents'" (click)="setWorkspaceTab('documents')">CV &amp; JD</button>
+              <button type="button" [class.active]="workspaceTab() === 'questions'" (click)="setWorkspaceTab('questions')">
+                Câu hỏi phỏng vấn
+                <span class="tab-status" [attr.data-status]="getQuestionPreparationStatus(selected)">{{ getQuestionPreparationStatus(selected) === 'ready' ? 'Đã chuẩn bị' : 'Tùy chọn' }}</span>
+              </button>
+              <button type="button" [class.active]="workspaceTab() === 'schedule'" (click)="setWorkspaceTab('schedule')">
+                Lịch phỏng vấn
+                @if (selected.interview_date) { <span>1</span> }
+              </button>
+            </nav>
+
+            @if (workspaceTab() === 'report') {
+              <div class="workspace-panel report-workspace">
+                @if (comparisonLoadingId() === selected.id || quickViewLoadingId() === selected.id) {
+                  <div class="workspace-loading"><span nz-icon nzType="loading"></span> Đang tổng hợp báo cáo hồ sơ...</div>
+                }
+
+                @if (getWorkspaceComparison(selected.id); as comparison) {
+                  <section class="full-report-section score-section">
+                    <header class="full-report-heading">
+                      <div><span>01</span><h4>Đối chiếu CV–JD</h4></div>
+                      <p>Điểm matching theo tiêu chí JD, tách biệt với nhận định AI.</p>
+                    </header>
+
+                    <div class="score-explanation-grid score-explanation-grid--full">
+                      <article class="primary-score-card">
+                        <span>ĐỘ PHÙ HỢP TỔNG</span>
+                        <strong>{{ comparison.total_score != null ? (comparison.total_score | number:'1.0-0') : '—' }}<small>/100</small></strong>
+                        <p>Tổng hợp ba nhóm tiêu chí bên cạnh; không phải xác suất ứng viên sẽ thành công.</p>
+                      </article>
+                      <article><span>KỸ NĂNG</span><strong>{{ comparison.skill_match_score != null ? (comparison.skill_match_score | number:'1.0-0') : '—' }}<small>/100</small></strong><p>Mức độ xuất hiện của kỹ năng JD trong CV.</p></article>
+                      <article><span>KINH NGHIỆM</span><strong>{{ comparison.experience_score != null ? (comparison.experience_score | number:'1.0-0') : '—' }}<small>/100</small></strong><p>So sánh số năm và mức độ liên quan.</p></article>
+                      <article><span>HỌC VẤN</span><strong>{{ comparison.education_score != null ? (comparison.education_score | number:'1.0-0') : '—' }}<small>/100</small></strong><p>Đối chiếu cấp học tối thiểu của JD.</p></article>
+                    </div>
+
+                    <div class="criteria-facts">
+                      <article><span>Kinh nghiệm JD</span><strong>Từ {{ comparison.min_experience_years }} năm</strong></article>
+                      <article><span>Học vấn JD</span><strong>{{ getEducationLabel(comparison.min_education) }}</strong></article>
+                      <article><span>File CV</span><strong>{{ comparison.resume_filename }}</strong></article>
+                    </div>
+
+                    <div class="skill-comparison-grid">
+                      <article class="skill-result-card matched">
+                        <header><span>Kỹ năng đã tìm thấy</span><strong>{{ comparison.matched_skills.length }}</strong></header>
+                        <div class="report-tags">
+                          @for (skill of comparison.matched_skills; track skill) { <span>{{ skill }}</span> }
+                          @if (comparison.matched_skills.length === 0) { <p>Chưa tìm thấy kỹ năng khớp trực tiếp.</p> }
+                        </div>
+                      </article>
+                      <article class="skill-result-card missing">
+                        <header><span>Kỹ năng chưa có bằng chứng</span><strong>{{ comparison.missing_skills.length }}</strong></header>
+                        <div class="report-tags">
+                          @for (skill of comparison.missing_skills; track skill) { <span>{{ skill }}</span> }
+                          @if (comparison.missing_skills.length === 0) { <p>Không phát hiện kỹ năng bắt buộc còn thiếu.</p> }
+                        </div>
+                      </article>
+                    </div>
+                  </section>
+
+                } @else if (comparisonLoadingId() !== selected.id) {
+                  <div class="workspace-empty-report"><h4>Chưa tải được dữ liệu CV–JD</h4><p>Vui lòng chọn lại hồ sơ hoặc thử tải lại trang.</p></div>
+                }
+
+                @if (getQuickView(selected.id)?.ai_evaluation; as evaluation) {
+                  <section class="full-report-section ai-report-section">
+                    <header class="full-report-heading">
+                      <div><span>02</span><h4>Đánh giá hỗ trợ bởi AI</h4></div>
+                      <p>Nhận định tham khảo cho HR, không thay thế quyết định tuyển dụng.</p>
+                    </header>
+
+                    <section class="decision-summary-card">
+                      <header>
+                        <div><span>KHUYẾN NGHỊ CHO HR</span><h4>{{ getRecommendationLabel(evaluation.recommendation) }}</h4></div>
+                        <strong>{{ evaluation.overall_score | number:'1.0-0' }}/100</strong>
+                      </header>
+                      <p>{{ evaluation.overall_assessment }}</p>
+                    </section>
+
+                    <div class="candidate-fact-grid">
+                      <article><span>Kinh nghiệm phát hiện</span><strong>{{ evaluation.experience_assessment.detected_years | number:'1.0-1' }} năm</strong><p>{{ evaluation.experience_assessment.summary }}</p></article>
+                      <article><span>Kinh nghiệm liên quan</span><strong>{{ evaluation.experience_assessment.relevant_years | number:'1.0-1' }} năm</strong><p>Độ tin cậy {{ evaluation.experience_assessment.confidence | number:'1.0-0' }}%</p></article>
+                      <article><span>Học vấn phát hiện</span><strong>{{ getEducationLabel(evaluation.education_assessment.detected_level) }}</strong><p>{{ evaluation.education_assessment.summary }}</p></article>
+                    </div>
+
+                    <div class="evidence-table-wrap">
+                      <table class="evidence-table">
+                        <thead><tr><th>Kỹ năng JD</th><th>Kết quả</th><th>Cấp độ</th><th>Độ tin cậy</th><th>Bằng chứng trong CV</th></tr></thead>
+                        <tbody>
+                          @for (skill of evaluation.skill_assessments; track skill.skill) {
+                            <tr>
+                              <td><strong>{{ skill.skill }}</strong></td>
+                              <td><span class="evidence-status" [class.found]="skill.found">{{ skill.found ? 'Đã tìm thấy' : 'Chưa tìm thấy' }}</span></td>
+                              <td>{{ skill.level || 'Chưa xác định' }}</td>
+                              <td>{{ skill.confidence | number:'1.0-0' }}%</td>
+                              <td>{{ skill.evidence || 'Không có trích đoạn bằng chứng.' }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div class="assessment-list-grid">
+                      <article><h5>Điểm mạnh có bằng chứng</h5><ul>@for (item of evaluation.strengths; track item) { <li>{{ item }}</li> }</ul></article>
+                      <article><h5>Rủi ro và điểm cần làm rõ</h5><ul>@for (item of evaluation.concerns; track item) { <li>{{ item }}</li> }</ul></article>
+                    </div>
+
+                  </section>
+                } @else if (quickViewLoadingId() !== selected.id) {
+                  <div class="workspace-empty-report"><h4>Hồ sơ chưa có đánh giá AI</h4><p>Phần CV–JD phía trên vẫn có thể được dùng để kiểm tra bằng chứng trước khi xếp lịch.</p></div>
+                }
+
+                <footer class="workspace-actions workspace-actions--sticky">
+                  <button nz-button nzType="primary" (click)="setWorkspaceTab('schedule')">Tiếp tục xếp lịch</button>
+                </footer>
+              </div>
+            } @else if (workspaceTab() === 'documents') {
+              <div class="workspace-panel document-workspace">
+                <header class="document-workspace-toolbar">
+                  <div>
+                    <h4>CV và yêu cầu công việc</h4>
+                    <p>Chuyển nhanh giữa CV gốc, JD hoặc đọc song song hai tài liệu.</p>
+                  </div>
+                  <div class="document-mode-switch" role="tablist" aria-label="Chế độ đọc tài liệu">
+                    <button type="button" [class.active]="documentMode() === 'cv'" (click)="setDocumentMode('cv')">CV</button>
+                    <button type="button" [class.active]="documentMode() === 'jd'" (click)="setDocumentMode('jd')">JD</button>
+                    <button type="button" [class.active]="documentMode() === 'split'" (click)="setDocumentMode('split')">Song song</button>
+                  </div>
+                </header>
+
+                @if (getWorkspaceComparison(selected.id); as comparison) {
+                  <div class="document-viewer-grid" [attr.data-mode]="documentMode()">
+                    @if (documentMode() !== 'jd') {
+                      <article class="document-pane cv-document-pane">
+                        <header><div><strong>CV ứng viên</strong><small>{{ comparison.resume_filename }}</small></div><span>PDF gốc</span></header>
+                        <div class="pdf-workspace-viewer">
+                          @if (workspaceResumeLoading()) {
+                            <div class="document-state"><span nz-icon nzType="loading"></span><p>Đang tải CV...</p></div>
+                          } @else if (workspaceResumeError()) {
+                            <div class="document-state"><strong>Chưa thể hiển thị CV</strong><p>{{ workspaceResumeError() }}</p></div>
+                          } @else if (workspaceResumeUrl()) {
+                            <iframe [src]="workspaceResumeUrl()" [title]="'CV của ' + selected.candidate_name"></iframe>
+                          }
+                        </div>
+                      </article>
+                    }
+
+                    @if (documentMode() !== 'cv') {
+                      <article class="document-pane jd-document-pane">
+                        <header><div><strong>Yêu cầu công việc</strong><small>{{ comparison.job_title }}</small></div><span>JD</span></header>
+                        <div class="jd-workspace-document">
+                          <section class="jd-fact-row">
+                            <article><span>Kinh nghiệm</span><strong>Từ {{ comparison.min_experience_years }} năm</strong></article>
+                            <article><span>Học vấn</span><strong>{{ getEducationLabel(comparison.min_education) }}</strong></article>
+                          </section>
+                          <section><h5>Mô tả công việc</h5><p>{{ comparison.job_description || 'Chưa có mô tả công việc.' }}</p></section>
+                          <section><h5>Yêu cầu ứng viên</h5><p>{{ comparison.job_requirements || 'Chưa có yêu cầu ứng viên.' }}</p></section>
+                          <section><h5>Kỹ năng bắt buộc</h5><div class="jd-skill-tags">@for (skill of comparison.must_have_skills; track skill) { <span>{{ skill }}</span> }</div></section>
+                          @if (comparison.nice_to_have_skills.length) {
+                            <section><h5>Kỹ năng ưu tiên</h5><div class="jd-skill-tags preferred">@for (skill of comparison.nice_to_have_skills; track skill) { <span>{{ skill }}</span> }</div></section>
+                          }
+                        </div>
+                      </article>
+                    }
+                  </div>
+                } @else if (comparisonLoadingId() === selected.id) {
+                  <div class="workspace-loading"><span nz-icon nzType="loading"></span> Đang tải CV và JD...</div>
+                } @else {
+                  <div class="workspace-empty-report"><h4>Chưa tải được CV và JD</h4><p>Vui lòng chọn lại hồ sơ hoặc thử tải lại trang.</p></div>
+                }
+              </div>
+            } @else if (workspaceTab() === 'questions') {
+              <div class="workspace-panel question-workspace">
+                <header class="question-workspace-heading">
+                  <div>
+                    <h4>Bộ câu hỏi cho phòng phỏng vấn AI</h4>
+                    <p>Tính năng tùy chọn: chọn và chỉnh sửa câu hỏi khi HR muốn sử dụng phòng phỏng vấn AI.</p>
+                  </div>
+                  <div class="question-heading-actions">
+                    <button nz-button class="question-action-button question-action-button--manual" (click)="addWorkspaceQuestion(selected.id)">HR tự thêm</button>
+                    <button
+                      nz-button
+                      class="question-action-button question-action-button--ai"
+                      [nzLoading]="questionsGeneratingId() === selected.id"
+                      [disabled]="questionsGeneratingId() !== null && questionsGeneratingId() !== selected.id"
+                      (click)="requestAiWorkspaceQuestions(selected)"
+                    >Yêu cầu AI đề xuất thêm</button>
+                  </div>
+                </header>
+
+                <section class="question-preparation-summary">
+                  <span>
+                    <small>Tổng bộ câu hỏi</small>
+                    <strong>{{ getWorkspaceQuestions(selected.id).length }} câu</strong>
+                    <em>AI {{ getAiQuestionCount(selected.id) }} · HR {{ getHrQuestionCount(selected.id) }}</em>
+                  </span>
+                  <span><small>Được chọn sử dụng</small><strong>{{ getSelectedQuestionCount(selected.id) }} câu</strong></span>
+                  <span><small>HR đã điều chỉnh</small><strong>{{ getEditedQuestionCount(selected.id) }} câu</strong></span>
+                  <span><small>Trạng thái phát hành</small><strong>{{ getQuestionPreparationStatus(selected) === 'ready' ? 'Đã xác nhận' : 'Chưa xác nhận' }}</strong></span>
+                </section>
+
+                @if (quickViewLoadingId() === selected.id) {
+                  <div class="workspace-loading"><span nz-icon nzType="loading"></span> Đang tải câu hỏi AI đề xuất...</div>
+                } @else if (getWorkspaceQuestions(selected.id).length === 0) {
+                  <div class="question-empty-state">
+                    <h4>Chưa có câu hỏi phỏng vấn</h4>
+                    <p>Yêu cầu AI tạo bộ câu hỏi theo JD và khoảng thiếu của hồ sơ, sau đó HR rà soát trước khi dùng.</p>
+                    <div class="question-empty-actions">
+                      <button
+                        nz-button
+                        class="question-action-button question-action-button--ai"
+                        [nzLoading]="questionsGeneratingId() === selected.id"
+                        (click)="requestAiWorkspaceQuestions(selected)"
+                      >Yêu cầu AI đề xuất câu hỏi</button>
+                      <button nz-button class="question-action-button question-action-button--manual" (click)="addWorkspaceQuestion(selected.id)">HR tự thêm</button>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="question-editor-list">
+                    @for (question of getWorkspaceQuestions(selected.id); track question.id; let index = $index) {
+                      <article class="question-editor-card" [class.not-selected]="!question.selected">
+                        <div class="question-select-column">
+                          <button
+                            type="button"
+                            class="question-number-toggle"
+                            [class.selected]="question.selected"
+                            [attr.aria-pressed]="question.selected"
+                            [attr.aria-label]="(question.selected ? 'Bỏ chọn câu hỏi ' : 'Chọn câu hỏi ') + (index + 1)"
+                            (click)="updateWorkspaceQuestion(selected.id, question.id, { selected: !question.selected })"
+                          >{{ index + 1 }}</button>
+                        </div>
+                        <div class="question-editor-content">
+                          <div class="question-meta-row">
+                            <span class="question-source" [class.hr]="question.source === 'hr'">{{ question.source === 'ai' ? 'AI đề xuất' : 'HR bổ sung' }}</span>
+                            @if (question.target_skill) { <span class="question-target">{{ question.target_skill }}</span> }
+                          </div>
+                          <textarea
+                            nz-input
+                            [nzAutosize]="{ minRows: 2, maxRows: 10 }"
+                            [ngModel]="question.question"
+                            (ngModelChange)="updateWorkspaceQuestion(selected.id, question.id, { question: $event })"
+                            placeholder="Nhập nội dung câu hỏi phỏng vấn"
+                          ></textarea>
+                          <input
+                            type="text"
+                            [ngModel]="question.purpose"
+                            (ngModelChange)="updateWorkspaceQuestion(selected.id, question.id, { purpose: $event })"
+                            placeholder="Mục tiêu cần đánh giá"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          class="question-card-menu"
+                          nz-dropdown
+                          nzTrigger="click"
+                          [nzDropdownMenu]="questionActions"
+                          [attr.aria-label]="'Tùy chọn câu hỏi ' + (index + 1)"
+                        >⋯</button>
+                        <nz-dropdown-menu #questionActions="nzDropdownMenu">
+                          <ul nz-menu>
+                            <li
+                              nz-menu-item
+                              class="question-delete-menu-item"
+                              nz-popconfirm
+                              nzPopconfirmTitle="Xóa câu hỏi này khỏi bộ câu hỏi?"
+                              (nzOnConfirm)="removeWorkspaceQuestion(selected.id, question.id)"
+                            >Xóa câu hỏi</li>
+                          </ul>
+                        </nz-dropdown-menu>
+                      </article>
+                    }
+                  </div>
+                }
+
+                <footer class="workspace-actions workspace-actions--sticky question-save-bar">
+                  <span>{{ selected.interview_date ? 'Xác nhận để phát hành bộ câu hỏi vào phòng phỏng vấn AI.' : 'Có thể chỉnh trước, nhưng cần đặt lịch để xác nhận chính thức.' }}</span>
+                  <button
+                    nz-button
+                    nzType="primary"
+                    [nzLoading]="questionsSaving()"
+                    (click)="saveWorkspaceQuestions(selected)"
+                  >{{ selected.interview_date ? 'Xác nhận bộ câu hỏi' : 'Lưu bản nháp' }}</button>
+                </footer>
+              </div>
+            } @else {
+              <div class="workspace-panel schedule-workspace">
+                @if (selected.interview_date && selected.interview_status !== 'cancelled') {
+                  <section class="scheduled-summary-card">
+                    <div class="scheduled-date-block">
+                      <span>{{ selected.interview_date | date:'EEEE':'':'vi-VN' }}</span>
+                      <strong>{{ selected.interview_date | date:'dd/MM/yyyy' }}</strong>
+                      <b>{{ selected.interview_date | date:'HH:mm' }}</b>
+                    </div>
+                    <div class="scheduled-summary-content">
+                      <span class="queue-status" [attr.data-status]="getScheduleStatusClass(selected)">{{ getScheduleStatusLabel(selected) }}</span>
+                      <h4>Lịch phỏng vấn của {{ selected.candidate_name }}</h4>
+                      <p>{{ selected.interview_type === 'offline' ? 'Phỏng vấn trực tiếp' : 'Phỏng vấn trực tuyến' }}</p>
+                      <small>{{ getRoomAvailabilityLabel(selected.interview_date, selected.interview_status) }}</small>
+                    </div>
+                  </section>
+                  <div class="schedule-context-note">
+                    Sau khi lưu lịch, hồ sơ vẫn được giữ tại workspace này. Trạng thái sẽ là “Chờ xác nhận” cho tới khi quy trình xác nhận được hoàn tất.
+                  </div>
+                  <div class="schedule-question-readiness" [attr.data-status]="getQuestionPreparationStatus(selected)">
+                    <div>
+                      <strong>{{ getQuestionPreparationLabel(selected) }}</strong>
+                      <span>
+                        @if (getQuestionPreparationStatus(selected) === 'ready') {
+                          {{ getQuestionPreparationCount(selected) }} câu đã được xác nhận cho phòng phỏng vấn AI.
+                        } @else {
+                          Phỏng vấn AI là tùy chọn. HR có thể chuẩn bị câu hỏi nếu muốn sử dụng phòng AI cho hồ sơ này.
+                        }
+                      </span>
+                    </div>
+                    @if (getQuestionPreparationStatus(selected) !== 'ready') {
+                      <button type="button" (click)="setWorkspaceTab('questions')">Chuẩn bị cho AI</button>
+                    }
+                  </div>
+                  <footer class="workspace-actions">
+                    <button nz-button (click)="openScheduleInterview(selected)">Đổi hoặc quản lý lịch</button>
+                    <button
+                      nz-button
+                      nzType="primary"
+                      class="btn-interview-room"
+                      [disabled]="!canEnterInterview(selected)"
+                      (click)="openInterviewRoom(selected)"
+                      nz-tooltip
+                      [nzTooltipTitle]="getInterviewActionHint(selected)"
+                    >Vào phòng phỏng vấn</button>
+                  </footer>
+                } @else {
+                  <div class="schedule-empty-state">
+                    <span class="schedule-empty-state__date">CHƯA CÓ LỊCH</span>
+                    <h4>Xếp lịch phỏng vấn cho {{ selected.candidate_name }}</h4>
+                    <p>Chọn ngày, giờ, hình thức và gửi hướng dẫn tham gia cho ứng viên.</p>
+                    <button nz-button nzType="primary" (click)="openScheduleInterview(selected)">Xếp lịch phỏng vấn</button>
+                  </div>
+                }
+              </div>
+            }
+          } @else {
+            <div class="queue-overview">
+              <header>
+                <span class="eyebrow">TỔNG QUAN HÀNG ĐỢI</span>
+                <h3>Chọn ứng viên để xem báo cáo hoặc xếp lịch</h3>
+                <p>Không tự động mở hồ sơ đầu tiên để HR chủ động lựa chọn đối tượng cần xử lý.</p>
+              </header>
+              <div class="queue-overview-metrics">
+                <article><strong>{{ unscheduledCount() }}</strong><span>Chờ xếp lịch</span></article>
+                <article><strong>{{ scheduledCount() }}</strong><span>Chờ/đã có lịch</span></article>
+                <article><strong>{{ upcomingCalendarEvents().length }}</strong><span>Lịch sắp tới</span></article>
+              </div>
+              <section class="upcoming-overview">
+                <div class="upcoming-overview__heading">
+                  <h4>Lịch phỏng vấn sắp tới</h4>
+                  <button type="button" (click)="setViewMode('calendar')">Mở lịch tổng thể</button>
+                </div>
+                @if (upcomingCalendarEvents().length === 0) {
+                  <p class="upcoming-empty">Chưa có lịch phỏng vấn sắp tới.</p>
+                } @else {
+                  @for (event of upcomingCalendarEvents(); track event.id) {
+                    <article class="upcoming-event-row">
+                      <time><b>{{ event.interview_date | date:'HH:mm' }}</b><span>{{ event.interview_date | date:'dd/MM' }}</span></time>
+                      <div><strong>{{ event.candidate_name }}</strong><span>{{ event.job_title }}</span></div>
+                      <span class="event-type">{{ event.interview_type === 'offline' ? 'Trực tiếp' : 'Online' }}</span>
+                    </article>
+                  }
+                }
+              </section>
+            </div>
+          }
+        </main>
+      </section>
+    }
+
+    <!-- Legacy grouped table retained as a non-rendered reference during migration. -->
+    @if (false) {
       <div class="grouped-section">
         @if (groupedJobs().length === 0 && !loading()) {
           <div class="empty-box">
@@ -208,7 +632,7 @@
                   </thead>
                   <tbody>
                     @for (app of group.applicants; track app.id) {
-                      <tr>
+                      <tr [class.row-expanded]="quickViewApplicationId() === app.id">
                         <!-- Compare Checkbox -->
                         <td class="cell-center">
                           <label
@@ -222,7 +646,14 @@
                         <!-- Candidate info -->
                         <td>
                           <div class="candidate-cell">
-                            <strong class="candidate-cell__name">{{ app.candidate_name }}</strong>
+                            <div class="candidate-cell__heading">
+                              <strong class="candidate-cell__name">{{ app.candidate_name }}</strong>
+                              @if ((app.ai_score ?? 0) >= 80) {
+                                <span class="insight-flag insight-flag--top">Ưu tiên</span>
+                              } @else if (app.ai_score != null && (app.ai_score ?? 0) < 50) {
+                                <span class="insight-flag insight-flag--attention">Thiếu tiêu chí</span>
+                              }
+                            </div>
                             <span class="candidate-cell__email">{{ app.candidate_email }}</span>
                             <small class="candidate-cell__date">Nộp ngày: {{ formatDate(app.submitted_at) }}</small>
                           </div>
@@ -236,7 +667,7 @@
                                 nz-button
                                 nzSize="small"
                                 class="btn-ai-report"
-                                (click)="openCvJdCompare(app)"
+                                (click)="toggleAiQuickView(app)"
                                 nz-tooltip
                                 nzTooltipTitle="Xem đối chiếu trực quan CV & JD và Báo cáo AI"
                               >
@@ -245,20 +676,21 @@
                                   nzType="circle"
                                   [nzWidth]="26"
                                   [nzStrokeWidth]="8"
-                                  [nzStrokeColor]="getScoreColor(app.ai_score)"
+                                  [nzStrokeColor]="getScoreColor(app.ai_score ?? 0)"
                                   [nzFormat]="scoreFormat"
                                 ></nz-progress>
-                                <span class="ai-btn-text">Báo cáo & JD</span>
+                                <span class="ai-score-text">{{ app.ai_score | number:'1.0-0' }}<small>/100</small></span>
+                                <span class="ai-btn-text">Xem nhanh</span>
                               </button>
                             } @else {
                               <button
                                 nz-button
                                 nzSize="small"
                                 nzType="dashed"
-                                (click)="openCvJdCompare(app)"
+                                (click)="toggleAiQuickView(app)"
                                 class="btn-ai-report--unscored"
                               >
-                                <span nz-icon nzType="file-search"></span> Đối chiếu CV-JD
+                                Chưa có đánh giá
                               </button>
                             }
                           </div>
@@ -308,7 +740,7 @@
                             nz-tooltip
                             nzTooltipTitle="Mở phòng phỏng vấn trực tiếp với AI"
                           >
-                            <span nz-icon nzType="audio"></span> Vào PV
+                                Vào phỏng vấn
                           </button>
                         </td>
 
@@ -328,7 +760,7 @@
                               (nzOnConfirm)="updateStatus(app, 'interviewing')"
                               [disabled]="transitioningApplicationId() !== null"
                             >
-                              <span nz-icon nzType="check"></span> Đạt
+                              Đạt vòng
                             </button>
 
                             <button
@@ -373,6 +805,58 @@
                           </div>
                         </td>
                       </tr>
+                      @if (quickViewApplicationId() === app.id) {
+                        <tr class="quick-view-row">
+                          <td colspan="6">
+                            <section class="ai-quick-view" aria-label="Tóm tắt đánh giá AI">
+                              <header class="ai-quick-view__header">
+                                <div>
+                                  <span class="eyebrow">Tóm tắt hỗ trợ quyết định</span>
+                                  <h4>
+                                    {{ app.candidate_name }} ·
+                                    @if (app.ai_score != null) {
+                                      {{ app.ai_score | number:'1.0-0' }}/100
+                                    } @else {
+                                      Chưa chấm AI
+                                    }
+                                  </h4>
+                                </div>
+                                <button type="button" class="quick-view-close" (click)="quickViewApplicationId.set(null)">Đóng</button>
+                              </header>
+
+                              @if (quickViewLoadingId() === app.id) {
+                                <div class="quick-view-loading"><span nz-icon nzType="loading"></span> Đang tải báo cáo...</div>
+                              } @else if (hasQuickEvaluation(app.id)) {
+                                <div class="ai-quick-view__grid">
+                                  <article>
+                                    <span class="summary-label">Điểm mạnh nổi bật</span>
+                                    <p>{{ getQuickStrength(app.id) }}</p>
+                                  </article>
+                                  <article>
+                                    <span class="summary-label">Khoảng thiếu so với JD</span>
+                                    <p>{{ getQuickConcern(app.id) }}</p>
+                                  </article>
+                                  <article>
+                                    <span class="summary-label">Câu hỏi nên xác minh</span>
+                                    <p>{{ getQuickQuestion(app.id) }}</p>
+                                  </article>
+                                </div>
+                              } @else {
+                                <div class="quick-view-empty">Chưa có báo cáo AI cho hồ sơ này. HR vẫn có thể xem đối chiếu CV–JD trước khi quyết định.</div>
+                              }
+
+                              <footer class="ai-quick-view__actions">
+                                <button nz-button nzSize="small" (click)="openCvJdCompare(app)">Mở đối chiếu CV–JD</button>
+                                @if (app.interview_date) {
+                                  <button nz-button nzSize="small" class="btn-interview-room" (click)="openInterviewRoom(app)">Vào phỏng vấn</button>
+                                } @else {
+                                  <button nz-button nzSize="small" class="btn-schedule-action" (click)="openScheduleInterview(app)">Xếp lịch phỏng vấn</button>
+                                }
+                              </footer>
+                            </section>
+                          </td>
+                        </tr>
+                      }
                     }
                   </tbody>
                 </table>
@@ -387,25 +871,21 @@
     @if (viewMode() === 'calendar') {
       <div class="calendar-section">
         <div class="calendar-view-toolbar">
-          <div class="calendar-date-nav">
-            @if (calendarDisplayMode() === 'day') {
-              <button type="button" (click)="moveSelectedDay(-1)">Trước</button>
-              <button type="button" (click)="selectToday()">Hôm nay</button>
-              <button type="button" (click)="moveSelectedDay(1)">Sau</button>
-            } @else {
-              <button type="button" (click)="moveSelectedMonth(-1)">Tháng trước</button>
-              <strong class="current-calendar-period">{{ formatMonthLabel(selectedCalendarDate()) }}</strong>
-              <button type="button" (click)="selectToday()">Hôm nay</button>
-              <button type="button" (click)="moveSelectedMonth(1)">Tháng sau</button>
-            }
+          <div class="calendar-period-heading">
+            <span>Lịch phỏng vấn</span>
+            <strong>{{ formatMonthLabel(selectedCalendarDate()) }}</strong>
           </div>
-          <div class="calendar-mode-switch" role="tablist" aria-label="Kiểu hiển thị lịch">
-            <button type="button" [class.active]="calendarDisplayMode() === 'day'" (click)="setCalendarDisplayMode('day')">Ngày</button>
-            <button type="button" [class.active]="calendarDisplayMode() === 'month'" (click)="setCalendarDisplayMode('month')">Tháng</button>
+          <div class="calendar-date-nav" aria-label="Điều hướng tháng">
+            <button type="button" class="month-nav-button" (click)="moveSelectedMonth(-1)">
+              <span aria-hidden="true">‹</span> Tháng trước
+            </button>
+            <button type="button" class="today-button" (click)="selectToday()">Hôm nay</button>
+            <button type="button" class="month-nav-button" (click)="moveSelectedMonth(1)">
+              Tháng sau <span aria-hidden="true">›</span>
+            </button>
           </div>
         </div>
 
-        @if (calendarDisplayMode() === 'month') {
         <div class="calendar-grid-wrap">
           <!-- Main Interactive Calendar -->
           <div class="calendar-main-pane">
@@ -463,8 +943,17 @@
                         </div>
                         <p>{{ ev.job_title }}</p>
                         @if (ev.location) { <small>{{ ev.location }}</small> }
+                        <span class="calendar-question-status" [attr.data-status]="ev.question_status || 'unreviewed'">{{ getCalendarQuestionLabel(ev) }}</span>
                         <div class="month-agenda-actions">
-                          <button nz-button nzSize="small" class="btn-agenda-room" (click)="openCalendarEventRoom(ev)">Vào phỏng vấn</button>
+                          <button
+                            nz-button
+                            nzSize="small"
+                            class="btn-agenda-room"
+                            [disabled]="!canEnterCalendarEvent(ev)"
+                            (click)="openCalendarEventRoom(ev)"
+                            nz-tooltip
+                            [nzTooltipTitle]="getCalendarActionHint(ev)"
+                          >Vào phỏng vấn</button>
                           <button nz-button nzSize="small" nzType="default" (click)="openCalendarEventReschedule(ev)">Đổi lịch</button>
                         </div>
                       </div>
@@ -475,158 +964,96 @@
             </div>
           </div>
         </div>
-        } @else {
-          <section class="day-calendar-view">
-            <header class="day-calendar-header">
-              <div>
-                <span>{{ formatWeekday(selectedCalendarDate()) }}</span>
-                <h3>{{ selectedCalendarDate() | date:'dd/MM/yyyy' }}</h3>
-              </div>
-              <strong>{{ selectedDateEvents().length }} buổi phỏng vấn</strong>
-            </header>
-
-            @if (selectedDateEvents().length === 0) {
-              <div class="day-calendar-empty">
-                <h4>Ngày này chưa có lịch phỏng vấn</h4>
-                <p>Chọn ngày khác hoặc đặt lịch từ danh sách ứng viên theo vị trí công việc.</p>
-              </div>
-            } @else {
-              <div class="day-agenda-list">
-                @for (ev of selectedDateEvents(); track ev.id) {
-                  <article class="day-agenda-item">
-                    <time>{{ ev.interview_date | date:'HH:mm' }}</time>
-                    <div class="day-agenda-line"><span></span></div>
-                    <div class="day-agenda-content">
-                      <div class="day-agenda-title-row">
-                        <div>
-                          <h4>{{ ev.candidate_name }}</h4>
-                          <p>{{ ev.job_title }}</p>
-                        </div>
-                        <span class="type-pill" [class.offline]="ev.interview_type === 'offline'">
-                          {{ ev.interview_type === 'offline' ? 'Trực tiếp' : 'Online' }}
-                        </span>
-                      </div>
-                      @if (ev.location) { <p class="day-location">{{ ev.location }}</p> }
-                      <div class="day-agenda-actions">
-                        <button nz-button nzSize="small" class="btn-agenda-room" (click)="openCalendarEventRoom(ev)">Vào phỏng vấn</button>
-                        <button nz-button nzSize="small" nzType="default" (click)="openCalendarEventReschedule(ev)">Đổi lịch</button>
-                      </div>
-                    </div>
-                  </article>
-                }
-              </div>
-            }
-          </section>
-        }
       </div>
     }
 
-    <!-- 3. FLAT TABLE VIEW -->
+    <!-- 3. POSITION OPERATIONS OVERVIEW -->
     @if (viewMode() === 'flat') {
       <div class="flat-table-section">
-        <nz-table
-          #flatTable
-          [nzData]="filteredApplicants()"
-          [nzLoading]="loading()"
-          [nzTotal]="total()"
-          [nzPageIndex]="page"
-          [nzPageSize]="20"
-          [nzFrontPagination]="true"
-          nzSize="middle"
-        >
-          <thead>
-            <tr>
-              <th style="width: 36px;"></th>
-              <th style="width: 22%;">Ứng viên</th>
-              <th style="width: 22%;">Vị trí</th>
-              <th style="width: 16%;">Báo cáo AI & JD</th>
-              <th style="width: 20%;">Lịch hẹn phỏng vấn</th>
-              <th style="width: 16%; text-align: right;">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (app of flatTable.data; track app.id) {
-              <tr>
-                <td>
-                  <label
-                    nz-checkbox
-                    [nzChecked]="compareSelected.has(app.id)"
-                    [nzDisabled]="!compareSelected.has(app.id) && compareSelected.size >= 2"
-                    (nzCheckedChange)="toggleCompare(app.id, $event)"
-                  ></label>
-                </td>
-                <td>
-                  <div class="candidate-cell">
-                    <strong class="candidate-cell__name">{{ app.candidate_name }}</strong>
-                    <span class="candidate-cell__email">{{ app.candidate_email }}</span>
-                    <small class="candidate-cell__date">{{ formatDate(app.submitted_at) }}</small>
-                  </div>
-                </td>
-                <td>
-                  <a [routerLink]="['/jobs', app.job_id]"><strong>{{ app.job_title }}</strong></a>
-                </td>
-                <td>
-                  <button
-                    nz-button
-                    nzSize="small"
-                    class="btn-ai-report"
-                    (click)="openCvJdCompare(app)"
-                  >
-                    @if (app.ai_score != null) {
-                      <nz-progress
-                        [nzPercent]="app.ai_score"
-                        nzType="circle"
-                        [nzWidth]="24"
-                        [nzStrokeColor]="getScoreColor(app.ai_score)"
-                        [nzFormat]="scoreFormat"
-                      ></nz-progress>
-                    }
-                    <span class="ai-btn-text">Báo cáo & JD</span>
-                  </button>
-                </td>
-                <td>
-                  @if (app.interview_date) {
-                    <span class="scheduled-badge">
-                      <span nz-icon nzType="calendar"></span>
-                      {{ app.interview_date | date:'dd/MM HH:mm' }}
-                    </span>
-                  } @else {
-                    <button
-                      nz-button
-                      nzSize="small"
-                      nzType="primary"
-                      (click)="openScheduleInterview(app)"
-                    >
-                      <span nz-icon nzType="calendar"></span> Đặt lịch
-                    </button>
-                  }
-                </td>
-                <td class="text-right">
-                  <div class="stage-action-wrap">
-                    <button
-                      nz-button
-                      nzSize="small"
-                      class="btn-interview-room"
-                      (click)="openInterviewRoom(app)"
-                    >
-                      <span nz-icon nzType="audio"></span> PV
-                    </button>
-                    <button
-                      nz-button
-                      nzSize="small"
-                      nzType="dashed"
-                      class="btn-pass-round"
-                      nz-popconfirm
-                      nzPopconfirmTitle="Chuyển sang Vòng 2 - Phỏng vấn?"
-                      (nzOnConfirm)="updateStatus(app, 'interviewing')"
-                    >
-                      Đạt
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </nz-table>
+        <header class="position-overview-header">
+          <div>
+            <span class="eyebrow">TỔNG HỢP THEO VỊ TRÍ</span>
+            <h3>Điều phối lịch phỏng vấn theo nhu cầu tuyển dụng</h3>
+            <p>Mỗi dòng là một vị trí. Vị trí còn hồ sơ chất lượng cao chưa xếp lịch được đưa lên trước.</p>
+          </div>
+          <div class="position-overview-summary" aria-label="Tóm tắt vận hành">
+            <span><b>{{ jobInterviewOverview().length }}</b> vị trí</span>
+            <span><b>{{ overviewUnscheduledCount() }}</b> chưa xếp lịch</span>
+            <span class="summary-priority"><b>{{ overviewPriorityCount() }}</b> hồ sơ ưu tiên cần xử lý</span>
+          </div>
+        </header>
+
+        @if (jobInterviewOverview().length === 0) {
+          <div class="position-overview-empty">
+            Không có vị trí phù hợp với bộ lọc hiện tại.
+          </div>
+        } @else {
+          <div class="position-table-scroll">
+            <table class="position-operations-table">
+              <thead>
+                <tr>
+                  <th>Vị trí tuyển dụng</th>
+                  <th>Chất lượng pipeline</th>
+                  <th>Tiến độ xếp lịch</th>
+                  <th>Lịch gần nhất</th>
+                  <th>Việc cần làm</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (job of jobInterviewOverview(); track job.jobId) {
+                  <tr [class.needs-attention]="job.priorityUnscheduled > 0">
+                    <td>
+                      <div class="position-name-cell">
+                        <a [routerLink]="['/jobs', job.jobId]">{{ job.jobTitle }}</a>
+                        <span>{{ job.total }} hồ sơ trong hàng đợi</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="pipeline-score-cell">
+                        <span><small>Khớp CV–JD TB</small><b>{{ job.averageMatching != null ? job.averageMatching + '/100' : 'Chưa có' }}</b></span>
+                        <span><small>Đánh giá AI TB</small><b>{{ job.averageAi != null ? job.averageAi + '/100' : 'Chưa chấm' }}</b></span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="scheduling-progress-cell">
+                        <div class="progress-copy">
+                          <strong>{{ job.scheduled }}/{{ job.total }} đã xếp</strong>
+                          <span>{{ getSchedulingProgress(job) }}%</span>
+                        </div>
+                        <div class="progress-track"><span [style.width.%]="getSchedulingProgress(job)"></span></div>
+                        <small>{{ job.pendingConfirmation }} chờ xác nhận · {{ job.unscheduled }} chưa xếp</small>
+                      </div>
+                    </td>
+                    <td>
+                      @if (job.nextInterview; as interview) {
+                        <button type="button" class="next-interview-link" (click)="openPositionCalendar(job)">
+                          <strong>{{ interview.interview_date | date:'HH:mm · dd/MM/yyyy' }}</strong>
+                          <span>{{ interview.candidate_name }}</span>
+                        </button>
+                      } @else {
+                        <span class="no-upcoming-interview">Chưa có lịch sắp tới</span>
+                      }
+                    </td>
+                    <td>
+                      <div class="position-next-action">
+                        @if (job.priorityUnscheduled > 0) {
+                          <span class="action-signal action-signal--priority">Ưu tiên</span>
+                          <small>{{ job.priorityUnscheduled }} hồ sơ đạt từ 80 điểm chưa được xếp lịch</small>
+                        } @else if (job.unscheduled > 0) {
+                          <span class="action-signal">Cần xếp lịch</span>
+                          <small>Còn {{ job.unscheduled }} hồ sơ chưa có lịch</small>
+                        } @else {
+                          <span class="action-signal action-signal--complete">Đã đủ lịch</span>
+                          <small>Theo dõi xác nhận và lịch sắp tới</small>
+                        }
+                        <button type="button" (click)="openPositionQueue(job)">{{ getOverviewActionLabel(job) }}</button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
     }

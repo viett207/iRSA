@@ -1,0 +1,103 @@
+<section class="screening-reference">
+  <header class="reference-toolbar">
+    <div>
+      <span>TÀI LIỆU THAM CHIẾU</span>
+      <h3>CV và báo cáo sàng lọc</h3>
+      <p>Các điểm dưới đây thuộc vòng sàng lọc hồ sơ, không phải điểm của buổi phỏng vấn hiện tại.</p>
+    </div>
+    <div class="view-switch" role="tablist" aria-label="Chế độ xem CV và báo cáo">
+      <button type="button" [class.active]="mode() === 'cv'" (click)="setMode('cv')">CV</button>
+      <button type="button" [class.active]="mode() === 'report'" (click)="setMode('report')">Báo cáo</button>
+      <button type="button" [class.active]="mode() === 'split'" (click)="setMode('split')">Xem song song</button>
+    </div>
+  </header>
+
+  <div class="reference-layout" [attr.data-mode]="mode()">
+    @if (mode() !== 'report') {
+      <article class="reference-pane cv-pane">
+        <header>
+          <div><strong>CV gốc của ứng viên</strong><small>Dùng để kiểm tra trực tiếp thông tin và bằng chứng.</small></div>
+          <button nz-button [disabled]="!resumeUrl()" (click)="openResumeFullscreen()">Mở toàn màn hình</button>
+        </header>
+        <div class="cv-frame">
+          @if (resumeLoading()) {
+            <div class="pane-state"><nz-spin nzSimple></nz-spin><span>Đang tải CV...</span></div>
+          } @else if (resumeError()) {
+            <div class="pane-state"><strong>Chưa thể hiển thị CV</strong><span>{{ resumeError() }}</span></div>
+          } @else if (resumeUrl()) {
+            <iframe [src]="resumeUrl()" [title]="'CV của ' + room.data()!.candidate.name"></iframe>
+          }
+        </div>
+      </article>
+    }
+
+    @if (mode() !== 'cv') {
+      <article class="reference-pane report-pane">
+        <header>
+          <div><strong>Báo cáo sàng lọc hồ sơ</strong><small>Hai loại điểm có mục đích và cách tính khác nhau.</small></div>
+        </header>
+
+        <div class="screening-score-grid">
+          <section>
+            <span>ĐỘ PHÙ HỢP CV–JD</span>
+            <strong>{{ room.data()!.screening_total_score != null ? (room.data()!.screening_total_score | number:'1.0-0') : '—' }}<small>/100</small></strong>
+            <p>Đo mức khớp kỹ năng, kinh nghiệm và học vấn trong CV với yêu cầu công việc.</p>
+          </section>
+          <section>
+            <span>ĐÁNH GIÁ HỒ SƠ CỦA AI</span>
+            <strong>{{ room.data()!.screening_ai_score != null ? (room.data()!.screening_ai_score | number:'1.0-0') : '—' }}<small>/100</small></strong>
+            <p>Nhận định hỗ trợ HR dựa trên nội dung hồ sơ; không phải điểm phỏng vấn hay xác suất tuyển dụng.</p>
+          </section>
+        </div>
+
+        @if (reportLoading()) {
+          <div class="pane-state report-loading"><nz-spin nzSimple></nz-spin><span>Đang tải bằng chứng sàng lọc...</span></div>
+        } @else {
+          @if (aiEvaluation()?.ai_evaluation; as evaluation) {
+            <section class="assessment-summary">
+              <span>NHẬN ĐỊNH SÀNG LỌC</span>
+              <strong>{{ evaluation.overall_assessment }}</strong>
+            </section>
+
+            <div class="insight-grid">
+              <section>
+                <h4>Điểm mạnh có bằng chứng</h4>
+                <ul>
+                  @for (item of evaluation.strengths; track item) { <li>{{ item }}</li> }
+                  @if (!evaluation.strengths.length) { <li>Chưa có điểm mạnh được ghi nhận.</li> }
+                </ul>
+              </section>
+              <section>
+                <h4>Khoảng thiếu cần xác minh</h4>
+                <ul>
+                  @for (item of evaluation.concerns; track item) { <li>{{ item }}</li> }
+                  @if (!evaluation.concerns.length) { <li>Chưa phát hiện khoảng thiếu đáng chú ý.</li> }
+                </ul>
+              </section>
+            </div>
+
+            <section class="evidence-list">
+              <header><strong>Bằng chứng kỹ năng trong CV</strong><small>Chọn lọc từ kết quả phân tích hồ sơ.</small></header>
+              @for (skill of evaluation.skill_assessments.slice(0, 6); track skill.skill) {
+                <div>
+                  <span [class.found]="skill.found">{{ skill.found ? 'Có bằng chứng' : 'Chưa có' }}</span>
+                  <strong>{{ skill.skill }}</strong>
+                  <p>{{ skill.evidence || 'Chưa tìm thấy trích đoạn chứng minh trong CV.' }}</p>
+                </div>
+              }
+            </section>
+          } @else {
+            @if (matchDetails(); as match) {
+              <div class="insight-grid">
+                <section><h4>Kỹ năng đã tìm thấy</h4><p>{{ match.match_details.skills.matched_must.join(', ') || 'Chưa tìm thấy kỹ năng bắt buộc.' }}</p></section>
+                <section><h4>Kỹ năng chưa có bằng chứng</h4><p>{{ match.match_details.skills.missing_must.join(', ') || 'Không có kỹ năng bắt buộc còn thiếu.' }}</p></section>
+              </div>
+            } @else {
+              <div class="pane-state"><strong>Chưa có báo cáo chi tiết</strong><span>Điểm tổng quan phía trên vẫn có thể dùng để tham khảo.</span></div>
+            }
+          }
+        }
+      </article>
+    }
+  </div>
+</section>

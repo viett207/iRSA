@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -71,6 +72,12 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(public_router, prefix="/pub")
 app.include_router(agent_router, prefix="/api/v1/agent", tags=["AI Agent"])
+
+
+@app.get("/")
+async def root():
+    """Redirect root to API documentation."""
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/health")

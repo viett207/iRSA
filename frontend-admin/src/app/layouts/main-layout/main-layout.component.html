@@ -177,9 +177,6 @@
               @for (notif of notificationSvc.notifications(); track notif.id) {
                 <div class="notification-item" [class.unread]="!notif.is_read"
                   (click)="onNotificationClick(notif)">
-                  <div class="notification-icon" [ngClass]="notif.type">
-                    <span nz-icon [nzType]="getNotificationIcon(notif.type)"></span>
-                  </div>
                   <div class="notification-content">
                     <p class="notification-text text-irsa-muted irsa-text-justify">{{ notif.message }}</p>
                     <span class="notification-time">{{ formatTime(notif.created_at) }}</span>

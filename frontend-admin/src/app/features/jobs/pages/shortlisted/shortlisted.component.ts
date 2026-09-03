@@ -1,7 +1,8 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -38,13 +39,42 @@ import { AiEvaluationModalComponent } from '../../components/ai-evaluation-modal
 import { CompareCandidatesModalComponent } from '../../components/compare-candidates-modal.component';
 import { CvJdCompareModalComponent } from '../../components/cv-jd-compare-modal.component';
 import { InterviewScheduleModalComponent } from '../../components/interview-schedule-modal.component';
-import { InterviewRoomModalComponent } from '../../components/interview-room-modal.component';
 
 export interface JobApplicantGroup {
   jobId: number;
   jobTitle: string;
   applicants: ShortlistedApplicant[];
 }
+
+interface JobInterviewOverview extends JobApplicantGroup {
+  total: number;
+  scheduled: number;
+  unscheduled: number;
+  pendingConfirmation: number;
+  priorityUnscheduled: number;
+  averageMatching: number | null;
+  averageAi: number | null;
+  nextInterview: ShortlistedApplicant | null;
+  nextApplicant: ShortlistedApplicant | null;
+}
+
+interface WorkspaceInterviewQuestion {
+  id: string;
+  selected: boolean;
+  source: 'ai' | 'hr';
+  question: string;
+  category: string;
+  target_skill: string | null;
+  purpose: string;
+  good_signs?: string[];
+  red_flags?: string[];
+  grading_guide?: string;
+  originalQuestion: string;
+  originalPurpose: string;
+  edited: boolean;
+}
+
+type QuestionPreparationStatus = 'unreviewed' | 'draft' | 'ready';
 
 @Component({
   selector: 'app-shortlisted',
@@ -78,17 +108,18 @@ export interface JobApplicantGroup {
   templateUrl: './shortlisted.component.html',
   styleUrl: './shortlisted.component.scss',
 })
-export class ShortlistedComponent implements OnInit {
+export class ShortlistedComponent implements OnInit, OnDestroy {
   applicants = signal<ShortlistedApplicant[]>([]);
   calendarEvents = signal<CalendarInterviewEvent[]>([]);
   total = signal(0);
   loading = signal(false);
   calendarLoading = signal(false);
   transitioningApplicationId = signal<number | null>(null);
+  currentTime = signal(Date.now());
+  private roomAvailabilityTimer: ReturnType<typeof setInterval> | null = null;
 
-  // View state: 'grouped' (Mặc định: Gom theo việc làm), 'calendar' (Xem Lịch), 'flat' (Bảng phẳng)
-  viewMode = signal<'grouped' | 'calendar' | 'flat'>('grouped');
-  calendarDisplayMode = signal<'month' | 'day'>('month');
+  // Bảng tổng hợp là điểm vào chính; từ đây HR đi sâu vào hàng đợi hoặc lịch.
+  viewMode = signal<'grouped' | 'calendar' | 'flat'>('flat');
   expandedJobIds = signal<Set<number>>(new Set());
   selectedCalendarDate = signal<Date>(new Date());
 
@@ -96,6 +127,25 @@ export class ShortlistedComponent implements OnInit {
   searchQuery = signal('');
   selectedJobFilter = signal<number | null>(null);
   scheduleFilter = signal<'all' | 'scheduled' | 'unscheduled'>('all');
+  aiPriorityFilter = signal<'all' | 'attention'>('all');
+  questionFilter = signal<'all' | 'needs-preparation' | 'ready'>('all');
+  quickViewApplicationId = signal<number | null>(null);
+  quickViewLoadingId = signal<number | null>(null);
+  quickViewData = signal<Record<number, AiEvaluationResponse | null>>({});
+  comparisonLoadingId = signal<number | null>(null);
+  comparisonData = signal<Record<number, CvJdCompareResponse | null>>({});
+  workspaceApplicantId = signal<number | null>(null);
+  workspaceTab = signal<'report' | 'documents' | 'questions' | 'schedule'>('report');
+  queueCollapsed = signal(false);
+  documentMode = signal<'cv' | 'jd' | 'split'>('split');
+  workspaceResumeLoading = signal(false);
+  workspaceResumeError = signal<string | null>(null);
+  workspaceResumeUrl = signal<SafeResourceUrl | null>(null);
+  workspaceQuestions = signal<Record<number, WorkspaceInterviewQuestion[]>>({});
+  questionPreparationState = signal<Record<number, QuestionPreparationStatus>>({});
+  questionsSaving = signal(false);
+  questionsGeneratingId = signal<number | null>(null);
+  private workspaceResumeObjectUrl: string | null = null;
   sortBy = 'date';
   page = 1;
   compareSelected = new Set<number>();
@@ -103,8 +153,23 @@ export class ShortlistedComponent implements OnInit {
   scoreFormat = (percent: number): string => `${Math.round(percent)}`;
 
   // KPI Metrics
-  scheduledCount = computed(() => this.applicants().filter((a) => a.interview_date != null).length);
-  unscheduledCount = computed(() => this.applicants().filter((a) => a.interview_date == null).length);
+  scheduledCount = computed(() => this.applicants().filter(
+    (a) => a.interview_date != null && a.interview_status !== 'cancelled'
+  ).length);
+  unscheduledCount = computed(() => this.applicants().filter(
+    (a) => a.interview_date == null || a.interview_status === 'cancelled'
+  ).length);
+  selectedWorkspaceApplicant = computed(() => {
+    const id = this.workspaceApplicantId();
+    return id == null ? null : this.applicants().find((app) => app.id === id) ?? null;
+  });
+  upcomingCalendarEvents = computed(() => {
+    const now = this.currentTime();
+    return this.calendarEvents()
+      .filter((event) => event.status !== 'cancelled' && new Date(event.interview_date).getTime() >= now)
+      .sort((a, b) => new Date(a.interview_date).getTime() - new Date(b.interview_date).getTime())
+      .slice(0, 5);
+  });
 
   // Filtered applicants
   filteredApplicants = computed(() => {
@@ -112,14 +177,24 @@ export class ShortlistedComponent implements OnInit {
     const q = this.searchQuery().trim().toLowerCase();
     const jf = this.selectedJobFilter();
     const sf = this.scheduleFilter();
+    const af = this.aiPriorityFilter();
+    const qf = this.questionFilter();
 
     if (jf !== null) {
       list = list.filter((a) => a.job_id === jf);
     }
     if (sf === 'scheduled') {
-      list = list.filter((a) => a.interview_date != null);
+      list = list.filter((a) => a.interview_date != null && a.interview_status !== 'cancelled');
     } else if (sf === 'unscheduled') {
-      list = list.filter((a) => a.interview_date == null);
+      list = list.filter((a) => a.interview_date == null || a.interview_status === 'cancelled');
+    }
+    if (af === 'attention') {
+      list = list.filter((a) => this.needsReview(a));
+    }
+    if (qf === 'needs-preparation') {
+      list = list.filter((a) => this.getQuestionPreparationStatus(a) !== 'ready');
+    } else if (qf === 'ready') {
+      list = list.filter((a) => this.getQuestionPreparationStatus(a) === 'ready');
     }
     if (q) {
       list = list.filter(
@@ -151,6 +226,59 @@ export class ShortlistedComponent implements OnInit {
     return Array.from(map.values());
   });
 
+  jobInterviewOverview = computed<JobInterviewOverview[]>(() => {
+    const now = this.currentTime();
+
+    return this.groupedJobs().map((group) => {
+      const scheduledApplicants = group.applicants.filter(
+        (app) => !!app.interview_date && app.interview_status !== 'cancelled'
+      );
+      const unscheduledApplicants = group.applicants.filter(
+        (app) => !app.interview_date || app.interview_status === 'cancelled'
+      );
+      const priorityUnscheduledApplicants = unscheduledApplicants.filter(
+        (app) => (app.ai_score ?? 0) >= 80 || (app.total_score ?? 0) >= 80
+      );
+      const upcoming = scheduledApplicants
+        .filter((app) => new Date(app.interview_date!).getTime() >= now)
+        .sort((a, b) => new Date(a.interview_date!).getTime() - new Date(b.interview_date!).getTime());
+      const rankedUnscheduled = [...unscheduledApplicants].sort(
+        (a, b) => Math.max(b.ai_score ?? 0, b.total_score ?? 0) - Math.max(a.ai_score ?? 0, a.total_score ?? 0)
+      );
+      const matchingScores = group.applicants
+        .map((app) => app.total_score)
+        .filter((score): score is number => score != null);
+      const aiScores = group.applicants
+        .map((app) => app.ai_score)
+        .filter((score): score is number => score != null);
+
+      return {
+        ...group,
+        total: group.applicants.length,
+        scheduled: scheduledApplicants.length,
+        unscheduled: unscheduledApplicants.length,
+        pendingConfirmation: scheduledApplicants.filter((app) => app.interview_status !== 'completed').length,
+        priorityUnscheduled: priorityUnscheduledApplicants.length,
+        averageMatching: this.averageScore(matchingScores),
+        averageAi: this.averageScore(aiScores),
+        nextInterview: upcoming[0] ?? null,
+        nextApplicant: priorityUnscheduledApplicants[0] ?? rankedUnscheduled[0] ?? null,
+      };
+    }).sort((a, b) => {
+      if (a.priorityUnscheduled !== b.priorityUnscheduled) return b.priorityUnscheduled - a.priorityUnscheduled;
+      if (a.unscheduled !== b.unscheduled) return b.unscheduled - a.unscheduled;
+      return a.jobTitle.localeCompare(b.jobTitle, 'vi');
+    });
+  });
+
+  overviewUnscheduledCount = computed(() =>
+    this.jobInterviewOverview().reduce((sum, job) => sum + job.unscheduled, 0)
+  );
+
+  overviewPriorityCount = computed(() =>
+    this.jobInterviewOverview().reduce((sum, job) => sum + job.priorityUnscheduled, 0)
+  );
+
   // Unique list of jobs for filter dropdown
   jobsOptions = computed(() => {
     const map = new Map<number, string>();
@@ -164,8 +292,9 @@ export class ShortlistedComponent implements OnInit {
   selectedDateEvents = computed(() => {
     const d = this.selectedCalendarDate();
     const dateStr = this.toDateKey(d);
+    const jobId = this.selectedJobFilter();
     return this.calendarEvents()
-      .filter((e) => this.toDateKey(new Date(e.interview_date)) === dateStr)
+      .filter((e) => this.toDateKey(new Date(e.interview_date)) === dateStr && (jobId == null || e.job_id === jobId))
       .sort((a, b) => new Date(a.interview_date).getTime() - new Date(b.interview_date).getTime());
   });
 
@@ -173,12 +302,20 @@ export class ShortlistedComponent implements OnInit {
     private jobService: JobService,
     private message: NzMessageService,
     private modal: NzModalService,
+    private sanitizer: DomSanitizer,
+    private router: Router,
     public authService: AuthService,
   ) {}
 
   ngOnInit(): void {
     this.loadShortlisted();
     this.loadCalendarEvents();
+    this.roomAvailabilityTimer = setInterval(() => this.currentTime.set(Date.now()), 30_000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.roomAvailabilityTimer) clearInterval(this.roomAvailabilityTimer);
+    this.releaseWorkspaceResume();
   }
 
   toDateKey(date: Date): string {
@@ -193,6 +330,13 @@ export class ShortlistedComponent implements OnInit {
     this.jobService.getShortlisted({ page: this.page, sort_by: this.sortBy }).subscribe({
       next: (res) => {
         this.applicants.set(res.items);
+        this.questionPreparationState.update((current) => {
+          const next = { ...current };
+          for (const app of res.items) {
+            if (!next[app.id]) next[app.id] = app.question_status ?? 'unreviewed';
+          }
+          return next;
+        });
         this.total.set(res.total);
         this.loading.set(false);
 
@@ -225,6 +369,86 @@ export class ShortlistedComponent implements OnInit {
     if (mode === 'calendar') {
       this.loadCalendarEvents();
     }
+  }
+
+  openPositionQueue(job: JobInterviewOverview): void {
+    this.selectedJobFilter.set(job.jobId);
+    this.scheduleFilter.set(job.unscheduled > 0 ? 'unscheduled' : 'all');
+    this.aiPriorityFilter.set('all');
+    this.viewMode.set('grouped');
+    if (job.nextApplicant) {
+      this.selectWorkspaceApplicant(job.nextApplicant);
+    } else {
+      this.clearWorkspaceApplicant();
+    }
+  }
+
+  openPositionCalendar(job: JobInterviewOverview): void {
+    this.selectedJobFilter.set(job.jobId);
+    if (job.nextInterview?.interview_date) {
+      this.selectedCalendarDate.set(new Date(job.nextInterview.interview_date));
+    }
+    this.setViewMode('calendar');
+  }
+
+  getSchedulingProgress(job: JobInterviewOverview): number {
+    return job.total === 0 ? 0 : Math.round((job.scheduled / job.total) * 100);
+  }
+
+  getOverviewActionLabel(job: JobInterviewOverview): string {
+    if (job.priorityUnscheduled > 0) return `Xử lý ${job.priorityUnscheduled} hồ sơ ưu tiên`;
+    if (job.unscheduled > 0) return `Xếp lịch ${job.unscheduled} hồ sơ`;
+    return 'Mở hàng đợi vị trí';
+  }
+
+  private averageScore(scores: number[]): number | null {
+    if (scores.length === 0) return null;
+    return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+  }
+
+  hasWorkspaceFilters(): boolean {
+    return !!this.searchQuery().trim()
+      || this.selectedJobFilter() !== null
+      || this.scheduleFilter() !== 'all'
+      || this.aiPriorityFilter() !== 'all'
+      || this.questionFilter() !== 'all'
+      || this.sortBy !== 'date';
+  }
+
+  clearWorkspaceFilters(): void {
+    this.searchQuery.set('');
+    this.selectedJobFilter.set(null);
+    this.scheduleFilter.set('all');
+    this.aiPriorityFilter.set('all');
+    this.questionFilter.set('all');
+    if (this.sortBy !== 'date') {
+      this.changeSortBy('date');
+    }
+  }
+
+  selectWorkspaceApplicant(app: ShortlistedApplicant): void {
+    this.workspaceApplicantId.set(app.id);
+    this.workspaceTab.set('report');
+    this.ensureEvaluationLoaded(app);
+    this.ensureComparisonLoaded(app);
+    this.ensureWorkspaceQuestions(app);
+    this.loadWorkspaceResume(app);
+  }
+
+  clearWorkspaceApplicant(): void {
+    this.workspaceApplicantId.set(null);
+  }
+
+  setWorkspaceTab(tab: 'report' | 'documents' | 'questions' | 'schedule'): void {
+    this.workspaceTab.set(tab);
+  }
+
+  toggleQueueCollapsed(): void {
+    this.queueCollapsed.update((collapsed) => !collapsed);
+  }
+
+  setDocumentMode(mode: 'cv' | 'jd' | 'split'): void {
+    this.documentMode.set(mode);
   }
 
   toggleJobExpanded(jobId: number): void {
@@ -272,16 +496,6 @@ export class ShortlistedComponent implements OnInit {
     this.selectedCalendarDate.set(date);
   }
 
-  setCalendarDisplayMode(mode: 'month' | 'day'): void {
-    this.calendarDisplayMode.set(mode);
-  }
-
-  moveSelectedDay(offset: number): void {
-    const date = new Date(this.selectedCalendarDate());
-    date.setDate(date.getDate() + offset);
-    this.selectedCalendarDate.set(date);
-  }
-
   moveSelectedMonth(offset: number): void {
     const current = this.selectedCalendarDate();
     const target = new Date(current.getFullYear(), current.getMonth() + offset, 1);
@@ -294,19 +508,15 @@ export class ShortlistedComponent implements OnInit {
     this.selectedCalendarDate.set(new Date());
   }
 
-  formatWeekday(date: Date): string {
-    const value = new Intl.DateTimeFormat('vi-VN', { weekday: 'long' }).format(date);
-    return value.charAt(0).toUpperCase() + value.slice(1);
-  }
-
   formatMonthLabel(date: Date): string {
     return `Tháng ${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
   }
 
   getEventsOnDate(date: Date): CalendarInterviewEvent[] {
     const key = this.toDateKey(date);
+    const jobId = this.selectedJobFilter();
     return this.calendarEvents().filter(
-      (e) => this.toDateKey(new Date(e.interview_date)) === key
+      (e) => this.toDateKey(new Date(e.interview_date)) === key && (jobId == null || e.job_id === jobId)
     );
   }
 
@@ -326,9 +536,448 @@ export class ShortlistedComponent implements OnInit {
   }
 
   getScoreColor(score: number): string {
-    if (score >= 70) return '#52c41a';
-    if (score >= 40) return '#faad14';
-    return '#ff4d4f';
+    if (score >= 80) return '#526a59';
+    if (score >= 50) return '#8a744b';
+    return '#9f5f5a';
+  }
+
+  toggleAiQuickView(app: ShortlistedApplicant): void {
+    if (this.quickViewApplicationId() === app.id) {
+      this.quickViewApplicationId.set(null);
+      return;
+    }
+
+    this.quickViewApplicationId.set(app.id);
+    this.ensureEvaluationLoaded(app);
+  }
+
+  private ensureEvaluationLoaded(app: ShortlistedApplicant): void {
+    if (this.quickViewData()[app.id] !== undefined || !app.has_ai_evaluation) return;
+    this.quickViewLoadingId.set(app.id);
+    this.jobService.getAiEvaluation(app.job_id, app.id).subscribe({
+      next: (result) => {
+        this.quickViewData.update((current) => ({ ...current, [app.id]: result }));
+        this.initializeWorkspaceQuestions(app.id, result);
+        this.quickViewLoadingId.set(null);
+      },
+      error: () => {
+        this.quickViewData.update((current) => ({ ...current, [app.id]: null }));
+        this.quickViewLoadingId.set(null);
+      },
+    });
+  }
+
+  private ensureComparisonLoaded(app: ShortlistedApplicant): void {
+    if (this.comparisonData()[app.id] !== undefined) return;
+    this.comparisonLoadingId.set(app.id);
+    this.jobService.getCvJdCompare(app.job_id, app.id).subscribe({
+      next: (result) => {
+        this.comparisonData.update((current) => ({ ...current, [app.id]: result }));
+        this.comparisonLoadingId.set(null);
+      },
+      error: () => {
+        this.comparisonData.update((current) => ({ ...current, [app.id]: null }));
+        this.comparisonLoadingId.set(null);
+      },
+    });
+  }
+
+  getQuickView(appId: number): AiEvaluationResponse | null | undefined {
+    return this.quickViewData()[appId];
+  }
+
+  getWorkspaceComparison(appId: number): CvJdCompareResponse | null | undefined {
+    return this.comparisonData()[appId];
+  }
+
+  getWorkspaceQuestions(appId: number): WorkspaceInterviewQuestion[] {
+    return this.workspaceQuestions()[appId] || [];
+  }
+
+  getSelectedQuestionCount(appId: number): number {
+    return this.getWorkspaceQuestions(appId).filter((question) => question.selected).length;
+  }
+
+  getEditedQuestionCount(appId: number): number {
+    return this.getWorkspaceQuestions(appId).filter((question) => question.edited).length;
+  }
+
+  getAiQuestionCount(appId: number): number {
+    return this.getWorkspaceQuestions(appId).filter((question) => question.source === 'ai').length;
+  }
+
+  getHrQuestionCount(appId: number): number {
+    return this.getWorkspaceQuestions(appId).filter((question) => question.source === 'hr').length;
+  }
+
+  getQuestionPreparationStatus(app: ShortlistedApplicant): QuestionPreparationStatus {
+    return this.questionPreparationState()[app.id] ?? app.question_status ?? 'unreviewed';
+  }
+
+  getQuestionPreparationLabel(app: ShortlistedApplicant): string {
+    const labels: Record<QuestionPreparationStatus, string> = {
+      unreviewed: 'Câu hỏi AI: Chưa chuẩn bị',
+      draft: 'Câu hỏi AI: Đang chỉnh',
+      ready: 'Câu hỏi AI: Sẵn sàng',
+    };
+    return labels[this.getQuestionPreparationStatus(app)];
+  }
+
+  getQuestionPreparationCount(app: ShortlistedApplicant): number {
+    const loaded = this.getWorkspaceQuestions(app.id);
+    return loaded.length || app.question_count || 0;
+  }
+
+  private markQuestionsDraft(appId: number): void {
+    this.questionPreparationState.update((current) => ({ ...current, [appId]: 'draft' }));
+  }
+
+  addWorkspaceQuestion(appId: number): void {
+    const question: WorkspaceInterviewQuestion = {
+      id: `hr-${Date.now()}`,
+      selected: true,
+      source: 'hr',
+      question: '',
+      category: 'custom',
+      target_skill: null,
+      purpose: 'Câu hỏi bổ sung của nhà tuyển dụng',
+      originalQuestion: '',
+      originalPurpose: '',
+      edited: true,
+    };
+    this.workspaceQuestions.update((current) => ({
+      ...current,
+      [appId]: [...(current[appId] || []), question],
+    }));
+    this.markQuestionsDraft(appId);
+  }
+
+  requestAiWorkspaceQuestions(app: ShortlistedApplicant): void {
+    if (this.questionsGeneratingId() !== null) return;
+
+    const comparison = this.getWorkspaceComparison(app.id);
+    const missingSkills = comparison?.missing_skills?.slice(0, 4) || [];
+    const focusTopic = missingSkills.length > 0
+      ? `Xác minh các khoảng thiếu so với JD: ${missingSkills.join(', ')}`
+      : 'Xác minh kỹ năng bắt buộc, kinh nghiệm thực tế và cách xử lý tình huống công việc';
+
+    this.questionsGeneratingId.set(app.id);
+    this.jobService.generateAiQuestions(app.job_id, app.id, focusTopic, 3).subscribe({
+      next: (response) => {
+        this.questionsGeneratingId.set(null);
+        const generated = Array.isArray(response?.questions) ? response.questions : [];
+        if (generated.length === 0) {
+          this.message.warning('AI chưa tạo được câu hỏi phù hợp. Vui lòng thử lại.');
+          return;
+        }
+
+        const current = this.getWorkspaceQuestions(app.id);
+        const existingTexts = new Set(current.map((item) => item.question.trim().toLocaleLowerCase('vi')));
+        const requestId = Date.now();
+        const additions = this.mapWorkspaceQuestions(generated)
+          .filter((item) => !existingTexts.has(item.question.trim().toLocaleLowerCase('vi')))
+          .map((item, index) => ({ ...item, id: `ai-generated-${requestId}-${index}` }));
+
+        if (additions.length === 0) {
+          this.message.info('Các câu hỏi AI vừa đề xuất đã có trong bộ câu hỏi hiện tại.');
+          return;
+        }
+
+        this.workspaceQuestions.update((state) => ({
+          ...state,
+          [app.id]: [...current, ...additions],
+        }));
+        this.markQuestionsDraft(app.id);
+        this.message.success(`AI đã đề xuất thêm ${additions.length} câu hỏi. Hãy rà soát trước khi xác nhận.`);
+      },
+      error: (error) => {
+        this.questionsGeneratingId.set(null);
+        this.message.error(error?.error?.detail || 'Không thể yêu cầu AI sinh thêm câu hỏi');
+      },
+    });
+  }
+
+  updateWorkspaceQuestion(
+    appId: number,
+    questionId: string,
+    changes: Partial<WorkspaceInterviewQuestion>,
+  ): void {
+    this.workspaceQuestions.update((current) => ({
+      ...current,
+      [appId]: (current[appId] || []).map((question) =>
+        question.id === questionId
+          ? {
+              ...question,
+              ...changes,
+              edited: changes.question !== undefined || changes.purpose !== undefined
+                ? (changes.question ?? question.question) !== question.originalQuestion
+                  || (changes.purpose ?? question.purpose) !== question.originalPurpose
+                : question.edited,
+            }
+          : question
+      ),
+    }));
+    this.markQuestionsDraft(appId);
+  }
+
+  removeWorkspaceQuestion(appId: number, questionId: string): void {
+    this.workspaceQuestions.update((current) => ({
+      ...current,
+      [appId]: (current[appId] || []).filter((question) => question.id !== questionId),
+    }));
+    this.markQuestionsDraft(appId);
+  }
+
+  saveWorkspaceQuestions(app: ShortlistedApplicant): void {
+    const currentQuestions = this.getWorkspaceQuestions(app.id);
+    const nonEmptyQuestions = currentQuestions.filter((item) => item.question.trim().length > 0);
+    const removedEmptyCount = currentQuestions.length - nonEmptyQuestions.length;
+
+    if (removedEmptyCount > 0) {
+      this.workspaceQuestions.update((current) => ({
+        ...current,
+        [app.id]: nonEmptyQuestions,
+      }));
+    }
+
+    const questions = this.getWorkspaceQuestionPayload(app.id);
+
+    if (questions.length === 0) {
+      this.message.warning(removedEmptyCount > 0
+        ? 'Đã xóa câu hỏi trống. Hãy chọn ít nhất một câu hỏi có nội dung.'
+        : 'Hãy chọn ít nhất một câu hỏi để sử dụng trong phòng phỏng vấn AI');
+      return;
+    }
+
+    if (removedEmptyCount > 0) {
+      this.message.info(`Đã tự động xóa ${removedEmptyCount} câu hỏi chưa có nội dung.`);
+    }
+
+    if (!app.interview_date || app.interview_status === 'cancelled') {
+      this.questionPreparationState.update((current) => ({ ...current, [app.id]: 'draft' }));
+      this.message.success('Đã giữ bản nháp; hãy đặt lịch trước khi xác nhận bộ câu hỏi chính thức');
+      return;
+    }
+
+    this.persistWorkspaceQuestions(app, questions);
+  }
+
+  private getWorkspaceQuestionPayload(appId: number): Array<Record<string, unknown>> {
+    return this.getWorkspaceQuestions(appId)
+      .filter((item) => item.selected && item.question.trim())
+      .map(({ id: _id, selected: _selected, source, originalQuestion: _originalQuestion, originalPurpose: _originalPurpose, edited, ...question }) => ({
+        ...question,
+        question: question.question.trim(),
+        is_custom: source === 'hr',
+        hr_edited: edited,
+        hr_reviewed: true,
+      }));
+  }
+
+  private persistWorkspaceQuestions(
+    app: ShortlistedApplicant,
+    questions: Array<Record<string, unknown>> = this.getWorkspaceQuestionPayload(app.id),
+  ): void {
+    if (questions.length === 0) return;
+    this.questionsSaving.set(true);
+    this.jobService.saveInterviewQuestions(app.job_id, app.id, questions).subscribe({
+      next: () => {
+        this.questionsSaving.set(false);
+        const editedCount = this.getEditedQuestionCount(app.id);
+        this.questionPreparationState.update((current) => ({ ...current, [app.id]: 'ready' }));
+        this.applicants.update((items) => items.map((item) => item.id === app.id
+          ? { ...item, question_status: 'ready', question_count: questions.length, question_edited_count: editedCount }
+          : item));
+        this.message.success(`Đã xác nhận ${questions.length} câu hỏi cho phòng phỏng vấn AI`);
+      },
+      error: () => {
+        this.questionsSaving.set(false);
+        this.message.error('Không thể lưu bộ câu hỏi phỏng vấn');
+      },
+    });
+  }
+
+  private ensureWorkspaceQuestions(app: ShortlistedApplicant): void {
+    if (this.workspaceQuestions()[app.id]) return;
+    if (app.interview_date && app.interview_status !== 'cancelled') {
+      this.jobService.getInterviewData(app.job_id, app.id).subscribe({
+        next: (data) => {
+          const officialQuestions = Array.isArray(data?.questions) ? data.questions : [];
+          this.workspaceQuestions.update((current) => ({
+            ...current,
+            [app.id]: this.mapWorkspaceQuestions(officialQuestions),
+          }));
+        },
+        error: () => {
+          const cached = this.quickViewData()[app.id];
+          if (cached) this.initializeWorkspaceQuestions(app.id, cached);
+        },
+      });
+      return;
+    }
+    const cached = this.quickViewData()[app.id];
+    if (cached) this.initializeWorkspaceQuestions(app.id, cached);
+  }
+
+  private initializeWorkspaceQuestions(appId: number, result: AiEvaluationResponse): void {
+    if (this.workspaceQuestions()[appId]) return;
+    const questions = this.mapWorkspaceQuestions(result.ai_evaluation?.interview_questions || []);
+    this.workspaceQuestions.update((current) => ({ ...current, [appId]: questions }));
+  }
+
+  private mapWorkspaceQuestions(questions: any[]): WorkspaceInterviewQuestion[] {
+    return questions.map((question, index) => ({
+      id: `${question.is_custom ? 'hr' : 'ai'}-${index}`,
+      selected: true,
+      source: question.is_custom ? 'hr' : 'ai',
+      question: question.question || '',
+      category: question.category || 'technical',
+      target_skill: question.target_skill || null,
+      purpose: question.purpose || 'Đánh giá năng lực ứng viên',
+      good_signs: question.good_signs,
+      red_flags: question.red_flags,
+      grading_guide: question.grading_guide,
+      originalQuestion: question.question || '',
+      originalPurpose: question.purpose || 'Đánh giá năng lực ứng viên',
+      edited: question.hr_edited === true || question.is_custom === true,
+    }));
+  }
+
+  private loadWorkspaceResume(app: ShortlistedApplicant): void {
+    this.releaseWorkspaceResume();
+    this.workspaceResumeLoading.set(true);
+    this.workspaceResumeError.set(null);
+    this.jobService.downloadResume(app.job_id, app.id).subscribe({
+      next: (blob) => {
+        const pdfBlob = new Blob([blob], { type: blob.type || 'application/pdf' });
+        this.workspaceResumeObjectUrl = URL.createObjectURL(pdfBlob);
+        this.workspaceResumeUrl.set(
+          this.sanitizer.bypassSecurityTrustResourceUrl(this.workspaceResumeObjectUrl)
+        );
+        this.workspaceResumeLoading.set(false);
+      },
+      error: () => {
+        this.workspaceResumeLoading.set(false);
+        this.workspaceResumeError.set('Không thể tải bản xem trước CV.');
+      },
+    });
+  }
+
+  private releaseWorkspaceResume(): void {
+    if (this.workspaceResumeObjectUrl) URL.revokeObjectURL(this.workspaceResumeObjectUrl);
+    this.workspaceResumeObjectUrl = null;
+    this.workspaceResumeUrl.set(null);
+  }
+
+  getRecommendationLabel(recommendation?: string | null): string {
+    const labels: Record<string, string> = {
+      STRONG_FIT: 'Rất phù hợp',
+      GOOD_FIT: 'Phù hợp',
+      PARTIAL_FIT: 'Phù hợp một phần',
+      WEAK_FIT: 'Ít phù hợp',
+      NOT_FIT: 'Không phù hợp',
+    };
+    return recommendation ? labels[recommendation] || recommendation : 'Cần HR xem xét';
+  }
+
+  getEducationLabel(level?: string | null): string {
+    const labels: Record<string, string> = {
+      high_school: 'THPT',
+      bachelor: 'Cử nhân / Đại học',
+      master: 'Thạc sĩ',
+      phd: 'Tiến sĩ',
+    };
+    return level ? labels[level] || level : 'Không yêu cầu';
+  }
+
+  hasQuickEvaluation(appId: number): boolean {
+    return !!this.quickViewData()[appId]?.ai_evaluation;
+  }
+
+  getQuickStrength(appId: number): string {
+    return this.quickViewData()[appId]?.ai_evaluation?.strengths?.[0]
+      || 'Chưa có bằng chứng nổi bật được ghi nhận.';
+  }
+
+  getQuickConcern(appId: number): string {
+    return this.quickViewData()[appId]?.ai_evaluation?.concerns?.[0]
+      || 'Chưa phát hiện khoảng thiếu đáng kể.';
+  }
+
+  getQuickQuestion(appId: number): string {
+    return this.quickViewData()[appId]?.ai_evaluation?.interview_questions?.[0]?.question
+      || 'Đánh giá chưa tạo câu hỏi phỏng vấn.';
+  }
+
+  getMatchingScore(app: ShortlistedApplicant): number | null {
+    return app.total_score == null ? null : Math.round(app.total_score);
+  }
+
+  needsReview(app: ShortlistedApplicant): boolean {
+    if (app.status === 'reviewing') return true;
+    if (app.ai_score == null || app.total_score == null) return false;
+    return app.ai_score < 60 || Math.abs(app.ai_score - app.total_score) >= 20;
+  }
+
+  getCandidateInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'UV';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+
+  getScheduleStatusLabel(app: ShortlistedApplicant): string {
+    if (!app.interview_date) return 'Chưa xếp lịch';
+    if (app.interview_status === 'completed') return 'Đã hoàn thành';
+    if (app.interview_status === 'cancelled') return 'Đã hủy';
+    return 'Chờ xác nhận';
+  }
+
+  getScheduleStatusClass(app: ShortlistedApplicant): string {
+    if (!app.interview_date) return 'unscheduled';
+    if (app.interview_status === 'completed') return 'completed';
+    if (app.interview_status === 'cancelled') return 'cancelled';
+    return 'pending-confirmation';
+  }
+
+  canEnterInterview(app: ShortlistedApplicant): boolean {
+    return this.isRoomOpen(app.interview_date, app.interview_status);
+  }
+
+  getInterviewActionHint(app: ShortlistedApplicant): string {
+    return this.getRoomAvailabilityLabel(app.interview_date, app.interview_status);
+  }
+
+  canEnterCalendarEvent(event: CalendarInterviewEvent): boolean {
+    return this.isRoomOpen(event.interview_date, event.status);
+  }
+
+  getCalendarQuestionLabel(event: CalendarInterviewEvent): string {
+    return event.question_status === 'ready'
+      ? `Câu hỏi AI sẵn sàng · ${event.question_count || 0} câu`
+      : 'Câu hỏi AI chưa chuẩn bị';
+  }
+
+  getCalendarActionHint(event: CalendarInterviewEvent): string {
+    return this.getRoomAvailabilityLabel(event.interview_date, event.status);
+  }
+
+  getRoomAvailabilityLabel(date: string | null, status: string | null): string {
+    if (!date) return 'Cần xếp lịch trước';
+    if (status === 'cancelled') return 'Lịch đã hủy';
+    if (status === 'completed') return 'Buổi phỏng vấn đã hoàn thành';
+    const interviewTime = new Date(date).getTime();
+    const now = this.currentTime();
+    if (now < interviewTime - 10 * 60_000) return 'Phòng mở trước giờ hẹn 10 phút';
+    if (now > interviewTime + 120 * 60_000) return 'Đã quá thời gian tham gia';
+    return 'Phòng phỏng vấn đang mở';
+  }
+
+  private isRoomOpen(date: string | null, status: string | null): boolean {
+    if (!date || status === 'cancelled' || status === 'completed') return false;
+    const interviewTime = new Date(date).getTime();
+    const now = this.currentTime();
+    return now >= interviewTime - 10 * 60_000 && now <= interviewTime + 120 * 60_000;
   }
 
   formatDate(date: string | null): string {
@@ -409,50 +1058,21 @@ export class ShortlistedComponent implements OnInit {
       this.loadShortlisted();
       this.loadCalendarEvents();
       if (res) {
-        this.message.success(`Đã cập nhật lịch phỏng vấn cho ứng viên "${app.candidate_name}"`);
+        this.persistWorkspaceQuestions(app);
+        this.message.success(`Đã gửi lịch cho "${app.candidate_name}" và giữ hồ sơ trong workspace`);
       }
     });
   }
 
   openInterviewRoom(app: ShortlistedApplicant): void {
-    const modalRef = this.modal.create({
-      nzTitle: `Phòng phỏng vấn AI - ${app.candidate_name}`,
-      nzContent: InterviewRoomModalComponent,
-      nzData: {
-        jobId: app.job_id,
-        appId: app.id,
-        candidateName: app.candidate_name,
-      },
-      nzFooter: null,
-      nzWidth: '94vw',
-      nzStyle: { top: '20px', maxWidth: '1400px' },
-      nzMaskClosable: false,
-    });
-
-    modalRef.afterClose.subscribe((res) => {
-      this.loadShortlisted();
-      this.loadCalendarEvents();
+    this.router.navigate(['/jobs/interviewing'], {
+      queryParams: { applicationId: app.id, confirm: 'room' },
     });
   }
 
   openCalendarEventRoom(ev: CalendarInterviewEvent): void {
-    const modalRef = this.modal.create({
-      nzTitle: `Phòng phỏng vấn AI - ${ev.candidate_name}`,
-      nzContent: InterviewRoomModalComponent,
-      nzData: {
-        jobId: ev.job_id,
-        appId: ev.application_id,
-        candidateName: ev.candidate_name,
-      },
-      nzFooter: null,
-      nzWidth: '94vw',
-      nzStyle: { top: '20px', maxWidth: '1400px' },
-      nzMaskClosable: false,
-    });
-
-    modalRef.afterClose.subscribe(() => {
-      this.loadShortlisted();
-      this.loadCalendarEvents();
+    this.router.navigate(['/jobs/interviewing'], {
+      queryParams: { applicationId: ev.application_id, confirm: 'room' },
     });
   }
 
@@ -473,7 +1093,7 @@ export class ShortlistedComponent implements OnInit {
       this.loadShortlisted();
       this.loadCalendarEvents();
       if (res) {
-        this.message.success(`Đã cập nhật lịch phỏng vấn cho ${ev.candidate_name}`);
+        this.message.success(`Đã cập nhật lịch phỏng vấn, đang chờ ${ev.candidate_name} xác nhận`);
       }
     });
   }

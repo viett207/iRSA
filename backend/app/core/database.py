@@ -24,8 +24,12 @@ engine = create_async_engine(
     future=True,
     pool_pre_ping=True,
     pool_recycle=300,
-    pool_size=10,
-    max_overflow=20,
+    # The Supabase session pool used by this project allows 15 clients.
+    # Keep the application pool deliberately below that limit so reloads,
+    # migrations and background work still have connection headroom.
+    pool_size=4,
+    max_overflow=2,
+    pool_timeout=15,
     connect_args={"statement_cache_size": 0} if "asyncpg" in async_database_url else {},
 )
 
@@ -43,8 +47,9 @@ sync_engine = create_engine(
     echo=settings.DEBUG,
     pool_pre_ping=True,
     pool_recycle=300,
-    pool_size=10,
-    max_overflow=20,
+    pool_size=2,
+    max_overflow=1,
+    pool_timeout=15,
 )
 SyncSessionLocal = sessionmaker(bind=sync_engine, expire_on_commit=False)
 

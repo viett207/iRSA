@@ -731,7 +731,6 @@
 
 .notification-item {
   display: flex;
-  gap: 12px;
   padding: 14px 20px;
   cursor: pointer;
   transition: background 0.2s ease;
@@ -746,31 +745,6 @@
     &:hover {
       background: var(--color-primary-100);
     }
-  }
-}
-
-.notification-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  &.info {
-    background: var(--color-info-bg);
-    color: var(--color-info);
-  }
-
-  &.success {
-    background: var(--color-success-bg);
-    color: var(--color-success);
-  }
-
-  &.warning {
-    background: var(--color-warning-bg);
-    color: var(--color-warning);
   }
 }
 

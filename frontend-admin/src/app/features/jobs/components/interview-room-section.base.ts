@@ -34,6 +34,9 @@ export abstract class InterviewRoomSectionBase {
   isAnyRecording(...args: Parameters<InterviewRoomModalComponent['isAnyRecording']>) {
     return this.room.isAnyRecording(...args);
   }
+  hasAnswerEvaluation(...args: Parameters<InterviewRoomModalComponent['hasAnswerEvaluation']>) {
+    return this.room.hasAnswerEvaluation(...args);
+  }
   getAudioSrc(...args: Parameters<InterviewRoomModalComponent['getAudioSrc']>) {
     return this.room.getAudioSrc(...args);
   }
@@ -78,6 +81,9 @@ export abstract class InterviewRoomSectionBase {
   }
   updateApplicationStatus(...args: Parameters<InterviewRoomModalComponent['updateApplicationStatus']>) {
     return this.room.updateApplicationStatus(...args);
+  }
+  closeRoom(...args: Parameters<InterviewRoomModalComponent['closeRoom']>) {
+    return this.room.closeRoom(...args);
   }
   formatSeconds(...args: Parameters<InterviewRoomModalComponent['formatSeconds']>) {
     return this.room.formatSeconds(...args);

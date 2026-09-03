@@ -2,8 +2,8 @@
   <!-- 1. Page Header -->
   <header class="page-top-header">
     <div class="header-title-group">
-      <h1 class="main-page-title">Quản lý người dùng &amp; vòng đời tài khoản</h1>
-      <p class="main-page-desc">Phê duyệt đăng ký mới, quản lý vai trò và kiểm soát quyền truy cập tại một nơi.</p>
+      <h1 class="main-page-title">Quản lý người dùng</h1>
+      <p class="main-page-desc">Phê duyệt tài khoản, phân quyền và xử lý các trường hợp cần chú ý.</p>
     </div>
     <div class="account-mode-switch" role="tablist" aria-label="Chế độ quản lý tài khoản">
       <button type="button" [class.active]="accountMode() === 'pending'" (click)="setAccountMode('pending')">
@@ -18,13 +18,14 @@
 
   @if (accountMode() === 'all') {
   <div class="all-accounts-actions">
+    <button type="button" class="btn-secondary-action" [class.active]="bulkMode()" (click)="toggleBulkMode()">
+      {{ bulkMode() ? 'Hủy chọn nhiều' : 'Chọn nhiều' }}
+    </button>
     <button type="button" class="btn-secondary-action" (click)="exportUsers()">
-      <span nz-icon nzType="download" nzTheme="outline"></span>
-      <span>Xuất CSV</span>
+      Xuất CSV
     </button>
     <button type="button" class="btn-primary-action" (click)="openCreateUserDrawer()">
-      <span nz-icon nzType="plus" nzTheme="outline"></span>
-      <span>Thêm người dùng</span>
+      Thêm người dùng
     </button>
   </div>
 
@@ -32,10 +33,9 @@
   <section class="smart-toolbar-card">
     <div class="search-filter-row">
       <div class="instant-search-box">
-        <span nz-icon nzType="search" class="search-ico"></span>
         <input
           type="text"
-          placeholder="Tìm kiếm nhanh theo Tên, Email, Số điện thoại..."
+          placeholder="Tìm theo tên, email hoặc số điện thoại..."
           [ngModel]="searchText()"
           (ngModelChange)="onSearchChange($event)"
           class="instant-search-input"
@@ -68,15 +68,8 @@
           <nz-option [nzValue]="false" nzLabel="Tài khoản bị khóa"></nz-option>
         </nz-select>
 
-        <button 
-          type="button" 
-          class="refresh-icon-btn" 
-          (click)="loadUsers()"
-          nz-tooltip 
-          nzTooltipTitle="Làm mới danh sách"
-          [disabled]="loading()"
-        >
-          <span nz-icon nzType="reload" [nzSpin]="loading()"></span>
+        <button type="button" class="refresh-text-btn" (click)="loadUsers()" [disabled]="loading()">
+          {{ loading() ? 'Đang tải...' : 'Làm mới' }}
         </button>
       </div>
     </div>
@@ -84,6 +77,15 @@
 
   <!-- 4. Smart Data Table -->
   <section class="smart-table-wrapper">
+    <div class="table-context-bar">
+      <div>
+        <strong>Danh sách tài khoản</strong>
+        <span>{{ total() }} người dùng · Chọn một dòng để xem và chỉnh sửa</span>
+      </div>
+      @if (bulkMode()) {
+        <span class="selection-hint">Chọn các tài khoản cần xử lý cùng lúc</span>
+      }
+    </div>
     <nz-table
       #userTable
       [nzData]="users()"
@@ -101,43 +103,34 @@
     >
       <thead>
         <tr>
-          <!-- Selection Checkbox Header -->
-          <th nzWidth="48px" nzAlign="center">
-            <input 
-              type="checkbox" 
-              class="smart-checkbox"
-              [checked]="isAllChecked()" 
-              [indeterminate]="isIndeterminate()"
-              (change)="toggleSelectAll($any($event.target).checked)"
-              aria-label="Chọn tất cả người dùng"
-            />
-          </th>
-          <th nzWidth="25%">NGƯỜI DÙNG</th>
-          <th nzWidth="19%">CÔNG TY / TỔ CHỨC</th>
-          <th nzWidth="14%">VAI TRÒ</th>
-          <th nzWidth="14%" nzAlign="center">TRẠNG THÁI</th>
-          <th nzWidth="13%">XÁC THỰC</th>
-          <th nzWidth="11%">CẬP NHẬT CUỐI</th>
+          @if (bulkMode()) {
+            <th nzWidth="48px">
+              <input type="checkbox" class="smart-checkbox" [checked]="isAllChecked()"
+                [indeterminate]="isIndeterminate()" (change)="toggleSelectAll($any($event.target).checked)"
+                aria-label="Chọn tất cả người dùng" />
+            </th>
+          }
+          <th nzWidth="39%">NGƯỜI DÙNG</th>
+          <th nzWidth="25%">CÔNG TY / TỔ CHỨC</th>
+          <th nzWidth="19%">TRUY CẬP &amp; XÁC THỰC</th>
+          <th nzWidth="13%">CẬP NHẬT CUỐI</th>
           <th nzWidth="4%" nzAlign="right"><span class="sr-only">Tùy chọn</span></th>
         </tr>
       </thead>
       <tbody>
         @for (user of userTable.data; track user.id) {
           <tr class="table-user-row" [class.table-user-row--selected]="selectedUserIds().has(user.id)" (click)="openUserDrawer(user, 'view')">
-            <!-- Checkbox Row -->
-            <td nzAlign="center" (click)="$event.stopPropagation()">
-              <input 
-                type="checkbox" 
-                class="smart-checkbox"
-                [checked]="selectedUserIds().has(user.id)"
-                (change)="toggleSelectUser(user.id, $any($event.target).checked)"
-                [attr.aria-label]="'Chọn người dùng ' + user.full_name"
-              />
-            </td>
+            @if (bulkMode()) {
+              <td (click)="$event.stopPropagation()">
+                <input type="checkbox" class="smart-checkbox" [checked]="selectedUserIds().has(user.id)"
+                  (change)="toggleSelectUser(user.id, $any($event.target).checked)"
+                  [attr.aria-label]="'Chọn người dùng ' + user.full_name" />
+              </td>
+            }
 
             <!-- User Info (Avatar + Name + Email + Sub-info) -->
             <td>
-              <div class="user-identity-cell" (click)="openUserDrawer(user, 'view')">
+              <div class="user-identity-cell">
                 <nz-avatar
                   [nzText]="getInitial(user.full_name)"
                   [nzSize]="38"
@@ -150,6 +143,7 @@
                 <div class="user-name-box">
                   <span class="user-full-name">{{ user.full_name }}</span>
                   <span class="user-email-text">{{ user.email }}</span>
+                  <span class="user-role-text">{{ getRoleLabel(user.role) }}</span>
                 </div>
               </div>
             </td>
@@ -161,46 +155,15 @@
               </div>
             </td>
 
-            <!-- Role Badge -->
             <td>
-              <span 
-                class="role-pill-badge"
-                [class.role-pill-badge--admin]="user.role === 'admin'"
-                [class.role-pill-badge--leader]="user.role === 'leader'"
-                [class.role-pill-badge--recruiter]="user.role === 'recruiter'"
-                [class.role-pill-badge--candidate]="user.role === 'candidate'"
-              >
-                {{ getRoleLabel(user.role) }}
-              </span>
-            </td>
-
-            <!-- Trạng thái: Quick Switch Toggle Trực Tiếp (Không Popup) -->
-            <td nzAlign="center" (click)="$event.stopPropagation()">
-              <div class="switch-toggle-wrap">
-                <nz-switch
-                  [ngModel]="user.is_active"
-                  (ngModelChange)="toggleUserActiveQuick(user, $event)"
-                  nzSize="small"
-                  nz-tooltip
-                  [nzTooltipTitle]="user.is_active ? 'Nhấp để tạm khóa tài khoản' : 'Nhấp để kích hoạt tài khoản'"
-                  [nzControl]="true"
-                ></nz-switch>
-                <span class="status-indicator-label" [class.status-indicator-label--active]="user.is_active">
-                  {{ user.is_active ? 'Hoạt động' : 'Tạm khóa' }}
+              <div class="account-health-cell">
+                <span class="account-state" [class.account-state--active]="user.is_active">
+                  {{ user.is_active ? 'Đang hoạt động' : 'Tạm khóa' }}
                 </span>
+                <small [class.needs-attention]="!user.email_verified">
+                  {{ user.email_verified ? 'Email đã xác thực' : 'Email chưa xác thực' }}
+                </small>
               </div>
-            </td>
-
-            <!-- Email Verified -->
-            <td>
-              <span 
-                class="verified-tag"
-                [class.verified-tag--yes]="user.email_verified"
-                [class.verified-tag--no]="!user.email_verified"
-              >
-                <span class="tag-dot"></span>
-                {{ user.email_verified ? 'Đã xác thực' : 'Chưa xác thực' }}
-              </span>
             </td>
 
             <!-- Updated At -->
@@ -221,31 +184,13 @@
                   nzPlacement="bottomRight"
                   aria-label="Thao tác khác"
                 >
-                  <span nz-icon nzType="more" nzTheme="outline"></span>
+                  <span aria-hidden="true">•••</span>
                 </button>
 
                 <nz-dropdown-menu #rowMenu="nzDropdownMenu">
                   <ul nz-menu class="smart-action-dropdown">
-                    <li nz-menu-group nzTitle="Phân quyền vai trò">
-                      <ul>
-                        <li nz-menu-item (click)="changeUserRole(user, 'admin')" [nzDisabled]="user.role === 'admin'">
-                          <span nz-icon nzType="safety"></span> Đổi sang Quản trị viên
-                        </li>
-                        <li nz-menu-item (click)="changeUserRole(user, 'leader')" [nzDisabled]="user.role === 'leader'">
-                          <span nz-icon nzType="crown"></span> Đổi sang Trưởng nhóm HR
-                        </li>
-                        <li nz-menu-item (click)="changeUserRole(user, 'recruiter')" [nzDisabled]="user.role === 'recruiter'">
-                          <span nz-icon nzType="solution"></span> Đổi sang Tuyển dụng
-                        </li>
-                        <li nz-menu-item (click)="changeUserRole(user, 'candidate')" [nzDisabled]="user.role === 'candidate'">
-                          <span nz-icon nzType="user"></span> Đổi sang Ứng viên
-                        </li>
-                      </ul>
-                    </li>
+                    <li nz-menu-item (click)="openUserDrawer(user, 'edit')">Mở hồ sơ</li>
                     <li nz-menu-divider></li>
-                    <li nz-menu-item (click)="openUserDrawer(user, 'edit')">
-                      <span nz-icon nzType="edit"></span> Chỉnh sửa chi tiết
-                    </li>
                     <li 
                       nz-menu-item 
                       nzDanger
@@ -256,7 +201,7 @@
                       nzOkDanger
                       (nzOnConfirm)="deleteUser(user)"
                     >
-                      <span nz-icon nzType="delete"></span> Xóa tài khoản
+                      Xóa tài khoản
                     </li>
                   </ul>
                 </nz-dropdown-menu>
@@ -270,7 +215,6 @@
     <!-- Empty State -->
     <ng-template #emptyTableTemplate>
       <div class="empty-state-box">
-        <span nz-icon nzType="usergroup-delete" class="empty-icon"></span>
         <h3 class="empty-title">Không tìm thấy người dùng phù hợp</h3>
         <p class="empty-desc">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
         <button type="button" class="btn-primary-action" (click)="openCreateUserDrawer()">
@@ -289,15 +233,12 @@
       </div>
       <div class="batch-buttons">
         <button type="button" class="batch-btn batch-btn--mint" (click)="batchUpdateActive(true)">
-          <span nz-icon nzType="check-circle" nzTheme="outline"></span>
           Kích hoạt
         </button>
         <button type="button" class="batch-btn batch-btn--gray" (click)="batchUpdateActive(false)">
-          <span nz-icon nzType="stop" nzTheme="outline"></span>
           Tạm khóa
         </button>
         <button type="button" class="batch-btn batch-btn--outline" (click)="exportUsers(true)">
-          <span nz-icon nzType="download" nzTheme="outline"></span>
           Xuất CSV đã chọn
         </button>
         <button type="button" class="batch-btn batch-btn--clear" (click)="clearSelection()">
@@ -327,8 +268,8 @@
               <nz-option nzValue="admin" nzLabel="Quản trị viên"></nz-option>
               <nz-option nzValue="candidate" nzLabel="Ứng viên"></nz-option>
             </nz-select>
-            <button type="button" class="refresh-icon-btn" (click)="loadPendingUsers()" aria-label="Làm mới">
-              <span nz-icon nzType="reload" [nzSpin]="pendingLoading()"></span>
+            <button type="button" class="refresh-text-btn" (click)="loadPendingUsers()" [disabled]="pendingLoading()">
+              {{ pendingLoading() ? 'Đang tải...' : 'Làm mới' }}
             </button>
           </div>
         </div>
@@ -336,9 +277,7 @@
         <div class="queue-heading">
           <div><strong>{{ filteredPendingUsers().length }} yêu cầu</strong><span>Chọn một tài khoản để kiểm tra</span></div>
           @if (selectedPendingUser()) {
-            <button type="button" class="queue-back" (click)="clearPendingSelection()" aria-label="Về tổng quan">
-              <span nz-icon nzType="appstore"></span>
-            </button>
+            <button type="button" class="queue-back" (click)="clearPendingSelection()">Tổng quan</button>
           }
         </div>
 
@@ -363,7 +302,6 @@
             </button>
           } @empty {
             <div class="queue-empty">
-              <span nz-icon nzType="check-circle"></span>
               <strong>Không có yêu cầu phù hợp</strong>
               <p>Hàng đợi hiện đã được xử lý hoặc không khớp bộ lọc.</p>
             </div>
@@ -403,7 +341,7 @@
                   <div><label>Địa điểm</label><strong>{{ company.location || 'Chưa cập nhật' }}</strong></div>
                 </div>
               } @else {
-                <div class="verification-note warning"><span nz-icon nzType="warning"></span><div><strong>Chưa đối chiếu được công ty</strong><p>Tài khoản chưa có mã công ty hoặc mã không tồn tại trong danh mục hiện tại.</p></div></div>
+                <div class="verification-note warning"><div><strong>Chưa đối chiếu được công ty</strong><p>Tài khoản chưa có mã công ty hoặc mã không tồn tại trong danh mục hiện tại.</p></div></div>
               }
             </section>
 
@@ -413,7 +351,7 @@
                 <div><label>Vai trò đề xuất</label><strong>{{ getRoleLabel(user.role) }}</strong></div>
                 <ul>
                   @for (permission of getPermissionSummary(user.role); track permission) {
-                    <li><span nz-icon nzType="check"></span>{{ permission }}</li>
+                    <li>{{ permission }}</li>
                   }
                 </ul>
               </div>
@@ -430,18 +368,16 @@
           </div>
 
           <footer class="approval-actions">
-            <p><span nz-icon nzType="info-circle"></span> Kiểm tra công ty và phạm vi quyền trước khi phê duyệt.</p>
+            <p>Kiểm tra công ty và phạm vi quyền trước khi phê duyệt.</p>
             <div>
               <button type="button" class="reject-account-btn" [disabled]="processingApprovalId() === user.id" (click)="confirmPendingAction(user, 'reject')">Từ chối</button>
               <button type="button" class="approve-account-btn" [disabled]="processingApprovalId() === user.id" (click)="confirmPendingAction(user, 'approve')">
-                @if (processingApprovalId() === user.id) { <span nz-icon nzType="loading"></span> }
-                Phê duyệt tài khoản
+                {{ processingApprovalId() === user.id ? 'Đang xử lý...' : 'Phê duyệt tài khoản' }}
               </button>
             </div>
           </footer>
         } @else {
           <div class="approval-overview">
-            <div class="overview-icon"><span nz-icon nzType="safety-certificate"></span></div>
             <h2>Hàng đợi phê duyệt tài khoản</h2>
             <p>Chọn một yêu cầu ở danh sách bên trái để đối chiếu danh tính, công ty và phạm vi quyền trước khi cấp quyền truy cập.</p>
             <div class="overview-stats">
@@ -462,7 +398,7 @@
   <!-- 6. Smart Slide-Over Detail & Edit Drawer (Thay thế hoàn toàn Modal Popup) -->
   <nz-drawer
     [nzVisible]="drawerVisible()"
-    [nzWidth]="540"
+    [nzWidth]="620"
     [nzTitle]="drawerTitleTpl"
     [nzFooter]="drawerFooterTpl"
     (nzOnClose)="closeDrawer()"
@@ -585,22 +521,16 @@
               </div>
             </div>
 
-            <!-- Drawer Tabs -->
-            <nz-tabset [(nzSelectedIndex)]="drawerActiveTab" class="drawer-tabset">
-              <!-- Tab 1: Thông tin tổng quan -->
-              <nz-tab nzTitle="Thông tin tổng quan">
+            <form [formGroup]="userForm" class="unified-account-panel" (ngSubmit)="saveDrawerUser()">
+              <section class="account-summary-section">
+                <div class="drawer-section-heading">
+                  <h3>Thông tin hệ thống</h3>
+                  <p>Dữ liệu nhận diện và trạng thái hiện tại của tài khoản.</p>
+                </div>
                 <div class="info-grid-list">
                   <div class="info-row">
                     <span class="info-label">Mã định danh (ID)</span>
                     <span class="info-value mono-num">#{{ user.id }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label">Số điện thoại</span>
-                    <span class="info-value">{{ user.phone || 'Chưa cập nhật' }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label">Công ty trực thuộc</span>
-                    <span class="info-value">{{ user.company_code || 'Không thuộc công ty' }}</span>
                   </div>
                   <div class="info-row">
                     <span class="info-label">Xác thực Email</span>
@@ -611,10 +541,12 @@
                       </span>
                     </span>
                   </div>
-                  <div class="info-row">
-                    <span class="info-label">Phê duyệt tài khoản</span>
-                    <span class="info-value">{{ user.approval_status === 'approved' ? 'Đã duyệt' : (user.approval_status === 'pending' ? 'Chờ duyệt' : 'Bình thường') }}</span>
-                  </div>
+                  @if (user.approval_status === 'pending') {
+                    <div class="info-row">
+                      <span class="info-label">Phê duyệt tài khoản</span>
+                      <span class="info-value needs-attention">Đang chờ duyệt</span>
+                    </div>
+                  }
                   <div class="info-row">
                     <span class="info-label">Ngày tạo tài khoản</span>
                     <span class="info-value">{{ formatDate(user.created_at) }}</span>
@@ -626,25 +558,25 @@
                 </div>
 
                 <div class="drawer-quick-panel">
-                  <h4 class="quick-panel-title">Hành động nhanh</h4>
+                  <h4 class="quick-panel-title">Quyền truy cập</h4>
                   <div class="quick-panel-body">
                     <div class="quick-toggle-item">
                       <div>
                         <strong>Trạng thái hoạt động</strong>
                         <p>Cho phép hoặc tạm dừng quyền truy cập vào hệ thống</p>
                       </div>
-                      <nz-switch
-                        [ngModel]="user.is_active"
-                        (ngModelChange)="toggleUserActiveQuick(user, $event)"
-                      ></nz-switch>
+                      <nz-switch formControlName="is_active"></nz-switch>
                     </div>
                   </div>
                 </div>
-              </nz-tab>
+              </section>
 
-              <!-- Tab 2: Chỉnh sửa hồ sơ -->
-              <nz-tab nzTitle="Chỉnh sửa hồ sơ">
-                <form [formGroup]="userForm" class="drawer-form-layout" (ngSubmit)="saveDrawerUser()">
+              <section class="account-edit-section">
+                <div class="drawer-section-heading">
+                  <h3>Thông tin và phân quyền</h3>
+                  <p>Cập nhật hồ sơ, vai trò và đơn vị trực thuộc trong cùng một trang.</p>
+                </div>
+                <div class="drawer-form-layout">
                   <div class="form-field-group">
                     <label class="form-label" for="edit-fullname">Họ và tên <span class="required-star">*</span></label>
                     <input 
@@ -666,12 +598,12 @@
                   </div>
 
                   <div class="form-field-group">
-                    <label class="form-label">Vai trò trong hệ thống</label>
+                    <label class="form-label">Vai trò</label>
                     <nz-select formControlName="role" class="drawer-select-control">
-                      <nz-option nzValue="candidate" nzLabel="Ứng viên (Candidate)"></nz-option>
-                      <nz-option nzValue="recruiter" nzLabel="Chuyên viên tuyển dụng (Recruiter)"></nz-option>
-                      <nz-option nzValue="leader" nzLabel="Trưởng nhóm HR (Leader)"></nz-option>
-                      <nz-option nzValue="admin" nzLabel="Quản trị viên (Admin)"></nz-option>
+                      <nz-option nzValue="candidate" nzLabel="Ứng viên"></nz-option>
+                      <nz-option nzValue="recruiter" nzLabel="Chuyên viên tuyển dụng"></nz-option>
+                      <nz-option nzValue="leader" nzLabel="Trưởng nhóm HR"></nz-option>
+                      <nz-option nzValue="admin" nzLabel="Quản trị viên"></nz-option>
                     </nz-select>
                   </div>
 
@@ -685,7 +617,7 @@
                   </div>
 
                   <div class="form-field-group">
-                    <label class="form-label" for="edit-password">Đặt lại mật khẩu mới (Nếu muốn đổi)</label>
+                    <label class="form-label" for="edit-password">Đặt lại mật khẩu</label>
                     <input 
                       id="edit-password"
                       type="password" 
@@ -694,9 +626,9 @@
                       placeholder="Để trống nếu không đổi mật khẩu"
                     />
                   </div>
-                </form>
-              </nz-tab>
-            </nz-tabset>
+                </div>
+              </section>
+            </form>
           </div>
         }
       }
@@ -709,7 +641,7 @@
       @if (drawerMode() === 'create') {
         <span>Thêm người dùng mới</span>
       } @else {
-        <span>Hồ sơ người dùng</span>
+        <span>Thông tin người dùng</span>
       }
     </div>
   </ng-template>
@@ -718,15 +650,14 @@
   <ng-template #drawerFooterTpl>
     <div class="drawer-footer-actions">
       <button type="button" class="btn-cancel" (click)="closeDrawer()">Đóng</button>
-      @if (drawerMode() === 'create' || drawerActiveTab() === 1) {
+      @if (drawerMode() === 'create' || drawerMode() === 'edit') {
         <button 
           type="button" 
           class="btn-submit" 
           [disabled]="drawerSaving()" 
           (click)="saveDrawerUser()"
         >
-          <span nz-icon nzType="loading" *ngIf="drawerSaving()"></span>
-          {{ drawerMode() === 'create' ? 'Tạo người dùng' : 'Lưu thay đổi' }}
+          {{ drawerSaving() ? 'Đang lưu...' : (drawerMode() === 'create' ? 'Tạo người dùng' : 'Lưu thay đổi') }}
         </button>
       }
     </div>

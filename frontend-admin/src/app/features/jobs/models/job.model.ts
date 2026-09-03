@@ -302,6 +302,9 @@ export interface ShortlistedApplicant {
   interview_date: string | null;
   interview_type: string | null;
   interview_status: string | null;
+  question_status?: 'unreviewed' | 'draft' | 'ready';
+  question_count?: number;
+  question_edited_count?: number;
 }
 
 export interface ShortlistedListResponse {
@@ -326,6 +329,9 @@ export interface CalendarInterviewEvent {
   notes: string | null;
   scheduler_name: string | null;
   ai_score: number | null;
+  question_status?: 'unreviewed' | 'draft' | 'ready';
+  question_count?: number;
+  question_edited_count?: number;
 }
 
 export interface InterviewingApplicant {
@@ -340,6 +346,11 @@ export interface InterviewingApplicant {
   ai_score: number | null;
   has_ai_evaluation: boolean;
   has_completed_interview: boolean;
+  interview_date: string | null;
+  interview_type: string | null;
+  interview_status: string | null;
+  question_status?: 'unreviewed' | 'draft' | 'ready';
+  question_count?: number;
   updated_at: string | null;
 }
 
@@ -359,6 +370,9 @@ export interface InterviewPassedApplicant {
   status: string;
   total_score: number | null;
   ai_score: number | null;
+  interview_score?: number | null;
+  interview_recommendation?: string | null;
+  interview_feedback?: string | null;
   updated_at: string | null;
 }
 

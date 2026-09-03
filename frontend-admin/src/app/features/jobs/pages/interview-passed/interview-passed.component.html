@@ -1,141 +1,109 @@
 <div class="page-header">
-  <h2>
-    <span nz-icon nzType="trophy" nzTheme="outline" style="color: #faad14; margin-right: 8px"></span>
-    Vòng 3 - Đã Pass phỏng vấn & Đề xuất tuyển dụng
-  </h2>
-  <p style="color: #888; margin: 4px 0 16px">
-    Danh sách ứng viên đã vượt qua vòng phỏng vấn trực tiếp. Xem lại biên bản ghi âm, điểm số AI và chốt quyết định tuyển dụng.
-  </p>
+  <span>VÒNG 3</span>
+  <h2>Chốt tuyển dụng</h2>
+  <p>Tổng hợp kết quả phỏng vấn, ưu tiên hồ sơ đang chờ quyết định và hoàn tất tuyển dụng.</p>
 </div>
 
-<!-- Stats cards -->
-<div class="static-kpi-grid static-kpi-grid--three">
-  <div class="static-display-card static-kpi-card static-kpi-card--primary">
-    <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="team"></span></span>
-    <div class="static-kpi-content"><span class="static-kpi-label">Tổng ứng viên đạt PV</span><strong class="static-kpi-value">{{ total() }}</strong></div>
+<section class="decision-overview">
+  <div class="overview-metrics">
+    <button type="button" [class.active]="statusFilter() === 'all'" (click)="changeFilter('all')">
+      <span>Đã qua phỏng vấn</span><strong>{{ applicants().length }}</strong><small>Tất cả hồ sơ trong bước chốt tuyển</small>
+    </button>
+    <button type="button" [class.active]="statusFilter() === 'offered'" (click)="changeFilter('offered')">
+      <span>Chờ quyết định</span><strong>{{ offeredCount() }}</strong><small>Cần chốt tuyển hoặc từ chối</small>
+    </button>
+    <button type="button" [class.active]="statusFilter() === 'hired'" (click)="changeFilter('hired')">
+      <span>Đã tuyển</span><strong>{{ hiredCount() }}</strong><small>Đã hoàn tất quyết định tuyển dụng</small>
+    </button>
   </div>
-  <div class="static-display-card static-kpi-card static-kpi-card--warning">
-    <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="gift"></span></span>
-    <div class="static-kpi-content"><span class="static-kpi-label">Đã đề xuất nhận việc (Offered)</span><strong class="static-kpi-value">{{ offeredCount() }}</strong></div>
-  </div>
-  <div class="static-display-card static-kpi-card static-kpi-card--success">
-    <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="check-circle"></span></span>
-    <div class="static-kpi-content"><span class="static-kpi-label">Chính thức trúng tuyển (Hired)</span><strong class="static-kpi-value">{{ hiredCount() }}</strong></div>
-  </div>
-</div>
-
-<!-- Filter toolbar -->
-<div style="margin-bottom: 12px; display: flex; gap: 8px">
-  <button nz-button nzSize="small"
-    [nzType]="statusFilter === 'all' ? 'primary' : 'default'"
-    (click)="changeFilter('all')">Tất cả ({{ total() }})</button>
-  <button nz-button nzSize="small"
-    [nzType]="statusFilter === 'offered' ? 'primary' : 'default'"
-    (click)="changeFilter('offered')">
-    <nz-tag nzColor="gold" style="margin:0">Đã đề xuất tuyển ({{ offeredCount() }})</nz-tag>
-  </button>
-  <button nz-button nzSize="small"
-    [nzType]="statusFilter === 'hired' ? 'primary' : 'default'"
-    (click)="changeFilter('hired')">
-    <nz-tag nzColor="success" style="margin:0">Đã tuyển ({{ hiredCount() }})</nz-tag>
-  </button>
-</div>
-
-<!-- Table -->
-<nz-table
-  #passedTable
-  [nzData]="applicants()"
-  [nzLoading]="loading()"
-  [nzTotal]="total()"
-  [nzPageIndex]="page"
-  [nzPageSize]="20"
-  [nzFrontPagination]="false"
-  (nzPageIndexChange)="onPageChange($event)"
-  nzSize="middle"
->
-  <thead>
-    <tr>
-      <th nzWidth="20%">Ứng viên</th>
-      <th nzWidth="18%">Vị trí</th>
-      <th nzWidth="12%">Điểm AI CV</th>
-      <th nzWidth="12%">Trạng thái</th>
-      <th nzWidth="12%">Cập nhật</th>
-      <th nzWidth="26%">Biên bản PV & Tuyển dụng</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (app of passedTable.data; track app.id) {
-      <tr>
-        <td>
-          <strong>{{ app.candidate_name }}</strong><br />
-          <small style="color: #888">{{ app.candidate_email }}</small>
-        </td>
-        <td><a [routerLink]="['/jobs', app.job_id]"><strong>{{ app.job_title }}</strong></a></td>
-        <td>
-          @if (app.ai_score != null) {
-            <nz-progress nzType="circle" [nzPercent]="app.ai_score"
-              [nzWidth]="38" [nzStrokeColor]="getScoreColor(app.ai_score)"
-              [nzFormat]="scoreFormat"></nz-progress>
-          } @else { <nz-tag>N/A</nz-tag> }
-        </td>
-        <td>
-          <nz-tag [nzColor]="getStatusColor(app.status)">
-            {{ getStatusLabel(app.status) }}
-          </nz-tag>
-        </td>
-        <td>{{ formatDate(app.updated_at) }}</td>
-        <td>
-          <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
-            @if (transitioningApplicationId() === app.id) {
-              <span class="status-updating" aria-live="polite"><span nz-icon nzType="loading"></span> Đang cập nhật</span>
-            }
-            <!-- View interview room report -->
-            <button
-              nz-button
-              nzSize="small"
-              style="color: var(--color-primary-light); border-color: var(--color-border); font-weight: 500"
-              (click)="openInterviewRoom(app)"
-              nz-tooltip
-              nzTooltipTitle="Xem lại biên bản phỏng vấn, câu trả lời, ghi âm và điểm số"
-            >
-              <span nz-icon nzType="solution"></span>
-              Biên bản PV
-            </button>
-
-            @if (app.status === 'offered') {
-              <button nz-button nzSize="small" nzType="primary"
-                style="background: #52c41a; border-color: #52c41a; font-weight: 600"
-                nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên này CHÍNH THỨC TRÚNG TUYỂN (Hired)?"
-                (nzOnConfirm)="updateStatus(app, 'hired')"
-                [disabled]="transitioningApplicationId() !== null"
-                nz-tooltip nzTooltipTitle="Chốt trúng tuyển">
-                <span nz-icon nzType="check"></span> Tuyển
-              </button>
-
-              <button nz-button nzSize="small" nzDanger
-                nz-popconfirm nzPopconfirmTitle="Từ chối ứng viên này?"
-                (nzOnConfirm)="updateStatus(app, 'rejected')"
-                [disabled]="transitioningApplicationId() !== null"
-                nz-tooltip nzTooltipTitle="Không đạt">
-                <span nz-icon nzType="close"></span> Không đạt
-              </button>
-
-              <button nz-button nzSize="small"
-                nz-popconfirm nzPopconfirmTitle="Đưa ứng viên quay lại Vòng 2: Phỏng vấn?"
-                (nzOnConfirm)="updateStatus(app, 'interviewing')"
-                [disabled]="transitioningApplicationId() !== null"
-                nz-tooltip nzTooltipTitle="Quay lại phỏng vấn">
-                <span nz-icon nzType="rollback"></span> Quay lại PV
-              </button>
-            } @else {
-              <nz-tag nzColor="success">
-                <span nz-icon nzType="check-circle" style="margin-right: 4px"></span>
-                Đã hoàn tất tuyển dụng
-              </nz-tag>
-            }
-          </div>
-        </td>
-      </tr>
+  <aside class="priority-summary">
+    @if (priorityApplicants().length > 0) {
+      <div class="priority-heading">
+        <div><span>CẦN XỬ LÝ</span><strong>{{ priorityApplicants().length }} hồ sơ chờ quyết định</strong></div>
+        <button type="button" (click)="showPendingDecisions()">Xem tất cả</button>
+      </div>
+      <div class="priority-list">
+        @for (priority of priorityApplicants().slice(0, 3); track priority.id; let index = $index) {
+          <button type="button" class="priority-item" (click)="openInterviewRoom(priority)">
+            <span class="priority-order">{{ index + 1 }}</span>
+            <span class="priority-copy">
+              <strong>{{ priority.candidate_name }}</strong>
+              <small>{{ getPriorityReason(priority) }}</small>
+            </span>
+            <span class="priority-action">Xem biên bản</span>
+          </button>
+        }
+      </div>
+      @if (priorityApplicants().length > 3) {
+        <button type="button" class="priority-more" (click)="showPendingDecisions()">
+          Còn {{ priorityApplicants().length - 3 }} hồ sơ trong danh sách
+        </button>
+      }
+    } @else {
+      <span>TRẠNG THÁI XỬ LÝ</span>
+      <strong>Không có hồ sơ tồn đọng</strong><p>Các quyết định tuyển dụng hiện đã hoàn tất.</p>
     }
-  </tbody>
-</nz-table>
+  </aside>
+</section>
+
+<section class="decision-filters">
+  <div class="filter-field filter-search">
+    <label for="passed-search">Tìm ứng viên</label>
+    <input id="passed-search" type="search" [ngModel]="searchText()" (ngModelChange)="searchText.set($event)" placeholder="Tên, email hoặc vị trí..." />
+  </div>
+  <div class="filter-field">
+    <label for="passed-job">Vị trí tuyển dụng</label>
+    <select id="passed-job" [ngModel]="selectedJobId()" (ngModelChange)="selectedJobId.set(+$event)">
+      <option [ngValue]="0">Tất cả vị trí</option>
+      @for (job of availableJobs(); track job.id) { <option [ngValue]="job.id">{{ job.title }}</option> }
+    </select>
+  </div>
+  <div class="filter-field">
+    <label for="passed-status">Trạng thái tuyển dụng</label>
+    <select id="passed-status" [ngModel]="statusFilter()" (ngModelChange)="changeFilter($event)">
+      <option value="all">Tất cả trạng thái</option><option value="offered">Chờ quyết định</option><option value="hired">Đã tuyển</option>
+    </select>
+  </div>
+  <span class="filter-result">{{ filteredApplicants().length }} hồ sơ hiển thị</span>
+</section>
+
+<section class="decision-table-shell" id="decision-list">
+  <header><div><h3>Danh sách cần chốt</h3><p>Hồ sơ chờ quyết định được đưa lên trước; điểm bên dưới là kết quả phỏng vấn, không phải điểm CV.</p></div></header>
+  <nz-table #passedTable [nzData]="filteredApplicants()" [nzLoading]="loading()" [nzPageIndex]="page" [nzPageSize]="20" [nzFrontPagination]="true" (nzPageIndexChange)="page = $event" nzSize="middle">
+    <thead><tr><th nzWidth="25%">Ứng viên & vị trí</th><th nzWidth="19%">Kết quả phỏng vấn</th><th nzWidth="13%">Trạng thái</th><th nzWidth="10%">Cập nhật</th><th nzWidth="33%">Quyết định & thao tác</th></tr></thead>
+    <tbody>
+      @for (app of passedTable.data; track app.id) {
+        <tr>
+          <td><div class="candidate-cell"><span>{{ getCandidateInitials(app.candidate_name) }}</span><div><strong>{{ app.candidate_name }}</strong><small>{{ app.candidate_email }}</small><a [routerLink]="['/jobs', app.job_id]">{{ app.job_title }}</a></div></div></td>
+          <td>
+            @if (app.interview_score != null) {
+              <div class="interview-result"><strong>{{ formatScore(app.interview_score) }}<small>/100</small></strong><div><span>{{ getRecommendationLabel(app.interview_recommendation) }}</span>@if (app.interview_feedback) { <small>{{ app.interview_feedback }}</small> }</div></div>
+            } @else {
+              <div class="result-missing"><strong>Chưa có tổng kết</strong><small>Mở biên bản để hoàn tất đánh giá.</small></div>
+            }
+          </td>
+          <td><span class="status-badge" [attr.data-status]="app.status">{{ getStatusLabel(app.status) }}</span></td>
+          <td><span class="updated-date">{{ formatDate(app.updated_at) }}</span></td>
+          <td><div class="row-actions">
+            @if (transitioningApplicationId() === app.id) { <span class="status-updating" aria-live="polite">Đang cập nhật...</span> }
+            @if (app.status === 'offered') {
+              <div class="decision-actions">
+                <button nz-button nzType="primary" nz-popconfirm nzPopconfirmTitle="Xác nhận tuyển ứng viên này?" (nzOnConfirm)="updateStatus(app, 'hired')" [disabled]="transitioningApplicationId() !== null">Xác nhận tuyển</button>
+                <button nz-button nzDanger nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên không đạt?" (nzOnConfirm)="updateStatus(app, 'rejected')" [disabled]="transitioningApplicationId() !== null">Không tuyển</button>
+              </div>
+              <div class="support-actions">
+                <button type="button" (click)="openInterviewRoom(app)">Xem biên bản</button>
+                <button type="button" nz-popconfirm nzPopconfirmTitle="Đưa ứng viên quay lại vòng phỏng vấn?" (nzOnConfirm)="updateStatus(app, 'interviewing')" [disabled]="transitioningApplicationId() !== null">Phỏng vấn lại</button>
+              </div>
+            } @else {
+              <button nz-button (click)="openInterviewRoom(app)">Xem biên bản</button>
+              <span class="completed-label">Đã hoàn tất</span>
+            }
+          </div></td>
+        </tr>
+      } @empty {
+        <tr><td colspan="5"><div class="table-empty"><strong>Không có hồ sơ phù hợp</strong><span>Hãy thay đổi điều kiện lọc để xem hồ sơ khác.</span></div></td></tr>
+      }
+    </tbody>
+  </nz-table>
+</section>

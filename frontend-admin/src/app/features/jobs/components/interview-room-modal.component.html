@@ -10,31 +10,23 @@
     <app-interview-candidate-banner [room]="view" />
 
     <nz-tabset [(nzSelectedIndex)]="activeTabIndex" class="tabs-spacing">
-      <nz-tab [nzTitle]="tabLiveTitle">
+      <nz-tab [nzTitle]="tabLiveTitle" [nzForceRender]="true">
         <ng-template #tabLiveTitle>
-          <span nz-icon nzType="audio" class="text-error"></span>
           <strong>Phòng phỏng vấn ({{ activeQuestions().length }} câu hỏi)</strong>
         </ng-template>
         <app-interview-live-room [room]="view" />
       </nz-tab>
 
-      <nz-tab [nzTitle]="tabSetupTitle">
-        <ng-template #tabSetupTitle>
-          <span nz-icon nzType="form"></span>
-          Thiết lập bộ câu hỏi ({{ allQuestionStates().length }})
-        </ng-template>
-        <app-interview-question-setup [room]="view" />
+      <nz-tab nzTitle="CV & Báo cáo sàng lọc" [nzForceRender]="true">
+        <app-interview-screening-reference [room]="view" />
       </nz-tab>
 
       <nz-tab [nzTitle]="tabSummaryTitle">
         <ng-template #tabSummaryTitle>
-          <span nz-icon nzType="trophy" class="text-warning"></span>
-          Tổng kết & Chốt quyết định
+          <strong>Tổng kết & Quyết định</strong>
         </ng-template>
         <app-interview-summary [room]="view" />
       </nz-tab>
     </nz-tabset>
   }
 </div>
-
-<app-interview-question-dialogs [room]="view" />

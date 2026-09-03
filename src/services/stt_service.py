@@ -10,6 +10,25 @@ from src.config import get_settings
 logger = logging.getLogger(__name__)
 
 
+class STTTemporarilyUnavailableError(RuntimeError):
+    """Raised when every configured STT provider is temporarily unavailable."""
+
+
+def _is_transient_provider_error(error: Exception) -> bool:
+    message = str(error).lower()
+    return any(marker in message for marker in (
+        "429",
+        "503",
+        "quota exceeded",
+        "resource_exhausted",
+        "unavailable",
+        "high demand",
+        "rate limit",
+        "temporarily",
+        "timeout",
+    ))
+
+
 async def transcribe_audio(
     audio_bytes: bytes,
     mime_type: str = "audio/webm",
@@ -44,41 +63,56 @@ async def transcribe_audio(
             "3. Không tự ý thêm bớt, không bình luận hay chào hỏi. Chỉ trả về duy nhất nội dung văn bản mà ứng viên đã nói."
         )
 
-        for attempt, key in enumerate(gemini_keys):
-            try:
-                client = genai.Client(api_key=key)
+        for key_index, key in enumerate(gemini_keys):
+            for retry_index in range(3):
+                try:
+                    client = genai.Client(api_key=key)
 
-                # Normalize mime type for Gemini
-                clean_mime = mime_type.split(";")[0].strip() if ";" in mime_type else mime_type.strip()
-                if "webm" in clean_mime:
-                    clean_mime = "audio/webm"
-                elif "wav" in clean_mime:
-                    clean_mime = "audio/wav"
-                elif "mp3" in clean_mime or "mpeg" in clean_mime:
-                    clean_mime = "audio/mp3"
-                elif "ogg" in clean_mime:
-                    clean_mime = "audio/ogg"
-                elif "m4a" in clean_mime or "mp4" in clean_mime:
-                    clean_mime = "audio/mp4"
+                    # Normalize mime type for Gemini
+                    clean_mime = mime_type.split(";")[0].strip() if ";" in mime_type else mime_type.strip()
+                    if "webm" in clean_mime:
+                        clean_mime = "audio/webm"
+                    elif "wav" in clean_mime:
+                        clean_mime = "audio/wav"
+                    elif "mp3" in clean_mime or "mpeg" in clean_mime:
+                        clean_mime = "audio/mp3"
+                    elif "ogg" in clean_mime:
+                        clean_mime = "audio/ogg"
+                    elif "m4a" in clean_mime or "mp4" in clean_mime:
+                        clean_mime = "audio/mp4"
 
-                audio_part = types.Part.from_bytes(data=audio_bytes, mime_type=clean_mime)
+                    audio_part = types.Part.from_bytes(data=audio_bytes, mime_type=clean_mime)
 
-                logger.info(f"Transcribing audio with Gemini ({model_name}, key #{attempt + 1}/{len(gemini_keys)}, size: {len(audio_bytes)} bytes)...")
-                response = await client.aio.models.generate_content(
-                    model=model_name,
-                    contents=[prompt, audio_part],
-                )
-                text = response.text.strip() if response and hasattr(response, "text") else ""
-                if text:
-                    logger.info(f"Gemini STT success ({len(text)} chars)")
-                    return text
-            except Exception as e:
-                last_error = e
-                err_str = str(e)
-                logger.warning(f"Gemini STT attempt #{attempt + 1} failed: {e}")
-                if "429" in err_str or "Quota exceeded" in err_str:
-                    logger.info("429 Rate limit encountered. Waiting 4 seconds before trying next key / retry...")
-                    await asyncio.sleep(4)
+                    logger.info(
+                        "Transcribing audio with Gemini (%s, key #%s/%s, try %s/3, size: %s bytes)...",
+                        model_name,
+                        key_index + 1,
+                        len(gemini_keys),
+                        retry_index + 1,
+                        len(audio_bytes),
+                    )
+                    response = await client.aio.models.generate_content(
+                        model=model_name,
+                        contents=[prompt, audio_part],
+                    )
+                    text = response.text.strip() if response and hasattr(response, "text") else ""
+                    if text:
+                        logger.info("Gemini STT success (%s chars)", len(text))
+                        return text
+                except Exception as e:
+                    last_error = e
+                    transient = _is_transient_provider_error(e)
+                    logger.warning(
+                        "Gemini STT key #%s try #%s failed (transient=%s): %s",
+                        key_index + 1,
+                        retry_index + 1,
+                        transient,
+                        e,
+                    )
+                    if transient and retry_index < 2:
+                        await asyncio.sleep(2 * (retry_index + 1))
+                        continue
+                    break
 
     # 2. Try OpenAI Whisper STT Fallback
     if openai_key:
@@ -111,6 +145,11 @@ async def transcribe_audio(
         except Exception as e:
             last_error = e
             logger.error(f"OpenAI Whisper STT failed: {e}")
+
+    if last_error and _is_transient_provider_error(last_error):
+        raise STTTemporarilyUnavailableError(
+            "Dịch vụ nhận dạng giọng nói đang bận. Vui lòng thử lại sau ít phút."
+        )
 
     if last_error:
         raise RuntimeError(f"Lỗi khi bóc băng giọng nói: {str(last_error)}")

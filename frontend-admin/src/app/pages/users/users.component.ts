@@ -16,7 +16,6 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzTagModule } from 'ng-zorro-antd/tag';
-import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
@@ -58,7 +57,6 @@ export interface UserStatsSummary {
     NzPopconfirmModule,
     NzToolTipModule,
     NzTagModule,
-    NzTabsModule,
     NzFormModule,
     NzModalModule,
   ],
@@ -100,6 +98,7 @@ export class UsersComponent implements OnInit {
 
   // Selection states (Batch actions)
   readonly selectedUserIds = signal<Set<number>>(new Set());
+  readonly bulkMode = signal(false);
 
   // Filter & Search states
   readonly activeSegment = signal<string>('all'); // all | recruiter | candidate | leader | admin | inactive
@@ -115,7 +114,6 @@ export class UsersComponent implements OnInit {
   readonly drawerMode = signal<'view' | 'edit' | 'create'>('view');
   readonly selectedUser = signal<User | null>(null);
   readonly drawerSaving = signal<boolean>(false);
-  readonly drawerActiveTab = signal<number>(0);
 
   // Reactive Form for Create / Edit inside Drawer
   readonly userForm = new FormGroup({
@@ -341,42 +339,9 @@ export class UsersComponent implements OnInit {
     this.selectedUserIds.set(new Set());
   }
 
-  // Inline Quick Switch Active (Optimistic update - No popup!)
-  toggleUserActiveQuick(user: User, event: boolean): void {
-    const originalState = user.is_active;
-    user.is_active = event; // Optimistic update
-
-    this.userService
-      .update(user.id, { is_active: event })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.message.success(event ? `Đã kích hoạt tài khoản ${user.full_name}` : `Đã tạm khóa tài khoản ${user.full_name}`);
-        },
-        error: () => {
-          user.is_active = originalState; // Revert on failure
-          this.message.error('Không thể cập nhật trạng thái người dùng');
-        },
-      });
-  }
-
-  // Quick Role Change from Dropdown
-  changeUserRole(user: User, newRole: UserRole): void {
-    if (user.role === newRole) return;
-
-    this.userService
-      .update(user.id, { role: newRole })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          user.role = newRole;
-          this.users.update((list) => [...list]);
-          this.message.success(`Đã đổi vai trò của ${user.full_name} thành ${this.getRoleLabel(newRole)}`);
-        },
-        error: () => {
-          this.message.error('Không thể phân quyền vai trò');
-        },
-      });
+  toggleBulkMode(): void {
+    this.bulkMode.update((enabled) => !enabled);
+    this.clearSelection();
   }
 
   // Batch actions
@@ -456,8 +421,7 @@ export class UsersComponent implements OnInit {
   // Drawer Open / Close
   openUserDrawer(user: User, mode: 'view' | 'edit' = 'view'): void {
     this.selectedUser.set(user);
-    this.drawerMode.set(mode);
-    this.drawerActiveTab.set(mode === 'edit' ? 1 : 0);
+    this.drawerMode.set('edit');
 
     this.userForm.reset({
       email: user.email,
@@ -478,7 +442,6 @@ export class UsersComponent implements OnInit {
   openCreateUserDrawer(): void {
     this.selectedUser.set(null);
     this.drawerMode.set('create');
-    this.drawerActiveTab.set(1);
 
     this.userForm.reset({
       email: '',

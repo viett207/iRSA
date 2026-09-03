@@ -104,15 +104,6 @@ export class JobListComponent implements OnInit {
     { value: 'rejected', label: 'Bị từ chối (Rejected)' },
   ];
 
-  readonly statusLegend: { status: JobStatus; label: string; symbol: string }[] = [
-    { status: 'active', label: 'Đang tuyển', symbol: '●' },
-    { status: 'approved', label: 'Đã duyệt', symbol: '◆' },
-    { status: 'pending_approval', label: 'Chờ duyệt', symbol: '◐' },
-    { status: 'draft', label: 'Bản nháp', symbol: '○' },
-    { status: 'closed', label: 'Đã đóng', symbol: '■' },
-    { status: 'rejected', label: 'Từ chối', symbol: '×' },
-  ];
-
   locationOptions = [
     'Hà Nội',
     'TP. Hồ Chí Minh',
@@ -341,10 +332,6 @@ export class JobListComponent implements OnInit {
 
   getStatusLabel(status: JobStatus): string {
     return JOB_STATUS_LABELS[status] || status;
-  }
-
-  getStatusSymbol(status: JobStatus): string {
-    return this.statusLegend.find((item) => item.status === status)?.symbol || '•';
   }
 
   getStatusColor(status: JobStatus): string {

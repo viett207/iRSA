@@ -456,6 +456,9 @@ class ShortlistedApplicantResponse(BaseModel):
     interview_date: datetime | None = None
     interview_type: str | None = None
     interview_status: str | None = None
+    question_status: str = "unreviewed"
+    question_count: int = 0
+    question_edited_count: int = 0
 
     class Config:
         from_attributes = True
@@ -521,7 +524,16 @@ async def list_shortlisted_applications(
 
     items = []
     for a in apps:
-        latest_iv = a.interviews[-1] if a.interviews else None
+        latest_iv = max(a.interviews, key=lambda interview: interview.id) if a.interviews else None
+        interview_questions = latest_iv.questions if latest_iv and isinstance(latest_iv.questions, list) else []
+        reviewed_questions = [
+            question for question in interview_questions
+            if isinstance(question, dict) and question.get("hr_reviewed") is True
+        ]
+        edited_questions = [
+            question for question in interview_questions
+            if isinstance(question, dict) and question.get("hr_edited") is True
+        ]
         items.append(
             ShortlistedApplicantResponse(
                 id=a.id,
@@ -542,6 +554,9 @@ async def list_shortlisted_applications(
                 interview_date=latest_iv.interview_date if latest_iv else None,
                 interview_type=latest_iv.interview_type if latest_iv else None,
                 interview_status=latest_iv.status if latest_iv else None,
+                question_status="ready" if reviewed_questions else "unreviewed",
+                question_count=len(interview_questions),
+                question_edited_count=len(edited_questions),
             )
         )
 
@@ -775,6 +790,12 @@ class InterviewingApplicantResponse(BaseModel):
     total_score: float | None = None
     ai_score: float | None = None
     has_ai_evaluation: bool = False
+    has_completed_interview: bool = False
+    interview_date: datetime | None = None
+    interview_type: str | None = None
+    interview_status: str | None = None
+    question_status: str = "unreviewed"
+    question_count: int = 0
     updated_at: datetime | None = None
 
     class Config:
@@ -803,6 +824,7 @@ async def list_interviewing_applications(
             selectinload(Application.candidate),
             selectinload(Application.job),
             selectinload(Application.scoring_result),
+            selectinload(Application.interviews),
         )
         .where(Application.status == "interviewing")
     )
@@ -827,8 +849,15 @@ async def list_interviewing_applications(
     result = await db.execute(base_query.offset(offset).limit(size))
     apps = result.scalars().all()
 
-    items = [
-        InterviewingApplicantResponse(
+    items = []
+    for a in apps:
+        latest_iv = max(a.interviews, key=lambda interview: interview.id) if a.interviews else None
+        questions = latest_iv.questions if latest_iv and isinstance(latest_iv.questions, list) else []
+        questions_ready = any(
+            isinstance(question, dict) and question.get("hr_reviewed") is True
+            for question in questions
+        )
+        items.append(InterviewingApplicantResponse(
             id=a.id,
             job_id=a.job_id,
             job_title=a.job.title_vi if a.job else "N/A",
@@ -839,10 +868,14 @@ async def list_interviewing_applications(
             total_score=a.scoring_result.total_score if a.scoring_result else None,
             ai_score=a.scoring_result.ai_score if a.scoring_result else None,
             has_ai_evaluation=bool(a.scoring_result and a.scoring_result.ai_evaluation),
+            has_completed_interview=any(iv.status == "completed" for iv in a.interviews),
+            interview_date=latest_iv.interview_date if latest_iv else None,
+            interview_type=latest_iv.interview_type if latest_iv else None,
+            interview_status=latest_iv.status if latest_iv else None,
+            question_status="ready" if questions_ready else "unreviewed",
+            question_count=len(questions),
             updated_at=a.updated_at,
-        )
-        for a in apps
-    ]
+        ))
 
     return InterviewingListResponse(items=items, total=total, page=page, size=size)
 
@@ -860,6 +893,9 @@ class InterviewPassedResponse(BaseModel):
     status: str
     total_score: float | None = None
     ai_score: float | None = None
+    interview_score: float | None = None
+    interview_recommendation: str | None = None
+    interview_feedback: str | None = None
     updated_at: datetime | None = None
 
     class Config:
@@ -890,6 +926,7 @@ async def list_interview_passed(
             selectinload(Application.candidate),
             selectinload(Application.job),
             selectinload(Application.scoring_result),
+            selectinload(Application.interviews),
         )
         .where(Application.status.in_(statuses))
     )
@@ -904,8 +941,11 @@ async def list_interview_passed(
     result = await db.execute(base_query.offset(offset).limit(size))
     apps = result.scalars().all()
 
-    items = [
-        InterviewPassedResponse(
+    items = []
+    for a in apps:
+        completed_interviews = [iv for iv in a.interviews if iv.status == "completed"]
+        latest_completed = max(completed_interviews, key=lambda interview: interview.id) if completed_interviews else None
+        items.append(InterviewPassedResponse(
             id=a.id,
             job_id=a.job_id,
             job_title=a.job.title_vi if a.job else "N/A",
@@ -914,9 +954,10 @@ async def list_interview_passed(
             status=a.status,
             total_score=a.scoring_result.total_score if a.scoring_result else None,
             ai_score=a.scoring_result.ai_score if a.scoring_result else None,
+            interview_score=latest_completed.overall_score if latest_completed else None,
+            interview_recommendation=latest_completed.recommendation if latest_completed else None,
+            interview_feedback=latest_completed.overall_feedback if latest_completed else None,
             updated_at=a.updated_at,
-        )
-        for a in apps
-    ]
+        ))
 
     return InterviewPassedListResponse(items=items, total=total, page=page, size=size)

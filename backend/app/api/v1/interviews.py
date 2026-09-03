@@ -14,7 +14,7 @@ from app.api.deps import DBSession, HRUser
 from app.models import Application, User, Job, ScoringResult
 from app.models.interview import Interview
 from app.services.storage import get_storage_service
-from src.services.stt_service import transcribe_audio
+from src.services.stt_service import STTTemporarilyUnavailableError, transcribe_audio
 from src.services.interview_eval_service import (
     evaluate_single_answer,
     summarize_full_interview,
@@ -58,6 +58,9 @@ class CalendarInterviewEvent(BaseModel):
     notes: str | None = None
     scheduler_name: str | None = None
     ai_score: float | None = None
+    question_status: str = "unreviewed"
+    question_count: int = 0
+    question_edited_count: int = 0
 
     class Config:
         from_attributes = True
@@ -392,11 +395,14 @@ async def transcribe_interview_audio_endpoint(
             mime_type=audio_file.content_type or "audio/webm",
             filename=audio_file.filename or "recording.webm",
         )
+    except STTTemporarilyUnavailableError as e:
+        logger.warning("STT provider temporarily unavailable: %s", e)
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"STT transcription failed: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Lỗi khi bóc băng âm thanh (STT): {str(e)}",
+            detail="Không thể hoàn thiện bản chép lời. Bản ghi âm vẫn được giữ để thử lại.",
         )
 
     # Persist audio_url, audio_path and transcript into interview.answers immediately
@@ -556,11 +562,14 @@ async def evaluate_interview_answer(
                     )
                     if stt_result:
                         final_transcript = stt_result
+                except STTTemporarilyUnavailableError as e:
+                    logger.warning("STT provider temporarily unavailable: %s", e)
+                    raise HTTPException(status_code=503, detail=str(e))
                 except Exception as e:
                     logger.error(f"STT transcription failed: {e}")
                     raise HTTPException(
                         status_code=500,
-                        detail=f"Lỗi khi bóc băng âm thanh (STT): {str(e)}",
+                        detail="Không thể hoàn thiện bản chép lời. Bản ghi âm vẫn được giữ để thử lại.",
                     )
 
     if not final_transcript:
@@ -710,18 +719,47 @@ async def schedule_interview(
     if app.scoring_result and app.scoring_result.ai_evaluation:
         default_questions = app.scoring_result.ai_evaluation.get("interview_questions", [])
 
-    interview = Interview(
-        application_id=app_id,
-        scheduled_by=current_user.id,
-        interview_date=body.interview_date,
-        interview_type=body.interview_type,
-        location=body.location,
-        notes=body.notes,
-        status="scheduled",
-        questions=default_questions,
-        answers={},
+    # One application has only one current schedule in this recruitment round.
+    # Re-submitting the scheduling form updates that schedule instead of creating
+    # a second active record. Older duplicate schedules are retired defensively.
+    interviews_result = await db.execute(
+        select(Interview)
+        .where(Interview.application_id == app_id)
+        .order_by(Interview.id.desc())
     )
-    db.add(interview)
+    existing_interviews = list(interviews_result.scalars().all())
+    latest_interview = existing_interviews[0] if existing_interviews else None
+
+    for stale_interview in existing_interviews[1:]:
+        if stale_interview.status == "scheduled":
+            stale_interview.status = "cancelled"
+
+    if latest_interview and latest_interview.status == "scheduled":
+        interview = latest_interview
+        interview.scheduled_by = current_user.id
+        interview.interview_date = body.interview_date
+        interview.interview_type = body.interview_type
+        interview.location = body.location
+        interview.notes = body.notes
+        interview.candidate_response = "pending"
+        interview.candidate_response_note = None
+        interview.candidate_proposed_date = None
+        interview.candidate_responded_at = None
+        if not interview.questions:
+            interview.questions = default_questions
+    else:
+        interview = Interview(
+            application_id=app_id,
+            scheduled_by=current_user.id,
+            interview_date=body.interview_date,
+            interview_type=body.interview_type,
+            location=body.location,
+            notes=body.notes,
+            status="scheduled",
+            questions=default_questions,
+            answers={},
+        )
+        db.add(interview)
 
     if app.status in ("submitted", "shortlisted"):
         app.status = "interviewing"
@@ -790,14 +828,33 @@ async def list_calendar_interviews(
     if current_user.role in ("recruiter", "leader") and current_user.company_code:
         query = query.where(Job.company_code == current_user.company_code)
 
-    result = await db.execute(query)
-    interviews = result.scalars().all()
+    result = await db.execute(query.order_by(None).order_by(Interview.id.desc()))
+    all_interviews = result.scalars().all()
+
+    # Historical duplicate rows may exist from the old create-on-reschedule flow.
+    # The newest row is authoritative; only expose it when it is still scheduled.
+    latest_by_application: dict[int, Interview] = {}
+    for interview in all_interviews:
+        latest_by_application.setdefault(interview.application_id, interview)
+    interviews = sorted(
+        (iv for iv in latest_by_application.values() if iv.status == "scheduled"),
+        key=lambda iv: iv.interview_date,
+    )
 
     events = []
     for iv in interviews:
         app = iv.application
         if not app:
             continue
+        questions = iv.questions if isinstance(iv.questions, list) else []
+        reviewed_questions = [
+            question for question in questions
+            if isinstance(question, dict) and question.get("hr_reviewed") is True
+        ]
+        edited_questions = [
+            question for question in questions
+            if isinstance(question, dict) and question.get("hr_edited") is True
+        ]
         events.append(
             CalendarInterviewEvent(
                 id=iv.id,
@@ -814,6 +871,9 @@ async def list_calendar_interviews(
                 notes=iv.notes,
                 scheduler_name=iv.scheduler.full_name if iv.scheduler else None,
                 ai_score=app.scoring_result.ai_score if app.scoring_result else None,
+                question_status="ready" if reviewed_questions else "unreviewed",
+                question_count=len(questions),
+                question_edited_count=len(edited_questions),
             )
         )
     return events

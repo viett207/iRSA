@@ -218,25 +218,6 @@
   <nz-card class="content-card results-card">
     <!-- List View -->
     @if (viewMode === 'list') {
-    <div class="status-legend" aria-label="Chú thích trạng thái tin tuyển dụng">
-      <span class="status-legend__title">Chú thích</span>
-      @for (item of statusLegend; track item.status) {
-        <span class="status-legend__item">
-          <span
-            class="status-symbol"
-            [class.status-symbol--draft]="item.status === 'draft'"
-            [class.status-symbol--pending]="item.status === 'pending_approval'"
-            [class.status-symbol--approved]="item.status === 'approved'"
-            [class.status-symbol--active]="item.status === 'active'"
-            [class.status-symbol--closed]="item.status === 'closed'"
-            [class.status-symbol--rejected]="item.status === 'rejected'"
-            aria-hidden="true"
-          >{{ item.symbol }}</span>
-          <span>{{ item.label }}</span>
-        </span>
-      }
-    </div>
-
     <div class="table-wrapper">
       <nz-table
         #jobTable
@@ -254,10 +235,11 @@
       >
         <thead>
           <tr>
-            <th nzWidth="66%" nzAlign="left">Tin tuyển dụng</th>
-            <th nzWidth="10%" nzAlign="center">Ứng viên</th>
-            <th nzWidth="16%" nzAlign="left">Người tạo</th>
-            <th nzWidth="8%" nzAlign="right"><span class="sr-only">Tùy chọn</span></th>
+            <th nzWidth="50%" nzAlign="left">Vị trí tuyển dụng</th>
+            <th nzWidth="14%" nzAlign="left">Mức lương</th>
+            <th nzWidth="12%" nzAlign="left">Hồ sơ</th>
+            <th nzWidth="19%" nzAlign="left">Phụ trách</th>
+            <th nzWidth="5%" nzAlign="right"><span class="sr-only">Tùy chọn</span></th>
           </tr>
         </thead>
         <tbody>
@@ -271,17 +253,14 @@
                       {{ job.title_vi }}
                     </a>
                     <span
-                      class="status-symbol status-symbol--title"
-                      [class.status-symbol--draft]="job.status === 'draft'"
-                      [class.status-symbol--pending]="job.status === 'pending_approval'"
-                      [class.status-symbol--approved]="job.status === 'approved'"
-                      [class.status-symbol--active]="job.status === 'active'"
-                      [class.status-symbol--closed]="job.status === 'closed'"
-                      [class.status-symbol--rejected]="job.status === 'rejected'"
-                      nz-tooltip
-                      [nzTooltipTitle]="getStatusLabel(job.status)"
-                      [attr.aria-label]="getStatusLabel(job.status)"
-                    >{{ getStatusSymbol(job.status) }}</span>
+                      class="job-status-label"
+                      [class.job-status-label--draft]="job.status === 'draft'"
+                      [class.job-status-label--pending]="job.status === 'pending_approval'"
+                      [class.job-status-label--approved]="job.status === 'approved'"
+                      [class.job-status-label--active]="job.status === 'active'"
+                      [class.job-status-label--closed]="job.status === 'closed'"
+                      [class.job-status-label--rejected]="job.status === 'rejected'"
+                    ><i aria-hidden="true"></i>{{ getStatusLabel(job.status) }}</span>
                   </div>
                   <div class="job-meta-pills">
                     @if (job.department) {
@@ -289,7 +268,6 @@
                     }
                     @if (job.location) {
                       <span class="meta-pill meta-pill--location">
-                        <span nz-icon nzType="environment" nzTheme="outline" class="meta-pill-icon"></span>
                         {{ job.location }}
                       </span>
                     }
@@ -298,32 +276,33 @@
                         {{ getEmploymentTypeLabel(job.employment_type) }}
                       </span>
                     }
-                    @if (job.salary_min != null || job.salary_max != null) {
-                      <span class="meta-pill meta-pill--salary">
-                        {{ formatSalary(job.salary_min, job.salary_max) }}
-                      </span>
-                    }
-                    <span class="meta-date">
-                      Ngày tạo: {{ formatDate(job.created_at) }}
-                    </span>
                   </div>
                 </div>
               </td>
 
-              <!-- Candidate Count (Clean number badge, no spammy repeated text) -->
-              <td nzAlign="center">
+              <!-- Salary -->
+              <td>
+                <div class="salary-cell">
+                  @if (job.salary_min != null || job.salary_max != null) {
+                    <strong>{{ formatSalary(job.salary_min, job.salary_max) }}</strong>
+                    <span>Dự kiến/tháng</span>
+                  } @else {
+                    <strong>Thỏa thuận</strong>
+                    <span>Theo năng lực</span>
+                  }
+                </div>
+              </td>
+
+              <!-- Candidate Count -->
+              <td>
                 <a
                   class="candidate-count-link"
                   [routerLink]="['/jobs', job.id]"
                   [attr.aria-label]="'Xem ' + job.applications_count + ' ứng viên'"
                   [title]="'Xem danh sách ứng viên (' + job.applications_count + ')'"
                 >
-                  <span
-                    class="candidate-count-pill"
-                    [class.candidate-count-pill--active]="job.applications_count > 0"
-                  >
-                    {{ job.applications_count }}
-                  </span>
+                  <strong>{{ job.applications_count }}</strong>
+                  <span>hồ sơ</span>
                 </a>
               </td>
 
@@ -335,7 +314,10 @@
                     [nzSize]="28"
                     class="creator-avatar"
                   ></nz-avatar>
-                  <span class="creator-name">{{ job.creator_name || '-' }}</span>
+                  <div class="creator-copy">
+                    <span class="creator-name">{{ job.creator_name || '-' }}</span>
+                    <time>Tạo ngày {{ formatDate(job.created_at) }}</time>
+                  </div>
                 </div>
               </td>
 
@@ -349,44 +331,44 @@
                   <nz-dropdown-menu #actionMenu="nzDropdownMenu">
                     <ul nz-menu class="job-action-menu">
                       <li nz-menu-item [routerLink]="['/jobs', job.id]">
-                        <span nz-icon nzType="eye"></span> Xem chi tiết
+                        Xem chi tiết
                       </li>
                       @if (canEdit(job)) {
                         <li nz-menu-item [routerLink]="['/jobs', job.id, 'edit']">
-                          <span nz-icon nzType="edit"></span> Chỉnh sửa tin
+                          Chỉnh sửa tin
                         </li>
                       }
                       @if (canSubmit(job)) {
                         <li nz-menu-item (click)="submitJob(job)">
-                          <span nz-icon nzType="send"></span> Gửi phê duyệt
+                          Gửi phê duyệt
                         </li>
                       }
                       @if (canApprove(job)) {
                         <li nz-menu-item (click)="approveJob(job)">
-                          <span nz-icon nzType="check"></span> Phê duyệt
+                          Phê duyệt
                         </li>
                         <li nz-menu-item (click)="showRejectModal(job)">
-                          <span nz-icon nzType="close"></span> Từ chối
+                          Từ chối
                         </li>
                       }
                       @if (canPublish(job)) {
                         <li nz-menu-item (click)="publishJob(job)">
-                          <span nz-icon nzType="global"></span> Đăng lên Portal
+                          Đăng lên Portal
                         </li>
                       }
                       @if (canUnpublish(job)) {
                         <li nz-menu-item (click)="unpublishJob(job)">
-                          <span nz-icon nzType="stop"></span> Gỡ khỏi Portal
+                          Gỡ khỏi Portal
                         </li>
                       }
                       @if (canClose(job)) {
                         <li nz-menu-item (click)="closeJob(job)">
-                          <span nz-icon nzType="poweroff"></span> Đóng tuyển
+                          Đóng tuyển
                         </li>
                       }
                       @if (canDelete(job)) {
                         <li nz-menu-item nzDanger nz-popconfirm nzPopconfirmTitle="Xóa vĩnh viễn tin tuyển dụng này?" nzOkText="Xóa" nzCancelText="Hủy" (nzOnConfirm)="deleteJob(job)" nzPopconfirmPlacement="left">
-                          <span nz-icon nzType="delete"></span> Xóa tin
+                          Xóa tin
                         </li>
                       }
                     </ul>
@@ -431,34 +413,34 @@
                 <nz-dropdown-menu #gridActionMenu="nzDropdownMenu">
                   <ul nz-menu class="job-action-menu">
                     <li nz-menu-item [routerLink]="['/jobs', job.id]">
-                      <span nz-icon nzType="eye"></span> Xem chi tiết
+                      Xem chi tiết
                     </li>
                     @if (canEdit(job)) {
                       <li nz-menu-item [routerLink]="['/jobs', job.id, 'edit']">
-                        <span nz-icon nzType="edit"></span> Chỉnh sửa tin
+                        Chỉnh sửa tin
                       </li>
                     }
                     @if (canSubmit(job)) {
-                      <li nz-menu-item (click)="submitJob(job)"><span nz-icon nzType="send"></span> Gửi phê duyệt</li>
+                      <li nz-menu-item (click)="submitJob(job)">Gửi phê duyệt</li>
                     }
                     @if (canApprove(job)) {
-                      <li nz-menu-item (click)="approveJob(job)"><span nz-icon nzType="check"></span> Phê duyệt</li>
-                      <li nz-menu-item (click)="showRejectModal(job)"><span nz-icon nzType="close"></span> Từ chối</li>
+                      <li nz-menu-item (click)="approveJob(job)">Phê duyệt</li>
+                      <li nz-menu-item (click)="showRejectModal(job)">Từ chối</li>
                     }
                     @if (canPublish(job)) {
-                      <li nz-menu-item (click)="publishJob(job)"><span nz-icon nzType="global"></span> Đăng lên Portal</li>
+                      <li nz-menu-item (click)="publishJob(job)">Đăng lên Portal</li>
                     }
                     @if (canUnpublish(job)) {
-                      <li nz-menu-item (click)="unpublishJob(job)"><span nz-icon nzType="stop"></span> Gỡ khỏi Portal</li>
+                      <li nz-menu-item (click)="unpublishJob(job)">Gỡ khỏi Portal</li>
                     }
                     @if (canClose(job)) {
                       <li nz-menu-item (click)="closeJob(job)">
-                        <span nz-icon nzType="poweroff"></span> Đóng tuyển
+                        Đóng tuyển
                       </li>
                     }
                     @if (canDelete(job)) {
                       <li nz-menu-item nzDanger nz-popconfirm nzPopconfirmTitle="Xóa vĩnh viễn tin tuyển dụng này?" nzOkText="Xóa" nzCancelText="Hủy" (nzOnConfirm)="deleteJob(job)" nzPopconfirmPlacement="left">
-                        <span nz-icon nzType="delete"></span> Xóa tin
+                        Xóa tin
                       </li>
                     }
                   </ul>

@@ -1,165 +1,203 @@
 <div class="page-header">
-  <h2>
-    <span nz-icon nzType="audio" nzTheme="outline" style="color: var(--color-primary-light); margin-right: 8px"></span>
-    Vòng 2 - Phòng phỏng vấn & Chấm điểm AI
-  </h2>
-  <p style="color: #888; margin: 4px 0 16px">
-    Quản lý ứng viên đang phỏng vấn. Bấm "Vào phòng PV" để sử dụng bộ câu hỏi AI, ghi âm câu trả lời, bóc băng STT và chấm điểm STAR.
-  </p>
+  <span>VÒNG 2</span>
+  <h2>Điều phối phỏng vấn</h2>
+  <p>Theo dõi lịch, mức độ sẵn sàng và những hồ sơ cần xử lý tiếp theo.</p>
 </div>
 
-<!-- Stats -->
-<div class="static-kpi-grid static-kpi-grid--one">
-  <div class="static-display-card static-kpi-card static-kpi-card--primary">
-    <span class="static-kpi-icon" aria-hidden="true"><span nz-icon nzType="team"></span></span>
-    <div class="static-kpi-content">
-      <span class="static-kpi-label">Ứng viên đang trong vòng phỏng vấn</span>
-      <strong class="static-kpi-value">{{ total() }}</strong>
+@if (activeRoomCandidate(); as roomCandidate) {
+  <section class="embedded-interview-room">
+    <app-interview-room-modal
+      [jobId]="roomCandidate.job_id"
+      [appId]="roomCandidate.id"
+      [candidateName]="roomCandidate.candidate_name"
+      (roomClosed)="closeEmbeddedRoom()"
+    ></app-interview-room-modal>
+  </section>
+} @else {
+@if (entryCandidate(); as candidate) {
+  <section class="interview-entry-confirmation" aria-labelledby="entry-confirmation-title">
+    <header>
+      <div>
+        <span class="entry-eyebrow">XÁC NHẬN TRƯỚC KHI BẮT ĐẦU</span>
+        <h3 id="entry-confirmation-title">Kiểm tra đúng ứng viên và phiên phỏng vấn</h3>
+        <p>Việc xác nhận chỉ mở phòng phỏng vấn AI, không tự động thay đổi kết quả tuyển dụng.</p>
+      </div>
+      <span class="entry-optional-label">Phỏng vấn AI · Tùy chọn</span>
+    </header>
+
+    <div class="entry-candidate-profile">
+      <span class="entry-avatar">{{ getCandidateInitials(candidate.candidate_name) }}</span>
+      <div>
+        <h4>{{ candidate.candidate_name }}</h4>
+        <p>{{ candidate.candidate_email }}</p>
+        <strong>{{ candidate.job_title }}</strong>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- Sort toolbar -->
-<div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center">
-  <div style="display: flex; gap: 8px">
-    <button nz-button nzSize="small"
-      [nzType]="sortBy === 'date' ? 'primary' : 'default'"
-      (click)="changeSortBy('date')">
-      <span nz-icon nzType="calendar"></span> Ngày cập nhật
-    </button>
-    <button nz-button nzSize="small"
-      [nzType]="sortBy === 'score' ? 'primary' : 'default'"
-      (click)="changeSortBy('score')">
-      <span nz-icon nzType="sort-descending"></span> Điểm sàng lọc
-    </button>
-    <button nz-button nzSize="small"
-      [nzType]="sortBy === 'ai_score' ? 'primary' : 'default'"
-      (click)="changeSortBy('ai_score')">
-      <span nz-icon nzType="robot"></span> Điểm AI
-    </button>
-  </div>
-  <button nz-button nzSize="small"
-    [disabled]="compareSelected.size !== 2 || !canCompare()"
-    (click)="openCompare()"
-    nz-tooltip
-    [nzTooltipTitle]="!canCompare() ? 'Chọn 2 ứng viên cùng vị trí' : 'So sánh 2 ứng viên'">
-    <span nz-icon nzType="swap"></span>
-    So sánh ({{ compareSelected.size }}/2)
-  </button>
-</div>
+    <div class="entry-fact-grid">
+      <article>
+        <span>Thời gian phỏng vấn</span>
+        <strong>{{ formatDateTime(candidate.interview_date) }}</strong>
+      </article>
+      <article>
+        <span>Hình thức</span>
+        <strong>{{ candidate.interview_type === 'offline' ? 'Trực tiếp' : 'Trực tuyến' }}</strong>
+      </article>
+      <article>
+        <span>Trạng thái phòng</span>
+        <strong>{{ getRoomAvailabilityLabel(candidate) }}</strong>
+      </article>
+      <article>
+        <span>Bộ câu hỏi AI</span>
+        <strong>{{ candidate.question_status === 'ready' ? (candidate.question_count || 0) + ' câu đã chuẩn bị' : 'Chưa chuẩn bị · Không bắt buộc' }}</strong>
+      </article>
+    </div>
 
-<!-- Table -->
-<nz-table
-  #interviewTable
-  [nzData]="applicants()"
-  [nzLoading]="loading()"
-  [nzTotal]="total()"
-  [nzPageIndex]="page"
-  [nzPageSize]="20"
-  [nzFrontPagination]="false"
-  (nzPageIndexChange)="onPageChange($event)"
-  nzSize="middle"
->
-  <thead>
-    <tr>
-      <th nzWidth="4%"></th>
-      <th nzWidth="18%">Ứng viên</th>
-      <th nzWidth="15%">Vị trí</th>
-      <th nzWidth="10%">Điểm AI CV</th>
-      <th nzWidth="10%">Cập nhật</th>
-      <th nzWidth="18%">Phòng phỏng vấn AI</th>
-      <th nzWidth="25%">Chốt kết quả & Thao tác</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (app of interviewTable.data; track app.id) {
-      <tr>
-        <td>
-          <label nz-checkbox
-            [nzChecked]="compareSelected.has(app.id)"
-            [nzDisabled]="!compareSelected.has(app.id) && compareSelected.size >= 2"
-            (nzCheckedChange)="toggleCompare(app.id, $event)">
-          </label>
-        </td>
-        <td>
-          <strong>{{ app.candidate_name }}</strong><br />
-          <small style="color: #888">{{ app.candidate_email }}</small>
-        </td>
-        <td><a [routerLink]="['/jobs', app.job_id]"><strong>{{ app.job_title }}</strong></a></td>
-        <td>
-          @if (app.ai_score != null) {
-            <nz-progress nzType="circle" [nzPercent]="app.ai_score"
-              [nzWidth]="38" [nzStrokeColor]="getScoreColor(app.ai_score)"
-              [nzFormat]="scoreFormat"></nz-progress>
-          } @else { <nz-tag>N/A</nz-tag> }
-        </td>
-        <td>{{ formatDate(app.updated_at) }}</td>
-        <td>
-          <!-- Prominent Interview Room Button -->
-          <button
-            nz-button
-            nzType="primary"
-            class="interview-room-button"
-            style="background: var(--color-primary-light); border-color: var(--color-primary-light); font-weight: 600"
-            (click)="openInterviewRoom(app)"
-            nz-tooltip
-            nzTooltipTitle="Vào phòng phỏng vấn: Ghi âm từng câu, bóc băng & AI chấm điểm"
-          >
-            <span nz-icon nzType="audio"></span>
-            🎙️ Vào phòng PV
-          </button>
-        </td>
-        <td>
-          @if (isOwner(app) && app.has_completed_interview) {
-            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
-              @if (transitioningApplicationId() === app.id) {
-                <span class="status-updating" aria-live="polite"><span nz-icon nzType="loading"></span> Đang cập nhật</span>
-              }
-              <button nz-button nzSize="small" nzType="primary"
-                style="background: #52c41a; border-color: #52c41a; font-weight: 600"
-                nz-popconfirm nzPopconfirmTitle="Phỏng vấn ĐẠT - Chuyển sang Vòng 3: Đã Pass phỏng vấn (Đề xuất tuyển dụng)?"
-                (nzOnConfirm)="updateStatus(app, 'offered')"
-                [disabled]="transitioningApplicationId() !== null"
-                nz-tooltip nzTooltipTitle="Đạt PV ➔ Chuyển sang Vòng 3: Đã Pass phỏng vấn">
-                <span nz-icon nzType="like"></span> Đạt PV
-              </button>
+    <footer>
+      <span>Hãy bảo đảm tên ứng viên và thời gian phía trên đúng với buổi phỏng vấn cần mở.</span>
+      <div>
+        <button nz-button (click)="cancelInterviewEntry()">Quay lại danh sách</button>
+        <button
+          nz-button
+          nzType="primary"
+          [disabled]="!canEnterInterview(candidate)"
+          (click)="confirmInterviewEntry()"
+          nz-tooltip
+          [nzTooltipTitle]="getRoomAvailabilityLabel(candidate)"
+        >Xác nhận và mở phòng AI</button>
+      </div>
+    </footer>
+  </section>
+}
+}
 
-              <button nz-button nzSize="small" nzDanger
-                nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên này KHÔNG ĐẠT phỏng vấn?"
-                (nzOnConfirm)="updateStatus(app, 'rejected')"
-                [disabled]="transitioningApplicationId() !== null"
-                nz-tooltip nzTooltipTitle="Không đạt">
-                <span nz-icon nzType="dislike"></span> Không đạt
-              </button>
+@if (!entryCandidate() && !activeRoomCandidate()) {
+  <section class="operations-overview">
+    <div class="overview-metrics">
+      <button type="button" [class.active]="stageFilter() === 'all'" (click)="setStageFilter('all')">
+        <span>Đang theo dõi</span><strong>{{ total() }}</strong><small>Tất cả hồ sơ vòng phỏng vấn</small>
+      </button>
+      <button type="button" [class.active]="stageFilter() === 'today'" (click)="setStageFilter('today')">
+        <span>Lịch hôm nay</span><strong>{{ todayCount() }}</strong><small>Cần được điều phối trong ngày</small>
+      </button>
+      <button type="button" [class.active]="stageFilter() === 'open'" (click)="setStageFilter('open')">
+        <span>Phòng đang mở</span><strong>{{ openRoomCount() }}</strong><small>Có thể bắt đầu ngay</small>
+      </button>
+      <button type="button" [class.active]="stageFilter() === 'decision'" (click)="setStageFilter('decision')">
+        <span>Chờ chốt kết quả</span><strong>{{ pendingDecisionCount() }}</strong><small>Đã hoàn thành phỏng vấn</small>
+      </button>
+    </div>
 
-              <button nz-button nzSize="small" nzType="default"
-                (click)="openScheduleInterview(app)"
-                nz-tooltip nzTooltipTitle="Xem / Đổi lịch phỏng vấn">
-                <span nz-icon nzType="calendar"></span> Đổi lịch
-              </button>
+    <aside class="next-interview">
+      @if (nextInterview(); as next) {
+        <span>{{ canEnterInterview(next) ? 'PHÒNG ĐANG MỞ' : 'LỊCH GẦN NHẤT' }}</span>
+        <strong>{{ formatInterviewTime(next.interview_date) }} · {{ formatInterviewDate(next.interview_date) }}</strong>
+        <p>{{ next.candidate_name }}</p>
+        <small>{{ next.job_title }}</small>
+        @if (canManageInterview(next) && canEnterInterview(next)) {
+          <button type="button" (click)="openInterviewRoom(next)">Vào phòng AI</button>
+        }
+      } @else {
+        <span>LỊCH GẦN NHẤT</span>
+        <strong>Chưa có lịch sắp tới</strong>
+        <p>Không có phiên nào cần xử lý lúc này.</p>
+      }
+    </aside>
+  </section>
 
-              <button nz-button nzSize="small"
-                nz-popconfirm nzPopconfirmTitle="Đưa ứng viên quay lại Vòng 1: Hẹn lịch phỏng vấn?"
-                (nzOnConfirm)="updateStatus(app, 'shortlisted')"
-                [disabled]="transitioningApplicationId() !== null"
-                nz-tooltip nzTooltipTitle="Quay lại Hẹn lịch">
-                <span nz-icon nzType="rollback"></span> Quay lại vòng 1
-              </button>
-            </div>
-          } @else if (isOwner(app)) {
-            <span
-              class="finalization-locked"
-              nz-tooltip
-              nzTooltipTitle="Hoàn thành buổi phỏng vấn trong Phòng PV trước khi chốt kết quả"
-            >
-              <span nz-icon nzType="lock"></span>
-              Chờ hoàn thành PV
-            </span>
-          } @else {
-            <span style="color: #999">—</span>
-          }
-        </td>
-      </tr>
-    }
-  </tbody>
-</nz-table>
+  <section class="interview-filter-bar">
+    <div class="filter-field filter-search">
+      <label for="interview-search">Tìm nhanh</label>
+      <input id="interview-search" type="search" [ngModel]="searchText()" (ngModelChange)="searchText.set($event)" placeholder="Tên, email hoặc vị trí..." />
+    </div>
+    <div class="filter-field">
+      <label for="interview-job">Vị trí tuyển dụng</label>
+      <select id="interview-job" [ngModel]="selectedJobId()" (ngModelChange)="selectedJobId.set(+$event)">
+        <option [ngValue]="0">Tất cả vị trí</option>
+        @for (job of jobs(); track job.id) { <option [ngValue]="job.id">{{ job.title }}</option> }
+      </select>
+    </div>
+    <div class="filter-field">
+      <label for="interview-stage">Trạng thái xử lý</label>
+      <select id="interview-stage" [ngModel]="stageFilter()" (ngModelChange)="setStageFilter($event)">
+        <option value="all">Tất cả trạng thái</option>
+        <option value="today">Lịch hôm nay</option>
+        <option value="open">Phòng đang mở</option>
+        <option value="upcoming">Sắp diễn ra</option>
+        <option value="decision">Chờ chốt kết quả</option>
+      </select>
+    </div>
+    <span class="filter-result">{{ filteredApplicants().length }} hồ sơ hiển thị</span>
+  </section>
+
+  <section class="interview-table-shell">
+    <header>
+      <div><h3>Danh sách điều phối</h3><p>Ưu tiên theo thời gian phỏng vấn và trạng thái cần hành động.</p></div>
+    </header>
+    <nz-table
+      #interviewTable
+      [nzData]="filteredApplicants()"
+      [nzLoading]="loading()"
+      [nzTotal]="filteredApplicants().length"
+      [nzPageIndex]="page"
+      [nzPageSize]="20"
+      [nzFrontPagination]="true"
+      (nzPageIndexChange)="page = $event"
+      nzSize="middle"
+    >
+      <thead>
+        <tr>
+          <th nzWidth="27%">Ứng viên & vị trí</th>
+          <th nzWidth="18%">Lịch phỏng vấn</th>
+          <th nzWidth="16%">Câu hỏi AI</th>
+          <th nzWidth="15%">Trạng thái</th>
+          <th nzWidth="24%">Hành động tiếp theo</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (app of interviewTable.data; track app.id) {
+          <tr [attr.data-stage]="getInterviewStage(app)">
+            <td>
+              <div class="candidate-cell">
+                <span>{{ getCandidateInitials(app.candidate_name) }}</span>
+                <div><strong>{{ app.candidate_name }}</strong><small>{{ app.candidate_email }}</small><a [routerLink]="['/jobs', app.job_id]">{{ app.job_title }}</a></div>
+              </div>
+            </td>
+            <td>
+              <div class="schedule-cell">
+                <strong>{{ formatInterviewTime(app.interview_date) }}</strong>
+                <span>{{ formatInterviewDate(app.interview_date) }}</span>
+                <small>{{ app.interview_type === 'offline' ? 'Trực tiếp' : 'Trực tuyến' }}</small>
+              </div>
+            </td>
+            <td><span class="question-state" [attr.data-state]="app.question_status || 'unreviewed'">{{ getQuestionReadinessLabel(app) }}</span></td>
+            <td><span class="stage-badge" [attr.data-stage]="getInterviewStage(app)">{{ getInterviewStageLabel(app) }}</span></td>
+            <td>
+              <div class="row-actions">
+                @if (canManageInterview(app) && app.has_completed_interview) {
+                  <button nz-button nzType="primary"
+                    nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên đạt phỏng vấn và chuyển sang đề xuất tuyển dụng?"
+                    (nzOnConfirm)="updateStatus(app, 'offered')"
+                    [disabled]="transitioningApplicationId() !== null">Đạt phỏng vấn</button>
+                  <button nz-button nzDanger
+                    nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên không đạt phỏng vấn?"
+                    (nzOnConfirm)="updateStatus(app, 'rejected')"
+                    [disabled]="transitioningApplicationId() !== null">Không đạt</button>
+                } @else if (canManageInterview(app) && canEnterInterview(app)) {
+                  <button nz-button nzType="primary" (click)="openInterviewRoom(app)">Vào phòng AI</button>
+                  <button nz-button (click)="openScheduleInterview(app)">Đổi lịch</button>
+                } @else if (canManageInterview(app)) {
+                  <button nz-button (click)="openScheduleInterview(app)">Xem hoặc đổi lịch</button>
+                } @else {
+                  <span class="view-only">Chỉ xem · Tin do người khác phụ trách</span>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5"><div class="table-empty"><strong>Không có hồ sơ phù hợp</strong><span>Hãy thay đổi điều kiện lọc để xem các lịch khác.</span></div></td></tr>
+        }
+      </tbody>
+    </nz-table>
+  </section>
+}

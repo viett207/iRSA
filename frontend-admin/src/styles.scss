@@ -617,6 +617,20 @@ a:hover {
 }
 
 /* ----- Message ----- */
+.ant-message {
+  top: auto !important;
+  right: 24px;
+  bottom: 24px;
+  left: auto;
+  width: auto;
+  text-align: right;
+}
+
+.ant-message-notice {
+  padding: 4px 0;
+  text-align: right;
+}
+
 .ant-message-notice-content {
   display: inline-flex;
   min-width: min(420px, calc(100vw - 32px));
@@ -636,17 +650,12 @@ a:hover {
 .ant-message-notice-content .ant-message-custom-content {
   display: inline-flex;
   align-items: center;
-  gap: 16px;
+  gap: 0;
   width: 100%;
 }
 
 .ant-message-notice-content .ant-message-custom-content::before {
-  content: '';
-  width: 9px;
-  height: 9px;
-  flex: 0 0 9px;
-  border-radius: 50%;
-  background: #f4f4f5;
+  content: none;
 }
 
 .ant-message-notice-content .anticon {
@@ -654,6 +663,13 @@ a:hover {
 }
 
 @media (max-width: 560px) {
+  .ant-message {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+  }
+
   .ant-message-notice-content {
     min-width: 0;
     padding: 14px 18px;

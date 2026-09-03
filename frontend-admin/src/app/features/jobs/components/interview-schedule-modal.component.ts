@@ -66,7 +66,11 @@ export class InterviewScheduleModalComponent implements OnInit {
   loadInterviews(): void {
     this.loading = true;
     this.jobService.getInterviews(this.jobId, this.appId).subscribe({
-      next: (data) => { this.interviews = data; this.loading = false; },
+      next: (data) => {
+        const latest = [...data].sort((left, right) => right.id - left.id)[0];
+        this.interviews = latest?.status === 'scheduled' ? [latest] : [];
+        this.loading = false;
+      },
       error: () => { this.loading = false; },
     });
   }
@@ -80,9 +84,12 @@ export class InterviewScheduleModalComponent implements OnInit {
       interview_date: new Date(this.form.interview_date).toISOString(),
     };
 
+    const isRescheduling = this.interviews.length > 0;
     this.jobService.scheduleInterview(this.jobId, this.appId, body).subscribe({
       next: (iv) => {
-        this.message.success('Đã đặt lịch phỏng vấn');
+        this.message.success(isRescheduling
+          ? 'Đã cập nhật lịch phỏng vấn, đang chờ ứng viên xác nhận lại'
+          : 'Đã gửi lịch phỏng vấn, đang chờ ứng viên xác nhận');
         this.submitting = false;
         this.modalRef.close(iv);
       },
@@ -112,6 +119,6 @@ export class InterviewScheduleModalComponent implements OnInit {
   }
 
   getStatusLabel(status: string): string {
-    return { scheduled: 'Đã lên lịch', completed: 'Hoàn thành', cancelled: 'Đã hủy' }[status] || status;
+    return { scheduled: 'Chờ xác nhận', completed: 'Hoàn thành', cancelled: 'Đã hủy' }[status] || status;
   }
 }

@@ -7,5 +7,33 @@
 .text-warning { color: #faad14; }
 .text-error { color: #ff4d4f; }
 .tabs-spacing { margin-top: 12px; }
+
+:host ::ng-deep .tabs-spacing > .ant-tabs-nav {
+  margin: 0 0 12px;
+  padding: 4px;
+  border: 1px solid #ded9cd;
+  border-radius: 10px;
+  background: #f3f0e9;
+}
+
+:host ::ng-deep .tabs-spacing > .ant-tabs-nav::before { display: none; }
+:host ::ng-deep .tabs-spacing > .ant-tabs-nav .ant-tabs-nav-list { gap: 4px; }
+:host ::ng-deep .tabs-spacing > .ant-tabs-nav .ant-tabs-tab {
+  margin: 0;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: #686870;
+  font-size: 11px;
+  transition: background .15s ease, color .15s ease;
+}
+:host ::ng-deep .tabs-spacing > .ant-tabs-nav .ant-tabs-tab:hover { color: #27272a; }
+:host ::ng-deep .tabs-spacing > .ant-tabs-nav .ant-tabs-tab-active {
+  border-color: #e7e2d8;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(39, 39, 42, .06);
+}
+:host ::ng-deep .tabs-spacing > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn { color: #27272a; }
+:host ::ng-deep .tabs-spacing > .ant-tabs-nav .ant-tabs-ink-bar { display: none; }
 .loading-copy { margin-top: 16px; color: #666; font-size: 14px; }
 .loading-state { text-align: center; padding: 40px; }
