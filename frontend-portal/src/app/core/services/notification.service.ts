@@ -1,5 +1,6 @@
 import { Injectable, signal, computed, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Subject } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface AppNotification {
@@ -24,6 +25,9 @@ export class NotificationService implements OnDestroy {
   private ws: WebSocket | null = null;
   private reconnectTimer: any = null;
   private pingTimer: any = null;
+
+  /** Real-time chat messages stream */
+  readonly chatMessages$ = new Subject<any>();
 
   /** All loaded notifications */
   notifications = signal<AppNotification[]>([]);
@@ -118,6 +122,8 @@ export class NotificationService implements OnDestroy {
           const notif: AppNotification = data.notification;
           this.notifications.update((list) => [notif, ...list]);
           this.unreadCount.update((c) => c + 1);
+        } else if (data.type === 'chat_message') {
+          this.chatMessages$.next(data);
         }
       } catch {
         // Ignore non-JSON (e.g., "pong")

@@ -302,6 +302,10 @@ export interface ShortlistedApplicant {
   interview_date: string | null;
   interview_type: string | null;
   interview_status: string | null;
+  candidate_response?: 'pending' | 'accepted' | 'declined' | 'reschedule_requested';
+  candidate_response_note?: string;
+  interview_location?: string;
+  interview_notes?: string;
   question_status?: 'unreviewed' | 'draft' | 'ready';
   question_count?: number;
   question_edited_count?: number;

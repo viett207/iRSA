@@ -53,6 +53,7 @@
             ],
             "styles": [
               "src/theme.less",
+              "../irsa-design-tokens-v2.scss",
               "src/styles.scss"
             ],
             "scripts": []
@@ -123,6 +124,7 @@
             ],
             "styles": [
               "src/theme.less",
+              "../irsa-design-tokens-v2.scss",
               "src/styles.scss"
             ],
             "scripts": []

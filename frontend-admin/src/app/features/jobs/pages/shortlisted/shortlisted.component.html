@@ -517,6 +517,9 @@
                     }
                   </div>
                   <footer class="workspace-actions">
+                    <button nz-button (click)="openCandidateChat(selected)">
+                      <span nz-icon nzType="message"></span> Nhắn tin ứng viên
+                    </button>
                     <button nz-button (click)="openScheduleInterview(selected)">Đổi hoặc quản lý lịch</button>
                     <button
                       nz-button
@@ -706,6 +709,16 @@
                                   <strong>{{ app.interview_date | date:'dd/MM HH:mm' }}</strong>
                                   <small>({{ app.interview_type === 'offline' ? 'Trực tiếp' : 'Online' }})</small>
                                 </span>
+                                <button
+                                  nz-button
+                                  nzSize="small"
+                                  nzType="link"
+                                  class="btn-chat"
+                                  (click)="openCandidateChat(app)"
+                                  nz-tooltip="Nhắn tin với ứng viên"
+                                >
+                                  <span nz-icon nzType="message"></span> Chat
+                                </button>
                                 <button
                                   nz-button
                                   nzSize="small"

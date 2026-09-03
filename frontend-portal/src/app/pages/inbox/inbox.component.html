@@ -1,0 +1,310 @@
+<div class="inbox-page">
+  <div class="inbox-container">
+    <!-- Left Panel: Conversations List -->
+    <aside class="inbox-sidebar">
+      <div class="sidebar-header">
+        <div class="header-title">
+          <span nz-icon nzType="message" nzTheme="outline"></span>
+          <h2>Hộp thư ứng tuyển</h2>
+        </div>
+        <p class="header-desc">Trao đổi với HR và nhận lịch phỏng vấn</p>
+        <div class="search-bar">
+          <nz-input-group [nzPrefix]="prefixIconSearch">
+            <input
+              nz-input
+              placeholder="Tìm theo vị trí hoặc công ty..."
+              [(ngModel)]="searchQuery"
+            />
+          </nz-input-group>
+          <ng-template #prefixIconSearch>
+            <span nz-icon nzType="search" class="search-icon"></span>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="conversation-list">
+        <nz-spin [nzSpinning]="loadingConversations()">
+          @if (filteredConversations.length === 0 && !loadingConversations()) {
+            <div class="empty-conversations">
+              <nz-empty
+                nzNotFoundImage="simple"
+                nzNotFoundContent="Chưa có tin nhắn hoặc lịch phỏng vấn nào"
+              ></nz-empty>
+            </div>
+          } @else {
+            @for (conv of filteredConversations; track conv.application_id) {
+              <div
+                class="conversation-item"
+                [class.active]="selectedConversation()?.application_id === conv.application_id"
+                (click)="selectConversation(conv)"
+              >
+                <div class="item-avatar">
+                  {{ getCandidateInitials(conv.company_name || conv.job_title) }}
+                </div>
+                <div class="item-body">
+                  <div class="item-header">
+                    <h4 class="item-job-title">{{ conv.job_title }}</h4>
+                    @if (conv.latest_message) {
+                      <span class="item-time">{{ conv.latest_message.created_at | date:'HH:mm dd/MM' }}</span>
+                    }
+                  </div>
+                  <div class="item-company">{{ conv.company_name || 'Nhà tuyển dụng' }}</div>
+                  
+                  <div class="item-footer">
+                    <p class="item-snippet">
+                      @if (conv.latest_message) {
+                        @if (conv.latest_message.message_type === 'interview_invitation') {
+                          <span class="invitation-snippet">📅 Lời mời phỏng vấn</span>
+                        } @else if (conv.latest_message.message_type === 'interview_response') {
+                          <span>{{ conv.latest_message.content }}</span>
+                        } @else {
+                          <span>{{ conv.latest_message.content }}</span>
+                        }
+                      } @else {
+                        <span class="no-msg">Chưa có tin nhắn</span>
+                      }
+                    </p>
+
+                    @if (conv.unread_count > 0) {
+                      <span class="unread-badge">{{ conv.unread_count }}</span>
+                    }
+                  </div>
+
+                  @if (conv.interview_date) {
+                    <div class="item-interview-tag">
+                      @if (conv.candidate_response === 'pending') {
+                        <span class="status-pill status-pending">
+                          <i class="dot"></i> Chờ bạn xác nhận
+                        </span>
+                      } @else if (conv.candidate_response === 'accepted') {
+                        <span class="status-pill status-accepted">
+                          <i class="dot"></i> Đã xác nhận
+                        </span>
+                      } @else if (conv.candidate_response === 'declined' || conv.interview_status === 'cancelled') {
+                        <span class="status-pill status-declined">
+                          <i class="dot"></i> Đã từ chối / Hủy
+                        </span>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </nz-spin>
+      </div>
+    </aside>
+
+    <!-- Right Panel: Conversation Details & Chat -->
+    <main class="inbox-chat">
+      @if (selectedConversation(); as conv) {
+        <!-- Chat Header -->
+        <header class="chat-header">
+          <div class="chat-header__info">
+            <div class="chat-header__avatar">
+              {{ getCandidateInitials(conv.company_name || conv.job_title) }}
+            </div>
+            <div>
+              <div class="chat-header__title-row">
+                <h3 class="chat-header__title">{{ conv.job_title }}</h3>
+                <a
+                  class="chat-header__job-link"
+                  [routerLink]="['/jobs', conv.job_id]"
+                  target="_blank"
+                  nz-tooltip="Xem chi tiết việc làm"
+                >
+                  <span nz-icon nzType="link"></span> Xem tin
+                </a>
+              </div>
+              <div class="chat-header__sub">
+                <span>{{ conv.company_name || 'Nhà tuyển dụng' }}</span>
+                @if (conv.candidate_response === 'pending') {
+                  <span class="status-pill status-pending"><i class="dot"></i> Chờ xác nhận lịch</span>
+                } @else if (conv.candidate_response === 'accepted') {
+                  <span class="status-pill status-accepted"><i class="dot"></i> Đã xác nhận phỏng vấn</span>
+                }
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Messages Stream -->
+        <div class="chat-messages" #scrollContainer>
+          <nz-spin [nzSpinning]="loadingMessages()">
+            @if (messages().length === 0 && !loadingMessages()) {
+              <div class="empty-messages">
+                <span nz-icon nzType="message" class="empty-icon"></span>
+                <p>Bắt đầu cuộc trò chuyện với nhà tuyển dụng về vị trí này.</p>
+              </div>
+            } @else {
+              @for (msg of messages(); track msg.id) {
+                <!-- INTERVIEW INVITATION CARD -->
+                @if (msg.message_type === 'interview_invitation' && msg.metadata_json) {
+                  <div class="message-row invitation-row">
+                    <article class="invitation-card">
+                      <div class="invitation-header">
+                        <div class="invitation-badge">
+                          <span nz-icon nzType="calendar" nzTheme="outline"></span>
+                          <span>LỜI MỜI PHỎNG VẤN</span>
+                        </div>
+                        <span class="invitation-time">{{ msg.created_at | date:'HH:mm dd/MM/yyyy' }}</span>
+                      </div>
+
+                      <div class="invitation-body">
+                        <h4 class="invitation-job-title">{{ conv.job_title }}</h4>
+                        
+                        <div class="invitation-meta-grid">
+                          <div class="meta-field">
+                            <span class="meta-label">Thời gian:</span>
+                            <strong class="meta-value highlight-time">
+                              {{ msg.metadata_json.interview_date | date:'EEEE, dd/MM/yyyy · HH:mm' }}
+                            </strong>
+                          </div>
+                          
+                          <div class="meta-field">
+                            <span class="meta-label">Hình thức:</span>
+                            <span class="meta-value">
+                              @if (msg.metadata_json.interview_type === 'online') {
+                                <span class="type-online">🌐 Phỏng vấn trực tuyến</span>
+                              } @else {
+                                <span class="type-offline">🏢 Phỏng vấn trực tiếp</span>
+                              }
+                            </span>
+                          </div>
+
+                          @if (msg.metadata_json.location) {
+                            <div class="meta-field full-width">
+                              <span class="meta-label">
+                                {{ msg.metadata_json.interview_type === 'online' ? 'Liên kết phòng họp:' : 'Địa điểm:' }}
+                              </span>
+                              @if (msg.metadata_json.interview_type === 'online') {
+                                <a
+                                  [href]="msg.metadata_json.location.startsWith('http') ? msg.metadata_json.location : 'https://' + msg.metadata_json.location"
+                                  target="_blank"
+                                  class="meet-link"
+                                >
+                                  <span nz-icon nzType="video-camera"></span>
+                                  {{ msg.metadata_json.location }}
+                                </a>
+                              } @else {
+                                <span class="location-text">
+                                  <span nz-icon nzType="environment"></span>
+                                  {{ msg.metadata_json.location }}
+                                </span>
+                              }
+                            </div>
+                          }
+
+                          @if (msg.metadata_json.notes) {
+                            <div class="meta-field full-width note-field">
+                              <span class="meta-label">Ghi chú từ HR:</span>
+                              <p class="note-text">{{ msg.metadata_json.notes }}</p>
+                            </div>
+                          }
+                        </div>
+
+                        <!-- Invitation Actions & Status -->
+                        <div class="invitation-status-action">
+                          @if (msg.metadata_json.candidate_response === 'pending' || !msg.metadata_json.candidate_response) {
+                            <div class="pending-prompt">
+                              <p>Vui lòng xác nhận bạn có thể tham gia lịch phỏng vấn trên:</p>
+                              <div class="action-buttons">
+                                <button
+                                  nz-button
+                                  nzType="primary"
+                                  class="btn-confirm"
+                                  [nzLoading]="responding()"
+                                  (click)="confirmInterview(msg.metadata_json.interview_id)"
+                                >
+                                  <span nz-icon nzType="check"></span> Xác nhận tham gia
+                                </button>
+                                <button
+                                  nz-button
+                                  nzDanger
+                                  class="btn-decline"
+                                  [disabled]="responding()"
+                                  (click)="declineInterview(msg.metadata_json.interview_id)"
+                                >
+                                  <span nz-icon nzType="close"></span> Từ chối
+                                </button>
+                              </div>
+                            </div>
+                          } @else if (msg.metadata_json.candidate_response === 'accepted') {
+                            <div class="response-result result-accepted">
+                              <span nz-icon nzType="check-circle" nzTheme="fill"></span>
+                              <div>
+                                <strong>Bạn đã xác nhận tham gia buổi phỏng vấn</strong>
+                                <small>Vui lòng chuẩn bị và có mặt đúng giờ theo lịch hẹn.</small>
+                              </div>
+                            </div>
+                          } @else if (msg.metadata_json.candidate_response === 'declined' || msg.metadata_json.status === 'cancelled') {
+                            <div class="response-result result-declined">
+                              <span nz-icon nzType="close-circle" nzTheme="fill"></span>
+                              <div>
+                                <strong>Lịch phỏng vấn này đã bị từ chối / hủy</strong>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+                } @else if (msg.message_type === 'interview_response') {
+                  <div class="message-row system-row">
+                    <div class="system-pill">
+                      <span nz-icon nzType="info-circle"></span>
+                      <span>{{ msg.content }}</span>
+                      <small>{{ msg.created_at | date:'HH:mm' }}</small>
+                    </div>
+                  </div>
+                } @else {
+                  <div
+                    class="message-row"
+                    [class.outgoing]="msg.sender_role === 'candidate'"
+                    [class.incoming]="msg.sender_role !== 'candidate'"
+                  >
+                    <div class="message-bubble">
+                      <div class="message-sender-name">
+                        {{ msg.sender_role === 'candidate' ? 'Bạn' : (msg.sender_name || 'Nhà tuyển dụng') }}
+                      </div>
+                      <p class="message-text">{{ msg.content }}</p>
+                      <span class="message-timestamp">{{ msg.created_at | date:'HH:mm' }}</span>
+                    </div>
+                  </div>
+                }
+              }
+            }
+          </nz-spin>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <footer class="chat-input-bar">
+          <textarea
+            nz-input
+            [(ngModel)]="newMessageText"
+            (keydown.enter)="$event.preventDefault(); sendMessage()"
+            [nzAutosize]="{ minRows: 1, maxRows: 4 }"
+            placeholder="Nhập tin nhắn trao đổi với nhà tuyển dụng... (Nhấn Enter để gửi)"
+            [disabled]="sending()"
+          ></textarea>
+          <button
+            nz-button
+            nzType="primary"
+            class="send-btn"
+            [nzLoading]="sending()"
+            [disabled]="!newMessageText.trim()"
+            (click)="sendMessage()"
+          >
+            <span nz-icon nzType="send"></span> Gửi
+          </button>
+        </footer>
+      } @else {
+        <div class="no-selection">
+          <span nz-icon nzType="message" class="no-selection-icon"></span>
+          <h3>Chọn một hội thoại</h3>
+          <p>Chọn đơn ứng tuyển ở danh sách bên trái để xem tin nhắn và xác nhận lịch phỏng vấn.</p>
+        </div>
+      }
+    </main>
+  </div>
+</div>

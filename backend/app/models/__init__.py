@@ -7,6 +7,7 @@ from app.models.application import Application
 from app.models.scoring_result import ScoringResult
 from app.models.interview import Interview
 from app.models.notification import Notification
+from app.models.message import ApplicationMessage
 
 __all__ = [
     "Company",
@@ -20,4 +21,5 @@ __all__ = [
     "ScoringResult",
     "Interview",
     "Notification",
+    "ApplicationMessage",
 ]

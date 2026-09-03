@@ -2,8 +2,12 @@
   <div class="header-inner">
     <!-- Logo -->
     <a routerLink="/" class="logo">
-      <span class="logo-icon">
-        <span nz-icon nzType="thunderbolt" nzTheme="fill"></span>
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 28 28" role="img" focusable="false" width="28" height="28">
+          <rect x="2" y="16" width="6" height="10" rx="3" fill="#D4D4D8"></rect>
+          <rect x="11" y="9" width="6" height="17" rx="3" fill="#71717A"></rect>
+          <rect x="20" y="2" width="6" height="24" rx="3" fill="#D4D4D8"></rect>
+        </svg>
       </span>
       <span class="logo-text">iRSA</span>
     </a>
@@ -18,6 +22,16 @@
         <span nz-icon nzType="search" nzTheme="outline"></span>
         Tìm việc
       </a>
+      <a routerLink="/companies" routerLinkActive="active" class="nav-link">
+        <span nz-icon nzType="bank" nzTheme="outline"></span>
+        Công ty
+      </a>
+      @if (authService.isAuthenticated()) {
+        <a routerLink="/dashboard/inbox" routerLinkActive="active" class="nav-link">
+          <span nz-icon nzType="message" nzTheme="outline"></span>
+          Hộp thư
+        </a>
+      }
     </nav>
 
     <!-- Right Section -->
@@ -88,6 +102,10 @@
             <li nz-menu-item routerLink="/dashboard/applications">
               <span nz-icon nzType="file-text" nzTheme="outline"></span>
               Đơn ứng tuyển
+            </li>
+            <li nz-menu-item routerLink="/dashboard/inbox">
+              <span nz-icon nzType="message" nzTheme="outline"></span>
+              Hộp thư & Lịch hẹn
             </li>
             <li nz-menu-item routerLink="/dashboard/cv-search">
               <span nz-icon nzType="file-search" nzTheme="outline"></span>
@@ -172,6 +190,10 @@
           <span nz-icon nzType="search" nzTheme="outline"></span>
           Tìm việc
         </li>
+        <li nz-menu-item routerLink="/companies" (click)="mobileMenuOpen = false">
+          <span nz-icon nzType="bank" nzTheme="outline"></span>
+          Công ty
+        </li>
         @if (authService.isAuthenticated()) {
           <li nz-menu-divider></li>
           <li nz-menu-item routerLink="/dashboard/profile" (click)="mobileMenuOpen = false">
@@ -181,6 +203,10 @@
           <li nz-menu-item routerLink="/dashboard/applications" (click)="mobileMenuOpen = false">
             <span nz-icon nzType="file-text" nzTheme="outline"></span>
             Đơn ứng tuyển
+          </li>
+          <li nz-menu-item routerLink="/dashboard/inbox" (click)="mobileMenuOpen = false">
+            <span nz-icon nzType="message" nzTheme="outline"></span>
+            Hộp thư & Lịch hẹn
           </li>
           <li nz-menu-item routerLink="/dashboard/cv-search" (click)="mobileMenuOpen = false">
             <span nz-icon nzType="file-search" nzTheme="outline"></span>

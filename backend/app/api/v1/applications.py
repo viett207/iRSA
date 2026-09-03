@@ -456,6 +456,10 @@ class ShortlistedApplicantResponse(BaseModel):
     interview_date: datetime | None = None
     interview_type: str | None = None
     interview_status: str | None = None
+    candidate_response: str | None = None
+    candidate_response_note: str | None = None
+    interview_location: str | None = None
+    interview_notes: str | None = None
     question_status: str = "unreviewed"
     question_count: int = 0
     question_edited_count: int = 0
@@ -554,6 +558,10 @@ async def list_shortlisted_applications(
                 interview_date=latest_iv.interview_date if latest_iv else None,
                 interview_type=latest_iv.interview_type if latest_iv else None,
                 interview_status=latest_iv.status if latest_iv else None,
+                candidate_response=latest_iv.candidate_response if latest_iv else None,
+                candidate_response_note=latest_iv.candidate_response_note if latest_iv else None,
+                interview_location=latest_iv.location if latest_iv else None,
+                interview_notes=latest_iv.notes if latest_iv else None,
                 question_status="ready" if reviewed_questions else "unreviewed",
                 question_count=len(interview_questions),
                 question_edited_count=len(edited_questions),

@@ -781,6 +781,38 @@ async def schedule_interview(
     except Exception as e:
         logger.warning(f"Failed to push interview notification: {e}")
 
+    try:
+        from app.services.message_service import MessageService
+        msg_service = MessageService(db)
+        interview_date_str = interview.interview_date.strftime("%d/%m/%Y %H:%M")
+        type_str = "Trực tuyến" if interview.interview_type == "online" else "Trực tiếp"
+        content_text = f"Lời mời phỏng vấn ({type_str}): {interview_date_str}."
+        if interview.location:
+            content_text += f" Địa điểm/Liên kết: {interview.location}."
+        if interview.notes:
+            content_text += f" Ghi chú: {interview.notes}."
+
+        metadata = {
+            "interview_id": interview.id,
+            "interview_date": interview.interview_date.isoformat() if interview.interview_date else None,
+            "interview_type": interview.interview_type,
+            "location": interview.location,
+            "notes": interview.notes,
+            "status": interview.status,
+            "candidate_response": getattr(interview, "candidate_response", "pending") or "pending",
+        }
+        await msg_service.send_message(
+            application_id=app_id,
+            sender_id=current_user.id,
+            sender_role="hr",
+            sender_name=current_user.full_name or "Nhà tuyển dụng",
+            content=content_text,
+            message_type="interview_invitation",
+            metadata_json=metadata,
+        )
+    except Exception as e:
+        logger.warning(f"Failed to create interview invitation message: {e}")
+
     return InterviewResponse(
         id=interview.id,
         application_id=interview.application_id,

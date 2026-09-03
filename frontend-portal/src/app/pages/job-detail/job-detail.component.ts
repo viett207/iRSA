@@ -90,12 +90,12 @@ export class JobDetailComponent implements OnInit {
     this.error = null;
 
     this.jobService.getBySlug(slug).subscribe({
-      next: (job) => {
+      next: (job: PublicJob) => {
         this.job = job;
         this.loading = false;
         this.checkAppliedStatus(job.id);
       },
-      error: (err) => {
+      error: (err: any) => {
         this.error = err.error?.detail || 'Không tìm thấy việc làm này';
         this.loading = false;
       },

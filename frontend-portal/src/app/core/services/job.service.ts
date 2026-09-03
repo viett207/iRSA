@@ -8,6 +8,9 @@ import {
   JobSearchParams,
   ActiveCompanyListResponse,
   CompanyDetail,
+  CompanyOverview,
+  PublicCompanyListResponse,
+  CompanyListParams,
   CVJobSearchResponse,
 } from '../../shared/models/job.model';
 import { Application } from '../../shared/models/application.model';
@@ -40,14 +43,20 @@ export class JobService {
       httpParams = httpParams.set('company_code', params.company_code);
     if (params.order_by)
       httpParams = httpParams.set('order_by', params.order_by);
-    if (params.page) httpParams = httpParams.set('page', params.page.toString());
-    if (params.size) httpParams = httpParams.set('size', params.size.toString());
+    if (params.page)
+      httpParams = httpParams.set('page', params.page.toString());
+    if (params.size)
+      httpParams = httpParams.set('size', params.size.toString());
 
     return this.http.get<PublicJobListResponse>(this.baseUrl, { params: httpParams });
   }
 
-  getBySlug(slug: string): Observable<PublicJob> {
+  get(slug: string): Observable<PublicJob> {
     return this.http.get<PublicJob>(`${this.baseUrl}/${slug}`);
+  }
+
+  getBySlug(slug: string): Observable<PublicJob> {
+    return this.get(slug);
   }
 
   apply(slug: string, formData: FormData): Observable<Application> {
@@ -61,8 +70,19 @@ export class JobService {
     );
   }
 
-  getCompanyDetail(companyCode: string): Observable<CompanyDetail> {
-    return this.http.get<CompanyDetail>(`${this.baseUrl}/companies/${companyCode}`);
+  listCompanies(params: CompanyListParams = {}): Observable<PublicCompanyListResponse> {
+    let httpParams = new HttpParams();
+    if (params.page) httpParams = httpParams.set('page', params.page.toString());
+    if (params.page_size) httpParams = httpParams.set('page_size', params.page_size.toString());
+    if (params.search) httpParams = httpParams.set('search', params.search);
+    if (params.industry) httpParams = httpParams.set('industry', params.industry);
+    if (params.location) httpParams = httpParams.set('location', params.location);
+
+    return this.http.get<PublicCompanyListResponse>(`${this.baseUrl}/companies`, { params: httpParams });
+  }
+
+  getCompanyDetail(identifier: string | number): Observable<CompanyOverview> {
+    return this.http.get<CompanyOverview>(`${this.baseUrl}/companies/${identifier}`);
   }
 
   searchByCV(params: {

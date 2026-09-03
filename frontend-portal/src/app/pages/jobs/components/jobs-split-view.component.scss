@@ -260,20 +260,25 @@
   .preview-apply-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    background: var(--irsa-brand-accent);
+    background: var(--irsa-brand-accent, #18181B);
+    border: 1px solid var(--irsa-brand-accent, #18181B);
     color: #fff;
-    padding: 10px 22px;
-    border-radius: 10px;
-    font-weight: 700;
+    height: 36px;
+    padding: 0 18px;
+    border-radius: 8px;
+    font-weight: 600;
     font-size: 14px;
     text-decoration: none;
     box-shadow: none;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
 
     &:hover {
-      background: var(--irsa-brand-hover);
+      background: var(--irsa-brand-hover, #27272A);
+      border-color: var(--irsa-brand-hover, #27272A);
       box-shadow: none;
+      transform: translateY(-1px);
     }
   }
 
@@ -281,26 +286,32 @@
   .preview-share-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    background: var(--irsa-bg-card);
-    border: 1px solid var(--irsa-border-light);
-    color: var(--irsa-text-secondary);
-    padding: 9px 16px;
-    border-radius: 10px;
+    background: var(--irsa-bg-card, #ffffff);
+    border: 1px solid var(--irsa-border-light, #E4DFD3);
+    color: var(--irsa-text-primary, #18181B);
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 8px;
     font-weight: 600;
     font-size: 13.5px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    box-shadow: none;
+    transition: all var(--transition-fast);
 
     &:hover {
-      background: var(--irsa-brand-light);
-      color: var(--irsa-text-primary);
+      background: #FAFAFA;
+      border-color: var(--irsa-brand-hover, #27272A);
+      color: var(--irsa-text-primary, #18181B);
+      box-shadow: none;
+      transform: translateY(-1px);
     }
 
     &.saved {
-      color: var(--irsa-text-primary);
-      border-color: var(--irsa-text-muted);
-      background: var(--irsa-brand-light);
+      color: var(--irsa-text-primary, #18181B);
+      border-color: var(--irsa-brand-accent, #18181B);
+      background: var(--irsa-brand-light, #E6E1D3);
     }
   }
 }

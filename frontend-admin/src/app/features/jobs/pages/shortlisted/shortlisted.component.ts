@@ -39,6 +39,7 @@ import { AiEvaluationModalComponent } from '../../components/ai-evaluation-modal
 import { CompareCandidatesModalComponent } from '../../components/compare-candidates-modal.component';
 import { CvJdCompareModalComponent } from '../../components/cv-jd-compare-modal.component';
 import { InterviewScheduleModalComponent } from '../../components/interview-schedule-modal.component';
+import { InterviewChatModalComponent } from '../../components/interview-chat-modal.component';
 
 export interface JobApplicantGroup {
   jobId: number;
@@ -929,15 +930,37 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
   getScheduleStatusLabel(app: ShortlistedApplicant): string {
     if (!app.interview_date) return 'Chưa xếp lịch';
     if (app.interview_status === 'completed') return 'Đã hoàn thành';
-    if (app.interview_status === 'cancelled') return 'Đã hủy';
-    return 'Chờ xác nhận';
+    if (app.interview_status === 'cancelled' || app.candidate_response === 'declined') return 'Đã từ chối / Hủy';
+    if (app.candidate_response === 'accepted') return 'Ứng viên đã xác nhận';
+    return 'Chờ ứng viên xác nhận';
   }
 
   getScheduleStatusClass(app: ShortlistedApplicant): string {
     if (!app.interview_date) return 'unscheduled';
     if (app.interview_status === 'completed') return 'completed';
-    if (app.interview_status === 'cancelled') return 'cancelled';
+    if (app.interview_status === 'cancelled' || app.candidate_response === 'declined') return 'cancelled';
+    if (app.candidate_response === 'accepted') return 'confirmed';
     return 'pending-confirmation';
+  }
+
+  openCandidateChat(app: ShortlistedApplicant): void {
+    const modalRef = this.modal.create({
+      nzTitle: undefined,
+      nzContent: InterviewChatModalComponent,
+      nzFooter: null,
+      nzWidth: 640,
+    });
+    const instance = modalRef.componentInstance;
+    if (instance) {
+      instance.appId = app.id;
+      instance.candidateName = app.candidate_name;
+      instance.jobTitle = app.job_title;
+      instance.candidateResponse = app.candidate_response;
+      instance.interviewDate = app.interview_date || undefined;
+    }
+    modalRef.afterClose.subscribe(() => {
+      this.loadShortlisted();
+    });
   }
 
   canEnterInterview(app: ShortlistedApplicant): boolean {

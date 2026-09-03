@@ -1,0 +1,155 @@
+import {
+  Component,
+  ElementRef,
+  Input,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { NzModalRef } from 'ng-zorro-antd/modal';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzTagModule } from 'ng-zorro-antd/tag';
+
+import { JobService } from '../services/job.service';
+import { NotificationService } from '../../../core/services/notification.service';
+
+@Component({
+  selector: 'app-interview-chat-modal',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    NzButtonModule,
+    NzInputModule,
+    NzIconModule,
+    NzSpinModule,
+    NzEmptyModule,
+    NzTagModule,
+  ],
+  templateUrl: './interview-chat-modal.component.html',
+  styleUrl: './interview-chat-modal.component.scss',
+})
+export class InterviewChatModalComponent implements OnInit, OnDestroy {
+  @Input() appId!: number;
+  @Input() candidateName = '';
+  @Input() jobTitle = '';
+  @Input() candidateResponse?: string = 'pending';
+  @Input() interviewDate?: string;
+
+  @ViewChild('scrollContainer') private scrollContainer?: ElementRef;
+
+  private jobService = inject(JobService);
+  private notifService = inject(NotificationService);
+  private message = inject(NzMessageService);
+  public modalRef = inject(NzModalRef);
+
+  messages = signal<any[]>([]);
+  loading = signal<boolean>(false);
+  sending = signal<boolean>(false);
+  newMessageText = '';
+
+  private sub = new Subscription();
+
+  ngOnInit(): void {
+    this.loadMessages();
+
+    // Listen to real-time incoming messages via WebSocket
+    this.sub.add(
+      this.notifService.chatMessages$.subscribe((data) => {
+        if (!data || !data.message) return;
+        const msg = data.message;
+        const appId = data.application_id || msg.application_id;
+        if (appId === this.appId) {
+          const exists = this.messages().some((m) => m.id === msg.id);
+          if (!exists) {
+            this.messages.update((prev) => [...prev, msg]);
+            this.scrollToBottom();
+            this.jobService.markMessagesRead(this.appId).subscribe();
+          }
+
+          if (msg.message_type === 'interview_response' && msg.metadata_json) {
+            this.candidateResponse = msg.metadata_json.response;
+          }
+        }
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
+
+  loadMessages(): void {
+    this.loading.set(true);
+    this.jobService.getApplicationMessages(this.appId).subscribe({
+      next: (msgs) => {
+        this.messages.set(msgs);
+        this.loading.set(false);
+        this.scrollToBottom();
+        this.jobService.markMessagesRead(this.appId).subscribe();
+
+        // Check if there is latest candidate response in messages
+        const latestResp = [...msgs]
+          .reverse()
+          .find((m) => m.message_type === 'interview_response' || m.message_type === 'interview_invitation');
+        if (latestResp && latestResp.metadata_json) {
+          this.candidateResponse =
+            latestResp.metadata_json.candidate_response ||
+            latestResp.metadata_json.response ||
+            this.candidateResponse;
+        }
+      },
+      error: () => {
+        this.loading.set(false);
+      },
+    });
+  }
+
+  sendMessage(): void {
+    const text = this.newMessageText.trim();
+    if (!text || this.sending()) return;
+
+    this.sending.set(true);
+    this.jobService.sendApplicationMessage(this.appId, text).subscribe({
+      next: (msg) => {
+        const exists = this.messages().some((m) => m.id === msg.id);
+        if (!exists) {
+          this.messages.update((prev) => [...prev, msg]);
+          this.scrollToBottom();
+        }
+        this.newMessageText = '';
+        this.sending.set(false);
+      },
+      error: () => {
+        this.message.error('Không thể gửi tin nhắn.');
+        this.sending.set(false);
+      },
+    });
+  }
+
+  private scrollToBottom(): void {
+    setTimeout(() => {
+      if (this.scrollContainer) {
+        this.scrollContainer.nativeElement.scrollTop =
+          this.scrollContainer.nativeElement.scrollHeight;
+      }
+    }, 100);
+  }
+
+  getCandidateInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'UV';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+}
