@@ -90,34 +90,106 @@
         <div class="section-header">
           <div>
             <h2 id="company-jobs">Tin tuyển dụng</h2>
-            <p>{{ data.stats.active_jobs }} vị trí đang tuyển · Hiển thị {{ data.jobs.length }} trên {{ data.stats.total_jobs }} tin.</p>
+            <p>
+              @if (searchQuery().trim() || selectedDepartment() !== 'all') {
+                Tìm thấy <strong>{{ filteredJobs().length }}</strong> vị trí phù hợp trong tổng số {{ data.jobs.length }} việc làm
+              } @else {
+                {{ data.stats.active_jobs }} vị trí đang tuyển · Hiển thị {{ data.jobs.length }} trên {{ data.stats.total_jobs }} tin.
+              }
+            </p>
           </div>
         </div>
 
         @if (data.jobs.length) {
-          <div class="job-list">
-            @for (job of data.jobs; track job.id) {
-              <a class="job-row" [routerLink]="['/jobs', job.slug || job.id]">
-                <div class="job-primary">
-                  <strong>{{ job.title_vi }}</strong>
-                  <div class="job-meta">
-                    @if (job.department) { <span>{{ job.department }}</span> }
-                    @if (job.location) { <span><span nz-icon nzType="environment" aria-hidden="true"></span>{{ job.location }}</span> }
-                    <span>{{ formatDate(job.created_at) }}</span>
-                    @if (job.salary_min || job.salary_max) {
-                      <span class="job-salary">{{ formatSalary(job.salary_min, job.salary_max) }}</span>
-                    }
-                  </div>
+          <div class="company-job-search-box">
+            <nz-input-group [nzPrefix]="searchPrefix" [nzSuffix]="searchSuffix" class="job-search-input-group">
+              <input
+                type="text"
+                nz-input
+                [ngModel]="searchQuery()"
+                (ngModelChange)="searchQuery.set($event)"
+                placeholder="Tìm việc tại {{ data.company.company_name }} (chức danh, kỹ năng, phòng ban, địa điểm)..."
+              />
+            </nz-input-group>
+            <ng-template #searchPrefix>
+              <span nz-icon nzType="search" class="search-input-icon"></span>
+            </ng-template>
+            <ng-template #searchSuffix>
+              @if (searchQuery()) {
+                <span nz-icon nzType="close-circle" nzTheme="fill" class="clear-input-icon" (click)="searchQuery.set('')"></span>
+              }
+            </ng-template>
+
+            @if (departments().length > 0) {
+              <div class="department-filter-bar">
+                <span class="filter-title">Phòng ban:</span>
+                <div class="dept-pills-wrap">
+                  <button
+                    type="button"
+                    class="dept-pill"
+                    [class.dept-pill--active]="selectedDepartment() === 'all'"
+                    (click)="selectedDepartment.set('all')"
+                  >
+                    Tất cả ({{ data.jobs.length }})
+                  </button>
+                  @for (dept of departments(); track dept) {
+                    <button
+                      type="button"
+                      class="dept-pill"
+                      [class.dept-pill--active]="selectedDepartment() === dept"
+                      (click)="selectedDepartment.set(dept)"
+                    >
+                      {{ dept }}
+                    </button>
+                  }
                 </div>
-                <nz-tag [nzColor]="getStatusColor(job.status)">{{ getStatusLabel(job.status) }}</nz-tag>
-                <div class="application-total">
-                  <strong>{{ job.applications_count }}</strong>
-                  <span>hồ sơ</span>
-                </div>
-                <span nz-icon nzType="right" class="job-arrow" aria-hidden="true"></span>
-              </a>
+              </div>
             }
           </div>
+
+          @if (filteredJobs().length) {
+            <div class="job-list">
+              @for (job of filteredJobs(); track job.id) {
+                <a class="job-row" [routerLink]="['/jobs', job.slug || job.id]">
+                  <div class="job-primary">
+                    <strong>{{ job.title_vi }}</strong>
+                    <div class="job-meta">
+                      @if (job.department) { <span>{{ job.department }}</span> }
+                      @if (job.location) { <span><span nz-icon nzType="environment" aria-hidden="true"></span>{{ job.location }}</span> }
+                      <span>{{ formatDate(job.created_at) }}</span>
+                      @if (job.salary_min || job.salary_max) {
+                        <span class="job-salary">{{ formatSalary(job.salary_min, job.salary_max) }}</span>
+                      }
+                    </div>
+                  </div>
+                  <nz-tag [nzColor]="getStatusColor(job.status)">{{ getStatusLabel(job.status) }}</nz-tag>
+                  <div class="application-total">
+                    <strong>{{ job.applications_count }}</strong>
+                    <span>hồ sơ</span>
+                  </div>
+                  <span nz-icon nzType="right" class="job-arrow" aria-hidden="true"></span>
+                </a>
+              }
+            </div>
+          } @else {
+            <div class="no-search-results">
+              <span nz-icon nzType="search" class="no-results-icon"></span>
+              <h3>Không tìm thấy công việc phù hợp</h3>
+              <p>
+                Không có vị trí tuyển dụng nào khớp với từ khóa
+                @if (searchQuery()) {
+                  "<strong>{{ searchQuery() }}</strong>"
+                }
+                @if (selectedDepartment() !== 'all') {
+                  tại phòng ban "<strong>{{ selectedDepartment() }}</strong>"
+                }
+              </p>
+              <button nz-button nzType="default" (click)="clearFilters()">
+                <span nz-icon nzType="undo"></span>
+                Xóa bộ lọc tìm kiếm
+              </button>
+            </div>
+          }
         } @else {
           <nz-empty nzNotFoundContent="Công ty này chưa tạo tin tuyển dụng nào"></nz-empty>
         }

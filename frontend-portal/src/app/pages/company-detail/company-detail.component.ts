@@ -1,27 +1,31 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 
 import { JobService } from '../../core/services/job.service';
-import { CompanyOverview } from '../../shared/models/job.model';
+import { CompanyJobSummary, CompanyOverview } from '../../shared/models/job.model';
 
 @Component({
   selector: 'app-company-detail',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterLink,
     NzButtonModule,
     NzCardModule,
     NzEmptyModule,
     NzIconModule,
+    NzInputModule,
     NzSkeletonModule,
     NzTagModule,
   ],
@@ -37,6 +41,8 @@ export class CompanyDetailComponent implements OnInit {
   loading = signal(true);
   loadError = signal(false);
   activeTab: 'overview' | 'jobs' = 'overview';
+  searchQuery = signal<string>('');
+  selectedDepartment = signal<string>('all');
   private companyCodeOrId: string | null = null;
 
   private employmentTypeMap: Record<string, string> = {
@@ -46,6 +52,63 @@ export class CompanyDetailComponent implements OnInit {
     intern: 'Thực tập',
     remote: 'Từ xa',
   };
+
+  departments = computed(() => {
+    const jobs = this.overview()?.jobs || [];
+    const deptSet = new Set<string>();
+    jobs.forEach((job) => {
+      if (job.department && job.department.trim()) {
+        deptSet.add(job.department.trim());
+      }
+    });
+    return Array.from(deptSet).sort((a, b) => a.localeCompare(b, 'vi'));
+  });
+
+  filteredJobs = computed<CompanyJobSummary[]>(() => {
+    const jobs = this.overview()?.jobs || [];
+    const query = this.searchQuery().trim();
+    const normQuery = this.removeVietnameseTones(query);
+    const selectedDept = this.selectedDepartment();
+
+    return jobs.filter((job) => {
+      // Department filter
+      if (selectedDept !== 'all' && (job.department || '').trim() !== selectedDept) {
+        return false;
+      }
+
+      // Search query filter
+      if (!normQuery) {
+        return true;
+      }
+
+      const titleNorm = this.removeVietnameseTones(job.title_vi || '');
+      const deptNorm = this.removeVietnameseTones(job.department || '');
+      const locNorm = this.removeVietnameseTones(job.location || '');
+      const empTypeLabel = this.employmentTypeMap[job.employment_type || ''] || job.employment_type || '';
+      const empTypeNorm = this.removeVietnameseTones(empTypeLabel);
+
+      return (
+        titleNorm.includes(normQuery) ||
+        deptNorm.includes(normQuery) ||
+        locNorm.includes(normQuery) ||
+        empTypeNorm.includes(normQuery)
+      );
+    });
+  });
+
+  clearFilters(): void {
+    this.searchQuery.set('');
+    this.selectedDepartment.set('all');
+  }
+
+  private removeVietnameseTones(str: string): string {
+    return str
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D')
+      .toLowerCase();
+  }
 
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
