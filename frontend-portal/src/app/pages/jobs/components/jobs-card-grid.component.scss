@@ -42,6 +42,12 @@
   }
 }
 
+.job-card-item > * {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
 .card-header-row {
   display: flex;
   align-items: flex-start;
@@ -51,7 +57,9 @@
 
 .job-card-title {
   display: block;
+  min-width: 0;
   min-height: 52px;
+  flex: 1;
   margin: 0;
   overflow-wrap: anywhere;
   font-size: 17px;
@@ -84,6 +92,7 @@
   min-height: 32px;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
   margin-top: 9px;
 }
 
@@ -114,7 +123,8 @@
   padding: 12px;
   border: 1px solid #e6e9e5;
   border-radius: 11px;
-  background: #f8faf8;
+  background: #fafaf9;
+  overflow: hidden;
 }
 
 .meta-item {
@@ -150,13 +160,21 @@
 .deadline-block {
   display: grid;
   min-width: 0;
+  flex: 1 1 120px;
   gap: 2px;
 
   span { color: #989b99; font-size: 12px; }
   strong { color: #626762; font-size: 12px; font-weight: 620; line-height: 1.4; white-space: normal; }
 }
 
-.card-action-buttons { display: flex; flex-shrink: 0; gap: 6px; }
+.card-action-buttons {
+  display: flex;
+  max-width: 100%;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
 
 .quick-view-btn,
 .card-primary-cta {

@@ -1136,3 +1136,18 @@
   text-overflow: clip;
   white-space: normal;
 }
+
+.job-card > *,
+.job-card__body,
+.job-meta-grid,
+.job-footer {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+.job-footer .deadline {
+  min-width: 0;
+  flex: 1 1 130px;
+  flex-wrap: wrap;
+}
