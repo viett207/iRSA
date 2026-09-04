@@ -8,9 +8,6 @@
         (click)="selectJobForLivePreview(job)"
       >
         <div class="split-item-header">
-          <div class="company-mini-avatar" [style.background]="job.companyGradient">
-            {{ job.companyInitial }}
-          </div>
           <div class="split-item-info">
             <h4 class="split-item-title">{{ job.title }}</h4>
             <div class="split-item-company">{{ job.company }}</div>
@@ -51,9 +48,6 @@
         <!-- Live Preview Top Header -->
         <div class="preview-header">
           <div class="preview-brand-row">
-            <div class="preview-avatar" [style.background]="selectedJobForPreview.companyGradient">
-              {{ selectedJobForPreview.companyInitial }}
-            </div>
             <div class="preview-title-info">
               <h2 class="preview-job-title">{{ selectedJobForPreview.title }}</h2>
               <div class="preview-company-row">

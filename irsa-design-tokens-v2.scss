@@ -6,6 +6,14 @@
 :root {
   /* --- Typography chuẩn Inter / SF Pro --- */
   --irsa-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  --irsa-font-mono: 'Geist Mono', 'SFMono-Regular', Consolas, monospace;
+
+  /* --- Canonical portal/admin type scale --- */
+  --irsa-text-caption: 12px;
+  --irsa-text-ui: 14px;
+  --irsa-text-body: 16px;
+  --irsa-text-section: 18px;
+  --irsa-text-page: clamp(24px, 2.35vw, 30px);
 
   /* --- Spacing System --- */
   --irsa-space-xs: 4px;
@@ -20,6 +28,11 @@
   --irsa-radius-lg: 12px;
   --irsa-radius-xl: 16px;
   --irsa-radius-pill: 9999px;
+
+  /* --- Shared component dimensions --- */
+  --irsa-control-height: 36px;
+  --irsa-control-height-lg: 44px;
+  --irsa-content-max: 1200px;
 
   /* --- Color Tokens --- */
   --irsa-bg-canvas: #F3F0E6;        /* Nền vàng ngà ấm */

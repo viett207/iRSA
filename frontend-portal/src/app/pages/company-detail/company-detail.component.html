@@ -1,7 +1,7 @@
 <main class="company-detail-page">
   <a class="back-link" routerLink="/companies">
-    <span nz-icon nzType="arrow-left" aria-hidden="true"></span>
-    Danh sách công ty
+    <span aria-hidden="true">←</span>
+    Khám phá doanh nghiệp
   </a>
 
   @if (loading()) {
@@ -10,223 +10,172 @@
     </section>
   } @else if (loadError()) {
     <section class="state-card" role="alert">
-      <span class="state-icon" nz-icon nzType="exclamation-circle" aria-hidden="true"></span>
       <div>
         <h1>Không thể tải thông tin công ty</h1>
         <p>Hãy kiểm tra kết nối rồi thử lại.</p>
       </div>
-      <button nz-button nzType="primary" (click)="loadOverview()">
-        <span nz-icon nzType="reload"></span>
-        Thử lại
-      </button>
+      <button nz-button nzType="primary" (click)="loadOverview()">Thử lại</button>
     </section>
   } @else {
     @if (overview(); as data) {
-    <section class="company-cover" aria-hidden="true">
-      <span class="cover-orb cover-orb--one"></span>
-      <span class="cover-orb cover-orb--two"></span>
-      <span class="cover-grid"></span>
-    </section>
-    <section class="company-hero" aria-labelledby="company-title">
-      <div class="company-avatar" aria-hidden="true">{{ getInitial(data.company.company_name) }}</div>
-      <div class="company-identity">
-        <h1 id="company-title">{{ data.company.company_name }}</h1>
-        <p class="company-summary">{{ getCompanySummary(data) }}</p>
-        <div class="company-tags">
-          <nz-tag nzColor="blue">{{ data.company.company_code }}</nz-tag>
-          @if (data.company.industry) {
-            <span><span nz-icon nzType="appstore" aria-hidden="true"></span>{{ data.company.industry }}</span>
-          }
-          @if (data.company.location) {
-            <span><span nz-icon nzType="environment" aria-hidden="true"></span>{{ data.company.location }}</span>
-          }
-        </div>
-      </div>
-    </section>
+      <section class="company-hero" aria-labelledby="company-title">
+        <div class="company-avatar" aria-hidden="true">{{ getInitial(data.company.company_name) }}</div>
 
-    <nav class="profile-tabs" aria-label="Nội dung hồ sơ công ty">
-      <a class="profile-tab" [class.profile-tab--active]="activeTab === 'overview'" (click)="activeTab = 'overview'" href="#company-overview">Tổng quan</a>
-      <a class="profile-tab" [class.profile-tab--active]="activeTab === 'jobs'" (click)="activeTab = 'jobs'" href="#company-jobs">Tin tuyển dụng <span>{{ data.stats.active_jobs }}</span></a>
-    </nav>
+        <div class="company-identity">
+          <span class="company-code">{{ data.company.company_code }}</span>
+          <h1 id="company-title">{{ data.company.company_name }}</h1>
+          <p>{{ getCompanySummary(data) }}</p>
 
-    <section class="stat-grid" aria-label="Chỉ số tuyển dụng">
-      <article class="metric-card metric-card--accent">
-        <span class="metric-icon" nz-icon nzType="global" aria-hidden="true"></span>
-        <span class="metric-label">Đang tuyển</span>
-        <strong>{{ data.stats.active_jobs }}</strong>
-        <span class="metric-note">vị trí đã đăng tuyển</span>
-      </article>
-      <article class="metric-card">
-        <span class="metric-icon" nz-icon nzType="solution" aria-hidden="true"></span>
-        <span class="metric-label">Tổng vị trí</span>
-        <strong>{{ data.stats.total_jobs }}</strong>
-        <span class="metric-note">tin đã tạo trong hệ thống</span>
-      </article>
-      <article class="metric-card">
-        <span class="metric-icon" nz-icon nzType="file-text" aria-hidden="true"></span>
-        <span class="metric-label">Tổng hồ sơ</span>
-        <strong>{{ data.stats.total_applications }}</strong>
-        <span class="metric-note">hồ sơ đã nộp</span>
-      </article>
-      <article class="metric-card">
-        <span class="metric-icon" nz-icon nzType="clock-circle" aria-hidden="true"></span>
-        <span class="metric-label">Đang xử lý</span>
-        <strong>{{ data.stats.in_progress_applications }}</strong>
-        <span class="metric-note">hồ sơ trong quy trình tuyển</span>
-      </article>
-    </section>
-
-    <section class="content-grid" id="company-overview">
-      <nz-card class="jobs-card">
-        <article class="company-introduction">
-          <div class="introduction-heading">
-            <span nz-icon nzType="idcard" aria-hidden="true"></span>
-            <h2>Giới thiệu công ty</h2>
-          </div>
-          <p>{{ getCompanyDescription(data) }}</p>
-        </article>
-
-        <div class="section-divider"></div>
-        <div class="section-header">
-          <div>
-            <h2 id="company-jobs">Tin tuyển dụng</h2>
-            <p>
-              @if (searchQuery().trim() || selectedDepartment() !== 'all') {
-                Tìm thấy <strong>{{ filteredJobs().length }}</strong> vị trí phù hợp trong tổng số {{ data.jobs.length }} việc làm
-              } @else {
-                {{ data.stats.active_jobs }} vị trí đang tuyển · Hiển thị {{ data.jobs.length }} trên {{ data.stats.total_jobs }} tin.
-              }
-            </p>
-          </div>
-        </div>
-
-        @if (data.jobs.length) {
-          <div class="company-job-search-box">
-            <nz-input-group [nzPrefix]="searchPrefix" [nzSuffix]="searchSuffix" class="job-search-input-group">
-              <input
-                type="text"
-                nz-input
-                [ngModel]="searchQuery()"
-                (ngModelChange)="searchQuery.set($event)"
-                placeholder="Tìm việc tại {{ data.company.company_name }} (chức danh, kỹ năng, phòng ban, địa điểm)..."
-              />
-            </nz-input-group>
-            <ng-template #searchPrefix>
-              <span nz-icon nzType="search" class="search-input-icon"></span>
-            </ng-template>
-            <ng-template #searchSuffix>
-              @if (searchQuery()) {
-                <span nz-icon nzType="close-circle" nzTheme="fill" class="clear-input-icon" (click)="searchQuery.set('')"></span>
-              }
-            </ng-template>
-
-            @if (departments().length > 0) {
-              <div class="department-filter-bar">
-                <span class="filter-title">Phòng ban:</span>
-                <div class="dept-pills-wrap">
-                  <button
-                    type="button"
-                    class="dept-pill"
-                    [class.dept-pill--active]="selectedDepartment() === 'all'"
-                    (click)="selectedDepartment.set('all')"
-                  >
-                    Tất cả ({{ data.jobs.length }})
-                  </button>
-                  @for (dept of departments(); track dept) {
-                    <button
-                      type="button"
-                      class="dept-pill"
-                      [class.dept-pill--active]="selectedDepartment() === dept"
-                      (click)="selectedDepartment.set(dept)"
-                    >
-                      {{ dept }}
-                    </button>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-
-          @if (filteredJobs().length) {
-            <div class="job-list">
-              @for (job of filteredJobs(); track job.id) {
-                <a class="job-row" [routerLink]="['/jobs', job.slug || job.id]">
-                  <div class="job-primary">
-                    <strong>{{ job.title_vi }}</strong>
-                    <div class="job-meta">
-                      @if (job.department) { <span>{{ job.department }}</span> }
-                      @if (job.location) { <span><span nz-icon nzType="environment" aria-hidden="true"></span>{{ job.location }}</span> }
-                      <span>{{ formatDate(job.created_at) }}</span>
-                      @if (job.salary_min || job.salary_max) {
-                        <span class="job-salary">{{ formatSalary(job.salary_min, job.salary_max) }}</span>
-                      }
-                    </div>
-                  </div>
-                  <nz-tag [nzColor]="getStatusColor(job.status)">{{ getStatusLabel(job.status) }}</nz-tag>
-                  <div class="application-total">
-                    <strong>{{ job.applications_count }}</strong>
-                    <span>hồ sơ</span>
-                  </div>
-                  <span nz-icon nzType="right" class="job-arrow" aria-hidden="true"></span>
-                </a>
-              }
-            </div>
-          } @else {
-            <div class="no-search-results">
-              <span nz-icon nzType="search" class="no-results-icon"></span>
-              <h3>Không tìm thấy công việc phù hợp</h3>
-              <p>
-                Không có vị trí tuyển dụng nào khớp với từ khóa
-                @if (searchQuery()) {
-                  "<strong>{{ searchQuery() }}</strong>"
-                }
-                @if (selectedDepartment() !== 'all') {
-                  tại phòng ban "<strong>{{ selectedDepartment() }}</strong>"
-                }
-              </p>
-              <button nz-button nzType="default" (click)="clearFilters()">
-                <span nz-icon nzType="undo"></span>
-                Xóa bộ lọc tìm kiếm
-              </button>
-            </div>
-          }
-        } @else {
-          <nz-empty nzNotFoundContent="Công ty này chưa tạo tin tuyển dụng nào"></nz-empty>
-        }
-      </nz-card>
-
-      <aside aria-label="Thông tin công ty">
-        <nz-card class="information-card">
-          <h2>Thông tin công ty</h2>
-          <dl>
+          <dl class="company-facts">
             <div>
-              <dt>Mã công ty</dt>
-              <dd><nz-tag nzColor="blue">{{ data.company.company_code }}</nz-tag></dd>
-            </div>
-            <div>
-              <dt>Ngành nghề</dt>
+              <dt>Lĩnh vực</dt>
               <dd>{{ data.company.industry || 'Chưa cập nhật' }}</dd>
             </div>
             <div>
               <dt>Địa điểm</dt>
               <dd>{{ data.company.location || 'Chưa cập nhật' }}</dd>
             </div>
-            <div>
-              <dt>Đội ngũ tuyển dụng</dt>
-              <dd>{{ data.stats.hr_members }} thành viên HR đang hoạt động</dd>
-            </div>
           </dl>
-        </nz-card>
+        </div>
 
-        <nz-card class="workflow-card">
-          <span nz-icon nzType="environment" aria-hidden="true"></span>
-          <div>
-            <strong>Địa điểm công ty</strong>
-            <p>{{ data.company.location || 'Công ty chưa cập nhật địa điểm hoạt động.' }}</p>
-          </div>
-        </nz-card>
-      </aside>
-    </section>
+        <a class="hero-jobs-link" href="#company-jobs">
+          <span class="hero-job-count">{{ data.stats.active_jobs }}</span>
+          <span>vị trí đang mở</span>
+          <strong>Xem việc làm <span aria-hidden="true">→</span></strong>
+        </a>
+      </section>
+
+      <div class="content-grid">
+        <div class="main-column">
+          <section class="company-introduction" id="company-overview">
+            <span class="section-eyebrow">Tổng quan</span>
+            <h2>Về {{ data.company.company_name }}</h2>
+            <p>{{ getCompanyDescription(data) }}</p>
+          </section>
+
+          <section class="jobs-panel" id="company-jobs">
+            <header class="section-header">
+              <div>
+                <span class="section-eyebrow">Cơ hội nghề nghiệp</span>
+                <h2>Việc làm đang tuyển</h2>
+                <p>
+                  @if (searchQuery().trim() || selectedDepartment() !== 'all') {
+                    {{ filteredJobs().length }} kết quả phù hợp
+                  } @else {
+                    {{ data.stats.active_jobs }} vị trí dành cho ứng viên
+                  }
+                </p>
+              </div>
+            </header>
+
+            @if (data.jobs.length) {
+              <div class="company-job-search-box">
+                <nz-input-group [nzPrefix]="searchPrefix" [nzSuffix]="searchSuffix" class="job-search-input-group">
+                  <input
+                    type="text"
+                    nz-input
+                    [ngModel]="searchQuery()"
+                    (ngModelChange)="searchQuery.set($event)"
+                    placeholder="Tìm theo chức danh, kỹ năng, phòng ban hoặc địa điểm"
+                  />
+                </nz-input-group>
+                <ng-template #searchPrefix>
+                  <span nz-icon nzType="search" class="search-input-icon" aria-hidden="true"></span>
+                </ng-template>
+                <ng-template #searchSuffix>
+                  @if (searchQuery()) {
+                    <button type="button" class="clear-search" (click)="searchQuery.set('')" aria-label="Xóa từ khóa">×</button>
+                  }
+                </ng-template>
+
+                @if (departments().length > 0) {
+                  <div class="department-filter-bar" aria-label="Lọc theo phòng ban">
+                    <button
+                      type="button"
+                      class="dept-pill"
+                      [class.dept-pill--active]="selectedDepartment() === 'all'"
+                      (click)="selectedDepartment.set('all')"
+                    >
+                      Tất cả <span>{{ data.jobs.length }}</span>
+                    </button>
+                    @for (dept of departments(); track dept) {
+                      <button
+                        type="button"
+                        class="dept-pill"
+                        [class.dept-pill--active]="selectedDepartment() === dept"
+                        (click)="selectedDepartment.set(dept)"
+                      >
+                        {{ dept }}
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+
+              @if (filteredJobs().length) {
+                <div class="job-list">
+                  @for (job of filteredJobs(); track job.id) {
+                    <a class="job-row" [routerLink]="['/jobs', job.slug || job.id]">
+                      <div class="job-primary">
+                        <h3>{{ job.title_vi }}</h3>
+                        <div class="job-meta">
+                          @if (job.department) { <span>{{ job.department }}</span> }
+                          @if (job.location) { <span>{{ job.location }}</span> }
+                          @if (job.employment_type) { <span>{{ formatEmploymentType(job.employment_type) }}</span> }
+                        </div>
+                      </div>
+
+                      <div class="job-decision-data">
+                        <strong>{{ formatSalary(job.salary_min, job.salary_max) }}</strong>
+                        <span>Hạn nộp {{ formatDate(job.application_deadline) || 'chưa cập nhật' }}</span>
+                      </div>
+
+                      <span class="job-arrow" aria-hidden="true">→</span>
+                    </a>
+                  }
+                </div>
+              } @else {
+                <div class="no-search-results">
+                  <h3>Không tìm thấy công việc phù hợp</h3>
+                  <p>Thử từ khóa khác hoặc xem lại bộ lọc phòng ban.</p>
+                  <button nz-button nzType="default" (click)="clearFilters()">Xóa bộ lọc</button>
+                </div>
+              }
+            } @else {
+              <nz-empty nzNotFoundContent="Công ty này chưa có vị trí đang tuyển"></nz-empty>
+            }
+          </section>
+        </div>
+
+        <aside class="company-sidebar" aria-label="Thông tin công ty">
+          <section class="information-card">
+            <span class="section-eyebrow">Thông tin nhanh</span>
+            <h2>Hồ sơ công ty</h2>
+            <dl>
+              <div>
+                <dt>Mã công ty</dt>
+                <dd class="mono-value">{{ data.company.company_code }}</dd>
+              </div>
+              <div>
+                <dt>Ngành nghề</dt>
+                <dd>{{ data.company.industry || 'Chưa cập nhật' }}</dd>
+              </div>
+              <div>
+                <dt>Địa điểm</dt>
+                <dd>{{ data.company.location || 'Chưa cập nhật' }}</dd>
+              </div>
+              <div>
+                <dt>Vị trí đang mở</dt>
+                <dd>{{ data.stats.active_jobs }} cơ hội</dd>
+              </div>
+            </dl>
+          </section>
+
+          <a class="all-companies-link" routerLink="/companies">
+            Xem các doanh nghiệp khác <span aria-hidden="true">→</span>
+          </a>
+        </aside>
+      </div>
     }
   }
 </main>

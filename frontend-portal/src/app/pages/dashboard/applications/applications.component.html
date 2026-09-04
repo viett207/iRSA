@@ -1,11 +1,45 @@
 <div class="applications-page">
   <div class="container">
     <div class="page-header">
-      <h1>Hồ sơ ứng tuyển</h1>
-      <p>Theo dõi trạng thái các hồ sơ bạn đã nộp</p>
+      <div>
+        <span class="page-eyebrow">HÀNH TRÌNH SỰ NGHIỆP</span>
+        <h1>Hồ sơ ứng tuyển</h1>
+        <p>Theo dõi tiến trình và chủ động cho bước tiếp theo của bạn.</p>
+      </div>
+      <a routerLink="/jobs" class="discover-jobs-btn">
+        <span nz-icon nzType="search" nzTheme="outline"></span>
+        Khám phá việc làm
+        <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
+      </a>
     </div>
 
-    <nz-card>
+    <section class="summary-grid" aria-label="Tổng quan hồ sơ ứng tuyển">
+      <article class="summary-card total-card">
+        <span class="metric-dot" aria-hidden="true"></span>
+        <div><strong>{{ total }}</strong><span>Tổng hồ sơ</span></div>
+      </article>
+      <article class="summary-card review-card">
+        <span class="metric-dot" aria-hidden="true"></span>
+        <div><strong>{{ statusCounts.in_review }}</strong><span>Đang xem xét</span></div>
+      </article>
+      <article class="summary-card shortlist-card">
+        <span class="metric-dot" aria-hidden="true"></span>
+        <div><strong>{{ statusCounts.shortlisted }}</strong><span>Vòng tiếp theo</span></div>
+      </article>
+      <article class="summary-card selected-card">
+        <span class="metric-dot" aria-hidden="true"></span>
+        <div><strong>{{ statusCounts.selected }}</strong><span>Đã tuyển chọn</span></div>
+      </article>
+    </section>
+
+    <nz-card class="applications-card">
+      <div class="list-heading">
+        <div>
+          <span class="section-kicker">DANH SÁCH HỒ SƠ</span>
+          <h2>Tiến trình ứng tuyển</h2>
+        </div>
+        <span class="record-count">{{ total }} hồ sơ</span>
+      </div>
       <nz-table
         #basicTable
         [nzData]="applications"
@@ -26,7 +60,7 @@
             <th class="hide-mobile">Địa điểm</th>
             <th>Trạng thái</th>
             <th class="hide-mobile">Ngày nộp</th>
-            <th nzWidth="180px"></th>
+            <th nzWidth="210px"><span class="actions-heading">Thao tác</span></th>
           </tr>
         </thead>
         <tbody>
@@ -35,40 +69,35 @@
               <td>
                 <div class="job-title">{{ app.job_title }}</div>
                 <div class="mobile-meta show-mobile-only">
+                  <span nz-icon nzType="calendar" nzTheme="outline"></span>
                   {{ app.submitted_at | date: 'dd/MM/yyyy' }}
                 </div>
               </td>
-              <td class="hide-mobile">{{ app.job_department || '-' }}</td>
-              <td class="hide-mobile">{{ app.job_location || '-' }}</td>
-              <td>
-                <nz-tag [nzColor]="getStatusColor(app.public_status)">
-                  {{ getStatusLabel(app.public_status) }}
-                </nz-tag>
+              <td class="hide-mobile"><span class="meta-value">{{ app.job_department || '-' }}</span></td>
+              <td class="hide-mobile">
+                <span class="location-value"><span nz-icon nzType="environment" nzTheme="outline"></span>{{ app.job_location || '-' }}</span>
               </td>
-              <td class="hide-mobile">{{ app.submitted_at | date: 'dd/MM/yyyy' }}</td>
+              <td>
+                <div class="status-wrap" [attr.data-status]="app.public_status">
+                  <span class="status-pill">
+                    <span nz-icon [nzType]="getStatusIcon(app.public_status)" nzTheme="outline"></span>
+                    {{ getStatusLabel(app.public_status) }}
+                  </span>
+                  <small class="status-description hide-mobile">{{ getStatusDescription(app.public_status) }}</small>
+                </div>
+              </td>
+              <td class="hide-mobile"><span class="date-value">{{ app.submitted_at | date: 'dd/MM/yyyy' }}</span></td>
               <td class="actions-cell">
-                <button
-                  nz-button
-                  nzType="link"
-                  nzSize="small"
-                  nz-tooltip
-                  nzTooltipTitle="Xem CV đã nộp"
-                  (click)="openPdfViewer(app)"
-                >
-                  <span nz-icon nzType="file-pdf" nzTheme="outline"></span>
-                  <span class="hide-mobile">Xem CV</span>
-                </button>
-                <a
-                  [routerLink]="['/jobs', app.job_slug]"
-                  nz-button
-                  nzType="link"
-                  nzSize="small"
-                  nz-tooltip
-                  nzTooltipTitle="Xem tin tuyển dụng"
-                >
-                  <span nz-icon nzType="eye" nzTheme="outline"></span>
-                  <span class="hide-mobile">Xem tin</span>
-                </a>
+                <div class="action-buttons">
+                  <button type="button" class="action-btn secondary" nz-tooltip nzTooltipTitle="Xem CV đã nộp" (click)="openPdfViewer(app)">
+                    <span nz-icon nzType="file-pdf" nzTheme="outline"></span>
+                    <span class="hide-mobile">Xem CV</span>
+                  </button>
+                  <a [routerLink]="['/jobs', app.job_slug]" class="action-btn primary" nz-tooltip nzTooltipTitle="Xem tin tuyển dụng">
+                    <span nz-icon nzType="eye" nzTheme="outline"></span>
+                    <span class="hide-mobile">Xem tin</span>
+                  </a>
+                </div>
               </td>
             </tr>
           } @empty {
@@ -78,7 +107,7 @@
                   nzNotFoundImage="simple"
                   nzNotFoundContent="Bạn chưa có hồ sơ ứng tuyển nào"
                 >
-                  <a routerLink="/jobs" nz-button nzType="primary">
+                  <a routerLink="/jobs" class="empty-action-btn">
                     Tìm việc làm
                   </a>
                 </nz-empty>

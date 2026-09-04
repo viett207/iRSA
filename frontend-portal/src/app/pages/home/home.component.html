@@ -1,54 +1,63 @@
 <!-- Hero Section -->
 <section class="hero-section">
-  <div class="hero-container">
-    <div class="hero-content">
-      <p class="hero-eyebrow">
-        <span class="live-dot" aria-hidden="true"></span>
-        {{ totalJobs || 'Nhiều' }} cơ hội đang tuyển dụng
-      </p>
-      <h1 class="hero-title">Tìm công việc <span class="hero-highlight">phù hợp với bạn</span></h1>
-      <p class="hero-trust">Tìm kiếm nhanh, thông tin minh bạch và ứng tuyển trực tiếp trên iRSA.</p>
+  <div class="hero-container hero-shell">
+    <div class="hero-layout">
+      <div class="hero-content">
+        <p class="hero-eyebrow">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span>Cơ hội đang mở</span>
+          <strong>{{ totalJobs || 'Nhiều' }} vị trí</strong>
+        </p>
+        <h1 class="hero-title">Tìm công việc <span class="hero-highlight">phù hợp với bạn</span></h1>
+        <p class="hero-trust">Khám phá cơ hội phù hợp theo kỹ năng, kinh nghiệm và định hướng phát triển của bạn.</p>
 
-      <!-- Search Box -->
-      <div class="search-box">
-        <div class="search-input">
-          <nz-input-group [nzPrefix]="searchIcon" nzSize="large">
-            <input
-              type="text"
-              nz-input
-              placeholder="Tìm kiếm vị trí, kỹ năng..."
-              [(ngModel)]="searchQuery"
-              (keyup.enter)="onSearch()"
-            />
-          </nz-input-group>
-          <ng-template #searchIcon>
-            <svg class="lucide-icon" aria-hidden="true"><use href="assets/icons/lucide.svg#search"></use></svg>
-          </ng-template>
-        </div>
-        <button nz-button nzType="primary" nzSize="large" class="search-btn irsa-btn-primary" (click)="onSearch()">
-          Tìm việc ngay
-        </button>
-      </div>
-
-      <!-- Category Quick Filters -->
-      <div class="category-chips">
-        @for (category of categories; track category.name) {
-          <button class="category-chip" routerLink="/jobs" [queryParams]="{department: category.name}">
-            <span nz-icon [nzType]="category.icon" nzTheme="outline"></span>
-            {{ category.label }}
+        <div class="search-box">
+          <div class="search-input">
+            <nz-input-group [nzPrefix]="searchIcon" nzSize="large">
+              <input
+                type="text"
+                nz-input
+                placeholder="Vị trí, kỹ năng hoặc lĩnh vực bạn quan tâm"
+                [(ngModel)]="searchQuery"
+                (keyup.enter)="onSearch()"
+              />
+            </nz-input-group>
+            <ng-template #searchIcon>
+              <svg class="lucide-icon" aria-hidden="true"><use href="assets/icons/lucide.svg#search"></use></svg>
+            </ng-template>
+          </div>
+          <button nz-button nzSize="large" class="search-btn" (click)="onSearch()">
+            Tìm cơ hội
+            <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
           </button>
-        }
+        </div>
+
+        <div class="category-area">
+          <span class="category-label">Tìm nhanh theo lĩnh vực</span>
+          <div class="category-chips">
+            @for (category of categories; track category.name) {
+              <button class="category-chip" routerLink="/jobs" [queryParams]="{department: category.name}">
+                <span nz-icon [nzType]="category.icon" nzTheme="outline"></span>
+                {{ category.label }}
+              </button>
+            }
+          </div>
+        </div>
       </div>
+
     </div>
   </div>
 </section>
 
 <!-- Latest Jobs -->
 <section class="jobs-section">
-  <div class="container">
+  <div class="container section-shell jobs-shell">
     <div class="section-header">
-      <h2>Việc làm mới nhất</h2>
-      <span class="job-count irsa-status-badge active" *ngIf="totalJobs > 0"><span class="irsa-status-dot" aria-hidden="true"></span>{{ totalJobs }} vị trí đang tuyển</span>
+      <div class="section-heading-copy">
+        <span class="section-eyebrow">CƠ HỘI MỚI</span>
+        <h2>Việc làm mới nhất</h2>
+        <p>Các vị trí vừa được cập nhật từ doanh nghiệp đang tuyển dụng.</p>
+      </div>
     </div>
 
     <nz-spin [nzSpinning]="loading">
@@ -57,27 +66,22 @@
           @for (job of jobs; track job.id) {
             <div nz-col [nzXs]="24" [nzMd]="12" [nzLg]="8">
               <article class="job-card" [routerLink]="['/jobs', job.slug]" tabindex="0">
-                <div class="job-card__topline">
-                  <div class="job-icon">{{ getInitials(job.company_name || job.company_code) }}</div>
-                  <div class="job-company"><strong>{{ job.company_name || job.company_code || 'Doanh nghiệp tuyển dụng' }}</strong><span><i></i> Đang tuyển dụng</span></div>
-                  @if (isNewJob(job.published_at)) {<span class="new-badge">MỚI</span>}
-                </div>
                 <div class="job-card__body">
+                  @if (isNewJob(job.published_at)) {<span class="new-badge">Mới cập nhật</span>}
                   <h3>{{ job.title_vi }}</h3>
-                  @if (job.description_vi) {<p class="job-summary">{{ getPlainText(job.description_vi) }}</p>}
-                  <div class="job-meta-grid">
-                    <span><span nz-icon nzType="environment"></span><small>Địa điểm</small><strong>{{ job.location || 'Linh hoạt' }}</strong></span>
-                    <span><span nz-icon nzType="clock-circle"></span><small>Hình thức</small><strong>{{ job.employment_type ? formatEmploymentType(job.employment_type) : 'Thỏa thuận' }}</strong></span>
-                    <span><span nz-icon nzType="fund-projection-screen"></span><small>Kinh nghiệm</small><strong>{{ formatExperience(job.min_experience_years, job.max_experience_years) }}</strong></span>
+                  <div class="job-salary-block">
+                    <span>Mức lương</span>
+                    <strong>{{ formatSalary(job.salary_min, job.salary_max) || 'Thỏa thuận' }}</strong>
                   </div>
-                  @if (job.must_have_skills && job.must_have_skills.length > 0) {
-                    <div class="skill-list">@for (skill of job.must_have_skills.slice(0, 3); track skill) {<span>{{ skill }}</span>}@if (job.must_have_skills.length > 3) {<span>+{{ job.must_have_skills.length - 3 }}</span>}</div>
-                  }
+                  <div class="job-meta-grid">
+                    <span><small>Địa điểm</small><strong>{{ job.location || 'Linh hoạt' }}</strong></span>
+                    <span><small>Hình thức</small><strong>{{ job.employment_type ? formatEmploymentType(job.employment_type) : 'Thỏa thuận' }}</strong></span>
+                    <span><small>Kinh nghiệm</small><strong>{{ formatExperience(job.min_experience_years, job.max_experience_years) }}</strong></span>
+                  </div>
                 </div>
                 <footer class="job-footer">
-                  <div><small>Mức lương</small><strong class="salary">{{ formatSalary(job.salary_min, job.salary_max) || 'Thỏa thuận' }}</strong></div>
                   <div class="deadline" [class.urgent]="getDeadlineLabel(job.application_deadline).includes('Còn')"><small>Hạn ứng tuyển</small><strong>{{ getDeadlineLabel(job.application_deadline) }}</strong></div>
-                  <span class="job-arrow"><span nz-icon nzType="arrow-right"></span></span>
+                  <span class="job-detail-link">Xem chi tiết <span nz-icon nzType="arrow-right"></span></span>
                 </footer>
               </article>
             </div>
@@ -89,7 +93,7 @@
     </nz-spin>
 
     <div class="section-cta" *ngIf="totalJobs > 6">
-      <button nz-button nzType="primary" nzSize="large" class="irsa-btn-primary" routerLink="/jobs">
+      <button nz-button nzSize="large" class="all-jobs-btn" routerLink="/jobs">
         Xem tất cả việc làm
         <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
       </button>
@@ -100,18 +104,28 @@
 <!-- Active Companies -->
 @if (activeCompanies.length > 0) {
   <section class="companies-section">
-    <div class="container">
+    <div class="container section-shell companies-shell">
       <div class="section-header">
-        <h2>Doanh nghiệp đang tuyển dụng</h2>
+        <div class="section-heading-copy">
+          <span class="section-eyebrow">NHÀ TUYỂN DỤNG</span>
+          <h2>Doanh nghiệp đang tuyển dụng</h2>
+          <p>Khám phá môi trường làm việc và các vị trí đang mở.</p>
+        </div>
       </div>
       <div class="companies-grid">
         @for (company of activeCompanies; track company.company_code) {
           <a class="company-card" [routerLink]="['/companies', company.company_code]">
-            <div class="company-card__accent"></div>
-            <div class="company-card__header"><div class="company-avatar">{{ getInitials(company.company_name) }}</div><span class="company-active"><i></i> Đang tuyển</span></div>
-            <div class="company-info"><h3>{{ company.company_name }}</h3><span class="company-code">{{ company.company_code }}</span><p>{{ company.industry || 'Doanh nghiệp đa ngành' }}</p></div>
-            <div class="company-details"><span><span nz-icon nzType="environment"></span>{{ company.location || 'Toàn quốc' }}</span>@if (company.latest_published_at) {<span><span nz-icon nzType="calendar"></span>Cập nhật {{ company.latest_published_at | date:'dd/MM' }}</span>}</div>
-            <footer><div><strong>{{ company.job_count }}</strong><span>vị trí đang mở</span></div><span class="explore-company">Khám phá <span nz-icon nzType="arrow-right"></span></span></footer>
+            <div class="company-avatar">{{ getInitials(company.company_name) }}</div>
+            <div class="company-info">
+              <h3>{{ company.company_name }}</h3>
+              <span class="company-code">{{ company.company_code }}</span>
+              <p>{{ company.industry || 'Doanh nghiệp đa ngành' }} · {{ company.location || 'Toàn quốc' }}</p>
+            </div>
+            <div class="company-job-count">
+              <strong>{{ company.job_count }}</strong>
+              <span>vị trí</span>
+            </div>
+            <span class="company-arrow" aria-hidden="true">→</span>
           </a>
         }
       </div>

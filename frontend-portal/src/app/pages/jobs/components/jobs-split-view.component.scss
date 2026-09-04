@@ -76,19 +76,6 @@
   margin-bottom: 8px;
 }
 
-.company-mini-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  color: #FFFFFF;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  flex-shrink: 0;
-}
-
 .split-item-info {
   flex: 1;
   min-width: 0;
@@ -201,20 +188,6 @@
   margin-bottom: 18px;
 }
 
-.preview-avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #FFFFFF;
-  font-size: 26px;
-  font-weight: 800;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
 .preview-title-info {
   flex: 1;
 
@@ -262,8 +235,8 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: var(--irsa-brand-accent, #18181B);
-    border: 1px solid var(--irsa-brand-accent, #18181B);
+    background: #9a7446;
+    border: 1px solid #9a7446;
     color: #fff;
     height: 36px;
     padding: 0 18px;
@@ -275,8 +248,8 @@
     transition: all var(--transition-fast);
 
     &:hover {
-      background: var(--irsa-brand-hover, #27272A);
-      border-color: var(--irsa-brand-hover, #27272A);
+      background: #7c5b35;
+      border-color: #7c5b35;
       box-shadow: none;
       transform: translateY(-1px);
     }
@@ -302,16 +275,16 @@
 
     &:hover {
       background: #FAFAFA;
-      border-color: var(--irsa-brand-hover, #27272A);
-      color: var(--irsa-text-primary, #18181B);
+      border-color: #9a7446;
+      color: #76552f;
       box-shadow: none;
       transform: translateY(-1px);
     }
 
     &.saved {
-      color: var(--irsa-text-primary, #18181B);
-      border-color: var(--irsa-brand-accent, #18181B);
-      background: var(--irsa-brand-light, #E6E1D3);
+      color: #76552f;
+      border-color: #c7ae8b;
+      background: #f4ecdf;
     }
   }
 }

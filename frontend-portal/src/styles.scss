@@ -1161,3 +1161,135 @@ body.portal-app {
   transform: none !important;
   cursor: not-allowed !important;
 }
+
+/* ==========================================================================
+   11. Portal-wide DESIGN-V5 visual contract
+   Mirrors the Admin reading hierarchy while preserving candidate workflows.
+   ========================================================================== */
+
+body.portal-app {
+  font-family: var(--irsa-font-sans);
+  font-size: var(--irsa-text-ui);
+  line-height: 1.55;
+  color: var(--irsa-text-primary);
+  background: var(--irsa-bg-canvas);
+}
+
+.portal-app button,
+.portal-app input,
+.portal-app textarea,
+.portal-app select,
+.portal-app .ant-typography,
+.portal-app .ant-menu,
+.portal-app .ant-select,
+.portal-app .ant-table,
+.portal-app .ant-modal,
+.portal-app .ant-dropdown-menu,
+.portal-app .ant-drawer {
+  font-family: var(--irsa-font-sans);
+}
+
+.portal-app .page-header > h1,
+.portal-app .page-header > h2,
+.portal-app .page-header .page-title,
+.portal-app .ant-page-header-heading-title {
+  margin-block: 0 5px;
+  color: var(--irsa-text-primary);
+  font-family: var(--irsa-font-sans);
+  font-size: var(--irsa-text-page);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+.portal-app .page-header > p,
+.portal-app .page-header .page-subtitle,
+.portal-app .ant-page-header-heading-sub-title {
+  margin-block: 0;
+  color: var(--irsa-text-secondary);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.portal-app .section-title,
+.portal-app .card-title,
+.portal-app .ant-card-head-title {
+  color: var(--irsa-text-primary);
+  font-family: var(--irsa-font-sans);
+  font-size: var(--irsa-text-section);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -.015em;
+}
+
+.portal-app .ant-btn,
+.portal-app .ant-input,
+.portal-app .ant-input-affix-wrapper,
+.portal-app .ant-select-selection-item,
+.portal-app .ant-select-selection-placeholder,
+.portal-app .ant-picker-input > input,
+.portal-app .ant-dropdown-menu-item,
+.portal-app .ant-pagination-item,
+.portal-app .ant-pagination-prev,
+.portal-app .ant-pagination-next {
+  font-size: var(--irsa-text-ui);
+}
+
+.portal-app .ant-input,
+.portal-app .ant-input-affix-wrapper,
+.portal-app .ant-select-selector,
+.portal-app .ant-picker {
+  min-height: var(--irsa-control-height);
+  border-color: var(--irsa-border-light);
+  border-radius: var(--irsa-radius-md);
+  background: var(--irsa-bg-card);
+  color: var(--irsa-text-primary);
+}
+
+.portal-app .ant-input:focus,
+.portal-app .ant-input-affix-wrapper-focused,
+.portal-app .ant-select-focused .ant-select-selector,
+.portal-app .ant-picker-focused {
+  border-color: var(--irsa-text-secondary);
+  box-shadow: var(--focus-ring);
+}
+
+.portal-app .ant-card,
+.portal-app .ant-modal-content,
+.portal-app .ant-drawer-content,
+.portal-app .ant-dropdown-menu,
+.portal-app .ant-table-wrapper {
+  border-color: var(--irsa-border-light);
+  border-radius: var(--irsa-radius-xl);
+  background: var(--irsa-bg-card);
+  box-shadow: var(--irsa-shadow-sm);
+}
+
+.portal-app .ant-card:hover { box-shadow: var(--irsa-shadow-md); }
+.portal-app .ant-table { color: var(--irsa-text-secondary); font-size: var(--irsa-text-ui); }
+.portal-app .ant-table-thead > tr > th { color: var(--irsa-text-secondary); background: #FAFAF9; font-size: var(--irsa-text-caption); font-weight: 600; }
+.portal-app .ant-table-tbody > tr > td { color: var(--irsa-text-secondary); }
+.portal-app .ant-table-tbody > tr > td strong { color: var(--irsa-text-primary); font-weight: 600; }
+.portal-app .ant-table-tbody > tr:hover > td { background: #FAFAF9; }
+
+.portal-app .ant-tag,
+.portal-app .irsa-status-badge {
+  font-size: var(--irsa-text-caption);
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+.portal-app .ant-empty-description,
+.portal-app .ant-result-subtitle {
+  color: var(--irsa-text-secondary);
+  font-size: var(--irsa-text-ui);
+  line-height: 1.5;
+}
+
+@media (max-width: 767px) {
+  body.portal-app { font-size: var(--irsa-text-ui); }
+  .portal-app .page-header > p,
+  .portal-app .page-header .page-subtitle { font-size: var(--irsa-text-ui); }
+}

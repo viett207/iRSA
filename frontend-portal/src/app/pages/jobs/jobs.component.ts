@@ -131,7 +131,8 @@ export class JobsComponent implements OnInit, OnDestroy {
   sortBy = 'newest';
   salaryRange: [number, number] = [0, 100];
   currentPage = 1;
-  pageSize = 20;
+  // The desktop results grid has three columns, so keep each page in complete rows.
+  pageSize = 18;
 
   // View mode: 'grid' (widescreen 2-col cards) or 'split' (master-detail with sticky live preview)
   viewMode: 'grid' | 'split' = 'grid';

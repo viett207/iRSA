@@ -3,7 +3,6 @@
   @for (item of [1, 2, 3, 4, 5, 6]; track item) {
     <div class="job-skeleton-card">
       <div class="skeleton-header">
-        <div class="skeleton-avatar"></div>
         <div class="skeleton-info">
           <div class="skeleton-line skeleton-title"></div>
           <div class="skeleton-line skeleton-sub"></div>
@@ -35,7 +34,7 @@
     [nzTotal]="totalJobs"
     [nzPageSize]="pageSize"
     nzShowSizeChanger
-    [nzPageSizeOptions]="[10, 20, 50]"
+    [nzPageSizeOptions]="[9, 18, 36]"
     (nzPageIndexChange)="onPageChange($event)"
     (nzPageSizeChange)="onPageSizeChange($event)"
   ></nz-pagination>

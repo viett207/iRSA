@@ -4,12 +4,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
-import { NzTagModule } from 'ng-zorro-antd/tag';
 
 import { JobService } from '../../core/services/job.service';
 import { CompanyJobSummary, CompanyOverview } from '../../shared/models/job.model';
@@ -22,12 +20,10 @@ import { CompanyJobSummary, CompanyOverview } from '../../shared/models/job.mode
     FormsModule,
     RouterLink,
     NzButtonModule,
-    NzCardModule,
     NzEmptyModule,
     NzIconModule,
     NzInputModule,
     NzSkeletonModule,
-    NzTagModule,
   ],
   templateUrl: './company-detail.component.html',
   styleUrl: './company-detail.component.scss',
@@ -40,7 +36,6 @@ export class CompanyDetailComponent implements OnInit {
   overview = signal<CompanyOverview | null>(null);
   loading = signal(true);
   loadError = signal(false);
-  activeTab: 'overview' | 'jobs' = 'overview';
   searchQuery = signal<string>('');
   selectedDepartment = signal<string>('all');
   private companyCodeOrId: string | null = null;
@@ -156,32 +151,15 @@ export class CompanyDetailComponent implements OnInit {
     return data.company?.description?.trim() || this.getCompanySummary(data);
   }
 
-  getStatusColor(status: string): string {
-    return {
-      draft: 'default',
-      pending_approval: 'orange',
-      approved: 'blue',
-      rejected: 'red',
-      active: 'green',
-      closed: 'default',
-    }[status] || 'default';
-  }
-
-  getStatusLabel(status: string): string {
-    return {
-      draft: 'Nháp',
-      pending_approval: 'Chờ duyệt',
-      approved: 'Đã duyệt',
-      rejected: 'Từ chối',
-      active: 'Đang tuyển',
-      closed: 'Đã đóng',
-    }[status] || status;
-  }
-
   formatDate(value: string | Date | null | undefined): string {
     if (!value) return '';
     return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
       .format(new Date(value));
+  }
+
+  formatEmploymentType(value: string | null | undefined): string {
+    if (!value) return 'Linh hoạt';
+    return this.employmentTypeMap[value] || value;
   }
 
   formatSalary(min: number | null | undefined, max: number | null | undefined): string {

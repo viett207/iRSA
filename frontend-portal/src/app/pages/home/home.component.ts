@@ -106,15 +106,6 @@ export class HomeComponent implements OnInit {
     return `Tối đa ${max} năm`;
   }
 
-  getPlainText(value?: string): string {
-    return (value || '')
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/&amp;/gi, '&')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
   private loadActiveCompanies(): void {
     this.jobService.listActiveCompanies(10).subscribe({
       next: (res) => this.activeCompanies = res.items,

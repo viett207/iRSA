@@ -4,7 +4,7 @@
 
 .jobs-page {
   min-height: 100vh;
-  background: #f4f6f9;
+  background: var(--irsa-bg-canvas, #f3f0e6);
   color: var(--irsa-text-primary);
   font-size: 15px;
 }

@@ -11,7 +11,7 @@
         [nzDescription]="error"
         nzShowIcon
       ></nz-alert>
-      <button nz-button nzType="primary" routerLink="/jobs" class="mt-4">
+      <button nz-button routerLink="/jobs" class="mt-4 back-to-jobs-btn">
         Quay lại danh sách
       </button>
     </div>
@@ -86,7 +86,7 @@
                   <h4>Bắt buộc:</h4>
                   <div class="skills-tags">
                     @for (skill of job.must_have_skills; track skill) {
-                      <nz-tag nzColor="blue">{{ skill }}</nz-tag>
+                      <nz-tag class="skill-tag required-skill">{{ skill }}</nz-tag>
                     }
                   </div>
                 </div>
@@ -96,7 +96,7 @@
                   <h4>Ưu tiên:</h4>
                   <div class="skills-tags">
                     @for (skill of job.nice_to_have_skills; track skill) {
-                      <nz-tag nzColor="geekblue">{{ skill }}</nz-tag>
+                      <nz-tag class="skill-tag optional-skill">{{ skill }}</nz-tag>
                     }
                   </div>
                 </div>

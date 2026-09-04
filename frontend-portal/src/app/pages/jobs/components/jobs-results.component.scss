@@ -31,14 +31,6 @@
   align-items: center;
 }
 
-.skeleton-avatar {
-  width: 54px;
-  height: 54px;
-  border-radius: 14px;
-  background: #E2E8F0;
-  animation: skeleton-pulse 1.5s infinite;
-}
-
 .skeleton-info {
   flex: 1;
   display: flex;
@@ -161,4 +153,4 @@
 }
 
 .job-skeleton-card,.no-results-card { border-color: #dfe4eb; border-radius: 16px; box-shadow: 0 7px 24px rgba(23,34,52,.04); }
-.skeleton-avatar,.skeleton-line { background: #dfe5ee; }.skeleton-pill,.skeleton-button { background: #e9edf3; }
+.skeleton-line { background: #dfe5ee; }.skeleton-pill,.skeleton-button { background: #e9edf3; }

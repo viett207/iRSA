@@ -2,20 +2,6 @@
   display: block;
 }
 
-.preview-avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #FFFFFF;
-  font-size: 26px;
-  font-weight: 800;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
 .preview-highlights-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -116,6 +102,16 @@
 
   button, a {
     border-radius: 8px;
+  }
+
+  .irsa-btn-primary {
+    border-color: #9a7446;
+    background: #9a7446;
+
+    &:hover {
+      border-color: #7c5b35;
+      background: #7c5b35;
+    }
   }
 }
 

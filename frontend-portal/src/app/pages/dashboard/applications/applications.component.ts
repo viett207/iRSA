@@ -2,8 +2,6 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NzTableModule } from 'ng-zorro-antd/table';
-import { NzTagModule } from 'ng-zorro-antd/tag';
-import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzCardModule } from 'ng-zorro-antd/card';
@@ -18,8 +16,8 @@ import {
 } from '../../../shared/components/pdf-viewer-modal/pdf-viewer-modal.component';
 import {
   Application,
+  ApplicationStatusCounts,
   APPLICATION_STATUS_LABELS,
-  APPLICATION_STATUS_COLORS,
   ApplicationStatus,
 } from '../../../shared/models/application.model';
 
@@ -30,8 +28,6 @@ import {
     CommonModule,
     RouterModule,
     NzTableModule,
-    NzTagModule,
-    NzButtonModule,
     NzIconModule,
     NzEmptyModule,
     NzCardModule,
@@ -48,6 +44,12 @@ export class ApplicationsComponent implements OnInit {
 
   loading = true;
   applications: Application[] = [];
+  statusCounts: ApplicationStatusCounts = {
+    in_review: 0,
+    shortlisted: 0,
+    not_selected: 0,
+    selected: 0,
+  };
   total = 0;
   page = 1;
   pageSize = 20;
@@ -62,6 +64,7 @@ export class ApplicationsComponent implements OnInit {
       next: (res) => {
         this.applications = res.items;
         this.total = res.total;
+        this.statusCounts = res.status_counts;
         this.loading = false;
       },
       error: () => {
@@ -85,8 +88,24 @@ export class ApplicationsComponent implements OnInit {
     return APPLICATION_STATUS_LABELS[status as ApplicationStatus] || status;
   }
 
-  getStatusColor(status: string): string {
-    return APPLICATION_STATUS_COLORS[status as ApplicationStatus] || 'default';
+  getStatusDescription(status: string): string {
+    const descriptions: Record<string, string> = {
+      in_review: 'Doanh nghiệp đang đánh giá hồ sơ',
+      shortlisted: 'Bạn đã tiến vào vòng tiếp theo',
+      not_selected: 'Hồ sơ chưa phù hợp với vị trí này',
+      selected: 'Chúc mừng, bạn đã được tuyển chọn',
+    };
+    return descriptions[status] || 'Trạng thái hồ sơ đã được cập nhật';
+  }
+
+  getStatusIcon(status: string): string {
+    const icons: Record<string, string> = {
+      in_review: 'clock-circle',
+      shortlisted: 'star',
+      not_selected: 'close-circle',
+      selected: 'check-circle',
+    };
+    return icons[status] || 'info-circle';
   }
 
   openPdfViewer(app: Application): void {

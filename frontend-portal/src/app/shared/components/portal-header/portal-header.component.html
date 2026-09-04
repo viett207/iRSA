@@ -14,10 +14,6 @@
 
     <!-- Desktop Nav -->
     <nav class="nav hide-mobile">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">
-        <span nz-icon nzType="home" nzTheme="outline"></span>
-        Trang chủ
-      </a>
       <a routerLink="/jobs" routerLinkActive="active" class="nav-link">
         <span nz-icon nzType="search" nzTheme="outline"></span>
         Tìm việc
@@ -204,10 +200,6 @@
       }
 
       <ul nz-menu nzMode="vertical" class="mobile-nav">
-        <li nz-menu-item routerLink="/" (click)="mobileMenuOpen = false">
-          <span nz-icon nzType="home" nzTheme="outline"></span>
-          Trang chủ
-        </li>
         <li nz-menu-item routerLink="/jobs" (click)="mobileMenuOpen = false">
           <span nz-icon nzType="search" nzTheme="outline"></span>
           Tìm việc

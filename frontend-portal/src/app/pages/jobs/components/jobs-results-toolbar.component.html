@@ -6,9 +6,6 @@
         <span class="results-kicker">CƠ HỘI DÀNH CHO BẠN</span>
         Tìm thấy <span class="highlight-count">{{ filteredJobs.length }}</span> vị trí theo tiêu chí
       </h2>
-      @if (totalJobs > filteredJobs.length) {
-        <span class="total-note">trong tổng số {{ totalJobs }} tin tuyển dụng</span>
-      }
     </div>
 
     <!-- Toolbar Controls Right -->
@@ -28,7 +25,6 @@
 
       <!-- View Mode Toggle (Grid vs Split Mode) - Clearly separated Display Control -->
       <div class="display-mode-control hide-mobile">
-        <span class="control-label">Hiển thị:</span>
         <div class="view-mode-toggle" role="group" aria-label="Kiểu hiển thị danh sách">
           <button
             type="button"
@@ -57,7 +53,6 @@
 
       <!-- Sort Dropdown -->
       <div class="sort-selector-wrap">
-        <span class="sort-label hide-mobile">Sắp xếp:</span>
         <nz-select
           [(ngModel)]="sortBy"
           (ngModelChange)="onFilterChange()"
@@ -70,18 +65,6 @@
         </nz-select>
       </div>
 
-      <!-- Page Size Changer -->
-      <div class="page-size-wrap hide-mobile">
-        <nz-select
-          [(ngModel)]="pageSize"
-          (ngModelChange)="onPageSizeChange($event)"
-          class="size-select"
-        >
-          <nz-option [nzValue]="10" nzLabel="10 / trang"></nz-option>
-          <nz-option [nzValue]="20" nzLabel="20 / trang"></nz-option>
-          <nz-option [nzValue]="50" nzLabel="50 / trang"></nz-option>
-        </nz-select>
-      </div>
     </div>
   </div>
 

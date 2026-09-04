@@ -3,7 +3,6 @@
   <div class="filter-card">
     <div class="filter-card-header">
       <div class="header-left">
-        <span nz-icon nzType="filter" nzTheme="fill" class="filter-title-icon"></span>
         <div class="filter-heading-copy"><h3>Lọc kết quả</h3><span>Tùy chỉnh cơ hội phù hợp</span></div>
         @if (getActiveFiltersCount() > 0) {
           <span class="filter-count-badge">{{ getActiveFiltersCount() }}</span>
@@ -26,7 +25,6 @@
       <div class="filter-facet saved-facet">
         <label nz-checkbox [(ngModel)]="onlySavedFilter" (ngModelChange)="onFilterChange()">
           <span class="saved-label">
-            <span nz-icon nzType="heart" nzTheme="fill" class="heart-icon"></span>
             Chỉ xem việc đã lưu ({{ savedJobIds.size }})
           </span>
         </label>
@@ -38,7 +36,6 @@
       <div class="filter-facet">
         <div class="facet-header">
           <h4 class="facet-title">
-            <span nz-icon nzType="dollar" nzTheme="outline"></span>
             Mức lương (triệu VNĐ)
           </h4>
           <span class="salary-dynamic-text">
@@ -81,7 +78,6 @@
       <!-- Facet 2: Hình thức làm việc -->
       <div class="filter-facet">
         <h4 class="facet-title">
-          <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
           Hình thức làm việc
         </h4>
         <div class="facet-options-list">
@@ -100,7 +96,6 @@
       <!-- Facet 3: Kinh nghiệm làm việc -->
       <div class="filter-facet">
         <h4 class="facet-title">
-          <span nz-icon nzType="trophy" nzTheme="outline"></span>
           Kinh nghiệm làm việc
         </h4>
         <div class="facet-options-list">
@@ -119,7 +114,6 @@
       <!-- Facet 4: Ngành nghề & Lĩnh vực -->
       <div class="filter-facet">
         <h4 class="facet-title">
-          <span nz-icon nzType="appstore" nzTheme="outline"></span>
           Ngành nghề tuyển dụng
         </h4>
         <nz-select
@@ -141,7 +135,6 @@
       <!-- Facet 5: Công ty tuyển dụng -->
       <div class="filter-facet">
         <h4 class="facet-title">
-          <span nz-icon nzType="bank" nzTheme="outline"></span>
           Công ty tuyển dụng
         </h4>
         <nz-select

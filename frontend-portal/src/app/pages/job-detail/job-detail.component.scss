@@ -77,8 +77,9 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    background: #DCFCE7;
-    color: #166534;
+    border: 1px solid #cfe2d5;
+    background: #edf5ef;
+    color: #356a4a;
     padding: 6px 14px;
     border-radius: var(--irsa-radius-full);
     font-weight: 600;
@@ -128,6 +129,23 @@
   }
 }
 
+::ng-deep .skill-tag.ant-tag {
+  margin: 0;
+  padding: 4px 10px;
+  border: 1px solid #ddd4c7;
+  border-radius: 7px;
+  background: #f6f1e9;
+  color: #71583d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+::ng-deep .optional-skill.ant-tag {
+  border-color: #dde1df;
+  background: #f3f5f4;
+  color: #65706a;
+}
+
 .apply-card {
   position: sticky;
   top: calc(var(--header-height) + var(--space-4));
@@ -154,9 +172,9 @@
   .applied-btn {
     opacity: 1;
     cursor: default;
-    border-color: var(--irsa-border-light, #E4DFD3);
-    background: #F4F4F5;
-    color: var(--color-text-primary, #18181B);
+    border-color: #cbded1 !important;
+    background: #eef5f0 !important;
+    color: #48705a !important;
     border-radius: 8px;
     min-height: 44px;
     font-weight: 600;
@@ -164,21 +182,43 @@
 }
 
 .apply-primary-action,
-.apply-submit-btn {
+.apply-submit-btn,
+.back-to-jobs-btn {
   min-height: 44px;
   border-radius: 8px !important;
-  background: #18181B !important;
-  border-color: #18181B !important;
+  background: #8f6d45 !important;
+  border-color: #8f6d45 !important;
   color: #FFFFFF !important;
   font-weight: 600;
   letter-spacing: 0;
   box-shadow: none !important;
 
   &:hover {
-    background: #27272A !important;
-    border-color: #27272A !important;
+    background: #755533 !important;
+    border-color: #755533 !important;
     box-shadow: none !important;
     transform: translateY(-1px);
+  }
+}
+
+.apply-submit-btn[disabled] {
+  border-color: #dedbd5 !important;
+  background: #f2f1ee !important;
+  color: #9d9992 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.irsa-btn-secondary,
+::ng-deep .apply-form nz-upload button {
+  border-color: #ddd4c7;
+  background: #fff;
+  color: #71583d;
+
+  &:hover {
+    border-color: #b99a74;
+    background: #f8f3eb;
+    color: #664b2e;
   }
 }
 
