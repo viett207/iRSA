@@ -722,7 +722,7 @@ a {
 /* Search Box */
 .search-box {
   background: var(--color-bg-secondary);
-  border-radius: var(--radius-2xl);
+  border-radius: 8px;
   padding: var(--space-2);
   box-shadow: var(--shadow-xl);
   display: flex;
@@ -733,7 +733,7 @@ a {
   @media (max-width: 768px) {
     flex-direction: column;
     padding: var(--space-4);
-    border-radius: var(--radius-xl);
+    border-radius: 8px;
   }
 
   .search-input {
