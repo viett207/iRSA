@@ -11,7 +11,8 @@
           <button type="button" [class.active]="conversationFilter === 'interview'" (click)="setConversationFilter('interview')">Phỏng vấn</button>
         </div>
       </header>
-      <div class="conversation-list"><nz-spin [nzSpinning]="loadingConversations()">
+      <div class="conversation-list">
+        @if (loadingConversations()) {<div class="conversations-loading"><nz-spin nzSimple></nz-spin></div>}
         @if (filteredConversations.length === 0 && !loadingConversations()) {
           <div class="empty-conversations"><span nz-icon nzType="inbox"></span><strong>Chưa có hội thoại</strong><p>Các trao đổi tuyển dụng sẽ xuất hiện tại đây.</p></div>
         } @else { @for (conv of filteredConversations; track conv.application_id) {
@@ -25,7 +26,7 @@
             </span>
           </button>
         }}
-      </nz-spin></div>
+      </div>
     </aside>
 
     <main class="chat-workspace">

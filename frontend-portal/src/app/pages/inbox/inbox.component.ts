@@ -419,11 +419,15 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   private scrollToBottom(): void {
     setTimeout(() => {
-      if (this.scrollContainer) {
-        this.scrollContainer.nativeElement.scrollTop =
-          this.scrollContainer.nativeElement.scrollHeight;
-      }
-    }, 100);
+      const element = this.scrollContainer?.nativeElement as HTMLElement | undefined;
+      if (!element) return;
+      requestAnimationFrame(() => {
+        element.scrollTop = element.scrollHeight;
+        requestAnimationFrame(() => {
+          element.scrollTop = element.scrollHeight;
+        });
+      });
+    }, 0);
   }
 
   getCandidateInitials(name?: string): string {
