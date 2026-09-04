@@ -42,10 +42,17 @@
           }
         </div>
       </div>
+      <div class="company-hero-actions">
+        @if (editMode()) {
+          <span class="editing-status">Đang chỉnh sửa hồ sơ</span>
+        } @else {
+          <button nz-button nzType="primary" type="button" (click)="startEditing()">Chỉnh sửa hồ sơ</button>
+        }
+      </div>
     </section>
 
     <nav class="profile-tabs" aria-label="Nội dung hồ sơ công ty">
-      <a class="profile-tab profile-tab--active" href="#company-overview">Tổng quan</a>
+      <a class="profile-tab profile-tab--active" href="#company-overview">Hồ sơ công ty</a>
       <a class="profile-tab" href="#company-jobs">Tin tuyển dụng <span>{{ data.stats.active_jobs }}</span></a>
     </nav>
 
@@ -79,11 +86,67 @@
     <section class="content-grid" id="company-overview">
       <nz-card class="jobs-card">
         <article class="company-introduction">
-          <div class="introduction-heading">
-            <span nz-icon nzType="idcard" aria-hidden="true"></span>
-            <h2>Giới thiệu công ty</h2>
+          <div class="introduction-heading profile-section-heading">
+            <div>
+              <span class="section-kicker">HỒ SƠ DOANH NGHIỆP</span>
+              <h2>{{ editMode() ? 'Chỉnh sửa thông tin công ty' : 'Thông tin công ty' }}</h2>
+              <p>{{ editMode() ? 'Các thay đổi sẽ được cập nhật trực tiếp vào hồ sơ đang xem.' : 'Thông tin nhận diện dùng chung trong toàn bộ quy trình tuyển dụng.' }}</p>
+            </div>
+            @if (!editMode()) { <button type="button" (click)="startEditing()">Chỉnh sửa</button> }
           </div>
-          <p>{{ getCompanyDescription(data) }}</p>
+
+          @if (editMode()) {
+            <form class="inline-company-form" nz-form [formGroup]="companyForm" nzLayout="vertical" (ngSubmit)="saveCompany()">
+              <div class="locked-field">
+                <label>Mã công ty</label>
+                <strong>{{ data.company.company_code }}</strong>
+                <small>Mã định danh không thể thay đổi sau khi tạo.</small>
+              </div>
+              <nz-form-item>
+                <nz-form-label nzRequired>Tên công ty</nz-form-label>
+                <nz-form-control nzErrorTip="Tên công ty cần ít nhất 2 ký tự">
+                  <input nz-input formControlName="company_name" placeholder="Nhập tên công ty" />
+                </nz-form-control>
+              </nz-form-item>
+              <nz-form-item>
+                <nz-form-label>Ngành nghề</nz-form-label>
+                <nz-form-control>
+                  <nz-select formControlName="industry" nzPlaceHolder="Chọn ngành nghề" nzAllowClear nzShowSearch>
+                    @for (industry of industries; track industry) { <nz-option [nzValue]="industry" [nzLabel]="industry"></nz-option> }
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+              <nz-form-item>
+                <nz-form-label>Địa điểm</nz-form-label>
+                <nz-form-control>
+                  <nz-select formControlName="location" nzPlaceHolder="Chọn tỉnh/thành phố" nzAllowClear nzShowSearch>
+                    @for (province of provinces; track province) { <nz-option [nzValue]="province" [nzLabel]="province"></nz-option> }
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+              <nz-form-item class="description-field">
+                <nz-form-label>Giới thiệu công ty</nz-form-label>
+                <nz-form-control nzErrorTip="Giới thiệu không được quá 2.000 ký tự">
+                  <textarea nz-input formControlName="description" rows="6" maxlength="2000" placeholder="Lĩnh vực hoạt động, văn hóa và điểm nổi bật của công ty..."></textarea>
+                  <small class="character-count">{{ companyForm.controls.description.value?.length || 0 }}/2000</small>
+                </nz-form-control>
+              </nz-form-item>
+              <footer class="inline-form-actions">
+                <span>Thông tin mới sẽ áp dụng cho hồ sơ và dữ liệu quản trị liên quan.</span>
+                <div><button nz-button type="button" (click)="cancelEditing()">Hủy</button><button nz-button nzType="primary" type="submit" [nzLoading]="saving()" [disabled]="companyForm.invalid">Lưu thay đổi</button></div>
+              </footer>
+            </form>
+          } @else {
+            <div class="company-profile-view">
+              <dl>
+                <div><dt>Mã công ty</dt><dd>{{ data.company.company_code }}</dd></div>
+                <div><dt>Tên công ty</dt><dd>{{ data.company.company_name }}</dd></div>
+                <div><dt>Ngành nghề</dt><dd>{{ data.company.industry || 'Chưa cập nhật' }}</dd></div>
+                <div><dt>Địa điểm</dt><dd>{{ data.company.location || 'Chưa cập nhật' }}</dd></div>
+              </dl>
+              <div class="profile-description"><span>Giới thiệu</span><p>{{ getCompanyDescription(data) }}</p></div>
+            </div>
+          }
         </article>
 
         <div class="section-divider"></div>
@@ -122,32 +185,31 @@
 
       <aside aria-label="Thông tin công ty">
         <nz-card class="information-card">
-          <h2>Thông tin công ty</h2>
+          <h2>Tình trạng hồ sơ</h2>
           <dl>
             <div>
-              <dt>Mã công ty</dt>
-              <dd><nz-tag nzColor="blue">{{ data.company.company_code }}</nz-tag></dd>
-            </div>
-            <div>
-              <dt>Ngành nghề</dt>
-              <dd>{{ data.company.industry || 'Chưa cập nhật' }}</dd>
-            </div>
-            <div>
-              <dt>Địa điểm</dt>
-              <dd>{{ data.company.location || 'Chưa cập nhật' }}</dd>
+              <dt>Mức hoàn thiện</dt>
+              <dd>{{ data.company.industry && data.company.location && data.company.description ? 'Đã hoàn thiện' : 'Cần bổ sung thông tin' }}</dd>
             </div>
             <div>
               <dt>Đội ngũ tuyển dụng</dt>
               <dd>{{ data.stats.hr_members }} thành viên HR đang hoạt động</dd>
             </div>
+            <div>
+              <dt>Ngày tham gia</dt>
+              <dd>{{ formatDate(data.company.created_at) }}</dd>
+            </div>
+            <div>
+              <dt>Cập nhật gần nhất</dt>
+              <dd>{{ data.company.updated_at ? formatDate(data.company.updated_at) : 'Chưa có thay đổi' }}</dd>
+            </div>
           </dl>
         </nz-card>
 
         <nz-card class="workflow-card">
-          <span nz-icon nzType="environment" aria-hidden="true"></span>
           <div>
-            <strong>Địa điểm công ty</strong>
-            <p>{{ data.company.location || 'Công ty chưa cập nhật địa điểm hoạt động.' }}</p>
+            <strong>Dữ liệu dùng chung</strong>
+            <p>Hồ sơ này được dùng cho tin tuyển dụng, quản lý thành viên HR và báo cáo của công ty.</p>
           </div>
         </nz-card>
       </aside>

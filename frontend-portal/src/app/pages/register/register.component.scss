@@ -278,6 +278,46 @@
   }
 }
 
+.irsa-logo-mark {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px;
+  flex: 0 0 38px;
+  border: 1px solid #e4dfd3;
+  border-radius: 10px;
+  background: #fff;
+
+  i { display: block; width: 6px; border-radius: 999px; }
+  i:nth-child(1) { height: 11px; background: #d4d4d8; }
+  i:nth-child(2) { height: 19px; background: #71717a; }
+  i:nth-child(3) { height: 27px; background: #d4d4d8; }
+
+  &--light {
+    border-color: rgb(255 255 255 / 15%);
+    background: rgb(255 255 255 / 7%);
+    i:nth-child(1), i:nth-child(3) { background: rgb(255 255 255 / 48%); }
+    i:nth-child(2) { background: #fff; }
+  }
+}
+
+.brand-logo,
+.auth-logo { gap: 12px; }
+
+:host ::ng-deep form .ant-form-item-label { text-align: left; }
+
+.auth-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: #71717a;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .12em;
+}
+
 @media (min-width: 900px) {
   .show-mobile-only {
     display: none;

@@ -1,176 +1,107 @@
 <div class="companies-page">
-  <!-- Page Header -->
-  <div class="page-header">
+  <header class="page-header">
     <div class="header-content">
-      <h1 class="page-title">Quản lý Công ty</h1>
-      <p class="page-subtitle">
-        Đang quản lý <strong class="company-total">{{ total() }}</strong> công ty trong hệ thống
-      </p>
+      <span class="eyebrow">QUẢN TRỊ HỆ THỐNG</span>
+      <h1 class="page-title">Quản lý công ty</h1>
+      <p class="page-subtitle">Quản lý hồ sơ doanh nghiệp và dữ liệu dùng chung cho đội ngũ tuyển dụng.</p>
     </div>
-    <div class="header-actions">
-      <button nz-button nzType="primary" (click)="openCreateModal()" class="create-btn">
-        <span nz-icon nzType="plus"></span>
-        Tạo công ty
-      </button>
-    </div>
-  </div>
+    <button nz-button nzType="primary" (click)="openCreateModal()" class="create-btn">Tạo công ty</button>
+  </header>
 
-  <!-- Search -->
-  <nz-card class="filter-card">
-    <div class="filter-row">
-      <div class="search-input">
-        <nz-input-group [nzPrefix]="searchIcon">
-          <input
-            nz-input
-            [(ngModel)]="searchText"
-            placeholder="Tìm kiếm theo tên, mã công ty..."
-            (keyup.enter)="onSearch()"
-          />
-        </nz-input-group>
-        <ng-template #searchIcon>
-          <span nz-icon nzType="search" nzTheme="outline"></span>
-        </ng-template>
-      </div>
-      <!-- Industry Filter -->
-      <nz-select
-        [(ngModel)]="industryFilter"
-        nzPlaceHolder="Ngành nghề"
-        nzAllowClear
-        nzShowSearch
-        class="industry-filter"
-        (ngModelChange)="onFilterChange()"
-      >
-        @for (industry of industries; track industry) {
-          <nz-option [nzValue]="industry" [nzLabel]="industry"></nz-option>
-        }
+  <section class="company-overview" aria-label="Tổng quan công ty">
+    <article class="overview-item overview-item--primary">
+      <span>Tổng công ty</span><strong>{{ total() }}</strong><small>Trong danh mục hệ thống</small>
+    </article>
+    <article class="overview-item">
+      <span>Kết quả đang xem</span><strong>{{ companies().length }}</strong><small>{{ hasActiveFilters() ? 'Theo bộ lọc hiện tại' : 'Trên trang hiện tại' }}</small>
+    </article>
+    <article class="overview-item" [class.overview-item--attention]="visibleIncompleteCount() > 0">
+      <span>Cần bổ sung hồ sơ</span><strong>{{ visibleIncompleteCount() }}</strong><small>Thiếu ngành, địa điểm hoặc mô tả</small>
+    </article>
+    <article class="overview-item">
+      <span>Nhóm ngành đang xem</span><strong>{{ visibleIndustryCount() }}</strong><small>Giúp kiểm tra độ phủ dữ liệu</small>
+    </article>
+  </section>
+
+  <section class="filter-panel" aria-label="Bộ lọc công ty">
+    <div class="filter-field filter-field--search">
+      <label for="company-search">Tìm nhanh</label>
+      <input id="company-search" nz-input [(ngModel)]="searchText" placeholder="Tên hoặc mã công ty..." (keyup.enter)="onSearch()" />
+    </div>
+    <div class="filter-field">
+      <label>Ngành nghề</label>
+      <nz-select [(ngModel)]="industryFilter" nzPlaceHolder="Tất cả ngành nghề" nzAllowClear nzShowSearch (ngModelChange)="onFilterChange()">
+        @for (industry of industries; track industry) { <nz-option [nzValue]="industry" [nzLabel]="industry"></nz-option> }
       </nz-select>
-
-      <!-- Location Filter -->
-      <nz-select
-        [(ngModel)]="locationFilter"
-        nzPlaceHolder="Địa điểm"
-        nzAllowClear
-        nzShowSearch
-        class="location-filter"
-        (ngModelChange)="onFilterChange()"
-      >
-        @for (province of provinces; track province) {
-          <nz-option [nzValue]="province" [nzLabel]="province"></nz-option>
-        }
-      </nz-select>
-
-      <div class="filter-actions">
-        <button nz-button (click)="clearFilters()">
-          <span nz-icon nzType="reload"></span>
-          Xóa bộ lọc
-        </button>
-      </div>
     </div>
-  </nz-card>
+    <div class="filter-field">
+      <label>Địa điểm</label>
+      <nz-select [(ngModel)]="locationFilter" nzPlaceHolder="Tất cả địa điểm" nzAllowClear nzShowSearch (ngModelChange)="onFilterChange()">
+        @for (province of provinces; track province) { <nz-option [nzValue]="province" [nzLabel]="province"></nz-option> }
+      </nz-select>
+    </div>
+    <div class="filter-result">
+      <span>{{ total() }} kết quả</span>
+      @if (hasActiveFilters()) { <button type="button" (click)="clearFilters()">Đặt lại</button> }
+    </div>
+  </section>
 
   <section class="company-directory" [attr.aria-busy]="loading()">
     <header class="directory-heading">
-      <div>
-        <h2>Danh bạ doanh nghiệp</h2>
-        <p>Mỗi thẻ tập trung vào thông tin nhận diện và phạm vi hoạt động.</p>
-      </div>
-      <span class="directory-result">{{ total() }} công ty</span>
+      <div><h2>Danh bạ công ty</h2><p>Chọn một công ty để xem tin tuyển dụng, ứng viên và thành viên HR liên quan.</p></div>
     </header>
 
-    @if (loading()) {
-      <div class="company-grid" aria-label="Đang tải danh sách công ty">
-        @for (placeholder of [1, 2, 3, 4, 5, 6]; track placeholder) {
-          <article class="company-card company-card--loading">
-            <nz-skeleton [nzActive]="true" [nzParagraph]="{ rows: 4 }"></nz-skeleton>
-          </article>
-        }
-      </div>
-    } @else if (companies().length) {
-      <div class="company-grid">
-        @for (company of companies(); track company.id) {
-          <article class="company-card">
-            <header class="company-card-header">
-              <span class="company-code">{{ company.company_code }}</span>
-              <button
-                nz-button
-                nzType="text"
-                nzSize="small"
-                nz-dropdown
-                nzTrigger="click"
-                [nzDropdownMenu]="actionMenu"
-                class="row-menu-trigger"
-                nz-tooltip
-                nzTooltipTitle="Mở menu quản lý công ty"
-                aria-label="Mở menu quản lý công ty"
-              >
-                <span nz-icon nzType="more" aria-hidden="true"></span>
-              </button>
+    @if (loading() || companies().length) {
+    <nz-table #companyTable [nzData]="companies()" [nzLoading]="loading()" [nzFrontPagination]="false" [nzShowPagination]="false" nzSize="middle" class="company-table">
+      <thead><tr><th nzWidth="31%">Công ty</th><th nzWidth="23%">Ngành nghề</th><th nzWidth="18%">Địa điểm</th><th nzWidth="17%">Hồ sơ</th><th nzWidth="8%">Tham gia</th><th nzWidth="3%"><span class="sr-only">Thao tác</span></th></tr></thead>
+      <tbody>
+        @for (company of companyTable.data; track company.id) {
+          <tr class="company-row">
+            <td>
+              <a class="company-identity" [routerLink]="['/companies', company.id]">
+                <span class="company-monogram">{{ getCompanyInitials(company.company_name) }}</span>
+                <span><strong>{{ company.company_name }}</strong><small>{{ company.company_code }}</small></span>
+              </a>
+            </td>
+            <td><span class="fact-value">{{ company.industry || 'Chưa cập nhật' }}</span></td>
+            <td><span class="fact-value">{{ company.location || 'Chưa cập nhật' }}</span></td>
+            <td>
+              <div class="completion-cell">
+                <div><strong>{{ getProfileCompleteness(company) }}%</strong><span>{{ getProfileCompleteness(company) === 100 ? 'Đã hoàn thiện' : 'Cần bổ sung' }}</span></div>
+                <span class="completion-track"><i [style.width.%]="getProfileCompleteness(company)"></i></span>
+              </div>
+            </td>
+            <td><span class="created-date">{{ formatDate(company.created_at) }}</span></td>
+            <td>
+              <button type="button" class="row-menu-trigger" nz-dropdown nzTrigger="click" nzPlacement="bottomRight" [nzDropdownMenu]="actionMenu" aria-label="Thao tác với công ty">•••</button>
               <nz-dropdown-menu #actionMenu="nzDropdownMenu">
                 <ul nz-menu class="action-dropdown">
-                  <li nz-menu-item (click)="editCompany(company)">Chỉnh sửa thông tin</li>
+                  <li nz-menu-item [routerLink]="['/companies', company.id]">Xem hồ sơ công ty</li>
+                  <li nz-menu-item [routerLink]="['/companies', company.id]" [queryParams]="{ edit: 1 }">Chỉnh sửa thông tin</li>
                   <li nz-menu-divider></li>
                   <li nz-menu-item nzDanger (click)="confirmDelete(company)">Xóa công ty</li>
                 </ul>
               </nz-dropdown-menu>
-            </header>
-
-            <div class="company-identity">
-              <span class="company-monogram" aria-hidden="true">{{ getCompanyInitials(company.company_name) }}</span>
-              <div>
-                <a class="company-name" [routerLink]="['/companies', company.id]">{{ company.company_name }}</a>
-                <span class="company-caption">Hồ sơ doanh nghiệp</span>
-              </div>
-            </div>
-
-            <dl class="company-facts">
-              <div>
-                <dt>Địa điểm</dt>
-                <dd>{{ company.location || 'Chưa cập nhật' }}</dd>
-              </div>
-              <div>
-                <dt>Ngành nghề</dt>
-                <dd>{{ company.industry || 'Chưa cập nhật' }}</dd>
-              </div>
-              <div>
-                <dt>Tham gia hệ thống</dt>
-                <dd>{{ formatDate(company.created_at) }}</dd>
-              </div>
-            </dl>
-
-            <footer class="company-card-footer">
-              <a [routerLink]="['/companies', company.id]">
-                Xem hồ sơ công ty
-                <span nz-icon nzType="right" aria-hidden="true"></span>
-              </a>
-            </footer>
-          </article>
+            </td>
+          </tr>
         }
-      </div>
-
-      <footer class="directory-pagination">
-        <span>Hiển thị {{ companies().length }} trên tổng số {{ total() }} công ty</span>
-        <nz-pagination
-          [nzPageIndex]="pageIndex"
-          [nzPageSize]="pageSize"
-          [nzTotal]="total()"
-          [nzShowSizeChanger]="true"
-          [nzPageSizeOptions]="[10, 20, 50]"
-          (nzPageIndexChange)="onPageIndexChange($event)"
-          (nzPageSizeChange)="onPageSizeChange($event)"
-        ></nz-pagination>
-      </footer>
+      </tbody>
+    </nz-table>
     } @else {
       <div class="directory-empty">
-        <nz-empty nzNotFoundContent="Chưa có công ty phù hợp"></nz-empty>
-        <button nz-button nzType="primary" (click)="openCreateModal()">Tạo công ty đầu tiên</button>
+        <nz-empty nzNotFoundContent="Không có công ty phù hợp"></nz-empty>
+        @if (hasActiveFilters()) { <button nz-button (click)="clearFilters()">Xóa bộ lọc</button> }
+        @else { <button nz-button nzType="primary" (click)="openCreateModal()">Tạo công ty đầu tiên</button> }
       </div>
+    }
+
+    @if (total() > 0) {
+      <footer class="directory-pagination">
+        <span>Hiển thị {{ companies().length }} trên tổng số {{ total() }} công ty</span>
+        <nz-pagination [nzPageIndex]="pageIndex" [nzPageSize]="pageSize" [nzTotal]="total()" [nzShowSizeChanger]="true" [nzPageSizeOptions]="[10, 20, 50]" (nzPageIndexChange)="onPageIndexChange($event)" (nzPageSizeChange)="onPageSizeChange($event)"></nz-pagination>
+      </footer>
     }
   </section>
 
-  <!-- Company Form Modal -->
-  <app-company-form-modal
-    [(visible)]="showFormModal"
-    [company]="editingCompany"
-    (saved)="onCompanySaved($event)"
-  ></app-company-form-modal>
+  <app-company-form-modal [(visible)]="showFormModal" [company]="editingCompany" (saved)="onCompanySaved($event)"></app-company-form-modal>
 </div>

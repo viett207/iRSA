@@ -4,8 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictException, NotFoundException
 from app.models.company import Company
+from app.models.job import Job
+from app.models.application import Application
+from app.models.user import User
 from app.schemas.company import (
     CompanyCreate, CompanyUpdate, CompanyResponse, CompanyList,
+    CompanyOverview, CompanyOverviewStats, CompanyJobSummary,
 )
 
 
@@ -67,6 +71,81 @@ class CompanyService:
             raise NotFoundException(f"Company with ID {company_id} not found")
         return company
 
+    async def get_company_overview(self, company_id: int) -> CompanyOverview:
+        company = await self.get_company(company_id)
+        company_job_ids = (
+            select(Job.id)
+            .join(User, Job.created_by == User.id)
+            .where(User.company_code == company.company_code)
+        )
+        total_jobs = await self.db.scalar(
+            select(func.count()).select_from(company_job_ids.subquery())
+        ) or 0
+        active_jobs = await self.db.scalar(
+            select(func.count(Job.id)).where(
+                Job.id.in_(company_job_ids),
+                Job.is_published.is_(True),
+            )
+        ) or 0
+        total_applications = await self.db.scalar(
+            select(func.count(Application.id)).where(
+                Application.job_id.in_(company_job_ids)
+            )
+        ) or 0
+        in_progress_applications = await self.db.scalar(
+            select(func.count(Application.id)).where(
+                Application.job_id.in_(company_job_ids),
+                Application.status.not_in(("hired", "rejected")),
+            )
+        ) or 0
+        hr_members = await self.db.scalar(
+            select(func.count(User.id)).where(
+                User.company_code == company.company_code,
+                User.role.in_(("admin", "leader", "recruiter")),
+                User.is_active.is_(True),
+            )
+        ) or 0
+
+        application_count = (
+            select(func.count(Application.id))
+            .where(Application.job_id == Job.id)
+            .correlate(Job)
+            .scalar_subquery()
+        )
+        job_rows = (
+            await self.db.execute(
+                select(Job, application_count.label("applications_count"))
+                .where(Job.id.in_(company_job_ids))
+                .order_by(Job.created_at.desc())
+                .limit(20)
+            )
+        ).all()
+        jobs = [
+            CompanyJobSummary(
+                id=job.id,
+                title_vi=job.title_vi,
+                department=job.department,
+                location=job.location,
+                employment_type=job.employment_type,
+                status=job.status,
+                applications_count=count,
+                created_at=job.created_at,
+                application_deadline=job.application_deadline,
+            )
+            for job, count in job_rows
+        ]
+        return CompanyOverview(
+            company=CompanyResponse.model_validate(company),
+            stats=CompanyOverviewStats(
+                total_jobs=total_jobs,
+                active_jobs=active_jobs,
+                total_applications=total_applications,
+                in_progress_applications=in_progress_applications,
+                hr_members=hr_members,
+            ),
+            jobs=jobs,
+        )
+
     async def create_company(self, data: CompanyCreate) -> Company:
         """Create a new company."""
         # Check company_code uniqueness
@@ -83,6 +162,7 @@ class CompanyService:
             company_name=data.company_name,
             location=data.location,
             industry=data.industry,
+            description=data.description,
         )
         self.db.add(company)
         await self.db.commit()

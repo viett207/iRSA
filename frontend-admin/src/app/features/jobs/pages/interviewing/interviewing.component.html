@@ -1,7 +1,9 @@
 <div class="page-header">
-  <span>VÒNG 2</span>
-  <h2>Điều phối phỏng vấn</h2>
-  <p>Theo dõi lịch, mức độ sẵn sàng và những hồ sơ cần xử lý tiếp theo.</p>
+  <div class="header-content">
+    <span>VÒNG 2</span>
+    <h2>Điều phối phỏng vấn</h2>
+    <p>Theo dõi lịch, mức độ sẵn sàng và những hồ sơ cần xử lý tiếp theo.</p>
+  </div>
 </div>
 
 @if (activeRoomCandidate(); as roomCandidate) {
@@ -53,8 +55,29 @@
       </article>
     </div>
 
+    <section class="entry-readiness" aria-labelledby="entry-readiness-title">
+      <div class="entry-readiness__heading">
+        <span>TRƯỚC KHI MỞ PHÒNG</span>
+        <h4 id="entry-readiness-title">Chuẩn bị nhanh cho buổi phỏng vấn</h4>
+      </div>
+      <div class="entry-readiness__items">
+        <article>
+          <span>01</span>
+          <p><strong>Kiểm tra microphone</strong>Trình duyệt sẽ yêu cầu quyền thu âm khi HR bắt đầu ghi.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <p><strong>Xác nhận đúng lịch</strong>Đối chiếu ứng viên, vị trí và thời gian của phiên phía trên.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <p><strong>Câu hỏi AI là tùy chọn</strong>Có thể phỏng vấn và tổng kết ngay cả khi chưa chuẩn bị bộ câu hỏi.</p>
+        </article>
+      </div>
+    </section>
+
     <footer>
-      <span>Hãy bảo đảm tên ứng viên và thời gian phía trên đúng với buổi phỏng vấn cần mở.</span>
+      <span>Xác nhận chỉ mở không gian làm việc; HR vẫn chủ động điều khiển ghi âm và tổng kết.</span>
       <div>
         <button nz-button (click)="cancelInterviewEntry()">Quay lại danh sách</button>
         <button
@@ -77,7 +100,7 @@
       <button type="button" [class.active]="stageFilter() === 'all'" (click)="setStageFilter('all')">
         <span>Đang theo dõi</span><strong>{{ total() }}</strong><small>Tất cả hồ sơ vòng phỏng vấn</small>
       </button>
-      <button type="button" [class.active]="stageFilter() === 'today'" (click)="setStageFilter('today')">
+      <button type="button" [class.active]="scheduleRange() === 'today'" (click)="showToday()">
         <span>Lịch hôm nay</span><strong>{{ todayCount() }}</strong><small>Cần được điều phối trong ngày</small>
       </button>
       <button type="button" [class.active]="stageFilter() === 'open'" (click)="setStageFilter('open')">
@@ -88,20 +111,20 @@
       </button>
     </div>
 
-    <aside class="next-interview">
-      @if (nextInterview(); as next) {
-        <span>{{ canEnterInterview(next) ? 'PHÒNG ĐANG MỞ' : 'LỊCH GẦN NHẤT' }}</span>
-        <strong>{{ formatInterviewTime(next.interview_date) }} · {{ formatInterviewDate(next.interview_date) }}</strong>
-        <p>{{ next.candidate_name }}</p>
-        <small>{{ next.job_title }}</small>
-        @if (canManageInterview(next) && canEnterInterview(next)) {
-          <button type="button" (click)="openInterviewRoom(next)">Vào phòng AI</button>
+    <aside class="schedule-summary">
+      <div class="summary-heading">
+        <span>KẾ HOẠCH 7 NGÀY</span>
+        <button type="button" (click)="showUpcomingWeek()">Xem danh sách</button>
+      </div>
+      <strong>{{ upcomingSevenDayCount() }} cuộc hẹn sắp tới</strong>
+      <div class="summary-facts">
+        <span><b>{{ openRoomCount() }}</b> phòng có thể vào ngay</span>
+        @if (nextInterview(); as next) {
+          <span><b>{{ formatInterviewTime(next.interview_date) }}</b> lịch sớm nhất · {{ next.candidate_name }}</span>
+        } @else {
+          <span>Chưa có lịch mới trong 7 ngày tới</span>
         }
-      } @else {
-        <span>LỊCH GẦN NHẤT</span>
-        <strong>Chưa có lịch sắp tới</strong>
-        <p>Không có phiên nào cần xử lý lúc này.</p>
-      }
+      </div>
     </aside>
   </section>
 
@@ -118,21 +141,39 @@
       </select>
     </div>
     <div class="filter-field">
+      <label for="interview-range">Thời gian phỏng vấn</label>
+      <select id="interview-range" [ngModel]="scheduleRange()" (ngModelChange)="setScheduleRange($event)">
+        <option value="all">Tất cả thời gian</option>
+        <option value="today">Hôm nay</option>
+        <option value="7days">7 ngày tới</option>
+        <option value="30days">30 ngày tới</option>
+        <option value="custom">Tùy chọn ngày</option>
+      </select>
+    </div>
+    <div class="filter-field">
       <label for="interview-stage">Trạng thái xử lý</label>
       <select id="interview-stage" [ngModel]="stageFilter()" (ngModelChange)="setStageFilter($event)">
         <option value="all">Tất cả trạng thái</option>
-        <option value="today">Lịch hôm nay</option>
         <option value="open">Phòng đang mở</option>
         <option value="upcoming">Sắp diễn ra</option>
         <option value="decision">Chờ chốt kết quả</option>
+        <option value="missed">Đã quá giờ</option>
+        <option value="unscheduled">Chưa có lịch</option>
       </select>
     </div>
-    <span class="filter-result">{{ filteredApplicants().length }} hồ sơ hiển thị</span>
+    @if (scheduleRange() === 'custom') {
+      <div class="custom-date-range">
+        <div class="filter-field"><label for="interview-from">Từ ngày</label><input id="interview-from" type="date" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event); page = 1" /></div>
+        <div class="filter-field"><label for="interview-to">Đến ngày</label><input id="interview-to" type="date" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event); page = 1" /></div>
+      </div>
+    }
+    <div class="filter-actions"><span>{{ filteredApplicants().length }} hồ sơ</span><button type="button" (click)="resetFilters()">Đặt lại</button></div>
   </section>
 
-  <section class="interview-table-shell">
+  <section class="interview-table-shell" id="interview-list">
     <header>
       <div><h3>Danh sách điều phối</h3><p>Ưu tiên theo thời gian phỏng vấn và trạng thái cần hành động.</p></div>
+      @if (loadError()) { <button nz-button type="button" (click)="loadData()">Thử tải lại</button> }
     </header>
     <nz-table
       #interviewTable
@@ -144,6 +185,7 @@
       [nzFrontPagination]="true"
       (nzPageIndexChange)="page = $event"
       nzSize="middle"
+      [nzNoResult]="interviewEmptyState"
     >
       <thead>
         <tr>
@@ -194,10 +236,20 @@
               </div>
             </td>
           </tr>
-        } @empty {
-          <tr><td colspan="5"><div class="table-empty"><strong>Không có hồ sơ phù hợp</strong><span>Hãy thay đổi điều kiện lọc để xem các lịch khác.</span></div></td></tr>
         }
       </tbody>
     </nz-table>
+    <ng-template #interviewEmptyState>
+      <div class="table-empty">
+        @if (loadError()) {
+          <strong>Không thể tải danh sách điều phối</strong>
+          <span>Kết nối đến máy chủ bị gián đoạn. Hãy thử tải lại.</span>
+          <button nz-button type="button" (click)="loadData()">Thử tải lại</button>
+        } @else {
+          <strong>Không có hồ sơ phù hợp</strong>
+          <span>Hãy thay đổi điều kiện lọc để xem các lịch khác.</span>
+        }
+      </div>
+    </ng-template>
   </section>
 }

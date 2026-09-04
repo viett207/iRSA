@@ -28,7 +28,7 @@
 }
 
 html {
-  font-size: 15px;
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -542,6 +542,7 @@ a:hover {
 /* ----- Tabs ----- */
 .ant-tabs-tab {
   font-family: var(--font-body);
+  font-size: 14px;
   font-weight: var(--font-medium);
   padding: var(--space-3) var(--space-4);
 }
@@ -688,7 +689,7 @@ a:hover {
 .ant-badge-count {
   font-family: var(--font-body);
   font-weight: var(--font-semibold);
-  font-size: 11px;
+  font-size: 12px;
   box-shadow: 0 0 0 2px var(--color-bg-secondary);
 }
 
@@ -1130,21 +1131,32 @@ a:focus-visible,
 }
 
 .page-header,
+.page-top-header,
+.page-top-bar,
 .dashboard .page-header {
   position: relative;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
-.page-header::before,
-.dashboard .page-header::before {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: -14px;
-  width: 4px;
-  height: 42px;
-  border-radius: 5px;
-  background: var(--color-primary);
+.page-header > .header-content,
+.page-header > .header-title-group,
+.page-header > .header-info,
+.page-header > .header-left > .header-content,
+.page-top-header > .header-title-group,
+.page-top-bar > .header-content {
+  position: relative;
+  padding-left: 14px;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 0;
+    width: 4px;
+    border-radius: 4px;
+    background: var(--color-primary, #18181B);
+  }
 }
 
 .page-title,
@@ -1279,7 +1291,7 @@ a:focus-visible,
 .ant-table-thead > tr > th {
   background: hsl(218 24% 95%);
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: .045em;
 }
 
@@ -1390,6 +1402,53 @@ select,
 .ant-empty-description,
 .ant-result-subtitle {
   color: var(--color-text-secondary);
+}
+
+/* A readable baseline for data-heavy admin screens. Components may increase
+   the size for emphasis, but supporting copy must not fall below 12px. */
+.admin-app {
+  .ant-btn,
+  .ant-input,
+  .ant-input-affix-wrapper,
+  .ant-select-selection-item,
+  .ant-select-selection-placeholder,
+  .ant-picker-input > input,
+  .ant-dropdown-menu-item,
+  .ant-pagination-item,
+  .ant-pagination-prev,
+  .ant-pagination-next {
+    font-size: 14px;
+  }
+
+  .ant-table {
+    font-size: 14px;
+  }
+
+  .ant-table-thead > tr > th {
+    font-size: 12px;
+  }
+
+  .ant-empty-description,
+  .ant-result-subtitle {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .table-empty,
+  .empty-state,
+  .empty-state-box {
+    strong,
+    h3 {
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    span,
+    p {
+      font-size: 13px;
+      line-height: 1.55;
+    }
+  }
 }
 
 /* ========================================================================
@@ -1581,7 +1640,7 @@ select,
   display: block;
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: var(--font-bold);
   line-height: 1.3;
   letter-spacing: .1em;
@@ -1852,7 +1911,7 @@ select,
   border-bottom: 1px solid var(--irsa-border-light);
   color: var(--irsa-text-secondary);
   background: transparent;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: none;
 }

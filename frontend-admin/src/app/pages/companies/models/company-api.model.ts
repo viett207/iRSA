@@ -40,8 +40,8 @@ export interface CompanyCreate {
 // PUT body for updating company
 export interface CompanyUpdate {
   company_name?: string;
-  location?: string;
-  industry?: string;
+  location?: string | null;
+  industry?: string | null;
   description?: string | null;
 }
 

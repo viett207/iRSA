@@ -64,6 +64,23 @@
   span:first-child { font-size: 24px; }
 }
 
+.footer-logo-mark {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 7px;
+
+  i { display: block; width: 4px; border-radius: 999px; }
+  i:nth-child(1) { height: 8px; background: rgb(255 255 255 / 48%); }
+  i:nth-child(2) { height: 14px; background: #fff; }
+  i:nth-child(3) { height: 20px; background: rgb(255 255 255 / 48%); }
+}
+
 .footer-tagline {
   color: rgba(255, 255, 255, 0.68);
   font-size: var(--text-sm);

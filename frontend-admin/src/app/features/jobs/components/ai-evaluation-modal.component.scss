@@ -301,7 +301,7 @@
 .agent-name { color: var(--color-primary); }
 .agent-step {
   color: var(--color-text-tertiary);
-  font-size: 11px;
+  font-size: 12px;
 }
 .table-copy {
   font-size: var(--text-xs);
@@ -330,7 +330,7 @@
   color: var(--color-primary);
   cursor: help;
 }
-.compact-tag { font-size: 11px; }
+.compact-tag { font-size: 12px; }
 .evidence-cell {
   font-size: var(--text-xs);
   font-style: italic;
@@ -350,7 +350,7 @@
 .verification-meta {
   margin-top: 6px;
   color: var(--color-text-tertiary);
-  font-size: 11px;
+  font-size: 12px;
 }
 .verification-header {
   font-size: 13px;
@@ -459,7 +459,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   flex-shrink: 0;
 }
