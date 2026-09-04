@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Subscription, interval } from 'rxjs';
 import { NzModalRef } from 'ng-zorro-antd/modal';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -68,24 +68,22 @@ export class InterviewChatModalComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadMessages();
 
-    // Listen to real-time incoming messages via WebSocket
+    // 1. Listen to real-time incoming messages via WebSocket
     this.sub.add(
       this.notifService.chatMessages$.subscribe((data) => {
         if (!data || !data.message) return;
-        const msg = data.message;
-        const appId = data.application_id || msg.application_id;
+        const appId = data.application_id || data.message?.application_id;
         if (appId === this.appId) {
-          const exists = this.messages().some((m) => m.id === msg.id);
-          if (!exists) {
-            this.messages.update((prev) => [...prev, msg]);
-            this.scrollToBottom();
-            this.jobService.markMessagesRead(this.appId).subscribe();
-          }
-
-          if (msg.message_type === 'interview_response' && msg.metadata_json) {
-            this.candidateResponse = msg.metadata_json.response;
-          }
+          this.loadMessages(true);
         }
+      })
+    );
+
+    // 2. Auto-refresh messages every 3.5s while chat modal is open
+    // Automatically cancels when modal is closed (ngOnDestroy unsubscribes)
+    this.sub.add(
+      interval(3500).subscribe(() => {
+        this.loadMessages(true);
       })
     );
   }
@@ -103,14 +101,23 @@ export class InterviewChatModalComponent implements OnInit, OnDestroy {
     this.chatMinimized.emit();
   }
 
-  loadMessages(): void {
-    this.loading.set(true);
+  loadMessages(silent: boolean = false): void {
+    if (!silent) {
+      this.loading.set(true);
+    }
     this.jobService.getApplicationMessages(this.appId).subscribe({
       next: (msgs) => {
+        const prevCount = this.messages().length;
+        const newCount = msgs.length;
+
         this.messages.set(msgs);
-        this.loading.set(false);
-        this.scrollToBottom();
-        this.jobService.markMessagesRead(this.appId).subscribe();
+        if (!silent) {
+          this.loading.set(false);
+        }
+        if (!silent || newCount > prevCount) {
+          this.scrollToBottom();
+          this.jobService.markMessagesRead(this.appId).subscribe();
+        }
 
         // Check if there is latest candidate response in messages
         const latestResp = [...msgs]
@@ -124,7 +131,9 @@ export class InterviewChatModalComponent implements OnInit, OnDestroy {
         }
       },
       error: () => {
-        this.loading.set(false);
+        if (!silent) {
+          this.loading.set(false);
+        }
       },
     });
   }

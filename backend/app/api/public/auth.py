@@ -56,7 +56,7 @@ async def register(
     """Register a new candidate account."""
     result = await db.execute(select(User).where(User.email == data.email))
     if result.scalar_one_or_none():
-        raise ConflictException("Email already registered")
+        raise ConflictException("Email đã được đăng ký trong hệ thống")
 
     user = User(
         email=data.email,

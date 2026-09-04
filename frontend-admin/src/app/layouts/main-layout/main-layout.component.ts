@@ -19,6 +19,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
 import { ChatDockService } from '../../core/services/chat-dock.service';
 import { CandidateConversation, JobService } from '../../features/jobs/services/job.service';
 import { InterviewChatModalComponent } from '../../features/jobs/components/interview-chat-modal.component';
+import { SoundService } from '../../core/services/sound.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -55,6 +56,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private readonly chatDockService = inject(ChatDockService);
   readonly openChats = this.chatDockService.openChats;
   readonly minimizedChats = this.chatDockService.minimizedChats;
+  readonly soundSvc = inject(SoundService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dashboardService = inject(DashboardService);
   private readonly jobService = inject(JobService);

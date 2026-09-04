@@ -76,6 +76,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Include routers
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(public_router, prefix="/pub")
+app.include_router(public_router, prefix="/api/v1/pub")
 app.include_router(agent_router, prefix="/api/v1/agent", tags=["AI Agent"])
 
 

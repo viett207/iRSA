@@ -56,35 +56,30 @@
         <div nz-row [nzGutter]="[24, 24]">
           @for (job of jobs; track job.id) {
             <div nz-col [nzXs]="24" [nzMd]="12" [nzLg]="8">
-              <div class="job-card irsa-job-card" [routerLink]="['/jobs', job.slug]">
-                <div class="job-header">
-                  <div class="job-icon">
-                    <svg class="lucide-icon" aria-hidden="true"><use href="assets/icons/lucide.svg#file-text"></use></svg>
+              <article class="job-card" [routerLink]="['/jobs', job.slug]" tabindex="0">
+                <div class="job-card__topline">
+                  <div class="job-icon">{{ getInitials(job.company_name || job.company_code) }}</div>
+                  <div class="job-company"><strong>{{ job.company_name || job.company_code || 'Doanh nghiệp tuyển dụng' }}</strong><span><i></i> Đang tuyển dụng</span></div>
+                  @if (isNewJob(job.published_at)) {<span class="new-badge">MỚI</span>}
+                </div>
+                <div class="job-card__body">
+                  <h3>{{ job.title_vi }}</h3>
+                  @if (job.description_vi) {<p class="job-summary">{{ getPlainText(job.description_vi) }}</p>}
+                  <div class="job-meta-grid">
+                    <span><span nz-icon nzType="environment"></span><small>Địa điểm</small><strong>{{ job.location || 'Linh hoạt' }}</strong></span>
+                    <span><span nz-icon nzType="clock-circle"></span><small>Hình thức</small><strong>{{ job.employment_type ? formatEmploymentType(job.employment_type) : 'Thỏa thuận' }}</strong></span>
+                    <span><span nz-icon nzType="fund-projection-screen"></span><small>Kinh nghiệm</small><strong>{{ formatExperience(job.min_experience_years, job.max_experience_years) }}</strong></span>
                   </div>
-                  <div class="job-info">
-                    <div class="job-title">{{ job.title_vi }}</div>
-                    <div class="job-dept">{{ job.company_name || job.company_code || 'Doanh nghiệp tuyển dụng' }}</div>
-                  </div>
+                  @if (job.must_have_skills && job.must_have_skills.length > 0) {
+                    <div class="skill-list">@for (skill of job.must_have_skills.slice(0, 3); track skill) {<span>{{ skill }}</span>}@if (job.must_have_skills.length > 3) {<span>+{{ job.must_have_skills.length - 3 }}</span>}</div>
+                  }
                 </div>
-                <div class="job-meta">
-                  <span class="meta-item" *ngIf="job.location">
-                    <span nz-icon nzType="environment" nzTheme="outline"></span>
-                    {{ job.location }}
-                  </span>
-                  <span class="meta-item" *ngIf="job.employment_type">
-                    <span nz-icon nzType="clock-circle" nzTheme="outline"></span>
-                    {{ formatEmploymentType(job.employment_type) }}
-                  </span>
-                </div>
-                <div class="job-footer">
-                  <span class="salary" *ngIf="job.salary_min || job.salary_max">
-                    {{ formatSalary(job.salary_min, job.salary_max) }}
-                  </span>
-                  <span class="posted-date" *ngIf="job.published_at">
-                    {{ job.published_at | date:'dd/MM/yyyy' }}
-                  </span>
-                </div>
-              </div>
+                <footer class="job-footer">
+                  <div><small>Mức lương</small><strong class="salary">{{ formatSalary(job.salary_min, job.salary_max) || 'Thỏa thuận' }}</strong></div>
+                  <div class="deadline" [class.urgent]="getDeadlineLabel(job.application_deadline).includes('Còn')"><small>Hạn ứng tuyển</small><strong>{{ getDeadlineLabel(job.application_deadline) }}</strong></div>
+                  <span class="job-arrow"><span nz-icon nzType="arrow-right"></span></span>
+                </footer>
+              </article>
             </div>
           }
         </div>
@@ -112,22 +107,11 @@
       <div class="companies-grid">
         @for (company of activeCompanies; track company.company_code) {
           <a class="company-card" [routerLink]="['/companies', company.company_code]">
-            <div class="company-avatar">
-              {{ company.company_name.charAt(0) }}
-            </div>
-            <div class="company-info">
-              <div class="company-name">{{ company.company_name }}</div>
-              <div class="company-meta">
-                <span *ngIf="company.industry">{{ company.industry }}</span>
-                <span *ngIf="company.location">
-                  <span nz-icon nzType="environment" nzTheme="outline"></span>
-                  {{ company.location }}
-                </span>
-              </div>
-            </div>
-            <div class="company-badge irsa-tag-outline">
-              {{ company.job_count }} vị trí
-            </div>
+            <div class="company-card__accent"></div>
+            <div class="company-card__header"><div class="company-avatar">{{ getInitials(company.company_name) }}</div><span class="company-active"><i></i> Đang tuyển</span></div>
+            <div class="company-info"><h3>{{ company.company_name }}</h3><span class="company-code">{{ company.company_code }}</span><p>{{ company.industry || 'Doanh nghiệp đa ngành' }}</p></div>
+            <div class="company-details"><span><span nz-icon nzType="environment"></span>{{ company.location || 'Toàn quốc' }}</span>@if (company.latest_published_at) {<span><span nz-icon nzType="calendar"></span>Cập nhật {{ company.latest_published_at | date:'dd/MM' }}</span>}</div>
+            <footer><div><strong>{{ company.job_count }}</strong><span>vị trí đang mở</span></div><span class="explore-company">Khám phá <span nz-icon nzType="arrow-right"></span></span></footer>
           </a>
         }
       </div>

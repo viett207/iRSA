@@ -221,6 +221,14 @@
             <div class="notification-header">
               <span>Thông báo</span>
               <div class="notification-header-actions">
+                <button
+                  type="button"
+                  class="notif-sound-btn"
+                  (click)="$event.stopPropagation(); soundSvc.toggleSound()"
+                  [title]="soundSvc.soundEnabled() ? 'Âm thanh thông báo: Đang bật (Bấm để tắt)' : 'Âm thanh thông báo: Đang tắt (Bấm để bật)'"
+                >
+                  <span nz-icon [nzType]="soundSvc.soundEnabled() ? 'sound' : 'audio-muted'" nzTheme="outline"></span>
+                </button>
                 @if (!notificationSvc.notificationsMuted()) {
                   <button type="button" (click)="notificationSvc.markAllAsRead()">Đánh dấu đã đọc</button>
                 }

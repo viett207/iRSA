@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface MessageResponse {
@@ -51,10 +51,24 @@ export interface ConversationItem {
 })
 export class ChatService {
   private http = inject(HttpClient);
-  private pubBase = `${environment.apiUrl}/pub`;
+  private pubBase = environment.publicApiUrl;
+
+  /** Total unread messages across conversations */
+  readonly unreadCount = signal(0);
+
+  loadUnreadCount(): void {
+    this.getConversations().subscribe();
+  }
 
   getConversations(): Observable<ConversationItem[]> {
-    return this.http.get<ConversationItem[]>(`${this.pubBase}/inbox/conversations`);
+    return this.http.get<ConversationItem[]>(`${this.pubBase}/inbox/conversations`).pipe(
+      tap((items) => {
+        if (Array.isArray(items)) {
+          const total = items.reduce((acc, c) => acc + (c.unread_count || 0), 0);
+          this.unreadCount.set(total);
+        }
+      })
+    );
   }
 
   getMessages(applicationId: number): Observable<MessageResponse[]> {
@@ -66,7 +80,11 @@ export class ChatService {
   }
 
   markAsRead(applicationId: number): Observable<any> {
-    return this.http.patch(`${this.pubBase}/inbox/applications/${applicationId}/read`, {});
+    return this.http.patch(`${this.pubBase}/inbox/applications/${applicationId}/read`, {}).pipe(
+      tap(() => {
+        this.loadUnreadCount();
+      })
+    );
   }
 
   respondToInvitation(

@@ -39,6 +39,7 @@
               >
                 <span nz-icon nzType="bank" nzTheme="outline"></span>
                 {{ job.company }}
+                <span class="company-profile-badge" nz-tooltip nzTooltipTitle="Có hồ sơ doanh nghiệp trên iRSA"><span nz-icon nzType="check"></span></span>
               </a>
             } @else {
               <span class="company-name-text">
@@ -98,20 +99,6 @@
           </div>
         }
       </div>
-
-      <!-- Skills Chips Row -->
-      @if (job.skills && job.skills.length > 0) {
-        <div class="card-skills-row">
-          @for (skill of job.skills; track skill) {
-            <span class="skill-tag-pill irsa-tag-outline">{{ skill }}</span>
-          }
-        </div>
-      }
-
-      <!-- Description Snippet Preview -->
-      <p class="card-description-snippet irsa-text-justify">
-        {{ job.descriptionSnippet }}
-      </p>
 
       <!-- Card Footer Actions -->
       <div class="card-footer-row">

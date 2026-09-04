@@ -77,6 +77,44 @@ export class HomeComponent implements OnInit {
     return '';
   }
 
+  getInitials(name?: string): string {
+    if (!name) return 'IR';
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
+  }
+
+  isNewJob(publishedAt?: string): boolean {
+    if (!publishedAt) return false;
+    const published = new Date(publishedAt).getTime();
+    return !Number.isNaN(published) && Date.now() - published <= 7 * 24 * 60 * 60 * 1000;
+  }
+
+  getDeadlineLabel(deadline?: string): string {
+    if (!deadline) return 'Không giới hạn';
+    const diff = Math.ceil((new Date(deadline).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+    if (diff < 0) return 'Đã hết hạn';
+    if (diff === 0) return 'Hết hạn hôm nay';
+    if (diff <= 7) return `Còn ${diff} ngày`;
+    return `Đến ${new Date(deadline).toLocaleDateString('vi-VN')}`;
+  }
+
+  formatExperience(min?: number, max?: number): string {
+    if (!min && !max) return 'Không yêu cầu';
+    if (min != null && max != null) return `${min}–${max} năm`;
+    if (min != null) return `Từ ${min} năm`;
+    return `Tối đa ${max} năm`;
+  }
+
+  getPlainText(value?: string): string {
+    return (value || '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   private loadActiveCompanies(): void {
     this.jobService.listActiveCompanies(10).subscribe({
       next: (res) => this.activeCompanies = res.items,

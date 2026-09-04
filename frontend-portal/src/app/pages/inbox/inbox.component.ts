@@ -10,7 +10,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, interval } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -29,6 +29,7 @@ import {
 } from '../../core/services/chat.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { SoundService } from '../../core/services/sound.service';
 
 @Component({
   selector: 'app-inbox',
@@ -55,6 +56,7 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   private chatService = inject(ChatService);
   private notifService = inject(NotificationService);
+  private soundService = inject(SoundService);
   private authService = inject(AuthService);
   private message = inject(NzMessageService);
   private modal = inject(NzModalService);
@@ -71,37 +73,59 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   newMessageText = '';
   searchQuery = '';
+  conversationFilter: 'all' | 'unread' | 'interview' = 'all';
+  detailsOpen = typeof window === 'undefined' || window.innerWidth > 1180;
 
   private sub = new Subscription();
+  private latestLocalMessages = new Map<number, MessageResponse>();
+  private conversationActivity = new Map<number, number>();
+  private activitySequence = Date.now();
 
   ngOnInit(): void {
     this.loadConversations();
 
-    // Listen to real-time chat messages via WebSocket
+    // 1. Listen to real-time chat messages via WebSocket for instant push
     this.sub.add(
       this.notifService.chatMessages$.subscribe((data) => {
         if (!data || !data.message) return;
         const msg: MessageResponse = data.message;
         const appId = data.application_id || msg.application_id;
 
-        // If currently viewing this conversation, append message
+        // Move the conversation to the top immediately, then refresh metadata.
+        this.updateConversationListWithNewMessage(appId, msg);
+        this.updateConversationInterviewState(appId, msg);
+        this.loadConversations(true);
+
+        // If currently viewing this conversation, reload messages
         const current = this.selectedConversation();
         if (current && current.application_id === appId) {
-          const exists = this.messages().some((m) => m.id === msg.id);
-          if (!exists) {
-            this.messages.update((prev) => [...prev, msg]);
-            this.scrollToBottom();
-            this.chatService.markAsRead(appId).subscribe();
-          }
+          this.loadMessages(appId, true);
+        }
+      })
+    );
 
-          // If it is an interview response or invitation, refresh conversation info
-          if (msg.message_type === 'interview_invitation' || msg.message_type === 'interview_response') {
-            this.updateConversationInterviewState(appId, msg);
+    // 2. Listen to route query param changes to select target conversation
+    this.sub.add(
+      this.route.queryParamMap.subscribe((params) => {
+        const appIdParam = params.get('appId');
+        if (appIdParam && this.conversations().length > 0) {
+          const target = this.conversations().find((c) => c.application_id === Number(appIdParam));
+          if (target && this.selectedConversation()?.application_id !== target.application_id) {
+            this.selectConversation(target);
           }
         }
+      })
+    );
 
-        // Also update conversation list latest message
-        this.updateConversationListWithNewMessage(appId, msg);
+    // 3. Auto-refresh ONLY while on this Inbox page (polls every 3.5s silently)
+    // When navigating away from Inbox, ngOnDestroy automatically cancels this interval!
+    this.sub.add(
+      interval(3500).subscribe(() => {
+        this.loadConversations(true);
+        const current = this.selectedConversation();
+        if (current) {
+          this.loadMessages(current.application_id, true);
+        }
       })
     );
   }
@@ -110,30 +134,61 @@ export class InboxComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
-  loadConversations(): void {
-    this.loadingConversations.set(true);
+  loadConversations(silent: boolean = false): void {
+    if (!silent) {
+      this.loadingConversations.set(true);
+    }
     this.chatService.getConversations().subscribe({
       next: (items) => {
-        this.conversations.set(items);
-        this.loadingConversations.set(false);
+        const mergedItems = items.map((item) => {
+          const localMessage = this.latestLocalMessages.get(item.application_id);
+          if (!localMessage) return item;
+
+          const serverTime = item.latest_message
+            ? this.getMessageTime(item.latest_message)
+            : 0;
+          const localTime = this.getMessageTime(localMessage);
+
+          if (localTime > serverTime) {
+            return { ...item, latest_message: localMessage };
+          }
+
+          this.latestLocalMessages.delete(item.application_id);
+          return item;
+        });
+        this.conversations.set(this.sortConversations(mergedItems));
+        if (!silent) {
+          this.loadingConversations.set(false);
+        }
+
+        // Keep current selected conversation in sync with latest metadata
+        const current = this.selectedConversation();
+        if (current) {
+          const fresh = items.find((c) => c.application_id === current.application_id);
+          if (fresh) {
+            this.selectedConversation.set(fresh);
+          }
+        }
 
         // Check if query param specified an application_id
         const appIdParam = this.route.snapshot.queryParamMap.get('appId');
         if (appIdParam) {
           const target = items.find((c) => c.application_id === Number(appIdParam));
-          if (target) {
+          if (target && (!current || current.application_id !== target.application_id)) {
             this.selectConversation(target);
             return;
           }
         }
 
-        // Auto-select first conversation if available
+        // Auto-select first conversation if available and none currently selected
         if (items.length > 0 && !this.selectedConversation()) {
           this.selectConversation(items[0]);
         }
       },
       error: () => {
-        this.loadingConversations.set(false);
+        if (!silent) {
+          this.loadingConversations.set(false);
+        }
       },
     });
   }
@@ -148,16 +203,38 @@ export class InboxComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadMessages(applicationId: number): void {
-    this.loadingMessages.set(true);
+  loadMessages(applicationId: number, silent: boolean = false): void {
+    if (!silent) {
+      this.loadingMessages.set(true);
+    }
     this.chatService.getMessages(applicationId).subscribe({
       next: (msgs) => {
+        const prevCount = this.messages().length;
+        const newCount = msgs.length;
+
+        // In silent mode, if new messages arrived from HR, play chime and mark read
+        if (silent && newCount > prevCount) {
+          const newMessages = msgs.slice(prevCount);
+          if (newMessages.some((m) => m.sender_role !== 'candidate')) {
+            this.soundService.playMessageSound();
+            this.chatService.markAsRead(applicationId).subscribe();
+          }
+        }
+
         this.messages.set(msgs);
-        this.loadingMessages.set(false);
-        this.scrollToBottom();
+        if (!silent) {
+          this.loadingMessages.set(false);
+        }
+
+        // Scroll to bottom on initial load or when new messages arrived
+        if (!silent || newCount > prevCount) {
+          this.scrollToBottom();
+        }
       },
       error: () => {
-        this.loadingMessages.set(false);
+        if (!silent) {
+          this.loadingMessages.set(false);
+        }
       },
     });
   }
@@ -170,6 +247,7 @@ export class InboxComponent implements OnInit, OnDestroy {
     this.sending.set(true);
     this.chatService.sendMessage(conv.application_id, text).subscribe({
       next: (msg) => {
+        this.updateConversationListWithNewMessage(conv.application_id, msg);
         // Optimistically add if not already added by WS
         const exists = this.messages().some((m) => m.id === msg.id);
         if (!exists) {
@@ -184,6 +262,12 @@ export class InboxComponent implements OnInit, OnDestroy {
         this.sending.set(false);
       },
     });
+  }
+
+  onComposerKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    this.sendMessage();
   }
 
   confirmInterview(invitationId?: number): void {
@@ -273,6 +357,9 @@ export class InboxComponent implements OnInit, OnDestroy {
   }
 
   private updateConversationListWithNewMessage(appId: number, msg: MessageResponse): void {
+    this.latestLocalMessages.set(appId, msg);
+    this.activitySequence = Math.max(this.activitySequence + 1, Date.now());
+    this.conversationActivity.set(appId, this.activitySequence);
     this.conversations.update((list) => {
       const target = list.find((c) => c.application_id === appId);
       if (!target) return list;
@@ -280,7 +367,7 @@ export class InboxComponent implements OnInit, OnDestroy {
       const current = this.selectedConversation();
       const isCurrent = current?.application_id === appId;
 
-      return list.map((c) => {
+      const updated = list.map((c) => {
         if (c.application_id === appId) {
           return {
             ...c,
@@ -290,26 +377,112 @@ export class InboxComponent implements OnInit, OnDestroy {
         }
         return c;
       });
+      return this.sortConversations(updated);
     });
   }
 
   get filteredConversations(): ConversationItem[] {
     const q = this.searchQuery.toLowerCase().trim();
-    if (!q) return this.conversations();
-    return this.conversations().filter(
-      (c) =>
-        c.job_title.toLowerCase().includes(q) ||
-        (c.company_name && c.company_name.toLowerCase().includes(q))
+    return this.conversations()
+      .filter((c) => {
+        const matchesQuery =
+          !q ||
+          c.job_title.toLowerCase().includes(q) ||
+          (c.company_name && c.company_name.toLowerCase().includes(q));
+        const matchesFilter =
+          this.conversationFilter === 'all' ||
+          (this.conversationFilter === 'unread' && c.unread_count > 0) ||
+          (this.conversationFilter === 'interview' && !!c.interview_date);
+        return matchesQuery && matchesFilter;
+      })
+      .sort((a, b) => this.getLatestMessageTime(b) - this.getLatestMessageTime(a));
+  }
+
+  private getLatestMessageTime(conversation: ConversationItem): number {
+    const messageTime = conversation.latest_message
+      ? this.getMessageTime(conversation.latest_message)
+      : 0;
+    return Math.max(
+      messageTime,
+      this.conversationActivity.get(conversation.application_id) || 0
     );
   }
 
-  private scrollToBottom(): void {
+  private getMessageTime(message: MessageResponse): number {
+    const timestamp = new Date(message.created_at).getTime();
+    return Number.isNaN(timestamp) ? 0 : timestamp;
+  }
+
+  private sortConversations(items: ConversationItem[]): ConversationItem[] {
+    return [...items].sort(
+      (a, b) => this.getLatestMessageTime(b) - this.getLatestMessageTime(a)
+    );
+  }
+
+  setConversationFilter(filter: 'all' | 'unread' | 'interview'): void {
+    this.conversationFilter = filter;
+  }
+
+  useQuickReply(text: string): void {
+    this.newMessageText = text;
+  }
+
+  toggleDetails(): void {
+    this.detailsOpen = !this.detailsOpen;
+  }
+
+  getApplicationStage(conv: ConversationItem): number {
+    if (conv.candidate_response === 'accepted') return 3;
+    if (conv.interview_date || conv.interview_status) return 2;
+    return 1;
+  }
+
+  getInterviewStatusLabel(conv: ConversationItem): string {
+    if (conv.candidate_response === 'accepted') return 'Đã xác nhận';
+    if (conv.candidate_response === 'declined' || conv.interview_status === 'cancelled') {
+      return 'Đã hủy';
+    }
+    if (conv.interview_date) return 'Chờ phản hồi';
+    return 'Chưa có lịch';
+  }
+
+  isFirstMessageInGroup(index: number, message: MessageResponse): boolean {
+    if (message.message_type !== 'text' || index === 0) return true;
+    const previous = this.messages()[index - 1];
+    return (
+      previous.message_type !== 'text' ||
+      previous.sender_role !== message.sender_role ||
+      previous.sender_id !== message.sender_id
+    );
+  }
+
+  isLastMessageInGroup(index: number, message: MessageResponse): boolean {
+    if (message.message_type !== 'text' || index === this.messages().length - 1) return true;
+    const next = this.messages()[index + 1];
+    return (
+      next.message_type !== 'text' ||
+      next.sender_role !== message.sender_role ||
+      next.sender_id !== message.sender_id
+    );
+  }
+
+  scrollToBottom(): void {
     setTimeout(() => {
-      if (this.scrollContainer) {
-        this.scrollContainer.nativeElement.scrollTop =
-          this.scrollContainer.nativeElement.scrollHeight;
-      }
-    }, 100);
+      const element = this.scrollContainer?.nativeElement as HTMLElement | undefined;
+      if (!element) return;
+      requestAnimationFrame(() => {
+        element.scrollTop = element.scrollHeight;
+        requestAnimationFrame(() => {
+          element.scrollTop = element.scrollHeight;
+        });
+      });
+    }, 0);
+  }
+
+  handleWheel(event: WheelEvent, element: HTMLElement): void {
+    if (element.scrollHeight <= element.clientHeight) return;
+    element.scrollTop += event.deltaY;
+    event.preventDefault();
   }
 
   getCandidateInitials(name?: string): string {

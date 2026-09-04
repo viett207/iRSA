@@ -4,29 +4,30 @@
 
 .jobs-page {
   min-height: 100vh;
-  background-color: var(--irsa-bg-canvas);
+  background: #f4f6f9;
   color: var(--irsa-text-primary);
+  font-size: 15px;
 }
 
 
 .widescreen-container {
-  max-width: 1760px;
+  max-width: none;
   width: 100%;
   margin: 0 auto;
-  padding: 0 clamp(16px, 3vw, 48px);
+  padding: 0 clamp(16px, 2vw, 30px);
 }
 
 /* ==========================================================================
    3. Main Content Layout (Sidebar + Jobs Grid / Split)
    ========================================================================== */
 .jobs-main-wrapper {
-  padding: clamp(24px, 3vw, 40px) 0 60px;
+  padding: 22px 0 52px;
 }
 
 .jobs-layout-grid {
   display: grid;
-  grid-template-columns: 290px minmax(0, 1fr);
-  gap: 24px;
+  grid-template-columns: clamp(280px, 21vw, 310px) minmax(0, 1fr);
+  gap: 18px;
   align-items: start;
 
   @media (max-width: 1024px) {
