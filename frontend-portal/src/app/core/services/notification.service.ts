@@ -1,7 +1,8 @@
-import { Injectable, signal, computed, OnDestroy } from '@angular/core';
+import { Injectable, signal, computed, OnDestroy, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SoundService } from './sound.service';
 
 export interface AppNotification {
   id: number;
@@ -34,6 +35,8 @@ export class NotificationService implements OnDestroy {
   notifications = signal<AppNotification[]>([]);
   /** Unread count for badge */
   unreadCount = signal(0);
+
+  private soundService = inject(SoundService);
 
   constructor(private http: HttpClient) {}
 
@@ -124,8 +127,13 @@ export class NotificationService implements OnDestroy {
           const notif: AppNotification = data.notification;
           this.notifications.update((list) => [notif, ...list]);
           this.unreadCount.update((c) => c + 1);
+          this.soundService.playNotificationSound();
         } else if (data.type === 'chat_message') {
           this.chatMessages$.next(data);
+          // Only play sound if incoming from HR / other user
+          if (data.message?.sender_role !== 'candidate') {
+            this.soundService.playMessageSound();
+          }
         }
       } catch {
         // Ignore non-JSON (e.g., "pong")

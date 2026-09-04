@@ -300,6 +300,34 @@
   border-bottom: 1px solid var(--irsa-border-light, #e4e4e7);
 }
 
+.notif-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notif-sound-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--irsa-border-light, #e4e4e7);
+  border-radius: 6px;
+  background: var(--irsa-bg-secondary, #fafafa);
+  color: var(--irsa-text-secondary, #52525b);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.notif-sound-btn:hover {
+  background: var(--irsa-bg-hover, #f4f4f5);
+  color: var(--irsa-text-primary, #18181b);
+  border-color: var(--irsa-border-muted, #d4d4d8);
+}
+
 .notif-mark-all {
   padding: 0;
   border: 0;

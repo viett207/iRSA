@@ -1,7 +1,8 @@
-import { Injectable, signal, OnDestroy } from '@angular/core';
+import { Injectable, signal, OnDestroy, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SoundService } from './sound.service';
 
 export interface AppNotification {
   id: number;
@@ -25,6 +26,7 @@ export class NotificationService implements OnDestroy {
   private ws: WebSocket | null = null;
   private reconnectTimer: any = null;
   private pingTimer: any = null;
+  private reconnectAttempts = 0;
 
   /** All loaded notifications */
   notifications = signal<AppNotification[]>([]);
@@ -34,6 +36,8 @@ export class NotificationService implements OnDestroy {
   dataChanged$ = new Subject<AppNotification>();
   /** Real-time chat messages stream */
   readonly chatMessages$ = new Subject<any>();
+
+  private soundService = inject(SoundService);
 
   constructor(private http: HttpClient) {}
 
@@ -114,6 +118,7 @@ export class NotificationService implements OnDestroy {
     this.ws = new WebSocket(url);
 
     this.ws.onopen = () => {
+      this.reconnectAttempts = 0;
       // Keep alive with ping every 30s
       this.pingTimer = setInterval(() => {
         if (this.ws?.readyState === WebSocket.OPEN) {
@@ -133,8 +138,13 @@ export class NotificationService implements OnDestroy {
           this.unreadCount.update((c) => c + 1);
           // Notify pages to reload their data
           this.dataChanged$.next(notif);
+          this.soundService.playNotificationSound();
         } else if (data.type === 'chat_message') {
           this.chatMessages$.next(data);
+          // Only play sound if incoming from candidate
+          if (data.message?.sender_role !== 'hr') {
+            this.soundService.playMessageSound();
+          }
         }
       } catch {
         // Ignore non-JSON (e.g., "pong")
@@ -143,8 +153,10 @@ export class NotificationService implements OnDestroy {
 
     this.ws.onclose = () => {
       this.clearTimers();
-      // Auto-reconnect after 5s
-      this.reconnectTimer = setTimeout(() => this.connectWebSocket(), 5000);
+      // Auto-reconnect with exponential backoff (5s -> 10s -> 20s -> max 30s)
+      const delay = Math.min(30000, 5000 * Math.pow(1.5, this.reconnectAttempts));
+      this.reconnectAttempts++;
+      this.reconnectTimer = setTimeout(() => this.connectWebSocket(), delay);
     };
 
     this.ws.onerror = () => {

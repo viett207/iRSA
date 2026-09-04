@@ -16,6 +16,7 @@ import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { SoundService } from '../../core/services/sound.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -43,6 +44,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   processMenuOpen = true;
   workspaceSearch = '';
   readonly newApplicationCount = signal(0);
+  readonly soundSvc = inject(SoundService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dashboardService = inject(DashboardService);
   private readonly acknowledgedApplicationIds = new Set<number>();

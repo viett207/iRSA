@@ -11,6 +11,7 @@ import { NzBadgeModule } from 'ng-zorro-antd/badge';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationService, AppNotification } from '../../../core/services/notification.service';
+import { SoundService } from '../../../core/services/sound.service';
 
 @Component({
   selector: 'app-portal-header',
@@ -32,6 +33,7 @@ import { NotificationService, AppNotification } from '../../../core/services/not
 export class PortalHeaderComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   notificationSvc = inject(NotificationService);
+  soundSvc = inject(SoundService);
   private router = inject(Router);
 
   mobileMenuOpen = false;
