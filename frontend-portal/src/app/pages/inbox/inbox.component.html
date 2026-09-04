@@ -264,9 +264,11 @@
                     [class.incoming]="msg.sender_role !== 'candidate'"
                   >
                     <div class="message-bubble">
-                      <div class="message-sender-name">
-                        {{ msg.sender_role === 'candidate' ? 'Bạn' : (msg.sender_name || 'Nhà tuyển dụng') }}
-                      </div>
+                      @if (msg.sender_role !== 'candidate') {
+                        <div class="message-sender-name">
+                          {{ msg.sender_name || 'Nhà tuyển dụng' }}
+                        </div>
+                      }
                       <p class="message-text">{{ msg.content }}</p>
                       <span class="message-timestamp">{{ msg.created_at | date:'HH:mm' }}</span>
                     </div>
