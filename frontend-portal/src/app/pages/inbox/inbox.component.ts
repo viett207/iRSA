@@ -10,7 +10,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, interval } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -29,6 +29,7 @@ import {
 } from '../../core/services/chat.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { SoundService } from '../../core/services/sound.service';
 
 @Component({
   selector: 'app-inbox',
@@ -55,6 +56,7 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   private chatService = inject(ChatService);
   private notifService = inject(NotificationService);
+  private soundService = inject(SoundService);
   private authService = inject(AuthService);
   private message = inject(NzMessageService);
   private modal = inject(NzModalService);
@@ -77,35 +79,25 @@ export class InboxComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadConversations();
 
-    // Listen to real-time chat messages via WebSocket
+    // 1. Listen to real-time chat messages via WebSocket for instant push
     this.sub.add(
       this.notifService.chatMessages$.subscribe((data) => {
         if (!data || !data.message) return;
         const msg: MessageResponse = data.message;
         const appId = data.application_id || msg.application_id;
 
-        // If currently viewing this conversation, append message
+        // Auto-refresh conversation list
+        this.loadConversations(true);
+
+        // If currently viewing this conversation, reload messages
         const current = this.selectedConversation();
         if (current && current.application_id === appId) {
-          const exists = this.messages().some((m) => m.id === msg.id);
-          if (!exists) {
-            this.messages.update((prev) => [...prev, msg]);
-            this.scrollToBottom();
-            this.chatService.markAsRead(appId).subscribe();
-          }
-
-          // If it is an interview response or invitation, refresh conversation info
-          if (msg.message_type === 'interview_invitation' || msg.message_type === 'interview_response') {
-            this.updateConversationInterviewState(appId, msg);
-          }
+          this.loadMessages(appId, true);
         }
-
-        // Also update conversation list latest message
-        this.updateConversationListWithNewMessage(appId, msg);
       })
     );
 
-    // Listen to route query param changes to select target conversation
+    // 2. Listen to route query param changes to select target conversation
     this.sub.add(
       this.route.queryParamMap.subscribe((params) => {
         const appIdParam = params.get('appId');
@@ -117,36 +109,63 @@ export class InboxComponent implements OnInit, OnDestroy {
         }
       })
     );
+
+    // 3. Auto-refresh ONLY while on this Inbox page (polls every 3.5s silently)
+    // When navigating away from Inbox, ngOnDestroy automatically cancels this interval!
+    this.sub.add(
+      interval(3500).subscribe(() => {
+        this.loadConversations(true);
+        const current = this.selectedConversation();
+        if (current) {
+          this.loadMessages(current.application_id, true);
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();
   }
 
-  loadConversations(): void {
-    this.loadingConversations.set(true);
+  loadConversations(silent: boolean = false): void {
+    if (!silent) {
+      this.loadingConversations.set(true);
+    }
     this.chatService.getConversations().subscribe({
       next: (items) => {
         this.conversations.set(items);
-        this.loadingConversations.set(false);
+        if (!silent) {
+          this.loadingConversations.set(false);
+        }
+
+        // Keep current selected conversation in sync with latest metadata
+        const current = this.selectedConversation();
+        if (current) {
+          const fresh = items.find((c) => c.application_id === current.application_id);
+          if (fresh) {
+            this.selectedConversation.set(fresh);
+          }
+        }
 
         // Check if query param specified an application_id
         const appIdParam = this.route.snapshot.queryParamMap.get('appId');
         if (appIdParam) {
           const target = items.find((c) => c.application_id === Number(appIdParam));
-          if (target) {
+          if (target && (!current || current.application_id !== target.application_id)) {
             this.selectConversation(target);
             return;
           }
         }
 
-        // Auto-select first conversation if available
+        // Auto-select first conversation if available and none currently selected
         if (items.length > 0 && !this.selectedConversation()) {
           this.selectConversation(items[0]);
         }
       },
       error: () => {
-        this.loadingConversations.set(false);
+        if (!silent) {
+          this.loadingConversations.set(false);
+        }
       },
     });
   }
@@ -161,16 +180,38 @@ export class InboxComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadMessages(applicationId: number): void {
-    this.loadingMessages.set(true);
+  loadMessages(applicationId: number, silent: boolean = false): void {
+    if (!silent) {
+      this.loadingMessages.set(true);
+    }
     this.chatService.getMessages(applicationId).subscribe({
       next: (msgs) => {
+        const prevCount = this.messages().length;
+        const newCount = msgs.length;
+
+        // In silent mode, if new messages arrived from HR, play chime and mark read
+        if (silent && newCount > prevCount) {
+          const newMessages = msgs.slice(prevCount);
+          if (newMessages.some((m) => m.sender_role !== 'candidate')) {
+            this.soundService.playMessageSound();
+            this.chatService.markAsRead(applicationId).subscribe();
+          }
+        }
+
         this.messages.set(msgs);
-        this.loadingMessages.set(false);
-        this.scrollToBottom();
+        if (!silent) {
+          this.loadingMessages.set(false);
+        }
+
+        // Scroll to bottom on initial load or when new messages arrived
+        if (!silent || newCount > prevCount) {
+          this.scrollToBottom();
+        }
       },
       error: () => {
-        this.loadingMessages.set(false);
+        if (!silent) {
+          this.loadingMessages.set(false);
+        }
       },
     });
   }
