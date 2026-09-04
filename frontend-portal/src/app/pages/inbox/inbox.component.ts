@@ -73,6 +73,8 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   newMessageText = '';
   searchQuery = '';
+  conversationFilter: 'all' | 'unread' | 'interview' = 'all';
+  detailsOpen = true;
 
   private sub = new Subscription();
 
@@ -349,12 +351,44 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   get filteredConversations(): ConversationItem[] {
     const q = this.searchQuery.toLowerCase().trim();
-    if (!q) return this.conversations();
-    return this.conversations().filter(
-      (c) =>
+    return this.conversations().filter((c) => {
+      const matchesQuery =
+        !q ||
         c.job_title.toLowerCase().includes(q) ||
-        (c.company_name && c.company_name.toLowerCase().includes(q))
-    );
+        (c.company_name && c.company_name.toLowerCase().includes(q));
+      const matchesFilter =
+        this.conversationFilter === 'all' ||
+        (this.conversationFilter === 'unread' && c.unread_count > 0) ||
+        (this.conversationFilter === 'interview' && !!c.interview_date);
+      return matchesQuery && matchesFilter;
+    });
+  }
+
+  setConversationFilter(filter: 'all' | 'unread' | 'interview'): void {
+    this.conversationFilter = filter;
+  }
+
+  useQuickReply(text: string): void {
+    this.newMessageText = text;
+  }
+
+  toggleDetails(): void {
+    this.detailsOpen = !this.detailsOpen;
+  }
+
+  getApplicationStage(conv: ConversationItem): number {
+    if (conv.candidate_response === 'accepted') return 3;
+    if (conv.interview_date || conv.interview_status) return 2;
+    return 1;
+  }
+
+  getInterviewStatusLabel(conv: ConversationItem): string {
+    if (conv.candidate_response === 'accepted') return 'Đã xác nhận';
+    if (conv.candidate_response === 'declined' || conv.interview_status === 'cancelled') {
+      return 'Đã hủy';
+    }
+    if (conv.interview_date) return 'Chờ phản hồi';
+    return 'Chưa có lịch';
   }
 
   private scrollToBottom(): void {
