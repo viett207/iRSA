@@ -770,16 +770,19 @@ async def schedule_interview(
 
     try:
         from app.services.notification_service import notify_interview_scheduled
-        await notify_interview_scheduled(
-            db, app.candidate.id,
-            job_title=app.job.title_vi or "N/A",
-            interview_date=interview.interview_date.strftime("%d/%m/%Y %H:%M"),
-            interview_type=interview.interview_type,
-            job_id=job_id, application_id=app_id,
-        )
-        await db.commit()
+        candidate_user_id = app.candidate_id or (app.candidate.id if app.candidate else None)
+        if candidate_user_id:
+            await notify_interview_scheduled(
+                db, candidate_user_id,
+                job_title=(app.job.title_vi if app.job else "N/A") or "N/A",
+                interview_date=interview.interview_date.strftime("%d/%m/%Y %H:%M"),
+                interview_type=interview.interview_type,
+                job_id=job_id, application_id=app_id,
+            )
+            await db.commit()
     except Exception as e:
         logger.warning(f"Failed to push interview notification: {e}")
+        await db.rollback()
 
     try:
         from app.services.message_service import MessageService
@@ -812,6 +815,7 @@ async def schedule_interview(
         )
     except Exception as e:
         logger.warning(f"Failed to create interview invitation message: {e}")
+        await db.rollback()
 
     return InterviewResponse(
         id=interview.id,

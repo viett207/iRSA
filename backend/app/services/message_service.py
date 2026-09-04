@@ -46,10 +46,15 @@ class MessageService:
             message_type=message_type,
             metadata_json=metadata_json,
             is_read=False,
+            updated_at=datetime.now(timezone.utc),
         )
         self.db.add(msg)
-        await self.db.commit()
-        await self.db.refresh(msg)
+        try:
+            await self.db.commit()
+            await self.db.refresh(msg)
+        except Exception:
+            await self.db.rollback()
+            raise
 
         # Determine recipient for real-time WebSocket push
         try:

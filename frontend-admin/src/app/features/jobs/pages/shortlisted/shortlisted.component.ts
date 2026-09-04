@@ -1068,10 +1068,15 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     const modalRef = this.modal.create({
       nzTitle: `Đặt lịch phỏng vấn: ${app.candidate_name}`,
       nzContent: InterviewScheduleModalComponent,
+      nzData: {
+        jobId: app.job_id,
+        appId: app.id,
+        candidateName: app.candidate_name,
+      },
       nzFooter: null,
       nzWidth: 580,
     });
-    const instance = modalRef.componentInstance;
+    const instance = modalRef.getContentComponent();
     if (instance) {
       instance.jobId = app.job_id;
       instance.appId = app.id;
@@ -1082,7 +1087,6 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
       this.loadCalendarEvents();
       if (res) {
         this.persistWorkspaceQuestions(app);
-        this.message.success(`Đã gửi lịch cho "${app.candidate_name}" và giữ hồ sơ trong workspace`);
       }
     });
   }
@@ -1103,10 +1107,15 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     const modalRef = this.modal.create({
       nzTitle: `Đặt lại lịch phỏng vấn: ${ev.candidate_name}`,
       nzContent: InterviewScheduleModalComponent,
+      nzData: {
+        jobId: ev.job_id,
+        appId: ev.application_id,
+        candidateName: ev.candidate_name,
+      },
       nzFooter: null,
       nzWidth: 580,
     });
-    const instance = modalRef.componentInstance;
+    const instance = modalRef.getContentComponent();
     if (instance) {
       instance.jobId = ev.job_id;
       instance.appId = ev.application_id;
@@ -1115,9 +1124,6 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     modalRef.afterClose.subscribe((res) => {
       this.loadShortlisted();
       this.loadCalendarEvents();
-      if (res) {
-        this.message.success(`Đã cập nhật lịch phỏng vấn, đang chờ ${ev.candidate_name} xác nhận`);
-      }
     });
   }
 
