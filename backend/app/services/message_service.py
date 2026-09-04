@@ -262,6 +262,13 @@ class MessageService:
                     location=latest_iv.location if latest_iv else None,
                 )
             )
+        items.sort(
+            key=lambda item: (
+                item.latest_message is not None,
+                item.latest_message.created_at if item.latest_message else datetime.min,
+            ),
+            reverse=True,
+        )
         return items
 
     async def get_hr_conversations(self, hr_user_id: int) -> list[ConversationItem]:
@@ -316,4 +323,11 @@ class MessageService:
                     location=latest_iv.location if latest_iv else None,
                 )
             )
+        items.sort(
+            key=lambda item: (
+                item.latest_message is not None,
+                item.latest_message.created_at if item.latest_message else datetime.min,
+            ),
+            reverse=True,
+        )
         return items

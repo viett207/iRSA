@@ -78,6 +78,8 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   private sub = new Subscription();
   private latestLocalMessages = new Map<number, MessageResponse>();
+  private conversationActivity = new Map<number, number>();
+  private activitySequence = Date.now();
 
   ngOnInit(): void {
     this.loadConversations();
@@ -356,6 +358,8 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   private updateConversationListWithNewMessage(appId: number, msg: MessageResponse): void {
     this.latestLocalMessages.set(appId, msg);
+    this.activitySequence = Math.max(this.activitySequence + 1, Date.now());
+    this.conversationActivity.set(appId, this.activitySequence);
     this.conversations.update((list) => {
       const target = list.find((c) => c.application_id === appId);
       if (!target) return list;
@@ -395,9 +399,13 @@ export class InboxComponent implements OnInit, OnDestroy {
   }
 
   private getLatestMessageTime(conversation: ConversationItem): number {
-    return conversation.latest_message
+    const messageTime = conversation.latest_message
       ? this.getMessageTime(conversation.latest_message)
       : 0;
+    return Math.max(
+      messageTime,
+      this.conversationActivity.get(conversation.application_id) || 0
+    );
   }
 
   private getMessageTime(message: MessageResponse): number {
