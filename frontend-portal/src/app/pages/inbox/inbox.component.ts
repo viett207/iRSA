@@ -88,7 +88,9 @@ export class InboxComponent implements OnInit, OnDestroy {
         const msg: MessageResponse = data.message;
         const appId = data.application_id || msg.application_id;
 
-        // Auto-refresh conversation list
+        // Move the conversation to the top immediately, then refresh metadata.
+        this.updateConversationListWithNewMessage(appId, msg);
+        this.updateConversationInterviewState(appId, msg);
         this.loadConversations(true);
 
         // If currently viewing this conversation, reload messages
@@ -226,6 +228,7 @@ export class InboxComponent implements OnInit, OnDestroy {
     this.sending.set(true);
     this.chatService.sendMessage(conv.application_id, text).subscribe({
       next: (msg) => {
+        this.updateConversationListWithNewMessage(conv.application_id, msg);
         // Optimistically add if not already added by WS
         const exists = this.messages().some((m) => m.id === msg.id);
         if (!exists) {
@@ -357,17 +360,26 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   get filteredConversations(): ConversationItem[] {
     const q = this.searchQuery.toLowerCase().trim();
-    return this.conversations().filter((c) => {
-      const matchesQuery =
-        !q ||
-        c.job_title.toLowerCase().includes(q) ||
-        (c.company_name && c.company_name.toLowerCase().includes(q));
-      const matchesFilter =
-        this.conversationFilter === 'all' ||
-        (this.conversationFilter === 'unread' && c.unread_count > 0) ||
-        (this.conversationFilter === 'interview' && !!c.interview_date);
-      return matchesQuery && matchesFilter;
-    });
+    return this.conversations()
+      .filter((c) => {
+        const matchesQuery =
+          !q ||
+          c.job_title.toLowerCase().includes(q) ||
+          (c.company_name && c.company_name.toLowerCase().includes(q));
+        const matchesFilter =
+          this.conversationFilter === 'all' ||
+          (this.conversationFilter === 'unread' && c.unread_count > 0) ||
+          (this.conversationFilter === 'interview' && !!c.interview_date);
+        return matchesQuery && matchesFilter;
+      })
+      .sort((a, b) => this.getLatestMessageTime(b) - this.getLatestMessageTime(a));
+  }
+
+  private getLatestMessageTime(conversation: ConversationItem): number {
+    const value = conversation.latest_message?.created_at;
+    if (!value) return 0;
+    const timestamp = new Date(value).getTime();
+    return Number.isNaN(timestamp) ? 0 : timestamp;
   }
 
   setConversationFilter(filter: 'all' | 'unread' | 'interview'): void {
