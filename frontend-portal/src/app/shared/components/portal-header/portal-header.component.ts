@@ -55,6 +55,14 @@ export class PortalHeaderComponent implements OnInit, OnDestroy {
     if (!n.is_read) {
       this.notificationSvc.markAsRead(n.id);
     }
+    const data = (n as any).data;
+    if (data?.application_id) {
+      this.router.navigate(['/dashboard/inbox'], {
+        queryParams: { appId: data.application_id },
+      });
+    } else if (n.type === 'interview' || n.type === 'application') {
+      this.router.navigate(['/dashboard/inbox']);
+    }
   }
 
   formatTime(isoDate: string): string {

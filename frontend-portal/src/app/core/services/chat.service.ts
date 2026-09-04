@@ -51,7 +51,7 @@ export interface ConversationItem {
 })
 export class ChatService {
   private http = inject(HttpClient);
-  private pubBase = `${environment.apiUrl}/pub`;
+  private pubBase = environment.publicApiUrl;
 
   getConversations(): Observable<ConversationItem[]> {
     return this.http.get<ConversationItem[]>(`${this.pubBase}/inbox/conversations`);

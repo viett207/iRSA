@@ -104,6 +104,19 @@ export class InboxComponent implements OnInit, OnDestroy {
         this.updateConversationListWithNewMessage(appId, msg);
       })
     );
+
+    // Listen to route query param changes to select target conversation
+    this.sub.add(
+      this.route.queryParamMap.subscribe((params) => {
+        const appIdParam = params.get('appId');
+        if (appIdParam && this.conversations().length > 0) {
+          const target = this.conversations().find((c) => c.application_id === Number(appIdParam));
+          if (target && this.selectedConversation()?.application_id !== target.application_id) {
+            this.selectConversation(target);
+          }
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {
