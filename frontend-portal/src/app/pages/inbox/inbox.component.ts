@@ -417,7 +417,7 @@ export class InboxComponent implements OnInit, OnDestroy {
     );
   }
 
-  private scrollToBottom(): void {
+  scrollToBottom(): void {
     setTimeout(() => {
       const element = this.scrollContainer?.nativeElement as HTMLElement | undefined;
       if (!element) return;
@@ -428,6 +428,12 @@ export class InboxComponent implements OnInit, OnDestroy {
         });
       });
     }, 0);
+  }
+
+  handleWheel(event: WheelEvent, element: HTMLElement): void {
+    if (element.scrollHeight <= element.clientHeight) return;
+    element.scrollTop += event.deltaY;
+    event.preventDefault();
   }
 
   getCandidateInitials(name?: string): string {

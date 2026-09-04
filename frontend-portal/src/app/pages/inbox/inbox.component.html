@@ -11,7 +11,7 @@
           <button type="button" [class.active]="conversationFilter === 'interview'" (click)="setConversationFilter('interview')">Phỏng vấn</button>
         </div>
       </header>
-      <div class="conversation-list">
+      <div class="conversation-list" #conversationScroll (wheel)="handleWheel($event, conversationScroll)">
         @if (loadingConversations()) {<div class="conversations-loading"><nz-spin nzSimple></nz-spin></div>}
         @if (filteredConversations.length === 0 && !loadingConversations()) {
           <div class="empty-conversations"><span nz-icon nzType="inbox"></span><strong>Chưa có hội thoại</strong><p>Các trao đổi tuyển dụng sẽ xuất hiện tại đây.</p></div>
@@ -37,7 +37,7 @@
         </header>
         <section class="journey-strip"><div class="journey-copy"><span>HÀNH TRÌNH ỨNG TUYỂN</span><strong>Bạn đang tiến gần hơn tới cơ hội mới</strong></div><div class="journey-steps"><div class="journey-step done"><i><span nz-icon nzType="check"></span></i><span>Đã ứng tuyển</span></div><b class="done"></b><div class="journey-step" [class.done]="getApplicationStage(conv) >= 2"><i><span nz-icon nzType="message"></span></i><span>Đang trao đổi</span></div><b [class.done]="getApplicationStage(conv) >= 3"></b><div class="journey-step" [class.done]="getApplicationStage(conv) >= 3"><i><span nz-icon nzType="calendar"></span></i><span>Phỏng vấn</span></div></div></section>
 
-        <div class="chat-messages" #scrollContainer>
+        <div class="chat-messages" #scrollContainer (wheel)="handleWheel($event, scrollContainer)">
           @if (loadingMessages()) {<div class="messages-loading"><nz-spin nzSimple></nz-spin></div>}
           <div class="conversation-date"><span>Cuộc trò chuyện tuyển dụng</span></div>
           @if (messages().length === 0 && !loadingMessages()) {<div class="empty-messages"><span nz-icon nzType="message"></span><h3>Hãy bắt đầu cuộc trò chuyện</h3><p>Trao đổi với nhà tuyển dụng về vị trí {{ conv.job_title }}.</p></div>}
@@ -56,7 +56,7 @@
           }
         </div>
 
-        <footer class="composer-area"><div class="quick-replies"><span>Trả lời nhanh</span><button type="button" (click)="useQuickReply('Cảm ơn anh/chị đã liên hệ với tôi.')">Cảm ơn anh/chị</button><button type="button" (click)="useQuickReply('Tôi đã nhận được thông tin và sẽ phản hồi sớm.')">Tôi đã nhận thông tin</button><button type="button" (click)="useQuickReply('Anh/chị có thể chia sẻ thêm thông tin về buổi phỏng vấn không?')">Hỏi thêm thông tin</button></div><div class="composer"><button type="button" class="composer-tool" nz-tooltip="Đính kèm sẽ sớm ra mắt"><span nz-icon nzType="paper-clip"></span></button><textarea nz-input [(ngModel)]="newMessageText" (keydown)="onComposerKeydown($event)" [nzAutosize]="{ minRows: 1, maxRows: 4 }" placeholder="Viết tin nhắn cho nhà tuyển dụng..." [disabled]="sending()"></textarea><button type="button" nz-button nzType="primary" class="send-button" [nzLoading]="sending()" [disabled]="sending() || !newMessageText.trim()" (click)="sendMessage()"><span nz-icon nzType="send"></span></button></div><p>Enter để gửi · Shift + Enter để xuống dòng</p></footer>
+        <footer class="composer-area"><div class="quick-replies"><span>Trả lời nhanh</span><button type="button" (click)="useQuickReply('Cảm ơn anh/chị đã liên hệ với tôi.')">Cảm ơn anh/chị</button><button type="button" (click)="useQuickReply('Tôi đã nhận được thông tin và sẽ phản hồi sớm.')">Tôi đã nhận thông tin</button><button type="button" (click)="useQuickReply('Anh/chị có thể chia sẻ thêm thông tin về buổi phỏng vấn không?')">Hỏi thêm thông tin</button><button type="button" class="jump-latest" (click)="scrollToBottom()"><span nz-icon nzType="vertical-align-bottom"></span> Xuống cuối</button></div><div class="composer"><button type="button" class="composer-tool" nz-tooltip="Đính kèm sẽ sớm ra mắt"><span nz-icon nzType="paper-clip"></span></button><textarea nz-input [(ngModel)]="newMessageText" (keydown)="onComposerKeydown($event)" [nzAutosize]="{ minRows: 1, maxRows: 4 }" placeholder="Viết tin nhắn cho nhà tuyển dụng..." [disabled]="sending()"></textarea><button type="button" nz-button nzType="primary" class="send-button" [nzLoading]="sending()" [disabled]="sending() || !newMessageText.trim()" (click)="sendMessage()"><span nz-icon nzType="send"></span></button></div><p>Enter để gửi · Shift + Enter để xuống dòng</p></footer>
       } @else {<div class="no-selection"><span nz-icon nzType="message"></span><h2>Không gian trao đổi của bạn</h2><p>Chọn một hội thoại để tiếp tục hành trình ứng tuyển.</p></div>}
     </main>
 
