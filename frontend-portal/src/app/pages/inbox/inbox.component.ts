@@ -77,6 +77,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   detailsOpen = typeof window === 'undefined' || window.innerWidth > 1180;
 
   private sub = new Subscription();
+  private latestLocalMessages = new Map<number, MessageResponse>();
 
   ngOnInit(): void {
     this.loadConversations();
@@ -137,7 +138,23 @@ export class InboxComponent implements OnInit, OnDestroy {
     }
     this.chatService.getConversations().subscribe({
       next: (items) => {
-        this.conversations.set(items);
+        const mergedItems = items.map((item) => {
+          const localMessage = this.latestLocalMessages.get(item.application_id);
+          if (!localMessage) return item;
+
+          const serverTime = item.latest_message
+            ? this.getMessageTime(item.latest_message)
+            : 0;
+          const localTime = this.getMessageTime(localMessage);
+
+          if (localTime > serverTime) {
+            return { ...item, latest_message: localMessage };
+          }
+
+          this.latestLocalMessages.delete(item.application_id);
+          return item;
+        });
+        this.conversations.set(this.sortConversations(mergedItems));
         if (!silent) {
           this.loadingConversations.set(false);
         }
@@ -338,6 +355,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   }
 
   private updateConversationListWithNewMessage(appId: number, msg: MessageResponse): void {
+    this.latestLocalMessages.set(appId, msg);
     this.conversations.update((list) => {
       const target = list.find((c) => c.application_id === appId);
       if (!target) return list;
@@ -345,7 +363,7 @@ export class InboxComponent implements OnInit, OnDestroy {
       const current = this.selectedConversation();
       const isCurrent = current?.application_id === appId;
 
-      return list.map((c) => {
+      const updated = list.map((c) => {
         if (c.application_id === appId) {
           return {
             ...c,
@@ -355,6 +373,7 @@ export class InboxComponent implements OnInit, OnDestroy {
         }
         return c;
       });
+      return this.sortConversations(updated);
     });
   }
 
@@ -376,10 +395,20 @@ export class InboxComponent implements OnInit, OnDestroy {
   }
 
   private getLatestMessageTime(conversation: ConversationItem): number {
-    const value = conversation.latest_message?.created_at;
-    if (!value) return 0;
-    const timestamp = new Date(value).getTime();
+    return conversation.latest_message
+      ? this.getMessageTime(conversation.latest_message)
+      : 0;
+  }
+
+  private getMessageTime(message: MessageResponse): number {
+    const timestamp = new Date(message.created_at).getTime();
     return Number.isNaN(timestamp) ? 0 : timestamp;
+  }
+
+  private sortConversations(items: ConversationItem[]): ConversationItem[] {
+    return [...items].sort(
+      (a, b) => this.getLatestMessageTime(b) - this.getLatestMessageTime(a)
+    );
   }
 
   setConversationFilter(filter: 'all' | 'unread' | 'interview'): void {
