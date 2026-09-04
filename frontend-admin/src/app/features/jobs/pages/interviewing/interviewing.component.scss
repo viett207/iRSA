@@ -31,7 +31,7 @@
 
 .overview-metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   overflow: hidden;
   border: 1px solid #ded9cd;
   border-radius: 11px;
@@ -89,7 +89,7 @@
 
 .interview-filter-bar {
   display: grid;
-  grid-template-columns: minmax(220px, 1.2fr) minmax(190px, .8fr) minmax(150px, .55fr) minmax(160px, .6fr) auto;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(190px, .8fr) minmax(250px, .9fr) minmax(160px, .6fr) auto;
   align-items: end;
   gap: 10px;
   margin-bottom: 12px;
@@ -120,7 +120,9 @@
   input:focus, select:focus { border-color: #8c8c92; box-shadow: 0 0 0 2px rgba(39, 39, 42, .05); }
 }
 
-.custom-date-range { display: grid; grid-column: 1 / -2; grid-template-columns: repeat(2, minmax(160px, 220px)); gap: 10px; }
+.filter-field nz-date-picker { width: 100%; height: 40px; border-color: #ded9cd; border-radius: 7px; }
+:host ::ng-deep .filter-field .ant-picker-input > input { height: auto; padding: 0; border: 0; box-shadow: none; font-size: 12px; }
+
 .filter-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding-bottom: 8px; color: #85858e; font-size: 12px; white-space: nowrap; }
 .filter-actions button { padding: 0; border: 0; color: #596575; background: transparent; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
@@ -178,11 +180,14 @@
 
 .question-state, .stage-badge {
   display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
   padding: 5px 8px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
+  white-space: nowrap;
 }
 .question-state { background: #efede8; color: #77716a; }
 .question-state[data-state='ready'] { background: #e8f0ea; color: #47604f; }
@@ -351,9 +356,8 @@
 }
 
 @media (max-width: 1400px) {
-  .interview-filter-bar { grid-template-columns: minmax(220px, 1.2fr) repeat(3, minmax(150px, .7fr)); }
+  .interview-filter-bar { grid-template-columns: minmax(220px, 1.2fr) minmax(170px, .7fr) minmax(250px, 1fr) minmax(150px, .7fr); }
   .filter-actions { grid-column: 1 / -1; justify-content: space-between; padding: 0; }
-  .custom-date-range { grid-column: 1 / -1; }
 }
 
 @media (max-width: 800px) {
@@ -368,10 +372,9 @@
   .entry-readiness { grid-template-columns: 1fr; }
   .entry-readiness__items { grid-template-columns: 1fr; }
   .operations-overview { grid-template-columns: 1fr; }
-  .overview-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .overview-metrics button:nth-child(2) { border-right: 0; }
-  .overview-metrics button:nth-child(-n+2) { border-bottom: 1px solid #eeeae1; }
+  .overview-metrics { grid-template-columns: 1fr; }
+  .overview-metrics button { border-right: 0; border-bottom: 1px solid #eeeae1; }
+  .overview-metrics button:last-child { border-bottom: 0; }
   .interview-filter-bar { grid-template-columns: 1fr; }
-  .custom-date-range { grid-column: auto; grid-template-columns: 1fr 1fr; }
   .filter-actions { justify-content: space-between; padding: 0; }
 }

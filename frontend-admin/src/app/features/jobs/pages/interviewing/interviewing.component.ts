@@ -9,12 +9,14 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
+import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { JobService } from '../../services/job.service';
 import { InterviewingApplicant } from '../../models/job.model';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { InterviewScheduleModalComponent } from '../../components/interview-schedule-modal.component';
 import { InterviewRoomModalComponent } from '../../components/interview-room-modal.component';
+import { MissedInterviewActionModalComponent } from '../../components/missed-interview-action-modal.component';
 
 @Component({
   selector: 'app-interviewing',
@@ -28,6 +30,7 @@ import { InterviewRoomModalComponent } from '../../components/interview-room-mod
     NzPopconfirmModule,
     NzToolTipModule,
     NzModalModule,
+    NzDatePickerModule,
     InterviewRoomModalComponent,
   ],
   templateUrl: './interviewing.component.html',
@@ -44,16 +47,16 @@ export class InterviewingComponent implements OnInit, OnDestroy {
   sortBy = 'date';
   searchText = signal('');
   selectedJobId = signal(0);
-  stageFilter = signal<'all' | 'open' | 'today' | 'upcoming' | 'decision' | 'missed' | 'unscheduled'>('all');
+  stageFilter = signal<'all' | 'open' | 'today' | 'upcoming' | 'decision' | 'missed'>('all');
   scheduleRange = signal<'all' | 'today' | '7days' | '30days' | 'custom'>('all');
-  dateFrom = signal('');
-  dateTo = signal('');
+  selectedInterviewDate = signal<Date | null>(null);
   entryCandidate = signal<InterviewingApplicant | null>(null);
   activeRoomCandidate = signal<InterviewingApplicant | null>(null);
   private requestedApplicationId: number | null = null;
   private sub?: Subscription;
   private routeSub?: Subscription;
   private roomAvailabilityTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly reconcilingCompletedIds = new Set<number>();
 
   readonly filteredApplicants = computed(() => {
     const query = this.searchText().trim().toLocaleLowerCase('vi');
@@ -70,9 +73,8 @@ export class InterviewingComponent implements OnInit, OnDestroy {
         || (stageFilter === 'open' && this.canEnterInterview(app))
         || (stageFilter === 'today' && this.isInterviewToday(app))
         || (stageFilter === 'upcoming' && this.isUpcoming(app))
-        || (stageFilter === 'decision' && app.has_completed_interview)
-        || (stageFilter === 'missed' && this.getInterviewStage(app) === 'missed')
-        || (stageFilter === 'unscheduled' && this.getInterviewStage(app) === 'unscheduled');
+        || (stageFilter === 'decision' && app.interview_status === 'completed')
+        || (stageFilter === 'missed' && this.getInterviewStage(app) === 'missed');
       return matchesQuery && matchesJob && matchesDate && matchesStage;
     }).sort((a, b) => {
       const priority = { open: 0, decision: 1, missed: 2, upcoming: 3, unscheduled: 4 };
@@ -92,13 +94,12 @@ export class InterviewingComponent implements OnInit, OnDestroy {
 
   readonly todayCount = computed(() => this.applicants().filter((app) => this.isInterviewToday(app)).length);
   readonly openRoomCount = computed(() => this.applicants().filter((app) => this.canEnterInterview(app)).length);
-  readonly pendingDecisionCount = computed(() => this.applicants().filter((app) => app.has_completed_interview).length);
   readonly upcomingSevenDayCount = computed(() => this.applicants().filter((app) => this.isWithinUpcomingDays(app, 7)).length);
   readonly nextInterview = computed(() => {
     const now = this.currentTime();
     return this.applicants()
       .filter((app) => {
-        if (!app.interview_date || app.has_completed_interview) return false;
+        if (!app.interview_date || app.interview_status === 'completed') return false;
         if (app.interview_status === 'cancelled' || app.interview_status === 'completed') return false;
         const interviewTime = new Date(app.interview_date).getTime();
         return this.canEnterInterview(app) || interviewTime > now;
@@ -151,16 +152,37 @@ export class InterviewingComponent implements OnInit, OnDestroy {
     this.jobService.getInterviewing({ page: 1, size: 100, sort_by: this.sortBy })
       .subscribe({
         next: (res) => {
-          this.applicants.set(res.items);
-          this.total.set(res.total);
+          const completed = res.items.filter((app) => app.interview_status === 'completed');
+          this.applicants.set(res.items.filter((app) => app.interview_status !== 'completed'));
+          this.total.set(Math.max(0, res.total - completed.length));
           this.loading.set(false);
           this.syncEntryCandidate();
+          this.moveCompletedApplicantsToDecision(completed);
         },
         error: () => {
           this.loadError.set(true);
           this.loading.set(false);
         },
       });
+  }
+
+  private moveCompletedApplicantsToDecision(completed: InterviewingApplicant[]): void {
+    for (const app of completed) {
+      if (this.reconcilingCompletedIds.has(app.id)) continue;
+      this.reconcilingCompletedIds.add(app.id);
+      this.jobService.updateApplicationStatus(
+        app.job_id,
+        app.id,
+        'offered',
+        'Đã hoàn tất phỏng vấn, chuyển sang bước chốt tuyển dụng',
+      ).subscribe({
+        next: () => this.reconcilingCompletedIds.delete(app.id),
+        error: () => {
+          this.reconcilingCompletedIds.delete(app.id);
+          this.message.error(`Không thể chuyển ${app.candidate_name} sang bước Chốt tuyển dụng`);
+        },
+      });
+    }
   }
 
   onPageChange(page: number): void {
@@ -182,7 +204,7 @@ export class InterviewingComponent implements OnInit, OnDestroy {
         this.transitioningApplicationId.set(null);
         const labels: Record<string, string> = {
           offered: 'Đề xuất tuyển dụng',
-          rejected: 'Không đạt',
+          rejected: 'Đã hủy phỏng vấn và loại ứng viên',
           shortlisted: 'Quay lại shortlist',
         };
         this.message.success(`${app.candidate_name}: ${labels[newStatus] || newStatus}`);
@@ -216,6 +238,26 @@ export class InterviewingComponent implements OnInit, OnDestroy {
 
     ref.afterClose.subscribe((result) => {
       if (result) this.loadData();
+    });
+  }
+
+  openMissedInterviewActions(app: InterviewingApplicant): void {
+    const ref = this.modal.create({
+      nzTitle: undefined,
+      nzContent: MissedInterviewActionModalComponent,
+      nzData: {
+        candidateName: app.candidate_name,
+        jobTitle: app.job_title,
+        interviewDate: app.interview_date,
+        interviewType: app.interview_type,
+      },
+      nzFooter: null,
+      nzWidth: 560,
+      nzCentered: true,
+    });
+    ref.afterClose.subscribe((action) => {
+      if (action === 'reschedule') this.openScheduleInterview(app);
+      if (action === 'reject') this.updateStatus(app, 'rejected');
     });
   }
 
@@ -307,21 +349,34 @@ export class InterviewingComponent implements OnInit, OnDestroy {
     return 'Phòng phỏng vấn đang mở';
   }
 
-  setStageFilter(filter: 'all' | 'open' | 'today' | 'upcoming' | 'decision' | 'missed' | 'unscheduled'): void {
+  setStageFilter(filter: 'all' | 'open' | 'today' | 'upcoming' | 'decision' | 'missed'): void {
     this.stageFilter.set(filter);
     this.page = 1;
   }
 
   showToday(): void {
-    this.setScheduleRange('today');
+    this.setScheduleRange(this.scheduleRange() === 'today' ? 'all' : 'today');
+    this.setStageFilter('all');
+  }
+
+  showAll(): void {
+    this.setScheduleRange('all');
     this.setStageFilter('all');
   }
 
   setScheduleRange(range: 'all' | 'today' | '7days' | '30days' | 'custom'): void {
     this.scheduleRange.set(range);
-    if (range !== 'custom') {
-      this.dateFrom.set('');
-      this.dateTo.set('');
+    this.selectedInterviewDate.set(range === 'today' ? new Date(this.currentTime()) : null);
+    this.page = 1;
+  }
+
+  setInterviewDate(date: Date | null): void {
+    if (!date) {
+      this.selectedInterviewDate.set(null);
+      this.scheduleRange.set('all');
+    } else {
+      this.selectedInterviewDate.set(date);
+      this.scheduleRange.set('custom');
     }
     this.page = 1;
   }
@@ -337,8 +392,7 @@ export class InterviewingComponent implements OnInit, OnDestroy {
     this.selectedJobId.set(0);
     this.stageFilter.set('all');
     this.scheduleRange.set('all');
-    this.dateFrom.set('');
-    this.dateTo.set('');
+    this.selectedInterviewDate.set(null);
     this.page = 1;
   }
 
@@ -352,7 +406,7 @@ export class InterviewingComponent implements OnInit, OnDestroy {
   }
 
   isUpcoming(app: InterviewingApplicant): boolean {
-    if (!app.interview_date || app.has_completed_interview) return false;
+    if (!app.interview_date || app.interview_status === 'completed') return false;
     return new Date(app.interview_date).getTime() > this.currentTime() + 120 * 60_000;
   }
 
@@ -363,15 +417,16 @@ export class InterviewingComponent implements OnInit, OnDestroy {
     if (range === 'today') return this.isInterviewToday(app);
     if (range === '7days') return this.isWithinUpcomingDays(app, 7);
     if (range === '30days') return this.isWithinUpcomingDays(app, 30);
-
-    const interviewTime = new Date(app.interview_date).getTime();
-    const from = this.dateFrom() ? new Date(`${this.dateFrom()}T00:00:00`).getTime() : Number.NEGATIVE_INFINITY;
-    const to = this.dateTo() ? new Date(`${this.dateTo()}T23:59:59.999`).getTime() : Number.POSITIVE_INFINITY;
-    return interviewTime >= from && interviewTime <= to;
+    const selectedDate = this.selectedInterviewDate();
+    if (!selectedDate) return true;
+    const interviewDate = new Date(app.interview_date);
+    return interviewDate.getFullYear() === selectedDate.getFullYear()
+      && interviewDate.getMonth() === selectedDate.getMonth()
+      && interviewDate.getDate() === selectedDate.getDate();
   }
 
   private isWithinUpcomingDays(app: InterviewingApplicant, days: number): boolean {
-    if (!app.interview_date || app.has_completed_interview) return false;
+    if (!app.interview_date || app.interview_status === 'completed') return false;
     if (app.interview_status === 'cancelled' || app.interview_status === 'completed') return false;
     const interviewTime = new Date(app.interview_date).getTime();
     const now = this.currentTime();
@@ -379,7 +434,7 @@ export class InterviewingComponent implements OnInit, OnDestroy {
   }
 
   getInterviewStage(app: InterviewingApplicant): 'open' | 'upcoming' | 'decision' | 'missed' | 'unscheduled' {
-    if (app.has_completed_interview || app.interview_status === 'completed') return 'decision';
+    if (app.interview_status === 'completed') return 'decision';
     if (!app.interview_date) return 'unscheduled';
     if (this.canEnterInterview(app)) return 'open';
     if (new Date(app.interview_date).getTime() > this.currentTime()) return 'upcoming';

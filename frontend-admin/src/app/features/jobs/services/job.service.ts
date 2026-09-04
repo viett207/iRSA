@@ -41,6 +41,21 @@ export interface JobListParams {
   order_by?: string;
 }
 
+export interface CandidateConversation {
+  application_id: number;
+  job_id: number;
+  job_title: string;
+  candidate_id?: number | null;
+  candidate_name: string;
+  candidate_email?: string | null;
+  latest_message?: { content: string; created_at: string; sender_role: string } | null;
+  unread_count: number;
+  candidate_response?: string | null;
+  interview_date?: string | null;
+  interview_location?: string | null;
+  interview_notes?: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -389,6 +404,10 @@ export class JobService {
 
   getApplicationMessages(appId: number): Observable<any[]> {
     return this.http.get<any[]>(`${environment.apiUrl}/messages/applications/${appId}`);
+  }
+
+  getCandidateConversations(): Observable<CandidateConversation[]> {
+    return this.http.get<CandidateConversation[]>(`${environment.apiUrl}/messages/conversations`);
   }
 
   sendApplicationMessage(appId: number, content: string): Observable<any> {

@@ -95,7 +95,7 @@
 <section class="decision-table-shell" id="decision-list">
   <header><div><h3>Danh sách cần chốt</h3><p>Hồ sơ chờ quyết định được đưa lên trước; mở biên bản để xem transcript, điểm và nhận định phỏng vấn.</p></div></header>
   <nz-table #passedTable [nzData]="filteredApplicants()" [nzLoading]="loading()" [nzPageIndex]="page" [nzPageSize]="20" [nzFrontPagination]="true" (nzPageIndexChange)="page = $event" nzSize="middle" [nzNoResult]="passedEmptyState">
-    <thead><tr><th nzWidth="25%">Ứng viên & vị trí</th><th nzWidth="19%">Kết quả phỏng vấn</th><th nzWidth="13%">Trạng thái</th><th nzWidth="10%">Cập nhật</th><th nzWidth="33%">Quyết định & thao tác</th></tr></thead>
+    <thead><tr><th nzWidth="25%">Ứng viên & vị trí</th><th nzWidth="18%">Kết quả phỏng vấn</th><th nzWidth="15%">Trạng thái</th><th nzWidth="9%">Cập nhật</th><th nzWidth="33%">Quyết định & thao tác</th></tr></thead>
     <tbody>
       @for (app of passedTable.data; track app.id) {
         <tr>

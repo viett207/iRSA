@@ -7,7 +7,7 @@ from app.schemas.auth import DevEmail
 class UserBase(BaseModel):
     """Base user schema."""
 
-    email: DevEmail
+    email: str
     full_name: str = Field(..., min_length=2, max_length=255)
     phone: str | None = Field(None, max_length=50)
 
@@ -15,6 +15,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     """Schema for creating a user (admin only)."""
 
+    email: DevEmail
     password: str = Field(..., min_length=8)
     role: str = Field(..., pattern="^(candidate|recruiter|leader|admin)$")
     company_code: str | None = Field(None, max_length=50)

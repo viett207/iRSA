@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -50,6 +51,8 @@ import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industr
 })
 export class CompaniesComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
+  private companiesRequest?: Subscription;
+  private searchTimer?: ReturnType<typeof setTimeout>;
 
   companies = signal<Company[]>([]);
   loading = signal(false);
@@ -70,7 +73,6 @@ export class CompaniesComponent implements OnInit {
   readonly visibleCompleteCount = computed(() => this.companies().filter((company) => this.getProfileCompleteness(company) === 100).length);
   readonly visibleIncompleteCount = computed(() => this.companies().length - this.visibleCompleteCount());
   readonly visibleIndustryCount = computed(() => new Set(this.companies().map((company) => company.industry).filter(Boolean)).size);
-  readonly hasActiveFilters = computed(() => !!(this.searchText.trim() || this.industryFilter || this.locationFilter));
 
   constructor(
     private companyService: CompanyService,
@@ -79,12 +81,18 @@ export class CompaniesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.destroyRef.onDestroy(() => {
+      if (this.searchTimer) clearTimeout(this.searchTimer);
+    });
     this.loadCompanies();
   }
 
   loadCompanies(): void {
+    // Cancel stale filter/page requests so they do not consume bandwidth or
+    // overwrite a newer result when responses arrive out of order.
+    this.companiesRequest?.unsubscribe();
     this.loading.set(true);
-    this.companyService.list({
+    this.companiesRequest = this.companyService.list({
       page: this.pageIndex,
       page_size: this.pageSize,
       search: this.searchText || undefined,
@@ -119,17 +127,29 @@ export class CompaniesComponent implements OnInit {
     this.loadCompanies();
   }
 
+  onSearchTextChange(value: string): void {
+    this.searchText = value;
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => this.onSearch(), 350);
+  }
+
   onFilterChange(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
     this.pageIndex = 1;
     this.loadCompanies();
   }
 
   clearFilters(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
     this.searchText = '';
     this.industryFilter = null;
     this.locationFilter = null;
     this.pageIndex = 1;
     this.loadCompanies();
+  }
+
+  hasActiveFilters(): boolean {
+    return !!(this.searchText.trim() || this.industryFilter || this.locationFilter);
   }
 
   formatDate(dateStr: string): string {

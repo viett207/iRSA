@@ -2,6 +2,7 @@
   <!-- 1. Page Header -->
   <header class="page-top-header">
     <div class="header-title-group">
+      <span class="page-eyebrow">QUẢN TRỊ HỆ THỐNG</span>
       <h1 class="main-page-title">Quản lý người dùng</h1>
       <p class="main-page-desc">Phê duyệt tài khoản, phân quyền và xử lý các trường hợp cần chú ý.</p>
     </div>
@@ -118,10 +119,10 @@
                 aria-label="Chọn tất cả người dùng" />
             </th>
           }
-          <th nzWidth="39%">NGƯỜI DÙNG</th>
-          <th nzWidth="25%">CÔNG TY / TỔ CHỨC</th>
-          <th nzWidth="19%">TRUY CẬP &amp; XÁC THỰC</th>
-          <th nzWidth="13%">CẬP NHẬT CUỐI</th>
+          <th nzWidth="38%">NGƯỜI DÙNG</th>
+          <th nzWidth="24%">CÔNG TY / TỔ CHỨC</th>
+          <th nzWidth="21%">TRUY CẬP &amp; XÁC THỰC</th>
+          <th nzWidth="12%">CẬP NHẬT CUỐI</th>
           <th nzWidth="4%" nzAlign="right"><span class="sr-only">Tùy chọn</span></th>
         </tr>
       </thead>
@@ -162,6 +163,7 @@
               <div class="company-table-cell">
                 <strong>{{ getCompany(user)?.company_name || user.company_code || 'Cá nhân' }}</strong>
                 @if (getCompany(user)?.industry) { <small>{{ getCompany(user)?.industry }}</small> }
+                @else if (!user.company_code) { <small>Không thuộc tổ chức</small> }
               </div>
             </td>
 
@@ -170,7 +172,7 @@
                 <span class="account-state" [class.account-state--active]="user.is_active">
                   {{ user.is_active ? 'Đang hoạt động' : 'Tạm khóa' }}
                 </span>
-                <small [class.needs-attention]="!user.email_verified">
+                <small class="verification-state" [class.verification-state--pending]="!user.email_verified">
                   {{ user.email_verified ? 'Email đã xác thực' : 'Email chưa xác thực' }}
                 </small>
               </div>
@@ -194,7 +196,7 @@
                   nzPlacement="bottomRight"
                   aria-label="Thao tác khác"
                 >
-                  <span aria-hidden="true">•••</span>
+                  <span nz-icon nzType="ellipsis" aria-hidden="true"></span>
                 </button>
 
                 <nz-dropdown-menu #rowMenu="nzDropdownMenu">

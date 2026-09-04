@@ -40,7 +40,7 @@
     }
 
     .main-page-title {
-      margin: 0;
+      margin: 3px 0 0;
       font-size: 26px;
       font-weight: 700;
       color: #18181B;
@@ -51,6 +51,14 @@
       margin: 4px 0 0 0;
       font-size: 14px;
       color: #71717A;
+    }
+
+    .page-eyebrow {
+      display: block;
+      color: #85858e;
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .1em;
     }
   }
 
@@ -395,6 +403,7 @@
   justify-content: space-between;
   gap: 16px;
   border-bottom: 1px solid #e9e5dc;
+  background: #faf9f6;
   text-align: left;
 
   > div {
@@ -403,7 +412,7 @@
     gap: 2px;
   }
 
-  strong { color: #27272a; font-size: 15px; }
+  strong { color: #27272a; font-size: 16px; }
   span { color: #7f7f88; font-size: 12.5px; }
   .selection-hint { color: #665f52; }
 }
@@ -473,14 +482,17 @@
       min-width: 0;
       align-items: center;
       gap: 8px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
     }
 
     .user-full-name {
+      overflow: hidden;
       font-size: 15px;
       font-weight: 600;
       color: #18181B;
       line-height: 1.3;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .user-email-text {
@@ -491,6 +503,7 @@
     }
 
     .user-role-text {
+      flex: 0 0 auto;
       width: fit-content;
       padding: 2px 8px;
       border-radius: 999px;
@@ -621,16 +634,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    border: 0;
-    background: transparent;
-    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #ebe7de;
+    background: #fff;
+    border-radius: 8px;
     color: #71717A;
     cursor: pointer;
 
     &:hover {
-      background: #F4F4F5;
+      border-color: #cfc9bd;
+      background: #f7f5ef;
       color: #18181B;
     }
   }
@@ -1481,6 +1495,27 @@
   text-align: left;
 }
 
+:host ::ng-deep .smart-table-wrapper .ant-table-thead > tr > th {
+  padding: 12px 16px;
+  border-bottom-color: #ddd9cf;
+  background: #f1f2f3;
+  color: #66666f;
+}
+
+:host ::ng-deep .smart-table-wrapper .ant-table-tbody > .table-user-row > td {
+  padding: 13px 16px;
+  border-bottom-color: #eeebe4;
+  transition: background-color .15s ease;
+}
+
+:host ::ng-deep .smart-table-wrapper .ant-table-tbody > .table-user-row:nth-child(even) > td {
+  background: #fdfcf9;
+}
+
+:host ::ng-deep .smart-table-wrapper .ant-table-tbody > .table-user-row:hover > td {
+  background: #f3f0e8 !important;
+}
+
 .account-health-cell {
   display: flex;
   min-width: 0;
@@ -1492,8 +1527,11 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #f5e9e7;
     color: #8b5e55;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 650;
 
     &::before {
@@ -1506,14 +1544,18 @@
     }
 
     &--active {
+      background: #eaf2ec;
       color: #4f6f5b;
       &::before { background: #6e9b7c; }
     }
   }
 
-  small {
+  .verification-state {
+    padding-left: 8px;
     color: #8b8b94;
     font-size: 12px;
+
+    &--pending { color: #9a6546; }
   }
 }
 

@@ -6,12 +6,13 @@ from io import BytesIO
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import func as sa_func
 
 from app.api.deps import DBSession, HRUser
 from app.models import Application, Job, Resume
+from app.models.interview import Interview
 from app.models.scoring_result import ScoringResult
 from app.services.storage import get_storage_service
 
@@ -279,9 +280,37 @@ async def update_application_status(
             detail=f"Trạng thái '{body.status}' không hợp lệ. Các trạng thái hợp lệ: {sorted(list(VALID_APPLICATION_STATUSES))}",
         )
 
+    if body.status == "interviewing":
+        scheduled_interview_id = await db.scalar(
+            select(Interview.id)
+            .where(
+                Interview.application_id == app.id,
+                Interview.status == "scheduled",
+                Interview.interview_date.is_not(None),
+            )
+            .order_by(Interview.id.desc())
+            .limit(1)
+        )
+        if scheduled_interview_id is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Cần đặt lịch phỏng vấn trước khi chuyển ứng viên sang vòng Phỏng vấn AI",
+            )
+
     app.status = body.status
     app.public_status = _PUBLIC_STATUS_MAP.get(body.status, app.public_status)
     app.updated_at = sa_func.now()
+    if body.status == "rejected":
+        scheduled_interviews = (
+            await db.execute(
+                select(Interview).where(
+                    Interview.application_id == app.id,
+                    Interview.status == "scheduled",
+                )
+            )
+        ).scalars().all()
+        for interview in scheduled_interviews:
+            interview.status = "cancelled"
     await db.commit()
     await db.refresh(app)
 
@@ -834,6 +863,35 @@ async def list_interviewing_applications(
     sort_by: str = Query("date", pattern="^(date|score|ai_score)$"),
 ):
     """List all candidates currently in interview stage."""
+    latest_interview_status = (
+        select(Interview.status)
+        .where(Interview.application_id == Application.id)
+        .order_by(Interview.id.desc())
+        .limit(1)
+        .correlate(Application)
+        .scalar_subquery()
+    )
+    latest_interview_date = (
+        select(Interview.interview_date)
+        .where(Interview.application_id == Application.id)
+        .order_by(Interview.id.desc())
+        .limit(1)
+        .correlate(Application)
+        .scalar_subquery()
+    )
+    # Repair legacy/in-flight records as well: a completed latest interview
+    # belongs to round 3, where HR makes the actual hiring decision.
+    moved_to_decision = await db.execute(
+        update(Application)
+        .where(
+            Application.status == "interviewing",
+            latest_interview_status == "completed",
+        )
+        .values(status="offered", public_status="shortlisted")
+    )
+    if moved_to_decision.rowcount:
+        await db.commit()
+
     base_query = (
         select(Application)
         .options(
@@ -843,10 +901,16 @@ async def list_interviewing_applications(
             selectinload(Application.interviews),
         )
         .where(Application.status == "interviewing")
+        .where(latest_interview_date.is_not(None))
+        .where(latest_interview_status == "scheduled")
     )
 
     count_q = select(func.count()).select_from(
-        select(Application.id).where(Application.status == "interviewing").subquery()
+        select(Application.id).where(
+            Application.status == "interviewing",
+            latest_interview_date.is_not(None),
+            latest_interview_status == "scheduled",
+        ).subquery()
     )
     total = (await db.execute(count_q)).scalar() or 0
 

@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import RedirectResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -38,6 +39,10 @@ app = FastAPI(
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
 )
+
+# Compress JSON and other sizeable responses before they cross the network.
+# Small responses stay uncompressed to avoid wasting CPU on negligible gains.
+app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
 
 # Build CORS origins list, filtering empty strings
 cors_origins = [

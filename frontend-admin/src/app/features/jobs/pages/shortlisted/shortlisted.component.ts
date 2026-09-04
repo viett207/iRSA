@@ -39,7 +39,8 @@ import { AiEvaluationModalComponent } from '../../components/ai-evaluation-modal
 import { CompareCandidatesModalComponent } from '../../components/compare-candidates-modal.component';
 import { CvJdCompareModalComponent } from '../../components/cv-jd-compare-modal.component';
 import { InterviewScheduleModalComponent } from '../../components/interview-schedule-modal.component';
-import { InterviewChatModalComponent } from '../../components/interview-chat-modal.component';
+import { MissedInterviewActionModalComponent } from '../../components/missed-interview-action-modal.component';
+import { ChatDockService } from '../../../../core/services/chat-dock.service';
 
 export interface JobApplicantGroup {
   jobId: number;
@@ -128,6 +129,7 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
   searchQuery = signal('');
   selectedJobFilter = signal<number | null>(null);
   scheduleFilter = signal<'all' | 'scheduled' | 'unscheduled'>('all');
+  confirmationFilter = signal<'all' | 'pending' | 'accepted' | 'declined' | 'reschedule_requested'>('all');
   aiPriorityFilter = signal<'all' | 'attention'>('all');
   questionFilter = signal<'all' | 'needs-preparation' | 'ready'>('all');
   quickViewApplicationId = signal<number | null>(null);
@@ -152,6 +154,18 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
   compareSelected = new Set<number>();
 
   scoreFormat = (percent: number): string => `${Math.round(percent)}`;
+  private readonly compactCountFormatter = new Intl.NumberFormat('en', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  });
+
+  formatCompactCount(value: number): string {
+    return value < 1_000 ? String(value) : this.compactCountFormatter.format(value);
+  }
+
+  formatExactCount(value: number, label: string): string {
+    return `${value.toLocaleString('vi-VN')} ${label}`;
+  }
 
   // KPI Metrics
   scheduledCount = computed(() => this.applicants().filter(
@@ -159,6 +173,11 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
   ).length);
   unscheduledCount = computed(() => this.applicants().filter(
     (a) => a.interview_date == null || a.interview_status === 'cancelled'
+  ).length);
+  pendingConfirmationCount = computed(() => this.applicants().filter(
+    (a) => a.interview_date != null
+      && a.interview_status !== 'cancelled'
+      && (!a.candidate_response || a.candidate_response === 'pending')
   ).length);
   selectedWorkspaceApplicant = computed(() => {
     const id = this.workspaceApplicantId();
@@ -178,6 +197,7 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     const q = this.searchQuery().trim().toLowerCase();
     const jf = this.selectedJobFilter();
     const sf = this.scheduleFilter();
+    const cf = this.confirmationFilter();
     const af = this.aiPriorityFilter();
     const qf = this.questionFilter();
 
@@ -188,6 +208,15 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
       list = list.filter((a) => a.interview_date != null && a.interview_status !== 'cancelled');
     } else if (sf === 'unscheduled') {
       list = list.filter((a) => a.interview_date == null || a.interview_status === 'cancelled');
+    }
+    if (cf === 'pending') {
+      list = list.filter((a) =>
+        a.interview_date != null
+        && a.interview_status !== 'cancelled'
+        && (!a.candidate_response || a.candidate_response === 'pending')
+      );
+    } else if (cf !== 'all') {
+      list = list.filter((a) => a.candidate_response === cf);
     }
     if (af === 'attention') {
       list = list.filter((a) => this.needsReview(a));
@@ -306,6 +335,7 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     private sanitizer: DomSanitizer,
     private router: Router,
     public authService: AuthService,
+    private chatDockService: ChatDockService,
   ) {}
 
   ngOnInit(): void {
@@ -411,6 +441,7 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     return !!this.searchQuery().trim()
       || this.selectedJobFilter() !== null
       || this.scheduleFilter() !== 'all'
+      || this.confirmationFilter() !== 'all'
       || this.aiPriorityFilter() !== 'all'
       || this.questionFilter() !== 'all'
       || this.sortBy !== 'date';
@@ -420,6 +451,7 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     this.searchQuery.set('');
     this.selectedJobFilter.set(null);
     this.scheduleFilter.set('all');
+    this.confirmationFilter.set('all');
     this.aiPriorityFilter.set('all');
     this.questionFilter.set('all');
     if (this.sortBy !== 'date') {
@@ -931,40 +963,48 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     if (!app.interview_date) return 'Chưa xếp lịch';
     if (app.interview_status === 'completed') return 'Đã hoàn thành';
     if (app.interview_status === 'cancelled' || app.candidate_response === 'declined') return 'Đã từ chối / Hủy';
+    if (app.candidate_response === 'reschedule_requested') return 'Yêu cầu đổi lịch';
     if (app.candidate_response === 'accepted') return 'Ứng viên đã xác nhận';
     return 'Chờ ứng viên xác nhận';
+  }
+
+  getQueueScheduleStatusLabel(app: ShortlistedApplicant): string {
+    return this.getScheduleStatusClass(app) === 'pending-confirmation'
+      ? 'Chờ xác nhận'
+      : this.getScheduleStatusLabel(app);
   }
 
   getScheduleStatusClass(app: ShortlistedApplicant): string {
     if (!app.interview_date) return 'unscheduled';
     if (app.interview_status === 'completed') return 'completed';
     if (app.interview_status === 'cancelled' || app.candidate_response === 'declined') return 'cancelled';
+    if (app.candidate_response === 'reschedule_requested') return 'reschedule-requested';
     if (app.candidate_response === 'accepted') return 'confirmed';
     return 'pending-confirmation';
   }
 
   openCandidateChat(app: ShortlistedApplicant): void {
-    const modalRef = this.modal.create({
-      nzTitle: undefined,
-      nzContent: InterviewChatModalComponent,
-      nzFooter: null,
-      nzWidth: 640,
-    });
-    const instance = modalRef.componentInstance;
-    if (instance) {
-      instance.appId = app.id;
-      instance.candidateName = app.candidate_name;
-      instance.jobTitle = app.job_title;
-      instance.candidateResponse = app.candidate_response;
-      instance.interviewDate = app.interview_date || undefined;
-    }
-    modalRef.afterClose.subscribe(() => {
-      this.loadShortlisted();
+    this.chatDockService.openChat({
+      application_id: app.id,
+      candidate_name: app.candidate_name,
+      candidate_email: app.candidate_email,
+      job_id: app.job_id,
+      job_title: app.job_title,
+      interview_date: app.interview_date,
+      interview_location: app.interview_location,
+      interview_notes: app.interview_notes,
+      candidate_response: app.candidate_response,
+      unread_count: 0,
     });
   }
 
   canEnterInterview(app: ShortlistedApplicant): boolean {
     return this.isRoomOpen(app.interview_date, app.interview_status);
+  }
+
+  isInterviewMissed(app: ShortlistedApplicant): boolean {
+    if (!app.interview_date || app.interview_status === 'cancelled' || app.interview_status === 'completed') return false;
+    return this.currentTime() > new Date(app.interview_date).getTime() + 120 * 60_000;
   }
 
   getInterviewActionHint(app: ShortlistedApplicant): string {
@@ -1088,6 +1128,32 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
       if (res) {
         this.persistWorkspaceQuestions(app);
       }
+    });
+  }
+
+  manageInterviewSchedule(app: ShortlistedApplicant): void {
+    if (!this.isInterviewMissed(app)) {
+      this.openScheduleInterview(app);
+      return;
+    }
+
+    const modalRef = this.modal.create({
+      nzTitle: undefined,
+      nzContent: MissedInterviewActionModalComponent,
+      nzData: {
+        candidateName: app.candidate_name,
+        jobTitle: app.job_title,
+        interviewDate: app.interview_date,
+        interviewType: app.interview_type,
+      },
+      nzFooter: null,
+      nzWidth: 560,
+      nzCentered: true,
+    });
+
+    modalRef.afterClose.subscribe((action) => {
+      if (action === 'reschedule') this.openScheduleInterview(app);
+      if (action === 'reject') this.updateStatus(app, 'rejected');
     });
   }
 

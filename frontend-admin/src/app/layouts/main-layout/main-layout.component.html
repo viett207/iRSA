@@ -78,7 +78,7 @@
             </li>
             <li nz-menu-item [nzSelected]="isRouteActive('/jobs/interview-passed')" [class.menu-item--active]="isRouteActive('/jobs/interview-passed')" routerLink="/jobs/interview-passed" class="submenu-item">
               <span nz-icon nzType="trophy" nzTheme="outline"></span>
-              <span>3. Đạt phỏng vấn</span>
+              <span>3. Chốt tuyển dụng</span>
             </li>
           </ul>
         </li>
@@ -152,15 +152,64 @@
           />
           <kbd aria-hidden="true">⌘K</kbd>
         </label>
+        <div
+          class="header-action message-trigger"
+          nz-dropdown
+          [nzDropdownMenu]="messageMenu"
+          nzTrigger="click"
+          (click)="loadConversations()"
+          nz-tooltip
+          nzTooltipTitle="Tin nhắn ứng viên"
+        >
+          <nz-badge [nzCount]="unreadMessageCount()" [nzOverflowCount]="99">
+            <span nz-icon nzType="message" nzTheme="outline"></span>
+          </nz-badge>
+        </div>
+
+        <nz-dropdown-menu #messageMenu="nzDropdownMenu">
+          <div class="message-dropdown">
+            <div class="message-dropdown__header">
+              <div><strong>Tin nhắn ứng viên</strong><span>{{ unreadMessageCount() }} chưa đọc</span></div>
+              <div class="message-dropdown__actions">
+                @if (conversationSelectionMode()) {
+                  <button type="button" (click)="toggleConversationSelectionMode()">Hủy</button>
+                  <button type="button" class="danger" [disabled]="selectedConversationIds().length === 0" (click)="deleteSelectedConversations()">Xóa {{ selectedConversationIds().length || '' }}</button>
+                } @else {
+                  <button type="button" (click)="toggleConversationSelectionMode()">Chọn</button>
+                  @if (conversations().length) { <button type="button" class="danger" (click)="deleteAllConversations()">Xóa tất cả</button> }
+                  <button type="button" (click)="loadConversations()" aria-label="Làm mới tin nhắn">Làm mới</button>
+                }
+              </div>
+            </div>
+            <div class="message-conversation-list">
+              @for (conversation of conversations(); track conversation.application_id) {
+                <button type="button" class="message-conversation" [class.unread]="conversation.unread_count > 0" [class.selected]="selectedConversationIds().includes(conversation.application_id)" (click)="handleConversationClick(conversation)">
+                  @if (conversationSelectionMode()) {
+                    <span class="message-selection-indicator" aria-hidden="true">{{ selectedConversationIds().includes(conversation.application_id) ? '✓' : '' }}</span>
+                  }
+                  <span class="message-conversation__avatar">{{ conversation.candidate_name.charAt(0).toUpperCase() }}</span>
+                  <span class="message-conversation__body">
+                    <span><strong>{{ conversation.candidate_name }}</strong>@if (conversation.unread_count > 0) { <b>{{ conversation.unread_count > 99 ? '99+' : conversation.unread_count }}</b> }</span>
+                    <small>{{ conversation.job_title }}</small>
+                    <em>{{ conversation.latest_message?.content || 'Chưa có nội dung trao đổi' }}</em>
+                  </span>
+                </button>
+              } @empty {
+                <div class="message-conversation-empty">{{ conversationsLoading() ? 'Đang tải hội thoại...' : 'Chưa có hội thoại với ứng viên' }}</div>
+              }
+            </div>
+          </div>
+        </nz-dropdown-menu>
         <!-- Notifications -->
         <div
           class="header-action notification-trigger"
           [class.has-unread]="notificationSvc.unreadCount() > 0"
+          [class.is-muted]="notificationSvc.notificationsMuted()"
           nz-dropdown
           [nzDropdownMenu]="notificationMenu"
           nzTrigger="click"
           nz-tooltip
-          nzTooltipTitle="Thông báo"
+          [nzTooltipTitle]="notificationSvc.notificationsMuted() ? 'Thông báo đang tắt' : 'Thông báo'"
         >
           <nz-badge [nzCount]="notificationSvc.unreadCount()" [nzOverflowCount]="9">
             <span nz-icon nzType="bell" nzTheme="outline"></span>
@@ -171,9 +220,23 @@
           <div class="notification-dropdown">
             <div class="notification-header">
               <span>Thông báo</span>
-              <a (click)="notificationSvc.markAllAsRead()">Đánh dấu đã đọc</a>
+              <div class="notification-header-actions">
+                @if (!notificationSvc.notificationsMuted()) {
+                  <button type="button" (click)="notificationSvc.markAllAsRead()">Đánh dấu đã đọc</button>
+                }
+                <button type="button" class="notification-toggle" (click)="toggleNotifications()">
+                  {{ notificationSvc.notificationsMuted() ? 'Bật thông báo' : 'Tắt thông báo' }}
+                </button>
+              </div>
             </div>
             <div class="notification-list">
+              @if (notificationSvc.notificationsMuted()) {
+                <div class="notification-muted-state">
+                  <span nz-icon nzType="bell" aria-hidden="true"></span>
+                  <strong>Thông báo đang tắt</strong>
+                  <small>Tin nhắn ứng viên vẫn hoạt động bình thường.</small>
+                </div>
+              }
               @for (notif of notificationSvc.notifications(); track notif.id) {
                 <div class="notification-item" [class.unread]="!notif.is_read"
                   (click)="onNotificationClick(notif)">
@@ -183,7 +246,7 @@
                   </div>
                 </div>
               }
-              @if (notificationSvc.notifications().length === 0) {
+              @if (!notificationSvc.notificationsMuted() && notificationSvc.notifications().length === 0) {
                 <div class="notification-empty">
                   Không có thông báo
                 </div>
@@ -226,11 +289,6 @@
                 </div>
               </div>
             </li>
-            <li nz-menu-divider></li>
-            <li nz-menu-item (click)="logout()" class="logout-item">
-              <span nz-icon nzType="logout" nzTheme="outline"></span>
-              Đăng xuất
-            </li>
           </ul>
         </nz-dropdown-menu>
       </div>
@@ -243,4 +301,36 @@
       </div>
     </nz-content>
   </nz-layout>
+
+  @if (openChats().length) {
+    <aside class="chat-dock" aria-label="Các cuộc trò chuyện đang mở">
+      @for (chat of openChats(); track chat.application_id) {
+        <app-interview-chat-modal
+          class="chat-dock__window"
+          [appId]="chat.application_id"
+          [candidateName]="chat.candidate_name"
+          [jobTitle]="chat.job_title"
+          [candidateResponse]="chat.candidate_response || 'pending'"
+          [interviewDate]="chat.interview_date || undefined"
+          [dockMode]="true"
+          (chatClosed)="closeChat(chat.application_id)"
+          (chatMinimized)="minimizeChat(chat)"
+        ></app-interview-chat-modal>
+      }
+    </aside>
+  }
+
+  @if (openChats().length || minimizedChats().length) {
+    <aside class="chat-minimized-rail" aria-label="Các cuộc trò chuyện đã thu nhỏ">
+      @for (chat of minimizedChats(); track chat.application_id) {
+        <button type="button" class="chat-minimized-avatar" (click)="restoreChat(chat)" [attr.aria-label]="'Mở lại hội thoại với ' + chat.candidate_name" [attr.title]="chat.candidate_name">
+          {{ chat.candidate_name.charAt(0).toUpperCase() }}
+          @if (chat.unread_count > 0) { <span>{{ chat.unread_count > 9 ? '9+' : chat.unread_count }}</span> }
+        </button>
+      }
+      <button type="button" class="chat-close-all" (click)="closeAllChats()" aria-label="Đóng tất cả cửa sổ trò chuyện" title="Đóng tất cả">
+        <span nz-icon nzType="close" aria-hidden="true"></span>
+      </button>
+    </aside>
+  }
 </nz-layout>

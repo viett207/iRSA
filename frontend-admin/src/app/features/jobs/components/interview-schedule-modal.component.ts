@@ -13,6 +13,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
+import { NzRadioModule } from 'ng-zorro-antd/radio';
 
 import { JobService } from '../services/job.service';
 import { Interview, InterviewCreateRequest } from '../models/job.model';
@@ -33,6 +34,7 @@ import { Interview, InterviewCreateRequest } from '../models/job.model';
     NzEmptyModule,
     NzSpinModule,
     NzPopconfirmModule,
+    NzRadioModule,
   ],
   templateUrl: './interview-schedule-modal.component.html',
   styleUrl: './interview-schedule-modal.component.scss',
@@ -117,7 +119,8 @@ export class InterviewScheduleModalComponent implements OnInit {
             this.form.notes = latest.notes;
           }
           if (latest.interview_type) {
-            this.form.interview_type = latest.interview_type;
+            const raw = String(latest.interview_type).trim().toLowerCase();
+            this.form.interview_type = raw === 'offline' ? 'offline' : 'online';
           }
         } else {
           this.interviews = [];
@@ -126,6 +129,10 @@ export class InterviewScheduleModalComponent implements OnInit {
       },
       error: () => { this.loading = false; },
     });
+  }
+
+  setInterviewType(type: 'online' | 'offline'): void {
+    this.form.interview_type = type;
   }
 
   submit(): void {

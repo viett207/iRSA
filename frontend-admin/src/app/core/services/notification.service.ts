@@ -30,6 +30,8 @@ export class NotificationService implements OnDestroy {
   notifications = signal<AppNotification[]>([]);
   /** Unread count for badge */
   unreadCount = signal(0);
+  /** Mutes system notifications without disconnecting chat messages. */
+  notificationsMuted = signal(false);
   /** Emits notification type when new data arrives — pages subscribe to auto-reload */
   dataChanged$ = new Subject<AppNotification>();
   /** Real-time chat messages stream */
@@ -39,8 +41,19 @@ export class NotificationService implements OnDestroy {
 
   /** Connect WebSocket and load initial notifications. Call after login. */
   connect(): void {
-    this.loadNotifications();
+    if (!this.notificationsMuted()) this.loadNotifications();
     this.connectWebSocket();
+  }
+
+  setNotificationsMuted(muted: boolean): void {
+    if (this.notificationsMuted() === muted) return;
+    this.notificationsMuted.set(muted);
+    if (muted) {
+      this.notifications.set([]);
+      this.unreadCount.set(0);
+    } else {
+      this.loadNotifications();
+    }
   }
 
   /** Disconnect WebSocket. Call on logout. */
@@ -126,11 +139,13 @@ export class NotificationService implements OnDestroy {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'init') {
-          this.unreadCount.set(data.unread_count);
+          if (!this.notificationsMuted()) this.unreadCount.set(data.unread_count);
         } else if (data.type === 'notification') {
           const notif: AppNotification = data.notification;
-          this.notifications.update((list) => [notif, ...list]);
-          this.unreadCount.update((c) => c + 1);
+          if (!this.notificationsMuted()) {
+            this.notifications.update((list) => [notif, ...list]);
+            this.unreadCount.update((c) => c + 1);
+          }
           // Notify pages to reload their data
           this.dataChanged$.next(notif);
         } else if (data.type === 'chat_message') {

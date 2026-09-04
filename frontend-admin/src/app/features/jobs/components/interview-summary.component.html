@@ -41,26 +41,15 @@
   <section class="decision-panel">
     <header>
       <div>
-        <span>QUYẾT ĐỊNH CỦA HR</span>
-        <h3>Chọn bước tiếp theo cho {{ data()!.candidate.name }}</h3>
+        <span>BƯỚC TIẾP THEO</span>
+        <h3>Đã chuyển {{ data()!.candidate.name }} sang Vòng 3</h3>
       </div>
-      <small>Quyết định sẽ cập nhật trạng thái hồ sơ ngay sau khi xác nhận.</small>
+      <small>Việc hoàn tất phỏng vấn chưa đồng nghĩa với tuyển ứng viên.</small>
     </header>
 
     <div class="decision-options">
       <article class="decision-option primary-option">
-        <div><strong>Đạt phỏng vấn</strong><p>Chuyển hồ sơ sang trang Chốt tuyển dụng để hoàn tất quyết định tuyển.</p></div>
-        <button nz-button nzType="primary" nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên đạt phỏng vấn và chuyển sang bước chốt tuyển dụng?" (nzOnConfirm)="updateApplicationStatus('offered')">Chuyển sang chốt tuyển</button>
-      </article>
-
-      <article class="decision-option">
-        <div><strong>Cần xem xét thêm</strong><p>Đưa hồ sơ về danh sách sơ tuyển để HR đánh giá hoặc sắp xếp lại.</p></div>
-        <button nz-button nz-popconfirm nzPopconfirmTitle="Đưa ứng viên quay lại danh sách sơ tuyển?" (nzOnConfirm)="updateApplicationStatus('shortlisted')">Quay lại sơ tuyển</button>
-      </article>
-
-      <article class="decision-option danger-option">
-        <div><strong>Không đạt phỏng vấn</strong><p>Kết thúc quy trình của ứng viên tại vị trí tuyển dụng này.</p></div>
-        <button nz-button nzDanger nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên không đạt phỏng vấn?" (nzOnConfirm)="updateApplicationStatus('rejected')">Xác nhận không đạt</button>
+        <div><strong>Chờ HR chốt quyết định</strong><p>Biên bản và kết quả AI đã được chuyển sang trang Chốt tuyển dụng. HR sẽ kiểm tra lại để quyết định tuyển hoặc không tuyển.</p></div>
       </article>
     </div>
   </section>

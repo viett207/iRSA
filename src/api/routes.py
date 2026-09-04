@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
-from src.agents.graph import agent_graph
-from src.services.agent_service import run_evaluation_agent
-from src.models.schemas import AgentEvaluationRequest
+
+class AgentEvaluationRequest(BaseModel):
+    application_id: int
 
 router = APIRouter()
 
@@ -10,6 +11,11 @@ router = APIRouter()
 @router.post("/evaluate")
 async def evaluate_candidate_agent(request: AgentEvaluationRequest):
     """Trigger the LangGraph AI Evaluation Agent for a candidate application."""
+    # Import the AI graph only when this expensive endpoint is used. Loading it
+    # during FastAPI startup adds several seconds to every cold start, including
+    # ordinary list/detail API traffic that never uses the agent.
+    from src.services.agent_service import run_evaluation_agent
+
     res = await run_evaluation_agent(None, request.application_id)
 
     if not res:
@@ -25,10 +31,9 @@ async def evaluate_candidate_agent(request: AgentEvaluationRequest):
 @router.get("/status")
 async def agent_status():
     """Check AI Evaluation Agent status & graph nodes."""
-    nodes = list(agent_graph.nodes.keys()) if hasattr(agent_graph, "nodes") else ["extractor", "evaluator", "question_gen", "verifier"]
     return {
         "status": "ready",
         "agent": "LangGraph AI CV Evaluation Agent v2.0",
         "architecture": "Hybrid Vector + LLM Deep Evaluation + Self-Reflection",
-        "nodes": nodes,
+        "nodes": ["extractor", "evaluator", "question_gen", "verifier"],
     }

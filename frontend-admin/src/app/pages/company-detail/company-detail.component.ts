@@ -1,11 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
-import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
 import { NzTagModule } from 'ng-zorro-antd/tag';
@@ -18,6 +17,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CompanyOverview } from '../companies/models/company-api.model';
 import { VIETNAMESE_PROVINCES } from '../../shared/constants/vietnamese-provinces';
 import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industries';
+import { CompanyJobsPanelComponent } from './company-jobs-panel.component';
 
 @Component({
   selector: 'app-company-detail',
@@ -27,7 +27,6 @@ import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industr
     RouterLink,
     NzButtonModule,
     NzCardModule,
-    NzEmptyModule,
     NzIconModule,
     NzSkeletonModule,
     NzTagModule,
@@ -35,9 +34,11 @@ import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industr
     NzSelectModule,
     NzFormModule,
     ReactiveFormsModule,
+    CompanyJobsPanelComponent,
   ],
   templateUrl: './company-detail.component.html',
   styleUrl: './company-detail.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CompanyDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -169,30 +170,4 @@ export class CompanyDetailComponent implements OnInit {
     return data.company.description?.trim() || this.getCompanySummary(data);
   }
 
-  getStatusColor(status: string): string {
-    return {
-      draft: 'default',
-      pending_approval: 'orange',
-      approved: 'blue',
-      rejected: 'red',
-      active: 'green',
-      closed: 'default',
-    }[status] || 'default';
-  }
-
-  getStatusLabel(status: string): string {
-    return {
-      draft: 'Nháp',
-      pending_approval: 'Chờ duyệt',
-      approved: 'Đã duyệt',
-      rejected: 'Từ chối',
-      active: 'Đang tuyển',
-      closed: 'Đã đóng',
-    }[status] || status;
-  }
-
-  formatDate(value: string): string {
-    return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
-      .format(new Date(value));
-  }
 }

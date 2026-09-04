@@ -356,7 +356,7 @@
   background: #f5f3ed;
   color: #65656d;
   border-bottom-color: #e4dfd3;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -389,7 +389,7 @@
 
 .job-title-link {
   min-width: 0;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: #27272a;
   text-decoration: none;
@@ -411,7 +411,7 @@
   border-radius: 999px;
   background: #efede8;
   color: #686870;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   line-height: 1.2;
   white-space: nowrap;
@@ -430,7 +430,7 @@
   align-items: center;
   gap: 0;
   flex-wrap: wrap;
-  font-size: 12px;
+  font-size: 13px;
 
   > * + * {
     margin-left: 9px;
@@ -447,7 +447,7 @@
   background: transparent;
   color: #71717a;
   border-radius: 0;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
 
@@ -512,7 +512,7 @@
   strong {
     color: #3f3f46;
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
     white-space: nowrap;
   }
@@ -520,7 +520,7 @@
   span {
     margin-top: 3px;
     color: #9a9aa1;
-    font-size: 12px;
+    font-size: 13px;
   }
 }
 
@@ -535,7 +535,7 @@
   strong {
     color: #343438;
     font-family: var(--font-mono);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     line-height: 1.2;
   }
@@ -543,7 +543,7 @@
   span {
     margin-top: 2px;
     color: #8b8b93;
-    font-size: 12px;
+    font-size: 13px;
   }
 
   &:hover strong { color: #72561f; }
@@ -565,7 +565,7 @@
 }
 
 .creator-name {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--color-text-secondary);
   font-weight: 500;
   overflow: hidden;
@@ -581,7 +581,7 @@
   time {
     margin-top: 2px;
     color: #9a9aa1;
-    font-size: 12px;
+    font-size: 13px;
   }
 }
 

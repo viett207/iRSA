@@ -42,18 +42,27 @@ class CompanyService:
         if location:
             query = query.where(Company.location == location)
 
-        # Total count
-        count_query = select(func.count()).select_from(query.subquery())
-        total = (await self.db.execute(count_query)).scalar() or 0
-
-        # Paginate
+        # Return the page and its total in one database round trip. This matters
+        # when the API and PostgreSQL are hosted in different networks.
         offset = (page - 1) * page_size
-        query = query.offset(offset).limit(page_size).order_by(
-            Company.created_at.desc()
-        )
+        filtered_query = query
+        query = filtered_query.add_columns(
+            func.count().over().label("total_count")
+        ).order_by(
+            Company.created_at.desc(), Company.id.desc()
+        ).offset(offset).limit(page_size)
 
-        result = await self.db.execute(query)
-        companies = result.scalars().all()
+        rows = (await self.db.execute(query)).all()
+        companies = [row[0] for row in rows]
+        total = rows[0].total_count if rows else 0
+
+        # A stale/out-of-range page should still report the real total so the
+        # client can recover its paginator. Normal requests use one query.
+        if not rows and page > 1:
+            count_query = select(func.count()).select_from(
+                filtered_query.with_only_columns(Company.id).subquery()
+            )
+            total = (await self.db.execute(count_query)).scalar() or 0
 
         return CompanyList(
             items=[CompanyResponse.model_validate(c) for c in companies],
@@ -80,33 +89,41 @@ class CompanyService:
             .join(User, Job.created_by == User.id)
             .where(User.company_code == company.company_code)
         )
-        total_jobs = await self.db.scalar(
-            select(func.count()).select_from(company_job_ids.subquery())
-        ) or 0
-        active_jobs = await self.db.scalar(
-            select(func.count(Job.id)).where(
-                Job.id.in_(company_job_ids),
-                Job.is_published.is_(True),
+        total_jobs_query = select(func.count()).select_from(
+            company_job_ids.subquery()
+        ).scalar_subquery()
+        active_jobs_query = select(func.count(Job.id)).where(
+            Job.id.in_(company_job_ids),
+            Job.is_published.is_(True),
+        ).scalar_subquery()
+        total_applications_query = select(func.count(Application.id)).where(
+            Application.job_id.in_(company_job_ids)
+        ).scalar_subquery()
+        in_progress_applications_query = select(func.count(Application.id)).where(
+            Application.job_id.in_(company_job_ids),
+            Application.status.not_in(("hired", "rejected")),
+        ).scalar_subquery()
+        hr_members_query = select(func.count(User.id)).where(
+            User.company_code == company.company_code,
+            User.role.in_(("admin", "leader", "recruiter")),
+            User.is_active.is_(True),
+        ).scalar_subquery()
+        stats = (
+            await self.db.execute(
+                select(
+                    total_jobs_query.label("total_jobs"),
+                    active_jobs_query.label("active_jobs"),
+                    total_applications_query.label("total_applications"),
+                    in_progress_applications_query.label("in_progress_applications"),
+                    hr_members_query.label("hr_members"),
+                )
             )
-        ) or 0
-        total_applications = await self.db.scalar(
-            select(func.count(Application.id)).where(
-                Application.job_id.in_(company_job_ids)
-            )
-        ) or 0
-        in_progress_applications = await self.db.scalar(
-            select(func.count(Application.id)).where(
-                Application.job_id.in_(company_job_ids),
-                Application.status.not_in(("hired", "rejected")),
-            )
-        ) or 0
-        hr_members = await self.db.scalar(
-            select(func.count(User.id)).where(
-                User.company_code == company.company_code,
-                User.role.in_(("admin", "leader", "recruiter")),
-                User.is_active.is_(True),
-            )
-        ) or 0
+        ).one()
+        total_jobs = stats.total_jobs or 0
+        active_jobs = stats.active_jobs or 0
+        total_applications = stats.total_applications or 0
+        in_progress_applications = stats.in_progress_applications or 0
+        hr_members = stats.hr_members or 0
 
         application_count = (
             select(func.count(Application.id))
@@ -334,7 +351,29 @@ class CompanyService:
         location: str | None = None,
     ) -> PublicCompanyListResponse:
         """Get paginated public list of companies with active job counts."""
-        query = select(Company)
+        active_job_counts = (
+            select(
+                User.company_code.label("company_code"),
+                func.count(Job.id).label("active_jobs_count"),
+            )
+            .join(Job, Job.created_by == User.id)
+            .where(
+                (Job.is_published.is_(True))
+                | (Job.status.in_(["published", "active", "approved"]))
+            )
+            .group_by(User.company_code)
+            .subquery()
+        )
+        query = select(
+            Company,
+            func.coalesce(active_job_counts.c.active_jobs_count, 0).label(
+                "active_jobs_count"
+            ),
+            func.count().over().label("total_count"),
+        ).outerjoin(
+            active_job_counts,
+            active_job_counts.c.company_code == Company.company_code,
+        )
 
         if search:
             query = query.where(
@@ -346,30 +385,23 @@ class CompanyService:
         if location:
             query = query.where(Company.location == location)
 
-        count_query = select(func.count()).select_from(query.subquery())
-        total = (await self.db.execute(count_query)).scalar() or 0
-
         offset = (page - 1) * page_size
-        query = query.offset(offset).limit(page_size).order_by(Company.company_name.asc())
-
-        result = await self.db.execute(query)
-        companies = result.scalars().all()
-
-        # Get active job counts for the fetched companies
-        job_counts: dict[str, int] = {}
-        if companies:
-            codes = [c.company_code for c in companies]
-            active_jobs_stmt = (
-                select(User.company_code, func.count(Job.id))
-                .join(Job, Job.created_by == User.id)
-                .where(
-                    User.company_code.in_(codes),
-                    (Job.is_published == True) | (Job.status.in_(["published", "active", "approved"])),
-                )
-                .group_by(User.company_code)
+        rows = (
+            await self.db.execute(
+                query.order_by(Company.company_name.asc(), Company.id.asc())
+                .offset(offset)
+                .limit(page_size)
             )
-            count_rows = (await self.db.execute(active_jobs_stmt)).all()
-            job_counts = {r[0]: r[1] for r in count_rows}
+        ).all()
+        total = rows[0].total_count if rows else 0
+        if not rows and page > 1:
+            total = (
+                await self.db.execute(
+                    select(func.count()).select_from(
+                        query.with_only_columns(Company.id).subquery()
+                    )
+                )
+            ).scalar() or 0
 
         items = [
             PublicCompanyItem(
@@ -379,10 +411,10 @@ class CompanyService:
                 location=c.location,
                 industry=c.industry,
                 description=f"Doanh nghiệp hoạt động tại {c.location}" if c.location else None,
-                active_jobs_count=job_counts.get(c.company_code, 0),
+                active_jobs_count=active_jobs_count,
                 created_at=c.created_at,
             )
-            for c in companies
+            for c, active_jobs_count, _ in rows
         ]
 
         return PublicCompanyListResponse(

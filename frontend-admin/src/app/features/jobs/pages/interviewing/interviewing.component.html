@@ -97,7 +97,7 @@
 @if (!entryCandidate() && !activeRoomCandidate()) {
   <section class="operations-overview">
     <div class="overview-metrics">
-      <button type="button" [class.active]="stageFilter() === 'all'" (click)="setStageFilter('all')">
+      <button type="button" [class.active]="stageFilter() === 'all' && scheduleRange() === 'all'" (click)="showAll()">
         <span>Đang theo dõi</span><strong>{{ total() }}</strong><small>Tất cả hồ sơ vòng phỏng vấn</small>
       </button>
       <button type="button" [class.active]="scheduleRange() === 'today'" (click)="showToday()">
@@ -105,9 +105,6 @@
       </button>
       <button type="button" [class.active]="stageFilter() === 'open'" (click)="setStageFilter('open')">
         <span>Phòng đang mở</span><strong>{{ openRoomCount() }}</strong><small>Có thể bắt đầu ngay</small>
-      </button>
-      <button type="button" [class.active]="stageFilter() === 'decision'" (click)="setStageFilter('decision')">
-        <span>Chờ chốt kết quả</span><strong>{{ pendingDecisionCount() }}</strong><small>Đã hoàn thành phỏng vấn</small>
       </button>
     </div>
 
@@ -142,13 +139,13 @@
     </div>
     <div class="filter-field">
       <label for="interview-range">Thời gian phỏng vấn</label>
-      <select id="interview-range" [ngModel]="scheduleRange()" (ngModelChange)="setScheduleRange($event)">
-        <option value="all">Tất cả thời gian</option>
-        <option value="today">Hôm nay</option>
-        <option value="7days">7 ngày tới</option>
-        <option value="30days">30 ngày tới</option>
-        <option value="custom">Tùy chọn ngày</option>
-      </select>
+      <nz-date-picker
+        id="interview-range"
+        nzFormat="dd/MM/yyyy"
+        nzPlaceHolder="Chọn ngày phỏng vấn"
+        [ngModel]="selectedInterviewDate()"
+        (ngModelChange)="setInterviewDate($event)"
+      ></nz-date-picker>
     </div>
     <div class="filter-field">
       <label for="interview-stage">Trạng thái xử lý</label>
@@ -156,17 +153,9 @@
         <option value="all">Tất cả trạng thái</option>
         <option value="open">Phòng đang mở</option>
         <option value="upcoming">Sắp diễn ra</option>
-        <option value="decision">Chờ chốt kết quả</option>
         <option value="missed">Đã quá giờ</option>
-        <option value="unscheduled">Chưa có lịch</option>
       </select>
     </div>
-    @if (scheduleRange() === 'custom') {
-      <div class="custom-date-range">
-        <div class="filter-field"><label for="interview-from">Từ ngày</label><input id="interview-from" type="date" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event); page = 1" /></div>
-        <div class="filter-field"><label for="interview-to">Đến ngày</label><input id="interview-to" type="date" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event); page = 1" /></div>
-      </div>
-    }
     <div class="filter-actions"><span>{{ filteredApplicants().length }} hồ sơ</span><button type="button" (click)="resetFilters()">Đặt lại</button></div>
   </section>
 
@@ -191,8 +180,8 @@
         <tr>
           <th nzWidth="27%">Ứng viên & vị trí</th>
           <th nzWidth="18%">Lịch phỏng vấn</th>
-          <th nzWidth="16%">Câu hỏi AI</th>
-          <th nzWidth="15%">Trạng thái</th>
+          <th nzWidth="17%">Câu hỏi AI</th>
+          <th nzWidth="14%">Trạng thái</th>
           <th nzWidth="24%">Hành động tiếp theo</th>
         </tr>
       </thead>
@@ -216,20 +205,13 @@
             <td><span class="stage-badge" [attr.data-stage]="getInterviewStage(app)">{{ getInterviewStageLabel(app) }}</span></td>
             <td>
               <div class="row-actions">
-                @if (canManageInterview(app) && app.has_completed_interview) {
-                  <button nz-button nzType="primary"
-                    nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên đạt phỏng vấn và chuyển sang đề xuất tuyển dụng?"
-                    (nzOnConfirm)="updateStatus(app, 'offered')"
-                    [disabled]="transitioningApplicationId() !== null">Đạt phỏng vấn</button>
-                  <button nz-button nzDanger
-                    nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên không đạt phỏng vấn?"
-                    (nzOnConfirm)="updateStatus(app, 'rejected')"
-                    [disabled]="transitioningApplicationId() !== null">Không đạt</button>
-                } @else if (canManageInterview(app) && canEnterInterview(app)) {
+                @if (canManageInterview(app) && canEnterInterview(app)) {
                   <button nz-button nzType="primary" (click)="openInterviewRoom(app)">Vào phòng AI</button>
                   <button nz-button (click)="openScheduleInterview(app)">Đổi lịch</button>
+                } @else if (canManageInterview(app) && getInterviewStage(app) === 'missed') {
+                  <button nz-button (click)="openMissedInterviewActions(app)">Quản lý lịch</button>
                 } @else if (canManageInterview(app)) {
-                  <button nz-button (click)="openScheduleInterview(app)">Xem hoặc đổi lịch</button>
+                  <button nz-button (click)="openScheduleInterview(app)">Quản lý lịch</button>
                 } @else {
                   <span class="view-only">Chỉ xem · Tin do người khác phụ trách</span>
                 }
