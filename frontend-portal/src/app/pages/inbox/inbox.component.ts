@@ -397,6 +397,26 @@ export class InboxComponent implements OnInit, OnDestroy {
     return 'Chưa có lịch';
   }
 
+  isFirstMessageInGroup(index: number, message: MessageResponse): boolean {
+    if (message.message_type !== 'text' || index === 0) return true;
+    const previous = this.messages()[index - 1];
+    return (
+      previous.message_type !== 'text' ||
+      previous.sender_role !== message.sender_role ||
+      previous.sender_id !== message.sender_id
+    );
+  }
+
+  isLastMessageInGroup(index: number, message: MessageResponse): boolean {
+    if (message.message_type !== 'text' || index === this.messages().length - 1) return true;
+    const next = this.messages()[index + 1];
+    return (
+      next.message_type !== 'text' ||
+      next.sender_role !== message.sender_role ||
+      next.sender_id !== message.sender_id
+    );
+  }
+
   private scrollToBottom(): void {
     setTimeout(() => {
       if (this.scrollContainer) {
