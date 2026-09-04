@@ -1,7 +1,7 @@
 """Add company profile description.
 
-Revision ID: 026_company_description
-Revises: 025_interview_candidate_response
+Revision ID: 028_company_description
+Revises: 027_app_msg_updated_at_null
 """
 
 from typing import Union
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from alembic import op
 
 
-revision: str = "026_company_description"
-down_revision: Union[str, None] = "025_interview_candidate_response"
+revision: str = "028_company_description"
+down_revision: Union[str, None] = "027_app_msg_updated_at_null"
 branch_labels = None
 depends_on = None
 

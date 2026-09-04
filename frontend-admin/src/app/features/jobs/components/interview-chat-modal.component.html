@@ -1,0 +1,145 @@
+<div class="chat-dialog">
+  <!-- Dialog Header -->
+  <header class="dialog-header">
+    <div class="dialog-header__info">
+      <div class="candidate-avatar">
+        {{ getCandidateInitials(candidateName) }}
+      </div>
+      <div>
+        <div class="title-row">
+          <h4>{{ candidateName }}</h4>
+          @if (candidateResponse === 'accepted') {
+            <span class="status-pill status-accepted"><i class="dot"></i> Ứng viên đã xác nhận</span>
+          } @else if (candidateResponse === 'declined') {
+            <span class="status-pill status-declined"><i class="dot"></i> Ứng viên từ chối</span>
+          } @else {
+            <span class="status-pill status-pending"><i class="dot"></i> Chờ ứng viên xác nhận</span>
+          }
+        </div>
+        <p class="subtitle">{{ jobTitle }}</p>
+      </div>
+    </div>
+    <button class="close-btn" (click)="modalRef.close()">
+      <span nz-icon nzType="close"></span>
+    </button>
+  </header>
+
+  <!-- Messages Scroll Area -->
+  <div class="dialog-messages" #scrollContainer>
+    <nz-spin [nzSpinning]="loading()">
+      @if (messages().length === 0 && !loading()) {
+        <div class="empty-state">
+          <span nz-icon nzType="message" class="empty-icon"></span>
+          <p>Chưa có tin nhắn nào trong hội thoại này.</p>
+          <small>Lịch phỏng vấn hoặc tin nhắn gửi cho ứng viên sẽ hiển thị tại đây.</small>
+        </div>
+      } @else {
+        @for (msg of messages(); track msg.id) {
+          <!-- INTERVIEW INVITATION CARD -->
+          @if (msg.message_type === 'interview_invitation' && msg.metadata_json) {
+            <div class="message-row invitation-row">
+              <article class="invitation-card">
+                <div class="invitation-header">
+                  <span nz-icon nzType="calendar" class="inv-icon"></span>
+                  <strong>LỊCH PHỎNG VẤN ĐÃ GỬI</strong>
+                  <span class="inv-time">{{ msg.created_at | date:'HH:mm dd/MM' }}</span>
+                </div>
+
+                <div class="invitation-content">
+                  <div class="meta-row">
+                    <span class="label">Thời gian:</span>
+                    <strong class="time">{{ msg.metadata_json.interview_date | date:'dd/MM/yyyy HH:mm' }}</strong>
+                  </div>
+                  <div class="meta-row">
+                    <span class="label">Hình thức:</span>
+                    <span>{{ msg.metadata_json.interview_type === 'online' ? '🌐 Trực tuyến' : '🏢 Trực tiếp' }}</span>
+                  </div>
+                  @if (msg.metadata_json.location) {
+                    <div class="meta-row">
+                      <span class="label">{{ msg.metadata_json.interview_type === 'online' ? 'Link phòng:' : 'Địa điểm:' }}</span>
+                      <span class="loc">{{ msg.metadata_json.location }}</span>
+                    </div>
+                  }
+                  @if (msg.metadata_json.notes) {
+                    <div class="meta-row notes">
+                      <span class="label">Ghi chú:</span>
+                      <p>{{ msg.metadata_json.notes }}</p>
+                    </div>
+                  }
+
+                  <!-- Candidate confirmation result -->
+                  <div class="invitation-candidate-status">
+                    @if (msg.metadata_json.candidate_response === 'accepted') {
+                      <div class="status-result accepted">
+                        <span nz-icon nzType="check-circle" nzTheme="fill"></span>
+                        <span>Ứng viên đã xác nhận tham gia</span>
+                      </div>
+                    } @else if (msg.metadata_json.candidate_response === 'declined') {
+                      <div class="status-result declined">
+                        <span nz-icon nzType="close-circle" nzTheme="fill"></span>
+                        <span>Ứng viên đã từ chối lịch phỏng vấn</span>
+                        <small *ngIf="msg.metadata_json.candidate_response_note">
+                          Lý do: {{ msg.metadata_json.candidate_response_note }}
+                        </small>
+                      </div>
+                    } @else {
+                      <div class="status-result pending">
+                        <span nz-icon nzType="clock-circle"></span>
+                        <span>Đã gửi đến inbox ứng viên · Đang chờ phản hồi</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </article>
+            </div>
+          } @else if (msg.message_type === 'interview_response') {
+            <div class="message-row system-row">
+              <div class="system-pill">
+                <span nz-icon nzType="info-circle"></span>
+                <span>{{ msg.content }}</span>
+                <small>{{ msg.created_at | date:'HH:mm' }}</small>
+              </div>
+            </div>
+          } @else {
+            <!-- REGULAR TEXT MESSAGE -->
+            <div
+              class="message-row"
+              [class.outgoing]="msg.sender_role === 'hr'"
+              [class.incoming]="msg.sender_role === 'candidate'"
+            >
+              <div class="message-bubble">
+                <div class="sender-name">
+                  {{ msg.sender_role === 'hr' ? 'Bạn (HR)' : (msg.sender_name || 'Ứng viên') }}
+                </div>
+                <p class="bubble-text">{{ msg.content }}</p>
+                <span class="timestamp">{{ msg.created_at | date:'HH:mm' }}</span>
+              </div>
+            </div>
+          }
+        }
+      }
+    </nz-spin>
+  </div>
+
+  <!-- Dialog Input Footer -->
+  <footer class="dialog-footer">
+    <textarea
+      nz-input
+      [(ngModel)]="newMessageText"
+      (keydown.enter)="$event.preventDefault(); sendMessage()"
+      [nzAutosize]="{ minRows: 1, maxRows: 3 }"
+      placeholder="Nhập tin nhắn gửi ứng viên... (Nhấn Enter để gửi)"
+      [disabled]="sending()"
+    ></textarea>
+    <button
+      nz-button
+      nzType="primary"
+      class="send-btn"
+      [nzLoading]="sending()"
+      [disabled]="!newMessageText.trim()"
+      (click)="sendMessage()"
+    >
+      <span nz-icon nzType="send"></span> Gửi
+    </button>
+  </footer>
+</div>

@@ -147,11 +147,30 @@
 .deadline-note { color: var(--irsa-text-secondary); }
 .card-action-buttons { gap: var(--irsa-space-sm); }
 .quick-view-btn,
-.card-primary-cta { min-height: 34px; text-decoration: none; }
-.quick-view-btn { background: var(--irsa-palette-surface); }
+.card-primary-cta {
+  min-height: 34px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+  box-shadow: none;
+}
+.quick-view-btn {
+  background: var(--irsa-bg-card, #ffffff);
+  border: 1px solid var(--irsa-border-light, #E4DFD3);
+  color: var(--irsa-text-primary, #18181B);
+
+  &:hover {
+    border-color: var(--irsa-brand-hover, #27272A);
+    background: #FAFAFA;
+    transform: translateY(-1px);
+  }
+}
 .job-card-item.is-applied .card-primary-cta {
-  border-color: var(--irsa-palette-action);
-  background: var(--irsa-palette-action);
+  border-color: var(--irsa-palette-action, #18181B);
+  background: var(--irsa-palette-action, #18181B);
 }
 
 @media (max-width: 1100px) {

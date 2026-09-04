@@ -19,7 +19,9 @@ from app.schemas.job import (
     PublicJobListResponse,
     PublicJobResponse,
 )
+from app.schemas.company import CompanyOverviewResponse, PublicCompanyListResponse
 from app.services.application import ApplicationService
+from app.services.company import CompanyService
 from app.services.scoring import score_application_in_background
 
 router = APIRouter(prefix="/jobs", tags=["public-jobs"])
@@ -236,78 +238,31 @@ async def list_active_companies(
     return ActiveCompanyListResponse(items=items, total=len(items))
 
 
-class CompanyDetailResponse(BaseModel):
-    """Company info + list of active jobs."""
-    company_code: str
-    company_name: str
-    location: str | None = None
-    industry: str | None = None
-    jobs: list[PublicJobListItem]
-    total_jobs: int
+@router.get("/companies", response_model=PublicCompanyListResponse)
+async def list_public_companies(
+    db: DBSession,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    search: str | None = Query(None),
+    industry: str | None = Query(None),
+    location: str | None = Query(None),
+):
+    """List public companies with active job counts and filtering."""
+    service = CompanyService(db)
+    return await service.get_public_companies(
+        page=page,
+        page_size=page_size,
+        search=search,
+        industry=industry,
+        location=location,
+    )
 
-    class Config:
-        from_attributes = True
 
-
-@router.get("/companies/{company_code}", response_model=CompanyDetailResponse)
+@router.get("/companies/{company_code}", response_model=CompanyOverviewResponse)
 async def get_company_detail(company_code: str, db: DBSession):
-    """Get company info and its active published jobs."""
-    result = await db.execute(
-        select(Company).where(Company.company_code == company_code)
-    )
-    company = result.scalar_one_or_none()
-    if not company:
-        raise NotFoundException("Company not found")
-
-    app_count_subquery = (
-        select(func.count(Application.id))
-        .where(Application.job_id == Job.id)
-        .correlate(Job)
-        .scalar_subquery()
-    )
-
-    # Fetch published jobs from this company
-    stmt = (
-        select(Job, app_count_subquery.label("app_count"))
-        .options(selectinload(Job.criteria))
-        .join(User, Job.created_by == User.id)
-        .where(((Job.is_published == True) | (Job.status.in_(["published", "active", "approved"]))), User.company_code == company_code)
-        .order_by(Job.published_at.desc())
-    )
-    jobs_result = await db.execute(stmt)
-    rows = jobs_result.all()
-
-    job_items = [
-        PublicJobListItem(
-            id=j.id,
-            slug=j.slug,
-            title_vi=j.title_vi,
-            department=j.department,
-            location=j.location,
-            employment_type=j.employment_type,
-            salary_min=j.salary_min,
-            salary_max=j.salary_max,
-            published_at=j.published_at,
-            application_deadline=j.application_deadline,
-            applications_count=app_count,
-            must_have_skills=j.criteria.must_have_skills if j.criteria and j.criteria.must_have_skills else [],
-            min_experience_years=j.criteria.min_experience_years if j.criteria else None,
-            max_experience_years=j.criteria.max_experience_years if j.criteria else None,
-            company_name=company.company_name,
-            company_code=company.company_code,
-            description_vi=j.description_vi,
-        )
-        for j, app_count in rows
-    ]
-
-    return CompanyDetailResponse(
-        company_code=company.company_code,
-        company_name=company.company_name,
-        location=company.location,
-        industry=company.industry,
-        jobs=job_items,
-        total_jobs=len(job_items),
-    )
+    """Get company info, statistics and its active published jobs."""
+    service = CompanyService(db)
+    return await service.get_company_overview(company_code, public_only=True)
 
 
 @router.get("", response_model=PublicJobListResponse)
@@ -484,7 +439,6 @@ async def get_job_by_slug(slug: str, db: DBSession):
         title_vi=job.title_vi,
         description_vi=job.description_vi,
         requirements_vi=job.requirements_vi,
-        benefits_vi=job.benefits_vi,
         company_name=company_name,
         company_code=company_code_val,
         department=job.department,

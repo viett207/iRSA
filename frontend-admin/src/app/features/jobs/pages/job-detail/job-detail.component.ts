@@ -947,6 +947,11 @@ export class JobDetailComponent implements OnInit {
     const ref = this.modal.create({
       nzTitle: `Đặt lịch phỏng vấn: ${app.candidate_name}`,
       nzContent: InterviewScheduleModalComponent,
+      nzData: {
+        jobId: j.id,
+        appId: app.id,
+        candidateName: app.candidate_name,
+      },
       nzFooter: null,
       nzWidth: 560,
       nzCentered: true,

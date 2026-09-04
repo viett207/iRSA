@@ -16,7 +16,9 @@ import { EmailRequiredComponent } from './pages/email-required/email-required.co
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
 import { CVJobSearchComponent } from './pages/cv-job-search/cv-job-search.component';
+import { CompaniesComponent } from './pages/companies/companies.component';
 import { CompanyDetailComponent } from './pages/company-detail/company-detail.component';
+import { InboxComponent } from './pages/inbox/inbox.component';
 
 export const routes: Routes = [
   {
@@ -24,6 +26,7 @@ export const routes: Routes = [
     component: PublicLayoutComponent,
     children: [
       { path: '', component: HomeComponent },
+      { path: 'companies', component: CompaniesComponent },
       { path: 'companies/:code', component: CompanyDetailComponent },
       { path: 'jobs', component: JobsComponent },
       { path: 'jobs/:slug', component: JobDetailComponent },
@@ -34,6 +37,7 @@ export const routes: Routes = [
       { path: 'email-required', component: EmailRequiredComponent },
       { path: 'forgot-password', component: ForgotPasswordComponent },
       { path: 'reset-password', component: ResetPasswordComponent },
+      { path: 'inbox', component: InboxComponent, canActivate: [authGuard] },
     ],
   },
   {
@@ -45,6 +49,7 @@ export const routes: Routes = [
       { path: 'applications', component: ApplicationsComponent },
       { path: 'profile', component: ProfileComponent },
       { path: 'cv-search', component: CVJobSearchComponent },
+      { path: 'inbox', component: InboxComponent },
     ],
   },
   { path: '**', redirectTo: '' },

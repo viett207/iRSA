@@ -268,7 +268,7 @@ body {
   padding: 24px;
 }
 
-/* Đảm bảo mọi lớp host/layout của Admin cùng ăn màu canvas warm-slate. */
+/* Đảm bảo mọi lớp host/layout của Admin và Portal cùng ăn màu canvas warm-slate. */
 html,
 body,
 app-root,
@@ -278,6 +278,13 @@ nz-layout,
 .ant-layout-header,
 .irsa-admin-layout,
 .admin-layout-wrapper,
+.portal-app,
+.layout,
+.dashboard-layout,
+.dashboard-content,
+.job-detail-page,
+.jobs-page,
+.jobs-main-wrapper,
 main {
   background-color: #F3F0E6 !important;
 }

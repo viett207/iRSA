@@ -300,51 +300,63 @@
   --irsa-status-success-dot: var(--color-success);
 }
 
-/* Portal palette restored from the original DESIGN.md direction. The body
-   scope keeps Admin on its own theme while retaining one token source. */
+/* Portal palette aligned with Admin "Warm Slate Minimalist" design system */
 body.portal-app {
-  --color-primary: #2563eb;
-  --color-primary-light: #3b82f6;
-  --color-primary-dark: #1d4ed8;
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-200: #bfdbfe;
-  --color-primary-300: #93c5fd;
-  --color-primary-400: #60a5fa;
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
-  --color-primary-800: #1e40af;
-  --color-primary-900: #1e3a8a;
-  --color-success: #059669;
-  --color-success-light: #10b981;
-  --color-success-dark: #047857;
-  --color-success-bg: #ecfdf5;
+  --color-primary: #18181b;
+  --color-primary-light: #27272a;
+  --color-primary-dark: #09090b;
+  --color-primary-50: #e6e1d3;
+  --color-primary-100: #e4dfd3;
+  --color-primary-200: #d4d4d8;
+  --color-primary-300: #a1a1aa;
+  --color-primary-400: #71717a;
+  --color-primary-500: #3f3f46;
+  --color-primary-600: #27272a;
+  --color-primary-700: #18181b;
+  --color-primary-800: #09090b;
+  --color-primary-900: #000000;
+  --color-success: #16a34a;
+  --color-success-light: #22c55e;
+  --color-success-dark: #15803d;
+  --color-success-bg: #dcfce7;
   --color-warning: #d97706;
   --color-warning-light: #f59e0b;
   --color-warning-dark: #b45309;
-  --color-warning-bg: #fffbeb;
+  --color-warning-bg: #fef3c7;
   --color-error: #dc2626;
   --color-error-light: #ef4444;
   --color-error-dark: #b91c1c;
   --color-error-bg: #fef2f2;
-  --color-bg-primary: #f9fafb;
+  --color-bg-primary: #f3f0e6;
   --color-bg-secondary: #ffffff;
-  --color-bg-tertiary: #f1f5f9;
+  --color-bg-tertiary: #fafaf9;
   --color-bg-card: #ffffff;
-  --color-text: #0f172a;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-tertiary: #64748b;
-  --color-border: #e2e8f0;
-  --color-border-light: #f1f5f9;
-  --color-border-dark: #cbd5e1;
-  --irsa-surface-blue: #eff6ff;
-  --irsa-surface-blue-soft: #f8fafc;
-  --irsa-surface-canvas: #f9fafb;
-  --irsa-border-light: #e2e8f0;
-  --irsa-border-muted: #f1f5f9;
-  --irsa-brand-light: #eff6ff;
+  --color-text: #18181b;
+  --color-text-primary: #18181b;
+  --color-text-secondary: #71717a;
+  --color-text-tertiary: #a1a1aa;
+  --color-border: #e4dfd3;
+  --color-border-light: #ececee;
+  --color-border-dark: #d4d4d8;
+  --irsa-surface-blue: #e6e1d3;
+  --irsa-surface-blue-soft: #f3f0e6;
+  --irsa-surface-canvas: #f3f0e6;
+  --irsa-border-light: #e4dfd3;
+  --irsa-border-muted: #ececee;
+  --irsa-brand-light: #e6e1d3;
+  --irsa-palette-plum: #18181b;
+  --irsa-palette-berry: #18181b;
+  --irsa-palette-berry-soft: #e6e1d3;
+  --irsa-palette-action: #18181b;
+  --irsa-palette-surface: #ffffff;
+  --irsa-palette-primary: #18181b;
+  --irsa-color-on-primary: #ffffff;
+  --irsa-text-primary: #18181b;
+  --irsa-text-secondary: #71717a;
+  --irsa-text-muted: #a1a1aa;
+  --irsa-bg-canvas: #f3f0e6;
+  --irsa-bg-card: #ffffff;
+  --irsa-bg-nav-active: #e6e1d3;
 }
 
 .irsa-text-justify {
@@ -423,24 +435,84 @@ body.portal-app {
 .irsa-btn-danger,
 .irsa-btn-applied {
   display: inline-flex;
-  min-height: 44px;
+  min-height: 36px;
+  height: 36px;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
   padding: 0 var(--space-4);
-  border-radius: var(--radius-full);
+  border-radius: 8px;
   box-shadow: none;
   font-family: var(--font-body);
   font-size: 14px;
-  font-weight: var(--font-semibold);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
-.irsa-btn-primary { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+.irsa-btn-primary {
+  border: 1px solid var(--irsa-brand-accent, #18181B);
+  background: var(--irsa-brand-accent, #18181B);
+  color: #ffffff;
+  box-shadow: none;
+}
 .irsa-btn-primary:hover,
-.irsa-btn-primary:focus-visible { border-color: var(--color-primary-600); background: var(--color-primary-600); color: #fff; }
-.irsa-btn-secondary,
-.irsa-btn-danger { border-color: var(--irsa-border-light); background: #fff; color: var(--color-primary); }
-.irsa-btn-applied { border-color: var(--color-border); background: var(--color-border-light); color: var(--color-primary); cursor: default; pointer-events: none; }
+.irsa-btn-primary:focus-visible {
+  border-color: var(--irsa-brand-hover, #27272A);
+  background: var(--irsa-brand-hover, #27272A);
+  color: #ffffff;
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+.irsa-btn-primary:active {
+  background: #09090B;
+  border-color: #09090B;
+  transform: translateY(0);
+}
+
+.irsa-btn-secondary {
+  border: 1px solid var(--color-border, #E4DFD3);
+  background: #ffffff;
+  color: var(--color-text-primary, #18181B);
+  box-shadow: none;
+}
+.irsa-btn-secondary:hover,
+.irsa-btn-secondary:focus-visible {
+  border-color: var(--irsa-brand-hover, #27272A);
+  background: #FAFAFA;
+  color: var(--color-text-primary, #18181B);
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+.irsa-btn-secondary:active {
+  background: #F4F4F5;
+  transform: translateY(0);
+}
+
+.irsa-btn-danger {
+  border: 1px solid #EAD4D1;
+  background: #ffffff;
+  color: #8F514A;
+  box-shadow: none;
+}
+.irsa-btn-danger:hover,
+.irsa-btn-danger:focus-visible {
+  border-color: #DC2626;
+  background: #FEF2F2;
+  color: #DC2626;
+  box-shadow: none;
+}
+
+.irsa-btn-applied {
+  border: 1px solid var(--color-border, #E4DFD3);
+  background: #F4F4F5;
+  color: var(--color-text-secondary, #71717A);
+  cursor: default;
+  pointer-events: none;
+  box-shadow: none;
+  transform: none;
+}
 
 .irsa-job-card {
   display: flex;

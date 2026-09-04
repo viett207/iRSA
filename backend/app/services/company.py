@@ -1,15 +1,17 @@
 from math import ceil
-from sqlalchemy import select, func
+from datetime import datetime
+from sqlalchemy import select, func, or_, cast, String
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictException, NotFoundException
 from app.models.company import Company
+from app.models.user import User
 from app.models.job import Job
 from app.models.application import Application
-from app.models.user import User
 from app.schemas.company import (
     CompanyCreate, CompanyUpdate, CompanyResponse, CompanyList,
-    CompanyOverview, CompanyOverviewStats, CompanyJobSummary,
+    CompanyOverview, CompanyOverviewStats, CompanyJobSummary, CompanyOverviewResponse,
+    PublicCompanyItem, PublicCompanyListResponse,
 )
 
 
@@ -188,3 +190,205 @@ class CompanyService:
         company = await self.get_company(company_id)
         await self.db.delete(company)
         await self.db.commit()
+
+    async def get_company_overview(
+        self, identifier: int | str, public_only: bool = False
+    ) -> CompanyOverviewResponse:
+        """Get full overview of a company including statistics and jobs."""
+        company = None
+        if isinstance(identifier, int) or (isinstance(identifier, str) and identifier.isdigit()):
+            comp_id = int(identifier)
+            res = await self.db.execute(select(Company).where(Company.id == comp_id))
+            company = res.scalar_one_or_none()
+
+        if not company:
+            res = await self.db.execute(
+                select(Company).where(Company.company_code == str(identifier))
+            )
+            company = res.scalar_one_or_none()
+
+        if not company:
+            raise NotFoundException(f"Company '{identifier}' not found")
+
+        # HR members count
+        hr_count_res = await self.db.execute(
+            select(func.count(User.id)).where(User.company_code == company.company_code)
+        )
+        hr_members = hr_count_res.scalar() or 0
+
+        # Subquery for application count per job
+        app_count_sub = (
+            select(func.count(Application.id))
+            .where(Application.job_id == Job.id)
+            .correlate(Job)
+            .scalar_subquery()
+        )
+
+        # Base query for company jobs
+        jobs_query = (
+            select(Job, app_count_sub.label("app_count"))
+            .join(User, Job.created_by == User.id)
+            .where(User.company_code == company.company_code)
+        )
+
+        if public_only:
+            jobs_query = jobs_query.where(
+                (Job.is_published == True) | (Job.status.in_(["published", "active", "approved"]))
+            )
+
+        jobs_query = jobs_query.order_by(Job.created_at.desc())
+        jobs_res = await self.db.execute(jobs_query)
+        job_rows = jobs_res.all()
+
+        # Stats
+        total_jobs_res = await self.db.execute(
+            select(func.count(Job.id))
+            .join(User, Job.created_by == User.id)
+            .where(User.company_code == company.company_code)
+        )
+        total_jobs_count = total_jobs_res.scalar() or 0
+
+        active_jobs_res = await self.db.execute(
+            select(func.count(Job.id))
+            .join(User, Job.created_by == User.id)
+            .where(
+                User.company_code == company.company_code,
+                (Job.is_published == True) | (Job.status.in_(["published", "active", "approved"]))
+            )
+        )
+        active_jobs_count = active_jobs_res.scalar() or 0
+
+        total_app_res = await self.db.execute(
+            select(func.count(Application.id))
+            .join(Job, Application.job_id == Job.id)
+            .join(User, Job.created_by == User.id)
+            .where(User.company_code == company.company_code)
+        )
+        total_applications = total_app_res.scalar() or 0
+
+        in_prog_app_res = await self.db.execute(
+            select(func.count(Application.id))
+            .join(Job, Application.job_id == Job.id)
+            .join(User, Job.created_by == User.id)
+            .where(
+                User.company_code == company.company_code,
+                Application.status.in_(["submitted", "in_review", "shortlisted", "interviewing", "interview_passed", "in_progress"])
+            )
+        )
+        in_progress_applications = in_prog_app_res.scalar() or 0
+
+        stats = CompanyOverviewStats(
+            total_jobs=total_jobs_count,
+            active_jobs=active_jobs_count,
+            total_applications=total_applications,
+            in_progress_applications=in_progress_applications,
+            hr_members=hr_members,
+        )
+
+        job_summaries = []
+        for j, app_count in job_rows:
+            deadline_dt = None
+            if j.application_deadline:
+                if isinstance(j.application_deadline, datetime):
+                    deadline_dt = j.application_deadline
+                else:
+                    deadline_dt = datetime.combine(j.application_deadline, datetime.min.time())
+
+            job_summaries.append(
+                CompanyJobSummary(
+                    id=j.id,
+                    slug=j.slug,
+                    title_vi=j.title_vi,
+                    department=j.department,
+                    location=j.location,
+                    employment_type=j.employment_type,
+                    status=j.status,
+                    applications_count=app_count or 0,
+                    created_at=j.created_at,
+                    application_deadline=deadline_dt,
+                    salary_min=j.salary_min,
+                    salary_max=j.salary_max,
+                )
+            )
+
+        company_resp = CompanyResponse.model_validate(company)
+
+        return CompanyOverviewResponse(
+            company=company_resp,
+            stats=stats,
+            jobs=job_summaries,
+            company_code=company.company_code,
+            company_name=company.company_name,
+            location=company.location,
+            industry=company.industry,
+            description=getattr(company, "description", None),
+            total_jobs=active_jobs_count if public_only else total_jobs_count,
+        )
+
+    async def get_public_companies(
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        search: str | None = None,
+        industry: str | None = None,
+        location: str | None = None,
+    ) -> PublicCompanyListResponse:
+        """Get paginated public list of companies with active job counts."""
+        query = select(Company)
+
+        if search:
+            query = query.where(
+                Company.company_name.ilike(f"%{search}%")
+                | Company.company_code.ilike(f"%{search}%")
+            )
+        if industry:
+            query = query.where(Company.industry == industry)
+        if location:
+            query = query.where(Company.location == location)
+
+        count_query = select(func.count()).select_from(query.subquery())
+        total = (await self.db.execute(count_query)).scalar() or 0
+
+        offset = (page - 1) * page_size
+        query = query.offset(offset).limit(page_size).order_by(Company.company_name.asc())
+
+        result = await self.db.execute(query)
+        companies = result.scalars().all()
+
+        # Get active job counts for the fetched companies
+        job_counts: dict[str, int] = {}
+        if companies:
+            codes = [c.company_code for c in companies]
+            active_jobs_stmt = (
+                select(User.company_code, func.count(Job.id))
+                .join(Job, Job.created_by == User.id)
+                .where(
+                    User.company_code.in_(codes),
+                    (Job.is_published == True) | (Job.status.in_(["published", "active", "approved"])),
+                )
+                .group_by(User.company_code)
+            )
+            count_rows = (await self.db.execute(active_jobs_stmt)).all()
+            job_counts = {r[0]: r[1] for r in count_rows}
+
+        items = [
+            PublicCompanyItem(
+                id=c.id,
+                company_code=c.company_code,
+                company_name=c.company_name,
+                location=c.location,
+                industry=c.industry,
+                description=f"Doanh nghiệp hoạt động tại {c.location}" if c.location else None,
+                active_jobs_count=job_counts.get(c.company_code, 0),
+                created_at=c.created_at,
+            )
+            for c in companies
+        ]
+
+        return PublicCompanyListResponse(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            pages=ceil(total / page_size) if total > 0 else 1,
+        )

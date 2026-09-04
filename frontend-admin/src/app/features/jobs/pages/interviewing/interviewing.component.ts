@@ -200,6 +200,11 @@ export class InterviewingComponent implements OnInit, OnDestroy {
     const ref = this.modal.create({
       nzTitle: `Đặt lịch phỏng vấn: ${app.candidate_name}`,
       nzContent: InterviewScheduleModalComponent,
+      nzData: {
+        jobId: app.job_id,
+        appId: app.id,
+        candidateName: app.candidate_name,
+      },
       nzFooter: null,
       nzWidth: 560,
       nzCentered: true,

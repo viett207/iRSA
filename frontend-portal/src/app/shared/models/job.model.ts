@@ -78,13 +78,79 @@ export interface ActiveCompanyListResponse {
   total: number;
 }
 
-export interface CompanyDetail {
+export interface CompanyOverviewStats {
+  total_jobs: number;
+  active_jobs: number;
+  total_applications: number;
+  in_progress_applications: number;
+  hr_members: number;
+}
+
+export interface CompanyJobSummary {
+  id: number;
+  slug?: string | null;
+  title_vi: string;
+  department: string | null;
+  location: string | null;
+  employment_type: string | null;
+  status: string;
+  applications_count: number;
+  created_at: string;
+  application_deadline: string | null;
+  salary_min?: number | null;
+  salary_max?: number | null;
+}
+
+export interface CompanyEntity {
+  id: number;
   company_code: string;
   company_name: string;
   location: string | null;
   industry: string | null;
-  jobs: PublicJobListItem[];
-  total_jobs: number;
+  description: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface CompanyOverview {
+  company: CompanyEntity;
+  stats: CompanyOverviewStats;
+  jobs: CompanyJobSummary[];
+  company_code?: string;
+  company_name?: string;
+  location?: string | null;
+  industry?: string | null;
+  description?: string | null;
+  total_jobs?: number;
+}
+
+export type CompanyDetail = CompanyOverview;
+
+export interface PublicCompanyItem {
+  id: number;
+  company_code: string;
+  company_name: string;
+  location: string | null;
+  industry: string | null;
+  description: string | null;
+  active_jobs_count: number;
+  created_at: string | null;
+}
+
+export interface PublicCompanyListResponse {
+  items: PublicCompanyItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  pages: number;
+}
+
+export interface CompanyListParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  industry?: string;
+  location?: string;
 }
 
 export interface CVJobMatchItem {

@@ -25,9 +25,9 @@
 /* Footer */
 .footer {
   margin-top: var(--irsa-space-section);
-  background: var(--irsa-palette-plum);
-  border-top: 0;
-  border-radius: var(--irsa-radius-lg) var(--irsa-radius-lg) 0 0;
+  background: #FFFFFF;
+  border-top: 1px solid var(--irsa-border-light, #E4DFD3);
+  border-radius: var(--irsa-radius-xl, 16px) var(--irsa-radius-xl, 16px) 0 0;
   padding: 0;
 }
 
@@ -55,13 +55,25 @@
 .footer-logo {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 10px;
   font-family: var(--font-heading);
   font-size: var(--text-xl);
   font-weight: var(--font-extrabold);
-  color: var(--irsa-color-on-primary);
+  color: var(--irsa-text-primary, #18181B);
   margin-bottom: var(--space-3);
-  span:first-child { font-size: 24px; }
+
+  .logo-mark {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
 }
 
 .footer-logo-mark {
@@ -82,7 +94,7 @@
 }
 
 .footer-tagline {
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--irsa-text-secondary, #71717A);
   font-size: var(--text-sm);
   line-height: var(--leading-relaxed);
   margin: 0;
@@ -101,7 +113,7 @@
     font-family: var(--font-heading);
     font-size: var(--text-sm);
     font-weight: var(--font-semibold);
-    color: var(--irsa-color-on-primary);
+    color: var(--irsa-text-primary, #18181B);
     margin-bottom: var(--space-4);
     letter-spacing: 0;
   }
@@ -113,20 +125,20 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    color: rgba(255, 255, 255, 0.64);
+    color: var(--irsa-text-secondary, #71717A);
     font-size: var(--text-sm);
 
     a {
-      color: rgba(255, 255, 255, 0.64);
+      color: var(--irsa-text-secondary, #71717A);
       transition: color var(--transition-fast);
-      &:hover { color: var(--irsa-palette-amber); }
+      &:hover { color: var(--irsa-text-primary, #18181B); }
     }
   }
 }
 
 .footer-bottom {
   padding: var(--space-6) 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1px solid var(--irsa-border-light, #E4DFD3);
   text-align: center;
-  p { margin: 0; color: rgba(255, 255, 255, 0.5); font-size: var(--text-xs); }
+  p { margin: 0; color: var(--irsa-text-muted, #A1A1AA); font-size: var(--text-xs); }
 }

@@ -32,6 +32,8 @@ export class NotificationService implements OnDestroy {
   unreadCount = signal(0);
   /** Emits notification type when new data arrives — pages subscribe to auto-reload */
   dataChanged$ = new Subject<AppNotification>();
+  /** Real-time chat messages stream */
+  readonly chatMessages$ = new Subject<any>();
 
   constructor(private http: HttpClient) {}
 
@@ -131,6 +133,8 @@ export class NotificationService implements OnDestroy {
           this.unreadCount.update((c) => c + 1);
           // Notify pages to reload their data
           this.dataChanged$.next(notif);
+        } else if (data.type === 'chat_message') {
+          this.chatMessages$.next(data);
         }
       } catch {
         // Ignore non-JSON (e.g., "pong")

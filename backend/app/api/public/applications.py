@@ -169,6 +169,52 @@ async def respond_to_interview_invitation(
         import logging
         logging.getLogger(__name__).warning(f"Failed to push interview response notification: {e}")
 
+    try:
+        from app.services.message_service import MessageService
+        from app.models.message import ApplicationMessage
+        msg_service = MessageService(db)
+        status_text = "xác nhận tham gia" if body.response == "accepted" else ("yêu cầu dời lịch" if body.response == "reschedule_requested" else "từ chối tham gia")
+        content_text = f"Ứng viên đã {status_text} buổi phỏng vấn."
+        if body.note:
+            content_text += f" Ghi chú: {body.note}"
+
+        metadata = {
+            "interview_id": interview.id,
+            "response": body.response,
+            "note": body.note,
+            "proposed_date": body.proposed_date.isoformat() if body.proposed_date else None,
+        }
+        await msg_service.send_message(
+            application_id=interview.application_id,
+            sender_id=user.id,
+            sender_role="candidate",
+            sender_name=user.full_name or user.email or "Ứng viên",
+            content=content_text,
+            message_type="interview_response",
+            metadata_json=metadata,
+        )
+
+        # Update existing invitation card metadata in the thread
+        inv_msgs_res = await db.execute(
+            select(ApplicationMessage)
+            .where(
+                ApplicationMessage.application_id == interview.application_id,
+                ApplicationMessage.message_type == "interview_invitation",
+            )
+        )
+        for inv_msg in inv_msgs_res.scalars().all():
+            if inv_msg.metadata_json and inv_msg.metadata_json.get("interview_id") == interview.id:
+                new_meta = dict(inv_msg.metadata_json)
+                new_meta["candidate_response"] = body.response
+                new_meta["candidate_response_note"] = body.note
+                if body.response == "declined":
+                    new_meta["status"] = "cancelled"
+                inv_msg.metadata_json = new_meta
+        await db.commit()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"Failed to record interview response message: {e}")
+
     app = interview.application
     job = app.job if app else None
     scheduler_name = interview.scheduler.full_name if interview.scheduler else None

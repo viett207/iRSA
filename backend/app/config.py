@@ -53,9 +53,13 @@ class Settings(BaseSettings):
     FRONTEND_ADMIN_URL: str = "http://localhost:4200"
     FRONTEND_PORTAL_URL: str = "http://localhost:4300"
 
-    # AI / Gemini
+    # AI / Gemini & Groq
+    LLM_PROVIDER: str = ""
     GEMINI_API_KEY: str = ""
     GEMINI_API_KEYS: str = ""
+    GROQ_API_KEY: str = ""
+    GROQ_API_KEYS: str = ""
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
 
     @property
     def parsed_gemini_api_keys(self) -> list[str]:
@@ -65,6 +69,20 @@ class Settings(BaseSettings):
             or self.GEMINI_API_KEY
             or os.environ.get("GEMINI_API_KEYS", "")
             or os.environ.get("GEMINI_API_KEY", "")
+        )
+        if not raw_keys:
+            return []
+        keys = [k.strip() for k in raw_keys.replace("\n", ",").split(",") if k.strip()]
+        return keys
+
+    @property
+    def parsed_groq_api_keys(self) -> list[str]:
+        import os
+        raw_keys = (
+            self.GROQ_API_KEYS
+            or self.GROQ_API_KEY
+            or os.environ.get("GROQ_API_KEYS", "")
+            or os.environ.get("GROQ_API_KEY", "")
         )
         if not raw_keys:
             return []

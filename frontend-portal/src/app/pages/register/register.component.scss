@@ -158,9 +158,9 @@
 }
 
 .social-btn {
-  height: 48px;
-  border-radius: var(--radius-lg);
-  font-weight: var(--font-medium);
+  height: 44px;
+  border-radius: 8px;
+  font-weight: 500;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -196,11 +196,12 @@
 }
 
 .submit-btn {
-  height: 48px;
-  border-radius: var(--radius-lg);
-  font-weight: var(--font-semibold);
+  height: 44px;
+  border-radius: 8px;
+  font-weight: 600;
   font-size: var(--text-base);
   margin-top: var(--space-4);
+  box-shadow: none;
 }
 
 .auth-footer {
@@ -266,8 +267,9 @@
   gap: var(--space-3);
 
   button {
-    height: 48px;
-    border-radius: var(--radius-lg);
+    height: 44px;
+    border-radius: 8px;
+    font-weight: 600;
   }
 }
 

@@ -39,6 +39,7 @@ import { AiEvaluationModalComponent } from '../../components/ai-evaluation-modal
 import { CompareCandidatesModalComponent } from '../../components/compare-candidates-modal.component';
 import { CvJdCompareModalComponent } from '../../components/cv-jd-compare-modal.component';
 import { InterviewScheduleModalComponent } from '../../components/interview-schedule-modal.component';
+import { InterviewChatModalComponent } from '../../components/interview-chat-modal.component';
 
 export interface JobApplicantGroup {
   jobId: number;
@@ -929,15 +930,37 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
   getScheduleStatusLabel(app: ShortlistedApplicant): string {
     if (!app.interview_date) return 'Chưa xếp lịch';
     if (app.interview_status === 'completed') return 'Đã hoàn thành';
-    if (app.interview_status === 'cancelled') return 'Đã hủy';
-    return 'Chờ xác nhận';
+    if (app.interview_status === 'cancelled' || app.candidate_response === 'declined') return 'Đã từ chối / Hủy';
+    if (app.candidate_response === 'accepted') return 'Ứng viên đã xác nhận';
+    return 'Chờ ứng viên xác nhận';
   }
 
   getScheduleStatusClass(app: ShortlistedApplicant): string {
     if (!app.interview_date) return 'unscheduled';
     if (app.interview_status === 'completed') return 'completed';
-    if (app.interview_status === 'cancelled') return 'cancelled';
+    if (app.interview_status === 'cancelled' || app.candidate_response === 'declined') return 'cancelled';
+    if (app.candidate_response === 'accepted') return 'confirmed';
     return 'pending-confirmation';
+  }
+
+  openCandidateChat(app: ShortlistedApplicant): void {
+    const modalRef = this.modal.create({
+      nzTitle: undefined,
+      nzContent: InterviewChatModalComponent,
+      nzFooter: null,
+      nzWidth: 640,
+    });
+    const instance = modalRef.componentInstance;
+    if (instance) {
+      instance.appId = app.id;
+      instance.candidateName = app.candidate_name;
+      instance.jobTitle = app.job_title;
+      instance.candidateResponse = app.candidate_response;
+      instance.interviewDate = app.interview_date || undefined;
+    }
+    modalRef.afterClose.subscribe(() => {
+      this.loadShortlisted();
+    });
   }
 
   canEnterInterview(app: ShortlistedApplicant): boolean {
@@ -1045,10 +1068,15 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     const modalRef = this.modal.create({
       nzTitle: `Đặt lịch phỏng vấn: ${app.candidate_name}`,
       nzContent: InterviewScheduleModalComponent,
+      nzData: {
+        jobId: app.job_id,
+        appId: app.id,
+        candidateName: app.candidate_name,
+      },
       nzFooter: null,
       nzWidth: 580,
     });
-    const instance = modalRef.componentInstance;
+    const instance = modalRef.getContentComponent();
     if (instance) {
       instance.jobId = app.job_id;
       instance.appId = app.id;
@@ -1059,7 +1087,6 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
       this.loadCalendarEvents();
       if (res) {
         this.persistWorkspaceQuestions(app);
-        this.message.success(`Đã gửi lịch cho "${app.candidate_name}" và giữ hồ sơ trong workspace`);
       }
     });
   }
@@ -1080,10 +1107,15 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     const modalRef = this.modal.create({
       nzTitle: `Đặt lại lịch phỏng vấn: ${ev.candidate_name}`,
       nzContent: InterviewScheduleModalComponent,
+      nzData: {
+        jobId: ev.job_id,
+        appId: ev.application_id,
+        candidateName: ev.candidate_name,
+      },
       nzFooter: null,
       nzWidth: 580,
     });
-    const instance = modalRef.componentInstance;
+    const instance = modalRef.getContentComponent();
     if (instance) {
       instance.jobId = ev.job_id;
       instance.appId = ev.application_id;
@@ -1092,9 +1124,6 @@ export class ShortlistedComponent implements OnInit, OnDestroy {
     modalRef.afterClose.subscribe((res) => {
       this.loadShortlisted();
       this.loadCalendarEvents();
-      if (res) {
-        this.message.success(`Đã cập nhật lịch phỏng vấn, đang chờ ${ev.candidate_name} xác nhận`);
-      }
     });
   }
 

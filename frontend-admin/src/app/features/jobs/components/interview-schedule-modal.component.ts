@@ -1,7 +1,7 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
@@ -38,8 +38,37 @@ import { Interview, InterviewCreateRequest } from '../models/job.model';
   styleUrl: './interview-schedule-modal.component.scss',
 })
 export class InterviewScheduleModalComponent implements OnInit {
-  @Input() jobId!: number;
-  @Input() appId!: number;
+  private readonly modalData = inject(NZ_MODAL_DATA, { optional: true }) as {
+    jobId?: number;
+    appId?: number;
+    candidateName?: string;
+  } | null;
+
+  private _jobId!: number;
+  private _appId!: number;
+
+  @Input()
+  set jobId(val: number) {
+    this._jobId = val;
+    if (this._jobId && this._appId && !this.loading && this.interviews.length === 0) {
+      this.loadInterviews();
+    }
+  }
+  get jobId(): number {
+    return this._jobId;
+  }
+
+  @Input()
+  set appId(val: number) {
+    this._appId = val;
+    if (this._jobId && this._appId && !this.loading && this.interviews.length === 0) {
+      this.loadInterviews();
+    }
+  }
+  get appId(): number {
+    return this._appId;
+  }
+
   @Input() candidateName = '';
 
   interviews: Interview[] = [];
@@ -60,15 +89,39 @@ export class InterviewScheduleModalComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadInterviews();
+    if (this.modalData) {
+      if (this.modalData.jobId) this._jobId = this.modalData.jobId;
+      if (this.modalData.appId) this._appId = this.modalData.appId;
+      if (this.modalData.candidateName) this.candidateName = this.modalData.candidateName;
+    }
+    if (this._jobId && this._appId) {
+      this.loadInterviews();
+    }
   }
 
   loadInterviews(): void {
+    if (!this._jobId || !this._appId) return;
     this.loading = true;
-    this.jobService.getInterviews(this.jobId, this.appId).subscribe({
+    this.jobService.getInterviews(this._jobId, this._appId).subscribe({
       next: (data) => {
         const latest = [...data].sort((left, right) => right.id - left.id)[0];
-        this.interviews = latest?.status === 'scheduled' ? [latest] : [];
+        if (latest && latest.status === 'scheduled') {
+          this.interviews = [latest];
+          if (!this.form.interview_date) {
+            this.form.interview_date = new Date(latest.interview_date) as any;
+          }
+          if (!this.form.location && latest.location) {
+            this.form.location = latest.location;
+          }
+          if (!this.form.notes && latest.notes) {
+            this.form.notes = latest.notes;
+          }
+          if (latest.interview_type) {
+            this.form.interview_type = latest.interview_type;
+          }
+        } else {
+          this.interviews = [];
+        }
         this.loading = false;
       },
       error: () => { this.loading = false; },
@@ -77,6 +130,10 @@ export class InterviewScheduleModalComponent implements OnInit {
 
   submit(): void {
     if (!this.form.interview_date) return;
+    if (!this._jobId || !this._appId) {
+      this.message.error('Không tìm thấy thông tin vị trí hoặc ứng viên');
+      return;
+    }
 
     this.submitting = true;
     const body: InterviewCreateRequest = {
@@ -85,7 +142,7 @@ export class InterviewScheduleModalComponent implements OnInit {
     };
 
     const isRescheduling = this.interviews.length > 0;
-    this.jobService.scheduleInterview(this.jobId, this.appId, body).subscribe({
+    this.jobService.scheduleInterview(this._jobId, this._appId, body).subscribe({
       next: (iv) => {
         this.message.success(isRescheduling
           ? 'Đã cập nhật lịch phỏng vấn, đang chờ ứng viên xác nhận lại'
@@ -101,15 +158,19 @@ export class InterviewScheduleModalComponent implements OnInit {
   }
 
   markCompleted(iv: Interview): void {
-    this.jobService.updateInterview(this.jobId, this.appId, iv.id, { status: 'completed' }).subscribe({
+    this.jobService.updateInterview(this._jobId, this._appId, iv.id, { status: 'completed' }).subscribe({
       next: () => { this.message.success('Đã đánh dấu hoàn thành'); this.loadInterviews(); },
       error: () => this.message.error('Không thể cập nhật'),
     });
   }
 
   cancelExisting(iv: Interview): void {
-    this.jobService.cancelInterview(this.jobId, this.appId, iv.id).subscribe({
-      next: () => { this.message.success('Đã hủy lịch'); this.loadInterviews(); },
+    this.jobService.cancelInterview(this._jobId, this._appId, iv.id).subscribe({
+      next: () => {
+        this.message.success('Đã hủy lịch');
+        this.form.interview_date = '';
+        this.loadInterviews();
+      },
       error: () => this.message.error('Không thể hủy'),
     });
   }

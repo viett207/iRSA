@@ -386,4 +386,16 @@ export class JobService {
       formData
     );
   }
+
+  getApplicationMessages(appId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/messages/applications/${appId}`);
+  }
+
+  sendApplicationMessage(appId: number, content: string): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/messages/applications/${appId}`, { content });
+  }
+
+  markMessagesRead(appId: number): Observable<any> {
+    return this.http.patch<any>(`${environment.apiUrl}/messages/applications/${appId}/read`, {});
+  }
 }

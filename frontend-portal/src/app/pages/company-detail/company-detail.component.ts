@@ -1,33 +1,43 @@
-import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { NzSpinModule } from 'ng-zorro-antd/spin';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzTagModule } from 'ng-zorro-antd/tag';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
-import { NzGridModule } from 'ng-zorro-antd/grid';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
+import { NzTagModule } from 'ng-zorro-antd/tag';
 
 import { JobService } from '../../core/services/job.service';
-import { CompanyDetail, PublicJobListItem } from '../../shared/models/job.model';
+import { CompanyOverview } from '../../shared/models/job.model';
 
 @Component({
   selector: 'app-company-detail',
   standalone: true,
   imports: [
     CommonModule,
-    RouterModule,
-    NzSpinModule,
-    NzIconModule,
-    NzTagModule,
+    RouterLink,
+    NzButtonModule,
+    NzCardModule,
     NzEmptyModule,
-    NzGridModule,
+    NzIconModule,
+    NzSkeletonModule,
+    NzTagModule,
   ],
   templateUrl: './company-detail.component.html',
   styleUrl: './company-detail.component.scss',
 })
 export class CompanyDetailComponent implements OnInit {
-  company: CompanyDetail | null = null;
-  loading = true;
+  private readonly route = inject(ActivatedRoute);
+  private readonly jobService = inject(JobService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  overview = signal<CompanyOverview | null>(null);
+  loading = signal(true);
+  loadError = signal(false);
+  activeTab: 'overview' | 'jobs' = 'overview';
+  private companyCodeOrId: string | null = null;
 
   private employmentTypeMap: Record<string, string> = {
     full_time: 'Toàn thời gian',
@@ -37,41 +47,84 @@ export class CompanyDetailComponent implements OnInit {
     remote: 'Từ xa',
   };
 
-  constructor(
-    private route: ActivatedRoute,
-    private jobService: JobService,
-  ) {}
-
   ngOnInit(): void {
-    this.route.params.subscribe((params) => {
-      if (params['code']) {
-        this.loadCompany(params['code']);
-      }
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const code = params.get('code') || params.get('id');
+      this.companyCodeOrId = code ? code.trim() : null;
+      this.loadOverview();
     });
   }
 
-  loadCompany(code: string): void {
-    this.loading = true;
-    this.jobService.getCompanyDetail(code).subscribe({
-      next: (data) => {
-        this.company = data;
-        this.loading = false;
-      },
-      error: () => {
-        this.company = null;
-        this.loading = false;
-      },
-    });
+  loadOverview(): void {
+    if (!this.companyCodeOrId) {
+      this.loading.set(false);
+      this.loadError.set(true);
+      return;
+    }
+
+    this.loading.set(true);
+    this.loadError.set(false);
+    this.jobService.getCompanyDetail(this.companyCodeOrId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (overview) => {
+          this.overview.set(overview);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.overview.set(null);
+          this.loading.set(false);
+          this.loadError.set(true);
+        },
+      });
   }
 
-  formatEmploymentType(type: string): string {
-    return this.employmentTypeMap[type] || type;
+  getInitial(name: string): string {
+    return name ? name.trim().charAt(0).toLocaleUpperCase('vi-VN') || 'C' : 'C';
   }
 
-  formatSalary(min?: number | null, max?: number | null): string {
-    if (min && max) return `${min} - ${max} triệu`;
-    if (min) return `Từ ${min} triệu`;
-    if (max) return `Đến ${max} triệu`;
-    return '';
+  getCompanySummary(data: CompanyOverview): string {
+    const industry = data.company?.industry ? ` trong lĩnh vực ${data.company.industry}` : '';
+    const location = data.company?.location ? `, hoạt động tại ${data.company.location}` : '';
+    return `${data.company?.company_name || 'Doanh nghiệp'}${industry}${location}.`;
+  }
+
+  getCompanyDescription(data: CompanyOverview): string {
+    return data.company?.description?.trim() || this.getCompanySummary(data);
+  }
+
+  getStatusColor(status: string): string {
+    return {
+      draft: 'default',
+      pending_approval: 'orange',
+      approved: 'blue',
+      rejected: 'red',
+      active: 'green',
+      closed: 'default',
+    }[status] || 'default';
+  }
+
+  getStatusLabel(status: string): string {
+    return {
+      draft: 'Nháp',
+      pending_approval: 'Chờ duyệt',
+      approved: 'Đã duyệt',
+      rejected: 'Từ chối',
+      active: 'Đang tuyển',
+      closed: 'Đã đóng',
+    }[status] || status;
+  }
+
+  formatDate(value: string | Date | null | undefined): string {
+    if (!value) return '';
+    return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      .format(new Date(value));
+  }
+
+  formatSalary(min: number | null | undefined, max: number | null | undefined): string {
+    if (min && max) return `${(min / 1000000).toFixed(0)} - ${(max / 1000000).toFixed(0)} triệu`;
+    if (min) return `Từ ${(min / 1000000).toFixed(0)} triệu`;
+    if (max) return `Đến ${(max / 1000000).toFixed(0)} triệu`;
+    return 'Thỏa thuận';
   }
 }

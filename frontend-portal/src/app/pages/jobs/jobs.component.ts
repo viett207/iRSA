@@ -776,7 +776,7 @@ export class JobsComponent implements OnInit, OnDestroy {
     this.previewJobDetail = null;
 
     this.jobService.getBySlug(job.slug).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.previewJobDetail = res;
         this.previewLoading = false;
       },

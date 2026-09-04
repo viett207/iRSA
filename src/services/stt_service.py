@@ -29,13 +29,61 @@ def _is_transient_provider_error(error: Exception) -> bool:
     ))
 
 
+async def _transcribe_with_groq(
+    audio_bytes: bytes,
+    filename: str,
+    groq_keys: list[str],
+) -> Optional[str]:
+    """Transcribe audio using Groq Whisper API (whisper-large-v3-turbo)."""
+    ext = ".webm"
+    if "." in filename:
+        ext = "." + filename.rsplit(".", 1)[1].lower()
+
+    with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+        tmp.write(audio_bytes)
+        tmp_path = tmp.name
+
+    try:
+        for key_idx, key in enumerate(groq_keys):
+            try:
+                try:
+                    from groq import Groq
+                    client = Groq(api_key=key)
+                except ImportError:
+                    from openai import OpenAI
+                    client = OpenAI(api_key=key, base_url="https://api.groq.com/openai/v1")
+
+                logger.info(
+                    "Transcribing audio with Groq Whisper (key #%s/%s)...",
+                    key_idx + 1,
+                    len(groq_keys),
+                )
+                with open(tmp_path, "rb") as f:
+                    transcript_resp = client.audio.transcriptions.create(
+                        model="whisper-large-v3-turbo",
+                        file=f,
+                        language="vi",
+                    )
+                text = transcript_resp.text.strip() if hasattr(transcript_resp, "text") else ""
+                if text:
+                    logger.info("Groq Whisper STT success (%s chars)", len(text))
+                    return text
+            except Exception as e:
+                logger.warning("Groq Whisper key #%s failed: %s", key_idx + 1, e)
+                continue
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+    return None
+
+
 async def transcribe_audio(
     audio_bytes: bytes,
     mime_type: str = "audio/webm",
     filename: str = "audio.webm",
 ) -> str:
     """
-    Transcribe audio bytes to text using Google Gemini Audio Processing or OpenAI Whisper.
+    Transcribe audio bytes to text using Google Gemini, Groq Whisper, or OpenAI Whisper.
 
     Returns transcribed Vietnamese text string.
     """
@@ -44,10 +92,18 @@ async def transcribe_audio(
 
     settings = get_settings()
     gemini_keys = settings.parsed_gemini_api_keys
+    groq_keys = settings.parsed_groq_api_keys
     openai_key = settings.openai_api_key or os.environ.get("OPENAI_API_KEY", "")
+    provider = (settings.llm_provider or os.environ.get("LLM_PROVIDER", "")).strip().lower()
     model_name = settings.model_name or "gemini-3.6-flash"
 
     last_error = None
+
+    # Priority 0: Explicit Groq Provider requested
+    if provider == "groq" and groq_keys:
+        groq_text = await _transcribe_with_groq(audio_bytes, filename, groq_keys)
+        if groq_text:
+            return groq_text
 
     # 1. Try Gemini Audio Transcription
     if gemini_keys:
@@ -114,7 +170,13 @@ async def transcribe_audio(
                         continue
                     break
 
-    # 2. Try OpenAI Whisper STT Fallback
+    # 2. Try Groq Whisper STT Fallback
+    if groq_keys:
+        groq_text = await _transcribe_with_groq(audio_bytes, filename, groq_keys)
+        if groq_text:
+            return groq_text
+
+    # 3. Try OpenAI Whisper STT Fallback
     if openai_key:
         try:
             from openai import OpenAI

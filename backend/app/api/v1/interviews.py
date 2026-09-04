@@ -770,16 +770,71 @@ async def schedule_interview(
 
     try:
         from app.services.notification_service import notify_interview_scheduled
-        await notify_interview_scheduled(
-            db, app.candidate.id,
-            job_title=app.job.title_vi or "N/A",
-            interview_date=interview.interview_date.strftime("%d/%m/%Y %H:%M"),
-            interview_type=interview.interview_type,
-            job_id=job_id, application_id=app_id,
-        )
-        await db.commit()
+        candidate_user_id = app.candidate_id or (app.candidate.id if app.candidate else None)
+        if candidate_user_id:
+            await notify_interview_scheduled(
+                db, candidate_user_id,
+                job_title=(app.job.title_vi if app.job else "N/A") or "N/A",
+                interview_date=interview.interview_date.strftime("%d/%m/%Y %H:%M"),
+                interview_type=interview.interview_type,
+                job_id=job_id, application_id=app_id,
+            )
+            await db.commit()
     except Exception as e:
         logger.warning(f"Failed to push interview notification: {e}")
+        await db.rollback()
+
+    try:
+        from app.services.message_service import MessageService
+        msg_service = MessageService(db)
+        interview_date_str = interview.interview_date.strftime("%d/%m/%Y %H:%M")
+        type_str = "Trực tuyến" if interview.interview_type == "online" else "Trực tiếp"
+        content_text = f"Lời mời phỏng vấn ({type_str}): {interview_date_str}."
+        if interview.location:
+            content_text += f" Địa điểm/Liên kết: {interview.location}."
+        if interview.notes:
+            content_text += f" Ghi chú: {interview.notes}."
+
+        metadata = {
+            "interview_id": interview.id,
+            "interview_date": interview.interview_date.isoformat() if interview.interview_date else None,
+            "interview_type": interview.interview_type,
+            "location": interview.location,
+            "notes": interview.notes,
+            "status": interview.status,
+            "candidate_response": getattr(interview, "candidate_response", "pending") or "pending",
+        }
+        await msg_service.send_message(
+            application_id=app_id,
+            sender_id=current_user.id,
+            sender_role="hr",
+            sender_name=current_user.full_name or "Nhà tuyển dụng",
+            content=content_text,
+            message_type="interview_invitation",
+            metadata_json=metadata,
+        )
+    except Exception as e:
+        logger.warning(f"Failed to create interview invitation message: {e}")
+        await db.rollback()
+
+    try:
+        from app.services.email import send_interview_notification_email
+        cand_email = app.candidate.email if app.candidate else None
+        cand_name = (app.candidate.full_name if app.candidate else None) or "Ứng viên"
+        if cand_email:
+            asyncio.create_task(
+                send_interview_notification_email(
+                    candidate_email=cand_email,
+                    candidate_name=cand_name,
+                    job_title=(app.job.title_vi if app.job else "N/A") or "N/A",
+                    interview_date=interview.interview_date.isoformat(),
+                    interview_type=interview.interview_type,
+                    location=interview.location,
+                    notes=interview.notes,
+                )
+            )
+    except Exception as e:
+        logger.warning(f"Failed to trigger interview notification email: {e}")
 
     return InterviewResponse(
         id=interview.id,
@@ -990,8 +1045,54 @@ async def update_interview(
                     application_id=app_id,
                 )
                 await db.commit()
+
+                # Also send updated in-app invitation message
+                from app.services.message_service import MessageService
+                msg_service = MessageService(db)
+                interview_date_str = interview.interview_date.strftime("%d/%m/%Y %H:%M")
+                type_str = "Trực tuyến" if interview.interview_type == "online" else "Trực tiếp"
+                content_text = f"Cập nhật lịch phỏng vấn ({type_str}): {interview_date_str}."
+                if interview.location:
+                    content_text += f" Địa điểm/Liên kết: {interview.location}."
+                if interview.notes:
+                    content_text += f" Ghi chú: {interview.notes}."
+
+                metadata = {
+                    "interview_id": interview.id,
+                    "interview_date": interview.interview_date.isoformat() if interview.interview_date else None,
+                    "interview_type": interview.interview_type,
+                    "location": interview.location,
+                    "notes": interview.notes,
+                    "status": interview.status,
+                    "candidate_response": getattr(interview, "candidate_response", "pending") or "pending",
+                }
+                await msg_service.send_message(
+                    application_id=app_id,
+                    sender_id=current_user.id,
+                    sender_role="hr",
+                    sender_name=current_user.full_name or "Nhà tuyển dụng",
+                    content=content_text,
+                    message_type="interview_invitation",
+                    metadata_json=metadata,
+                )
+
+                # Send email notification to candidate
+                from app.services.email import send_interview_notification_email
+                if app_obj.candidate.email:
+                    asyncio.create_task(
+                        send_interview_notification_email(
+                            candidate_email=app_obj.candidate.email,
+                            candidate_name=app_obj.candidate.full_name or "Ứng viên",
+                            job_title=app_obj.job.title_vi if app_obj.job else "N/A",
+                            interview_date=interview.interview_date.isoformat(),
+                            interview_type=interview.interview_type,
+                            location=interview.location,
+                            notes=interview.notes,
+                        )
+                    )
         except Exception as e:
-            logger.warning(f"Failed to push updated interview notification: {e}")
+            logger.warning(f"Failed to push updated interview notification/message/email: {e}")
+            await db.rollback()
 
     return InterviewResponse(
         id=interview.id,
