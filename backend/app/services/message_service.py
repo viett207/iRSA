@@ -18,7 +18,69 @@ class MessageService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
+    async def ensure_interview_invitation_message(self, application_id: int) -> None:
+        """If an application has a scheduled interview without an invitation message, backfill it."""
+        try:
+            from app.models.interview import Interview
+            iv_res = await self.db.execute(
+                select(Interview)
+                .options(selectinload(Interview.scheduler))
+                .where(Interview.application_id == application_id, Interview.status == "scheduled")
+                .order_by(Interview.id.desc())
+            )
+            interview = iv_res.scalars().first()
+            if not interview:
+                return
+
+            msg_res = await self.db.execute(
+                select(ApplicationMessage)
+                .where(
+                    ApplicationMessage.application_id == application_id,
+                    ApplicationMessage.message_type == "interview_invitation",
+                )
+                .limit(1)
+            )
+            if msg_res.scalars().first():
+                return
+
+            interview_date_str = interview.interview_date.strftime("%d/%m/%Y %H:%M")
+            type_str = "Trực tuyến" if interview.interview_type == "online" else "Trực tiếp"
+            content_text = f"Lời mời phỏng vấn ({type_str}): {interview_date_str}."
+            if interview.location:
+                content_text += f" Địa điểm/Liên kết: {interview.location}."
+            if interview.notes:
+                content_text += f" Ghi chú: {interview.notes}."
+
+            metadata = {
+                "interview_id": interview.id,
+                "interview_date": interview.interview_date.isoformat() if interview.interview_date else None,
+                "interview_type": interview.interview_type,
+                "location": interview.location,
+                "notes": interview.notes,
+                "status": interview.status,
+                "candidate_response": getattr(interview, "candidate_response", "pending") or "pending",
+            }
+            sender_name = interview.scheduler.full_name if interview.scheduler else "Nhà tuyển dụng"
+            sender_id = interview.scheduled_by or 1
+            msg = ApplicationMessage(
+                application_id=application_id,
+                sender_id=sender_id,
+                sender_role="hr",
+                sender_name=sender_name,
+                content=content_text,
+                message_type="interview_invitation",
+                metadata_json=metadata,
+                is_read=False,
+                updated_at=datetime.now(timezone.utc),
+            )
+            self.db.add(msg)
+            await self.db.commit()
+        except Exception as e:
+            logger.warning(f"Error ensuring interview invitation message: {e}")
+            await self.db.rollback()
+
     async def get_messages(self, application_id: int) -> list[ApplicationMessage]:
+        await self.ensure_interview_invitation_message(application_id)
         query = (
             select(ApplicationMessage)
             .where(ApplicationMessage.application_id == application_id)
@@ -156,6 +218,17 @@ class MessageService:
 
         items = []
         for app in apps:
+            has_scheduled_interview = any(iv.status == "scheduled" for iv in (app.interviews or []))
+            has_invitation_message = any(m.message_type == "interview_invitation" for m in (app.messages or []))
+            if has_scheduled_interview and not has_invitation_message:
+                await self.ensure_interview_invitation_message(app.id)
+                m_res = await self.db.execute(
+                    select(ApplicationMessage)
+                    .where(ApplicationMessage.application_id == app.id)
+                    .order_by(ApplicationMessage.created_at.asc())
+                )
+                app.messages = list(m_res.scalars().all())
+
             job = app.job
             latest_msg = None
             if app.messages:
