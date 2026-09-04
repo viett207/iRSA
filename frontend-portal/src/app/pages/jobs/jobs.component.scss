@@ -10,23 +10,23 @@
 
 
 .widescreen-container {
-  max-width: 1480px;
+  max-width: none;
   width: 100%;
   margin: 0 auto;
-  padding: 0 clamp(16px, 3vw, 48px);
+  padding: 0 clamp(16px, 2vw, 30px);
 }
 
 /* ==========================================================================
    3. Main Content Layout (Sidebar + Jobs Grid / Split)
    ========================================================================== */
 .jobs-main-wrapper {
-  padding: 26px 0 64px;
+  padding: 22px 0 52px;
 }
 
 .jobs-layout-grid {
   display: grid;
-  grid-template-columns: 278px minmax(0, 1fr);
-  gap: 22px;
+  grid-template-columns: 246px minmax(0, 1fr);
+  gap: 18px;
   align-items: start;
 
   @media (max-width: 1024px) {
