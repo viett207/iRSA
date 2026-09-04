@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +14,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
+import { NzTableModule } from 'ng-zorro-antd/table';
 
 import { NzSelectModule } from 'ng-zorro-antd/select';
 
@@ -39,6 +40,7 @@ import { VIETNAMESE_INDUSTRIES } from '../../shared/constants/vietnamese-industr
     NzToolTipModule,
     NzPaginationModule,
     NzSkeletonModule,
+    NzTableModule,
     NzSelectModule,
     RouterLink,
     CompanyFormModalComponent,
@@ -64,6 +66,11 @@ export class CompaniesComponent implements OnInit {
 
   showFormModal = false;
   editingCompany: Company | null = null;
+
+  readonly visibleCompleteCount = computed(() => this.companies().filter((company) => this.getProfileCompleteness(company) === 100).length);
+  readonly visibleIncompleteCount = computed(() => this.companies().length - this.visibleCompleteCount());
+  readonly visibleIndustryCount = computed(() => new Set(this.companies().map((company) => company.industry).filter(Boolean)).size);
+  readonly hasActiveFilters = computed(() => !!(this.searchText.trim() || this.industryFilter || this.locationFilter));
 
   constructor(
     private companyService: CompanyService,
@@ -142,6 +149,11 @@ export class CompaniesComponent implements OnInit {
       .slice(0, 2)
       .map(part => part.charAt(0).toUpperCase())
       .join('') || 'CT';
+  }
+
+  getProfileCompleteness(company: Company): number {
+    const fields = [company.company_name, company.company_code, company.location, company.industry, company.description];
+    return Math.round(fields.filter((field) => String(field || '').trim()).length / fields.length * 100);
   }
 
   openCreateModal(): void {

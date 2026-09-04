@@ -3,7 +3,7 @@ from fastapi import APIRouter, Query
 from app.api.deps import DBSession, AdminUser
 from app.schemas.company import (
     CompanyResponse, CompanyCreate, CompanyUpdate, CompanyList,
-    CompanyOverviewResponse,
+    CompanyOverviewResponse, CompanyOverview,
 )
 from app.services.company import CompanyService
 
@@ -47,6 +47,7 @@ async def get_company(company_id: int, db: DBSession, _: AdminUser):
     """Get company by ID (admin only)."""
     service = CompanyService(db)
     return await service.get_company(company_id)
+
 
 
 @router.put("/{company_id}", response_model=CompanyResponse)

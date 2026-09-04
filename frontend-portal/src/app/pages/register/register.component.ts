@@ -13,7 +13,6 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { AuthService } from '../../core/auth/auth.service';
@@ -29,7 +28,6 @@ import { AuthService } from '../../core/auth/auth.service';
     NzInputModule,
     NzButtonModule,
     NzIconModule,
-    NzDividerModule,
     NzAlertModule,
     NzCheckboxModule,
   ],

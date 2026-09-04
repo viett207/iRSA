@@ -1,7 +1,9 @@
 <div class="page-header">
-  <span>VÒNG 3</span>
-  <h2>Chốt tuyển dụng</h2>
-  <p>Tổng hợp kết quả phỏng vấn, ưu tiên hồ sơ đang chờ quyết định và hoàn tất tuyển dụng.</p>
+  <div class="header-content">
+    <span>VÒNG 3</span>
+    <h2>Chốt tuyển dụng</h2>
+    <p>Tổng hợp kết quả phỏng vấn, ưu tiên hồ sơ đang chờ quyết định và hoàn tất tuyển dụng.</p>
+  </div>
 </div>
 
 <section class="decision-overview">
@@ -16,33 +18,16 @@
       <span>Đã tuyển</span><strong>{{ hiredCount() }}</strong><small>Đã hoàn tất quyết định tuyển dụng</small>
     </button>
   </div>
-  <aside class="priority-summary">
-    @if (priorityApplicants().length > 0) {
-      <div class="priority-heading">
-        <div><span>CẦN XỬ LÝ</span><strong>{{ priorityApplicants().length }} hồ sơ chờ quyết định</strong></div>
-        <button type="button" (click)="showPendingDecisions()">Xem tất cả</button>
-      </div>
-      <div class="priority-list">
-        @for (priority of priorityApplicants().slice(0, 3); track priority.id; let index = $index) {
-          <button type="button" class="priority-item" (click)="openInterviewRoom(priority)">
-            <span class="priority-order">{{ index + 1 }}</span>
-            <span class="priority-copy">
-              <strong>{{ priority.candidate_name }}</strong>
-              <small>{{ getPriorityReason(priority) }}</small>
-            </span>
-            <span class="priority-action">Xem biên bản</span>
-          </button>
-        }
-      </div>
-      @if (priorityApplicants().length > 3) {
-        <button type="button" class="priority-more" (click)="showPendingDecisions()">
-          Còn {{ priorityApplicants().length - 3 }} hồ sơ trong danh sách
-        </button>
-      }
-    } @else {
-      <span>TRẠNG THÁI XỬ LÝ</span>
-      <strong>Không có hồ sơ tồn đọng</strong><p>Các quyết định tuyển dụng hiện đã hoàn tất.</p>
-    }
+  <aside class="attention-summary">
+    <div class="attention-heading">
+      <div><span>VIỆC CẦN LÀM</span><strong>{{ offeredCount() }} hồ sơ chờ quyết định</strong></div>
+      <button type="button" (click)="showPendingDecisions()">Xem tất cả</button>
+    </div>
+    <div class="attention-list">
+      <button type="button" (click)="showAttention('missing-summary')"><span>Chưa có tổng kết</span><strong>{{ missingSummaryCount() }}</strong></button>
+      <button type="button" (click)="showAttention('stale')"><span>Chờ quá 3 ngày</span><strong>{{ staleDecisionCount() }}</strong></button>
+      <button type="button" (click)="showAttention('ready')"><span>Sẵn sàng quyết định</span><strong>{{ readyDecisionCount() }}</strong></button>
+    </div>
   </aside>
 </section>
 
@@ -58,18 +43,58 @@
       @for (job of availableJobs(); track job.id) { <option [ngValue]="job.id">{{ job.title }}</option> }
     </select>
   </div>
+  <div class="filter-field date-range-field">
+    <label for="passed-range">Khoảng ngày cập nhật</label>
+    <button id="passed-range" type="button" class="date-range-trigger" [class.active]="datePickerOpen()" (click)="toggleDatePicker($event)" aria-haspopup="dialog" [attr.aria-expanded]="datePickerOpen()">
+      <span>{{ dateRangeLabel() }}</span><i aria-hidden="true"></i>
+    </button>
+    @if (datePickerOpen()) {
+      <div class="single-month-picker" role="dialog" aria-label="Chọn khoảng ngày cập nhật" (click)="$event.stopPropagation()">
+        <header>
+          <button type="button" (click)="changeCalendarMonth(-1, $event)" aria-label="Tháng trước">‹</button>
+          <strong>{{ calendarLabel() }}</strong>
+          <button type="button" (click)="changeCalendarMonth(1, $event)" aria-label="Tháng sau">›</button>
+        </header>
+        <p class="range-instruction">{{ pendingDateStart() ? 'Chọn ngày kết thúc' : 'Chọn ngày bắt đầu' }}</p>
+        <div class="calendar-weekdays" aria-hidden="true"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div>
+        <div class="calendar-days">
+          @for (day of calendarDays(); track day.getTime()) {
+            <button
+              type="button"
+              [class.outside]="!isCurrentCalendarMonth(day)"
+              [class.today]="isToday(day)"
+              [class.in-range]="isInVisibleRange(day)"
+              [class.range-edge]="isRangeEdge(day)"
+              (mouseenter)="previewRange(day)"
+              (click)="selectRangeDate(day)"
+            >{{ day.getDate() }}</button>
+          }
+        </div>
+        <footer>
+          <div><button type="button" (click)="applyRecentRange(6, $event)">7 ngày</button><button type="button" (click)="applyRecentRange(29, $event)">30 ngày</button></div>
+          <button type="button" class="clear-range" (click)="clearDateRange($event)">Xóa chọn</button>
+        </footer>
+      </div>
+    }
+  </div>
+  <div class="filter-field">
+    <label for="passed-attention">Mức độ cần xử lý</label>
+    <select id="passed-attention" [ngModel]="attentionFilter()" (ngModelChange)="changeAttentionFilter($event)">
+      <option value="all">Tất cả hồ sơ</option><option value="missing-summary">Chưa có tổng kết</option><option value="stale">Chờ quá 3 ngày</option><option value="ready">Sẵn sàng quyết định</option>
+    </select>
+  </div>
   <div class="filter-field">
     <label for="passed-status">Trạng thái tuyển dụng</label>
     <select id="passed-status" [ngModel]="statusFilter()" (ngModelChange)="changeFilter($event)">
       <option value="all">Tất cả trạng thái</option><option value="offered">Chờ quyết định</option><option value="hired">Đã tuyển</option>
     </select>
   </div>
-  <span class="filter-result">{{ filteredApplicants().length }} hồ sơ hiển thị</span>
+  <div class="filter-actions"><span>{{ filteredApplicants().length }} hồ sơ</span><button type="button" (click)="resetFilters()">Đặt lại</button></div>
 </section>
 
 <section class="decision-table-shell" id="decision-list">
-  <header><div><h3>Danh sách cần chốt</h3><p>Hồ sơ chờ quyết định được đưa lên trước; điểm bên dưới là kết quả phỏng vấn, không phải điểm CV.</p></div></header>
-  <nz-table #passedTable [nzData]="filteredApplicants()" [nzLoading]="loading()" [nzPageIndex]="page" [nzPageSize]="20" [nzFrontPagination]="true" (nzPageIndexChange)="page = $event" nzSize="middle">
+  <header><div><h3>Danh sách cần chốt</h3><p>Hồ sơ chờ quyết định được đưa lên trước; mở biên bản để xem transcript, điểm và nhận định phỏng vấn.</p></div></header>
+  <nz-table #passedTable [nzData]="filteredApplicants()" [nzLoading]="loading()" [nzPageIndex]="page" [nzPageSize]="20" [nzFrontPagination]="true" (nzPageIndexChange)="page = $event" nzSize="middle" [nzNoResult]="passedEmptyState">
     <thead><tr><th nzWidth="25%">Ứng viên & vị trí</th><th nzWidth="19%">Kết quả phỏng vấn</th><th nzWidth="13%">Trạng thái</th><th nzWidth="10%">Cập nhật</th><th nzWidth="33%">Quyết định & thao tác</th></tr></thead>
     <tbody>
       @for (app of passedTable.data; track app.id) {
@@ -79,7 +104,7 @@
             @if (app.interview_score != null) {
               <div class="interview-result"><strong>{{ formatScore(app.interview_score) }}<small>/100</small></strong><div><span>{{ getRecommendationLabel(app.interview_recommendation) }}</span>@if (app.interview_feedback) { <small>{{ app.interview_feedback }}</small> }</div></div>
             } @else {
-              <div class="result-missing"><strong>Chưa có tổng kết</strong><small>Mở biên bản để hoàn tất đánh giá.</small></div>
+              <div class="result-missing"><strong>Chưa có tổng kết</strong><small>Mở biên bản để xem dữ liệu đã ghi nhận.</small></div>
             }
           </td>
           <td><span class="status-badge" [attr.data-status]="app.status">{{ getStatusLabel(app.status) }}</span></td>
@@ -92,18 +117,22 @@
                 <button nz-button nzDanger nz-popconfirm nzPopconfirmTitle="Xác nhận ứng viên không đạt?" (nzOnConfirm)="updateStatus(app, 'rejected')" [disabled]="transitioningApplicationId() !== null">Không tuyển</button>
               </div>
               <div class="support-actions">
-                <button type="button" (click)="openInterviewRoom(app)">Xem biên bản</button>
+                <button type="button" (click)="openInterviewRecord(app)">Xem biên bản</button>
                 <button type="button" nz-popconfirm nzPopconfirmTitle="Đưa ứng viên quay lại vòng phỏng vấn?" (nzOnConfirm)="updateStatus(app, 'interviewing')" [disabled]="transitioningApplicationId() !== null">Phỏng vấn lại</button>
               </div>
             } @else {
-              <button nz-button (click)="openInterviewRoom(app)">Xem biên bản</button>
+              <button nz-button (click)="openInterviewRecord(app)">Xem biên bản</button>
               <span class="completed-label">Đã hoàn tất</span>
             }
           </div></td>
         </tr>
-      } @empty {
-        <tr><td colspan="5"><div class="table-empty"><strong>Không có hồ sơ phù hợp</strong><span>Hãy thay đổi điều kiện lọc để xem hồ sơ khác.</span></div></td></tr>
       }
     </tbody>
   </nz-table>
+  <ng-template #passedEmptyState>
+    <div class="table-empty">
+      <strong>Không có hồ sơ phù hợp</strong>
+      <span>Hãy thay đổi điều kiện lọc để xem hồ sơ khác.</span>
+    </div>
+  </ng-template>
 </section>

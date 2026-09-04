@@ -40,6 +40,7 @@ import { InterviewCandidateBannerComponent } from './interview-candidate-banner.
 import { InterviewLiveRoomComponent } from './interview-live-room.component';
 import { InterviewScreeningReferenceComponent } from './interview-screening-reference.component';
 import { InterviewSummaryComponent } from './interview-summary.component';
+import { InterviewReportComponent } from './interview-report.component';
 import {
   AiInterviewQuestion,
   InterviewAnswer,
@@ -109,6 +110,7 @@ interface QuestionState {
     InterviewLiveRoomComponent,
     InterviewScreeningReferenceComponent,
     InterviewSummaryComponent,
+    InterviewReportComponent,
   ],
   templateUrl: './interview-room-modal.component.html',
   styleUrl: './interview-room-modal.component.scss',
@@ -120,6 +122,7 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
     jobId: number;
     appId: number;
     candidateName: string;
+    mode?: 'room' | 'report';
   } | null;
   private modalRef = inject(NzModalRef, { optional: true });
 
@@ -127,6 +130,7 @@ export class InterviewRoomModalComponent implements OnInit, OnDestroy {
   @Input() appId: number | null = null;
   @Input() candidateName = '';
   @Output() roomClosed = new EventEmitter<{ statusUpdated?: string } | void>();
+  readonly reportMode = this.injectedModalData?.mode === 'report';
 
   data = signal<InterviewDataResponse | null>(null);
   loading = signal(true);

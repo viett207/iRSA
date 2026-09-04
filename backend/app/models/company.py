@@ -1,4 +1,4 @@
-from sqlalchemy import String, Index
+from sqlalchemy import String, Index, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -17,6 +17,7 @@ class Company(Base, TimestampMixin):
     company_name: Mapped[str] = mapped_column(String(255))
     location: Mapped[str | None] = mapped_column(String(255), nullable=True)
     industry: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships
     users: Mapped[list["User"]] = relationship(

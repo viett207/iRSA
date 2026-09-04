@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -25,17 +25,26 @@ export class InterviewPassedComponent implements OnInit {
   readonly searchText = signal('');
   readonly selectedJobId = signal(0);
   readonly statusFilter = signal<'all' | 'offered' | 'hired'>('all');
+  readonly attentionFilter = signal<'all' | 'missing-summary' | 'stale' | 'ready'>('all');
+  readonly selectedDateRange = signal<Date[] | null>(null);
+  readonly datePickerOpen = signal(false);
+  readonly pendingDateStart = signal<Date | null>(null);
+  readonly hoveredDate = signal<Date | null>(null);
+  readonly calendarCursor = signal(this.startOfMonth(new Date()));
+  readonly calendarDays = computed(() => this.createCalendarDays(this.calendarCursor()));
+  readonly calendarLabel = computed(() => this.calendarCursor().toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' }));
+  readonly dateRangeLabel = computed(() => {
+    const range = this.selectedDateRange();
+    if (!range) return 'Tất cả thời gian';
+    return `${this.formatShortDate(range[0])} – ${this.formatShortDate(range[1])}`;
+  });
   page = 1;
 
   readonly offeredCount = computed(() => this.applicants().filter((app) => app.status === 'offered').length);
   readonly hiredCount = computed(() => this.applicants().filter((app) => app.status === 'hired').length);
-  readonly priorityApplicants = computed(() => this.applicants()
-    .filter((app) => app.status === 'offered')
-    .sort((a, b) => {
-      const missingSummary = Number(a.interview_score == null) - Number(b.interview_score == null);
-      if (missingSummary !== 0) return -missingSummary;
-      return new Date(a.updated_at || 0).getTime() - new Date(b.updated_at || 0).getTime();
-    }));
+  readonly missingSummaryCount = computed(() => this.applicants().filter((app) => app.status === 'offered' && app.interview_score == null).length);
+  readonly staleDecisionCount = computed(() => this.applicants().filter((app) => app.status === 'offered' && this.isOlderThanDays(app.updated_at, 3)).length);
+  readonly readyDecisionCount = computed(() => this.applicants().filter((app) => app.status === 'offered' && app.interview_score != null).length);
   readonly availableJobs = computed(() => {
     const jobs = new Map<number, string>();
     this.applicants().forEach((app) => jobs.set(app.job_id, app.job_title));
@@ -45,17 +54,33 @@ export class InterviewPassedComponent implements OnInit {
     const query = this.searchText().trim().toLocaleLowerCase('vi');
     const jobId = this.selectedJobId();
     const status = this.statusFilter();
+    const attention = this.attentionFilter();
     return this.applicants()
       .filter((app) => status === 'all' || app.status === status)
       .filter((app) => jobId === 0 || app.job_id === jobId)
       .filter((app) => !query || `${app.candidate_name} ${app.candidate_email} ${app.job_title}`.toLocaleLowerCase('vi').includes(query))
+      .filter((app) => this.matchesUpdatedRange(app.updated_at))
+      .filter((app) => attention === 'all'
+        || (attention === 'missing-summary' && app.status === 'offered' && app.interview_score == null)
+        || (attention === 'stale' && app.status === 'offered' && this.isOlderThanDays(app.updated_at, 3))
+        || (attention === 'ready' && app.status === 'offered' && app.interview_score != null))
       .sort((a, b) => {
         if (a.status !== b.status) return a.status === 'offered' ? -1 : 1;
+        if (a.status === 'offered') {
+          const missingSummary = Number(b.interview_score == null) - Number(a.interview_score == null);
+          if (missingSummary !== 0) return missingSummary;
+          return new Date(a.updated_at || 0).getTime() - new Date(b.updated_at || 0).getTime();
+        }
         return new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime();
       });
   });
 
-  constructor(private readonly jobService: JobService, private readonly message: NzMessageService, private readonly modal: NzModalService) {}
+  constructor(
+    private readonly jobService: JobService,
+    private readonly message: NzMessageService,
+    private readonly modal: NzModalService,
+    private readonly elementRef: ElementRef<HTMLElement>,
+  ) {}
 
   ngOnInit(): void { this.loadPassed(); }
 
@@ -67,10 +92,118 @@ export class InterviewPassedComponent implements OnInit {
     });
   }
 
-  changeFilter(filter: 'all' | 'offered' | 'hired'): void { this.statusFilter.set(filter); this.page = 1; }
+  changeFilter(filter: 'all' | 'offered' | 'hired'): void {
+    this.statusFilter.set(filter);
+    this.attentionFilter.set('all');
+    this.page = 1;
+  }
+
+  changeAttentionFilter(filter: 'all' | 'missing-summary' | 'stale' | 'ready'): void {
+    this.attentionFilter.set(filter);
+    if (filter !== 'all') this.statusFilter.set('offered');
+    this.page = 1;
+  }
+
+  toggleDatePicker(event: MouseEvent): void {
+    event.stopPropagation();
+    const willOpen = !this.datePickerOpen();
+    this.datePickerOpen.set(willOpen);
+    this.pendingDateStart.set(null);
+    this.hoveredDate.set(null);
+    if (willOpen) this.calendarCursor.set(this.startOfMonth(this.selectedDateRange()?.[0] || new Date()));
+  }
+
+  selectRangeDate(date: Date): void {
+    const start = this.pendingDateStart();
+    if (!start) {
+      this.pendingDateStart.set(new Date(date));
+      this.hoveredDate.set(new Date(date));
+      return;
+    }
+    const dates = [new Date(start), new Date(date)].sort((a, b) => a.getTime() - b.getTime());
+    this.selectedDateRange.set(dates);
+    this.pendingDateStart.set(null);
+    this.hoveredDate.set(null);
+    this.datePickerOpen.set(false);
+    this.page = 1;
+  }
+
+  previewRange(date: Date): void {
+    if (this.pendingDateStart()) this.hoveredDate.set(new Date(date));
+  }
+
+  changeCalendarMonth(offset: number, event: MouseEvent): void {
+    event.stopPropagation();
+    const next = new Date(this.calendarCursor());
+    next.setMonth(next.getMonth() + offset);
+    this.calendarCursor.set(this.startOfMonth(next));
+  }
+
+  applyRecentRange(daysAgo: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.selectedDateRange.set(this.createRecentRange(daysAgo));
+    this.pendingDateStart.set(null);
+    this.hoveredDate.set(null);
+    this.datePickerOpen.set(false);
+    this.page = 1;
+  }
+
+  clearDateRange(event: MouseEvent): void {
+    event.stopPropagation();
+    this.selectedDateRange.set(null);
+    this.pendingDateStart.set(null);
+    this.hoveredDate.set(null);
+    this.datePickerOpen.set(false);
+    this.page = 1;
+  }
+
+  isCurrentCalendarMonth(date: Date): boolean {
+    const cursor = this.calendarCursor();
+    return date.getMonth() === cursor.getMonth() && date.getFullYear() === cursor.getFullYear();
+  }
+
+  isRangeEdge(date: Date): boolean {
+    const range = this.visibleDateRange();
+    return !!range && (this.isSameDay(date, range[0]) || this.isSameDay(date, range[1]));
+  }
+
+  isInVisibleRange(date: Date): boolean {
+    const range = this.visibleDateRange();
+    if (!range) return false;
+    const time = this.dayTimestamp(date);
+    return time >= this.dayTimestamp(range[0]) && time <= this.dayTimestamp(range[1]);
+  }
+
+  isToday(date: Date): boolean { return this.isSameDay(date, new Date()); }
+
+  @HostListener('document:click', ['$event'])
+  closeDatePickerOnOutsideClick(event: MouseEvent): void {
+    if (!this.elementRef.nativeElement.contains(event.target as Node)) {
+      this.datePickerOpen.set(false);
+      this.pendingDateStart.set(null);
+      this.hoveredDate.set(null);
+    }
+  }
+
+  resetFilters(): void {
+    this.searchText.set('');
+    this.selectedJobId.set(0);
+    this.statusFilter.set('all');
+    this.attentionFilter.set('all');
+    this.selectedDateRange.set(null);
+    this.datePickerOpen.set(false);
+    this.pendingDateStart.set(null);
+    this.hoveredDate.set(null);
+    this.page = 1;
+  }
 
   showPendingDecisions(): void {
     this.changeFilter('offered');
+    requestAnimationFrame(() => document.getElementById('decision-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
+
+  showAttention(filter: 'missing-summary' | 'stale' | 'ready'): void {
+    this.changeAttentionFilter(filter);
     requestAnimationFrame(() => document.getElementById('decision-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }
 
@@ -88,9 +221,54 @@ export class InterviewPassedComponent implements OnInit {
     return recommendation ? labels[recommendation] || recommendation : 'Đã có kết quả';
   }
 
-  getPriorityReason(app: InterviewPassedApplicant): string {
-    if (app.interview_score == null) return 'Chưa có tổng kết phỏng vấn';
-    return `${this.getRecommendationLabel(app.interview_recommendation)} · ${this.formatScore(app.interview_score)}/100`;
+  private matchesUpdatedRange(value: string | null): boolean {
+    const range = this.selectedDateRange();
+    if (!range?.length) return true;
+    if (!value) return false;
+    const time = new Date(value).getTime();
+    const from = new Date(range[0]);
+    const to = new Date(range[1]);
+    from.setHours(0, 0, 0, 0);
+    to.setHours(23, 59, 59, 999);
+    return time >= from.getTime() && time <= to.getTime();
+  }
+
+  private createRecentRange(daysAgo: number): Date[] {
+    const from = new Date();
+    const to = new Date();
+    from.setDate(from.getDate() - daysAgo);
+    from.setHours(0, 0, 0, 0);
+    to.setHours(23, 59, 59, 999);
+    return [from, to];
+  }
+
+  private createCalendarDays(cursor: Date): Date[] {
+    const first = this.startOfMonth(cursor);
+    const mondayOffset = (first.getDay() + 6) % 7;
+    const start = new Date(first);
+    start.setDate(first.getDate() - mondayOffset);
+    return Array.from({ length: 42 }, (_, index) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + index);
+      return date;
+    });
+  }
+
+  private startOfMonth(date: Date): Date { return new Date(date.getFullYear(), date.getMonth(), 1); }
+  private dayTimestamp(date: Date): number { return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime(); }
+  private isSameDay(left: Date, right: Date): boolean { return this.dayTimestamp(left) === this.dayTimestamp(right); }
+  private formatShortDate(date: Date): string { return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
+
+  private visibleDateRange(): Date[] | null {
+    const pendingStart = this.pendingDateStart();
+    const hovered = this.hoveredDate();
+    if (pendingStart && hovered) return [pendingStart, hovered].sort((a, b) => a.getTime() - b.getTime());
+    return this.selectedDateRange();
+  }
+
+  private isOlderThanDays(value: string | null, days: number): boolean {
+    if (!value) return false;
+    return new Date(value).getTime() < Date.now() - days * 24 * 60 * 60_000;
   }
 
   updateStatus(app: InterviewPassedApplicant, newStatus: string): void {
@@ -107,14 +285,14 @@ export class InterviewPassedComponent implements OnInit {
     });
   }
 
-  openInterviewRoom(app: InterviewPassedApplicant): void {
+  openInterviewRecord(app: InterviewPassedApplicant): void {
     const modalRef = this.modal.create({
-      nzTitle: `Biên bản phỏng vấn - ${app.candidate_name}`,
+      nzTitle: `Biên bản phỏng vấn · ${app.candidate_name}`,
       nzContent: InterviewRoomModalComponent,
-      nzData: { jobId: app.job_id, appId: app.id, candidateName: app.candidate_name },
+      nzData: { jobId: app.job_id, appId: app.id, candidateName: app.candidate_name, mode: 'report' },
       nzFooter: null,
-      nzWidth: '94vw',
-      nzStyle: { top: '20px', maxWidth: '1400px' },
+      nzWidth: '90vw',
+      nzStyle: { top: '28px', maxWidth: '1180px' },
       nzMaskClosable: false,
     });
     modalRef.afterClose.subscribe(() => this.loadPassed());

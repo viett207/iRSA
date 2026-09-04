@@ -59,15 +59,6 @@ export class LoginComponent {
     this.loginError = null;
   }
 
-  fillAdminAccount(): void {
-    this.loginForm.patchValue({
-      email: 'admin@example.com',
-      password: 'Admin@123456',
-    });
-    this.clearLoginError();
-    this.message.info('Đã tự động điền tài khoản Admin');
-  }
-
   onSubmit(): void {
     this.clearLoginError();
 

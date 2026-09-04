@@ -20,6 +20,7 @@ import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { ActivatedRoute } from '@angular/router';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { UserService } from '../../core/services/user.service';
 import { CompanyService } from '../../core/services/company.service';
@@ -104,6 +105,7 @@ export class UsersComponent implements OnInit {
   readonly activeSegment = signal<string>('all'); // all | recruiter | candidate | leader | admin | inactive
   readonly searchText = signal<string>('');
   readonly statusFilter = signal<boolean | null>(null);
+  private readonly searchChanges = new Subject<string>();
 
   // Pagination
   pageIndex = 1;
@@ -141,6 +143,10 @@ export class UsersComponent implements OnInit {
       candidates: candidateCount,
     };
   });
+  readonly visibleInactiveCount = computed(() => this.users().filter((user) => !user.is_active).length);
+  readonly visibleUnverifiedCount = computed(() => this.users().filter((user) => !user.email_verified).length);
+  readonly visibleHrCount = computed(() => this.users().filter((user) => ['admin', 'leader', 'recruiter'].includes(user.role)).length);
+  readonly hasActiveUserFilters = computed(() => !!(this.searchText().trim() || this.activeSegment() !== 'all' || this.statusFilter() !== null));
 
   // Checkbox helpers
   readonly isAllChecked = computed(() => {
@@ -163,6 +169,11 @@ export class UsersComponent implements OnInit {
     this.loadUsers();
     this.loadCompanies();
     this.loadPendingUsers();
+    this.searchChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(() => this.loadUsers());
   }
 
   setAccountMode(mode: 'pending' | 'all'): void {
@@ -307,6 +318,20 @@ export class UsersComponent implements OnInit {
 
   onSearchChange(value: string): void {
     this.searchText.set(value);
+    this.pageIndex = 1;
+    this.searchChanges.next(value);
+  }
+
+  changeStatusFilter(value: boolean | null): void {
+    this.statusFilter.set(value);
+    this.pageIndex = 1;
+    this.loadUsers();
+  }
+
+  resetUserFilters(): void {
+    this.searchText.set('');
+    this.activeSegment.set('all');
+    this.statusFilter.set(null);
     this.pageIndex = 1;
     this.loadUsers();
   }

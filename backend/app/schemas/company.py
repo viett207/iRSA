@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from pydantic import BaseModel, Field
 
 
@@ -9,7 +9,7 @@ class CompanyBase(BaseModel):
     company_name: str = Field(..., min_length=2, max_length=255)
     location: str | None = Field(None, max_length=255)
     industry: str | None = Field(None, max_length=255)
-    description: str | None = None
+    description: str | None = Field(None, max_length=2000)
 
 
 class CompanyCreate(CompanyBase):
@@ -24,7 +24,7 @@ class CompanyUpdate(BaseModel):
     company_name: str | None = Field(None, min_length=2, max_length=255)
     location: str | None = Field(None, max_length=255)
     industry: str | None = Field(None, max_length=255)
-    description: str | None = None
+    description: str | None = Field(None, max_length=2000)
 
 
 class CompanyResponse(CompanyBase):
@@ -70,7 +70,7 @@ class CompanyJobSummary(BaseModel):
     status: str
     applications_count: int = 0
     created_at: datetime
-    application_deadline: datetime | None = None
+    application_deadline: datetime | date | None = None
     salary_min: int | None = None
     salary_max: int | None = None
 
@@ -94,6 +94,10 @@ class CompanyOverviewResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# Alias for compatibility
+CompanyOverview = CompanyOverviewResponse
 
 
 class PublicCompanyItem(BaseModel):

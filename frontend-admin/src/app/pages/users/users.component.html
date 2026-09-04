@@ -17,25 +17,36 @@
   </header>
 
   @if (accountMode() === 'all') {
-  <div class="all-accounts-actions">
-    <button type="button" class="btn-secondary-action" [class.active]="bulkMode()" (click)="toggleBulkMode()">
-      {{ bulkMode() ? 'Hủy chọn nhiều' : 'Chọn nhiều' }}
-    </button>
-    <button type="button" class="btn-secondary-action" (click)="exportUsers()">
-      Xuất CSV
-    </button>
-    <button type="button" class="btn-primary-action" (click)="openCreateUserDrawer()">
-      Thêm người dùng
-    </button>
-  </div>
+  <section class="account-summary-strip" aria-label="Tổng quan danh sách tài khoản">
+    <div class="account-summary-copy">
+      <span class="summary-kicker">TỔNG QUAN TÀI KHOẢN</span>
+      <strong>{{ total() }} tài khoản</strong>
+      <span>{{ hasActiveUserFilters() ? 'Khớp điều kiện lọc hiện tại' : 'Đang được quản lý trong hệ thống' }}</span>
+    </div>
+    <div class="account-summary-metrics">
+      <div><span>Trang hiện tại</span><strong>{{ users().length }}</strong><small>Tài khoản đang hiển thị</small></div>
+      <div [class.needs-review]="visibleUnverifiedCount() > 0"><span>Cần xác minh</span><strong>{{ visibleUnverifiedCount() }}</strong><small>Email chưa xác thực</small></div>
+      <div [class.needs-review]="visibleInactiveCount() > 0"><span>Đang tạm khóa</span><strong>{{ visibleInactiveCount() }}</strong><small>Cần kiểm tra quyền truy cập</small></div>
+      <div><span>Nhân sự nội bộ</span><strong>{{ visibleHrCount() }}</strong><small>Quản trị và tuyển dụng</small></div>
+    </div>
+    <div class="all-accounts-actions">
+      <button type="button" class="btn-primary-action" (click)="openCreateUserDrawer()">Thêm người dùng</button>
+      <button type="button" class="btn-secondary-action" (click)="exportUsers()">Xuất danh sách</button>
+      <button type="button" class="btn-text-action" [class.active]="bulkMode()" (click)="toggleBulkMode()">
+        {{ bulkMode() ? 'Kết thúc chọn' : 'Xử lý nhiều' }}
+      </button>
+    </div>
+  </section>
 
   <!-- Bộ lọc tài khoản -->
   <section class="smart-toolbar-card">
     <div class="search-filter-row">
-      <div class="instant-search-box">
+      <label class="filter-field filter-field--search">
+        <span>Tìm nhanh</span>
+        <div class="instant-search-box">
         <input
           type="text"
-          placeholder="Tìm theo tên, email hoặc số điện thoại..."
+          placeholder="Tên, email hoặc số điện thoại..."
           [ngModel]="searchText()"
           (ngModelChange)="onSearchChange($event)"
           class="instant-search-input"
@@ -43,34 +54,31 @@
         @if (searchText()) {
           <button type="button" class="clear-search-btn" (click)="onSearchChange('')" aria-label="Xóa từ khóa">×</button>
         }
-      </div>
+        </div>
+      </label>
 
       <div class="filter-dropdown-wrap">
-        <nz-select
-          [ngModel]="activeSegment()"
-          (ngModelChange)="setSegment($event)"
-          class="status-select-control"
-        >
-          <nz-option nzValue="all" nzLabel="Tất cả vai trò"></nz-option>
-          <nz-option nzValue="recruiter" nzLabel="Chuyên viên tuyển dụng"></nz-option>
-          <nz-option nzValue="leader" nzLabel="Trưởng nhóm HR"></nz-option>
-          <nz-option nzValue="admin" nzLabel="Quản trị viên"></nz-option>
-          <nz-option nzValue="candidate" nzLabel="Ứng viên"></nz-option>
-        </nz-select>
-        <nz-select
-          [ngModel]="statusFilter()"
-          (ngModelChange)="statusFilter.set($event); loadUsers()"
-          nzPlaceHolder="Tất cả trạng thái"
-          nzAllowClear
-          class="status-select-control"
-        >
-          <nz-option [nzValue]="true" nzLabel="Đang hoạt động"></nz-option>
-          <nz-option [nzValue]="false" nzLabel="Tài khoản bị khóa"></nz-option>
-        </nz-select>
+        <label class="filter-field">
+          <span>Vai trò</span>
+          <nz-select [ngModel]="activeSegment()" (ngModelChange)="setSegment($event)" class="status-select-control">
+            <nz-option nzValue="all" nzLabel="Tất cả vai trò"></nz-option>
+            <nz-option nzValue="recruiter" nzLabel="Chuyên viên tuyển dụng"></nz-option>
+            <nz-option nzValue="leader" nzLabel="Trưởng nhóm HR"></nz-option>
+            <nz-option nzValue="admin" nzLabel="Quản trị viên"></nz-option>
+            <nz-option nzValue="candidate" nzLabel="Ứng viên"></nz-option>
+          </nz-select>
+        </label>
+        <label class="filter-field">
+          <span>Trạng thái truy cập</span>
+          <nz-select [ngModel]="statusFilter()" (ngModelChange)="changeStatusFilter($event)" nzPlaceHolder="Tất cả trạng thái" nzAllowClear class="status-select-control">
+            <nz-option [nzValue]="true" nzLabel="Đang hoạt động"></nz-option>
+            <nz-option [nzValue]="false" nzLabel="Tài khoản bị khóa"></nz-option>
+          </nz-select>
+        </label>
 
-        <button type="button" class="refresh-text-btn" (click)="loadUsers()" [disabled]="loading()">
-          {{ loading() ? 'Đang tải...' : 'Làm mới' }}
-        </button>
+        @if (hasActiveUserFilters()) {
+          <button type="button" class="refresh-text-btn" (click)="resetUserFilters()">Đặt lại</button>
+        }
       </div>
     </div>
   </section>
@@ -80,7 +88,7 @@
     <div class="table-context-bar">
       <div>
         <strong>Danh sách tài khoản</strong>
-        <span>{{ total() }} người dùng · Chọn một dòng để xem và chỉnh sửa</span>
+        <span>Chọn một dòng để xem hồ sơ và chỉnh sửa ngay trong cùng một bảng thông tin.</span>
       </div>
       @if (bulkMode()) {
         <span class="selection-hint">Chọn các tài khoản cần xử lý cùng lúc</span>
@@ -141,9 +149,11 @@
                   [class.user-avatar-mark--candidate]="user.role === 'candidate'"
                 ></nz-avatar>
                 <div class="user-name-box">
-                  <span class="user-full-name">{{ user.full_name }}</span>
+                  <div class="user-title-line">
+                    <span class="user-full-name">{{ user.full_name }}</span>
+                    <span class="user-role-text" [attr.data-role]="user.role">{{ getRoleLabel(user.role) }}</span>
+                  </div>
                   <span class="user-email-text">{{ user.email }}</span>
-                  <span class="user-role-text">{{ getRoleLabel(user.role) }}</span>
                 </div>
               </div>
             </td>

@@ -3,59 +3,69 @@
   <div class="branding-panel">
     <div class="branding-content">
       <div class="brand-logo">
-        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="48" height="48" rx="12" fill="white" fill-opacity="0.15"/>
-          <path d="M12 15h9v18h-9V15zm15 0h9v18h-9V15z" fill="white"/>
-          <circle cx="16.5" cy="24" r="3" fill="rgba(255,255,255,0.3)"/>
-          <circle cx="31.5" cy="24" r="3" fill="rgba(255,255,255,0.3)"/>
-        </svg>
+        <span class="irsa-logo-mark irsa-logo-mark--light" aria-hidden="true"><i></i><i></i><i></i></span>
         <div class="brand-text">
-          <span class="brand-name">iRSA</span>
-          <span class="brand-tagline">HR Admin</span>
+          <span class="brand-name">iRSA Admin</span>
+          <span class="brand-tagline">Quản trị tuyển dụng</span>
         </div>
       </div>
       <div class="hero-section">
+        <span class="hero-eyebrow">DÀNH CHO DOANH NGHIỆP</span>
         <h1 class="hero-title">
-          Tham gia cùng<br/>
-          <span class="highlight">đội ngũ HR</span>
+          Bắt đầu quản lý<br/>
+          <span class="highlight">tuyển dụng cùng iRSA</span>
         </h1>
         <p class="hero-description">
-          Đăng ký tài khoản HR để quản lý tuyển dụng, sàng lọc ứng viên
-          và theo dõi quy trình hiệu quả với iRSA.
+          Một không gian thống nhất để đăng tin, sàng lọc hồ sơ và phối hợp
+          quy trình phỏng vấn cùng đội ngũ của bạn.
         </p>
       </div>
-      <div class="steps-list">
-        <div class="step-item">
-          <span class="step-number">1</span>
-          <div class="step-text">
-            <strong>Đăng ký tài khoản</strong>
-            <span>Điền thông tin và mã công ty</span>
-          </div>
+      <div class="steps-card">
+        <div class="steps-heading">
+          <span>Quy trình kích hoạt</span>
+          <strong>3 bước</strong>
         </div>
-        <div class="step-item">
-          <span class="step-number">2</span>
-          <div class="step-text">
-            <strong>Xác thực email</strong>
-            <span>Kiểm tra hộp thư và xác thực</span>
+        <div class="steps-list">
+          <div class="step-item">
+            <span class="step-number">1</span>
+            <div class="step-text">
+              <strong>Tạo hồ sơ HR</strong>
+              <span>Dùng email công việc và mã công ty được cấp</span>
+            </div>
           </div>
-        </div>
-        <div class="step-item">
-          <span class="step-number">3</span>
-          <div class="step-text">
-            <strong>Chờ phê duyệt</strong>
-            <span>Quản trị viên xét duyệt tài khoản</span>
+          <div class="step-item">
+            <span class="step-number">2</span>
+            <div class="step-text">
+              <strong>Xác thực email</strong>
+              <span>Kiểm tra hộp thư và xác thực</span>
+            </div>
+          </div>
+          <div class="step-item">
+            <span class="step-number">3</span>
+            <div class="step-text">
+              <strong>Chờ phê duyệt</strong>
+              <span>Quản trị viên xét duyệt tài khoản</span>
+            </div>
           </div>
         </div>
       </div>
+      <p class="preparation-note">
+        Cần chuẩn bị: email công việc và mã định danh công ty.
+      </p>
     </div>
     <div class="branding-footer">
-      <p>2024 iRSA. All rights reserved.</p>
+      <p>iRSA · Nền tảng quản trị tuyển dụng</p>
     </div>
   </div>
 
   <!-- Right Panel: Form -->
   <div class="form-panel">
     <div class="form-container">
+      <div class="mobile-logo">
+        <span class="irsa-logo-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>iRSA Admin</span>
+      </div>
+
       <!-- Success State -->
       @if (registered) {
         <nz-result
@@ -70,27 +80,11 @@
           </div>
         </nz-result>
       } @else {
-        <div class="auth-mascot" aria-hidden="true">
-          <svg viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle class="mascot-halo" cx="48" cy="48" r="45"/>
-            <path class="mascot-spark" d="M17 24v8M13 28h8M75 15v6M72 18h6"/>
-            <path class="mascot-antenna" d="M48 22v-7"/>
-            <circle class="mascot-antenna-dot" cx="48" cy="12" r="4"/>
-            <rect class="mascot-face" x="22" y="23" width="52" height="44" rx="16"/>
-            <circle class="mascot-eye" cx="39" cy="43" r="4"/>
-            <circle class="mascot-eye" cx="57" cy="43" r="4"/>
-            <path class="mascot-smile" d="M40 55c5 5 11 5 16 0"/>
-            <rect class="mascot-cv" x="58" y="56" width="29" height="27" rx="8"/>
-            <path class="mascot-cv-line" d="M65 64h11M65 69h8"/>
-            <circle class="mascot-check-dot" cx="78" cy="76" r="5"/>
-            <path class="mascot-check" d="m75.5 76 1.7 1.7 3.2-3.6"/>
-          </svg>
-        </div>
-
         <!-- Form Header -->
         <div class="form-header">
+          <span class="form-eyebrow">TẠO TÀI KHOẢN MỚI</span>
           <h2 class="form-title">Đăng ký tài khoản HR</h2>
-          <p class="form-subtitle">Tạo tài khoản để quản lý tuyển dụng cho doanh nghiệp.</p>
+          <p class="form-subtitle">Điền thông tin bên dưới. Tài khoản chỉ được mở sau khi email và công ty được xác minh.</p>
         </div>
 
         @if (errorMessage) {
@@ -98,77 +92,112 @@
         }
 
         <form nz-form nzLayout="vertical" [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
-          <nz-form-item>
-            <nz-form-label nzFor="email" nzNoColon>Email</nz-form-label>
-            <nz-form-control [nzErrorTip]="emailError">
-              <nz-input-group [nzPrefix]="emailIcon" nzSize="large">
-                <input id="email" type="email" nz-input formControlName="email" placeholder="hr@company.com"/>
-              </nz-input-group>
-              <ng-template #emailIcon><span nz-icon nzType="mail" nzTheme="outline"></span></ng-template>
-              <ng-template #emailError>Vui lòng nhập email hợp lệ</ng-template>
-            </nz-form-control>
-          </nz-form-item>
+          <section class="form-section" aria-labelledby="profile-section-title">
+            <div class="section-heading">
+              <span class="section-index">01</span>
+              <div>
+                <h3 id="profile-section-title">Thông tin công việc</h3>
+                <p>Dùng thông tin thật để quản trị viên xác minh tài khoản.</p>
+              </div>
+            </div>
 
-          <nz-form-item>
-            <nz-form-label nzFor="full_name" nzNoColon>Họ và tên</nz-form-label>
-            <nz-form-control nzErrorTip="Vui lòng nhập họ và tên (tối thiểu 2 ký tự)">
-              <nz-input-group [nzPrefix]="userIcon" nzSize="large">
-                <input id="full_name" type="text" nz-input formControlName="full_name" placeholder="Nguyễn Văn A"/>
-              </nz-input-group>
-              <ng-template #userIcon><span nz-icon nzType="user" nzTheme="outline"></span></ng-template>
-            </nz-form-control>
-          </nz-form-item>
+            <div class="form-grid">
+              <nz-form-item>
+                <nz-form-label nzFor="full_name" nzNoColon nzRequired>Họ và tên</nz-form-label>
+                <nz-form-control nzErrorTip="Vui lòng nhập họ và tên (tối thiểu 2 ký tự)">
+                  <nz-input-group [nzPrefix]="userIcon" nzSize="large">
+                    <input id="full_name" type="text" nz-input formControlName="full_name" autocomplete="name" placeholder="Nguyễn Văn A"/>
+                  </nz-input-group>
+                  <ng-template #userIcon><span nz-icon nzType="user" nzTheme="outline"></span></ng-template>
+                </nz-form-control>
+              </nz-form-item>
 
-          <nz-form-item>
-            <nz-form-label nzFor="phone" nzNoColon>Số điện thoại <span class="optional">(tùy chọn)</span></nz-form-label>
-            <nz-form-control>
-              <nz-input-group [nzPrefix]="phoneIcon" nzSize="large">
-                <input id="phone" type="tel" nz-input formControlName="phone" placeholder="0901234567"/>
-              </nz-input-group>
-              <ng-template #phoneIcon><span nz-icon nzType="phone" nzTheme="outline"></span></ng-template>
-            </nz-form-control>
-          </nz-form-item>
+              <nz-form-item>
+                <nz-form-label nzFor="email" nzNoColon nzRequired>Email công việc</nz-form-label>
+                <nz-form-control [nzErrorTip]="emailError">
+                  <nz-input-group [nzPrefix]="emailIcon" nzSize="large">
+                    <input id="email" type="email" nz-input formControlName="email" autocomplete="email" placeholder="hr@company.com"/>
+                  </nz-input-group>
+                  <ng-template #emailIcon><span nz-icon nzType="mail" nzTheme="outline"></span></ng-template>
+                  <ng-template #emailError>Vui lòng nhập email hợp lệ</ng-template>
+                </nz-form-control>
+              </nz-form-item>
 
-          <nz-form-item>
-            <nz-form-label nzFor="company_code" nzNoColon>Mã công ty</nz-form-label>
-            <nz-form-control nzErrorTip="Vui lòng nhập mã công ty">
-              <nz-input-group [nzPrefix]="bankIcon" nzSize="large">
-                <input id="company_code" type="text" nz-input formControlName="company_code" placeholder="ACME"/>
-              </nz-input-group>
-              <ng-template #bankIcon><span nz-icon nzType="bank" nzTheme="outline"></span></ng-template>
-            </nz-form-control>
-          </nz-form-item>
+              <nz-form-item>
+                <nz-form-label nzFor="phone" nzNoColon>Số điện thoại <span class="optional">Tùy chọn</span></nz-form-label>
+                <nz-form-control>
+                  <nz-input-group [nzPrefix]="phoneIcon" nzSize="large">
+                    <input id="phone" type="tel" nz-input formControlName="phone" autocomplete="tel" inputmode="tel" placeholder="090 123 4567"/>
+                  </nz-input-group>
+                  <ng-template #phoneIcon><span nz-icon nzType="phone" nzTheme="outline"></span></ng-template>
+                </nz-form-control>
+              </nz-form-item>
 
-          <nz-form-item>
-            <nz-form-label nzFor="password" nzNoColon>Mật khẩu</nz-form-label>
-            <nz-form-control nzErrorTip="Mật khẩu tối thiểu 8 ký tự">
-              <nz-input-group [nzPrefix]="lockIcon" [nzSuffix]="pwSuffix" nzSize="large">
-                <input id="password" [type]="showPassword ? 'text' : 'password'" nz-input formControlName="password" placeholder="Tối thiểu 8 ký tự"/>
-              </nz-input-group>
-              <ng-template #lockIcon><span nz-icon nzType="lock" nzTheme="outline"></span></ng-template>
-              <ng-template #pwSuffix>
-                <span nz-icon class="toggle-pw" [nzType]="showPassword ? 'eye-invisible' : 'eye'" (click)="showPassword = !showPassword"></span>
-              </ng-template>
-            </nz-form-control>
-          </nz-form-item>
+              <nz-form-item>
+                <nz-form-label nzFor="company_code" nzNoColon nzRequired>Mã công ty</nz-form-label>
+                <nz-form-control nzErrorTip="Vui lòng nhập mã công ty">
+                  <nz-input-group [nzPrefix]="bankIcon" nzSize="large">
+                    <input id="company_code" type="text" nz-input formControlName="company_code" autocomplete="organization" placeholder="Ví dụ: FBT-2026"/>
+                  </nz-input-group>
+                  <ng-template #bankIcon><span nz-icon nzType="bank" nzTheme="outline"></span></ng-template>
+                </nz-form-control>
+                <p class="field-help">Mã do quản trị viên công ty cung cấp.</p>
+              </nz-form-item>
+            </div>
+          </section>
 
-          <nz-form-item>
-            <nz-form-label nzFor="confirm_password" nzNoColon>Xác nhận mật khẩu</nz-form-label>
-            <nz-form-control [nzErrorTip]="confirmError">
-              <nz-input-group [nzPrefix]="lockIcon2" nzSize="large">
-                <input id="confirm_password" [type]="showPassword ? 'text' : 'password'" nz-input formControlName="confirm_password" placeholder="Nhập lại mật khẩu"/>
-              </nz-input-group>
-              <ng-template #lockIcon2><span nz-icon nzType="lock" nzTheme="outline"></span></ng-template>
-              <ng-template #confirmError>
-                @if (registerForm.get('confirm_password')?.errors?.['required']) { Vui lòng xác nhận mật khẩu }
-                @else { Mật khẩu xác nhận không khớp }
-              </ng-template>
-            </nz-form-control>
-          </nz-form-item>
+          <section class="form-section" aria-labelledby="security-section-title">
+            <div class="section-heading section-heading--compact">
+              <span class="section-index">02</span>
+              <div>
+                <h3 id="security-section-title">Thiết lập bảo mật</h3>
+                <p>Mật khẩu cần có ít nhất 8 ký tự.</p>
+              </div>
+            </div>
 
-          <button nz-button nzType="primary" nzSize="large" nzBlock [nzLoading]="loading" type="submit" class="submit-btn">
-            Đăng ký
-          </button>
+            <div class="form-grid">
+              <nz-form-item>
+                <nz-form-label nzFor="password" nzNoColon nzRequired>Mật khẩu</nz-form-label>
+                <nz-form-control nzErrorTip="Mật khẩu tối thiểu 8 ký tự">
+                  <nz-input-group [nzPrefix]="lockIcon" [nzSuffix]="pwSuffix" nzSize="large">
+                    <input id="password" [type]="showPassword ? 'text' : 'password'" nz-input formControlName="password" autocomplete="new-password" placeholder="Tối thiểu 8 ký tự"/>
+                  </nz-input-group>
+                  <ng-template #lockIcon><span nz-icon nzType="lock" nzTheme="outline"></span></ng-template>
+                  <ng-template #pwSuffix>
+                    <button type="button" class="toggle-pw" [attr.aria-label]="showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'" (click)="showPassword = !showPassword">
+                      <span nz-icon [nzType]="showPassword ? 'eye-invisible' : 'eye'"></span>
+                    </button>
+                  </ng-template>
+                </nz-form-control>
+              </nz-form-item>
+
+              <nz-form-item>
+                <nz-form-label nzFor="confirm_password" nzNoColon nzRequired>Xác nhận mật khẩu</nz-form-label>
+                <nz-form-control [nzErrorTip]="confirmError">
+                  <nz-input-group [nzPrefix]="lockIcon2" [nzSuffix]="confirmPwSuffix" nzSize="large">
+                    <input id="confirm_password" [type]="showPassword ? 'text' : 'password'" nz-input formControlName="confirm_password" autocomplete="new-password" placeholder="Nhập lại mật khẩu"/>
+                  </nz-input-group>
+                  <ng-template #lockIcon2><span nz-icon nzType="lock" nzTheme="outline"></span></ng-template>
+                  <ng-template #confirmPwSuffix>
+                    <button type="button" class="toggle-pw" [attr.aria-label]="showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'" (click)="showPassword = !showPassword">
+                      <span nz-icon [nzType]="showPassword ? 'eye-invisible' : 'eye'"></span>
+                    </button>
+                  </ng-template>
+                  <ng-template #confirmError>
+                    @if (registerForm.get('confirm_password')?.errors?.['required']) { Vui lòng xác nhận mật khẩu }
+                    @else { Mật khẩu xác nhận không khớp }
+                  </ng-template>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+          </section>
+
+          <div class="form-submit-row">
+            <p>Sau khi gửi, hãy kiểm tra email để hoàn tất xác thực.</p>
+            <button nz-button nzType="primary" nzSize="large" [nzLoading]="loading" [disabled]="loading" type="submit" class="submit-btn">
+              Gửi yêu cầu đăng ký
+            </button>
+          </div>
         </form>
 
         <div class="login-link">

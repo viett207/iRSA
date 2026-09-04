@@ -3,30 +3,34 @@
     <div class="loading-state">
       <nz-spin nzSimple nzSize="large"></nz-spin>
       <p class="loading-copy">
-        Đang tải dữ liệu phòng phỏng vấn và bộ câu hỏi...
+        {{ reportMode ? 'Đang tải biên bản phỏng vấn...' : 'Đang tải dữ liệu phòng phỏng vấn và bộ câu hỏi...' }}
       </p>
     </div>
   } @else if (data()) {
-    <app-interview-candidate-banner [room]="view" />
+    @if (reportMode) {
+      <app-interview-report [room]="view" />
+    } @else {
+      <app-interview-candidate-banner [room]="view" />
 
-    <nz-tabset [(nzSelectedIndex)]="activeTabIndex" class="tabs-spacing">
-      <nz-tab [nzTitle]="tabLiveTitle" [nzForceRender]="true">
-        <ng-template #tabLiveTitle>
-          <strong>Phòng phỏng vấn ({{ activeQuestions().length }} câu hỏi)</strong>
-        </ng-template>
-        <app-interview-live-room [room]="view" />
-      </nz-tab>
+      <nz-tabset [(nzSelectedIndex)]="activeTabIndex" class="tabs-spacing">
+        <nz-tab [nzTitle]="tabLiveTitle" [nzForceRender]="true">
+          <ng-template #tabLiveTitle>
+            <strong>Phòng phỏng vấn ({{ activeQuestions().length }} câu hỏi)</strong>
+          </ng-template>
+          <app-interview-live-room [room]="view" />
+        </nz-tab>
 
-      <nz-tab nzTitle="CV & Báo cáo sàng lọc" [nzForceRender]="true">
-        <app-interview-screening-reference [room]="view" />
-      </nz-tab>
+        <nz-tab nzTitle="CV & Báo cáo sàng lọc" [nzForceRender]="true">
+          <app-interview-screening-reference [room]="view" />
+        </nz-tab>
 
-      <nz-tab [nzTitle]="tabSummaryTitle">
-        <ng-template #tabSummaryTitle>
-          <strong>Tổng kết & Quyết định</strong>
-        </ng-template>
-        <app-interview-summary [room]="view" />
-      </nz-tab>
-    </nz-tabset>
+        <nz-tab [nzTitle]="tabSummaryTitle">
+          <ng-template #tabSummaryTitle>
+            <strong>Tổng kết & Quyết định</strong>
+          </ng-template>
+          <app-interview-summary [room]="view" />
+        </nz-tab>
+      </nz-tabset>
+    }
   }
 </div>

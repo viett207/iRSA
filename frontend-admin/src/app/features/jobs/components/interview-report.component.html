@@ -1,0 +1,133 @@
+<article class="interview-report">
+  <header class="report-header">
+    <div class="candidate-summary">
+      <span class="candidate-avatar">{{ getCandidateInitials(data()!.candidate.name) }}</span>
+      <div>
+        <span class="report-eyebrow">BIÊN BẢN & ĐÁNH GIÁ PHỎNG VẤN</span>
+        <h2>{{ data()!.candidate.name }}</h2>
+        <strong>{{ data()!.job_title }}</strong>
+        <p>{{ data()!.candidate.email }}@if (data()!.candidate.phone) { <span>·</span> {{ data()!.candidate.phone }} }</p>
+      </div>
+    </div>
+    <div class="report-state" [class.ready]="overallScore() !== null">
+      <span>{{ overallScore() !== null ? 'Đã có tổng kết' : 'Chưa có tổng kết' }}</span>
+      <small>{{ formatInterviewDate(data()!.interview?.interview_date) }}</small>
+    </div>
+  </header>
+
+  <section class="report-overview" aria-label="Kết quả tổng quan">
+    <article class="primary-metric">
+      <span>ĐIỂM PHỎNG VẤN TỔNG HỢP</span>
+      @if (overallScore() !== null) {
+        <strong>{{ scoreFormat(overallScore()!) }}<small>/100</small></strong>
+      } @else {
+        <strong>—</strong>
+        <small>Chưa tạo tổng kết</small>
+      }
+    </article>
+    <article>
+      <span>KHUYẾN NGHỊ</span>
+      <strong>{{ recommendation() ? getRecLabel(recommendation()!) : 'Chưa có đề xuất' }}</strong>
+      <small>Thông tin tham khảo, quyết định cuối cùng thuộc về HR</small>
+    </article>
+    <article>
+      <span>DỮ LIỆU ĐÃ CHẤM</span>
+      <strong>{{ answeredCount() }}/{{ activeQuestions().length }} câu hỏi</strong>
+      <small>Điểm trung bình: {{ answeredCount() ? scoreFormat(averageAnswerScore()) + '/100' : 'Chưa có' }}</small>
+    </article>
+  </section>
+
+  <section class="overall-assessment">
+    <div>
+      <span>NHẬN ĐỊNH TỔNG THỂ</span>
+      <h3>Kết luận từ phiên phỏng vấn</h3>
+    </div>
+    <p>{{ overallFeedback() || 'Chưa có nhận định tổng thể. Báo cáo bên dưới vẫn hiển thị toàn bộ câu trả lời và dữ liệu đã ghi nhận.' }}</p>
+  </section>
+
+  <div class="report-body">
+    <aside class="question-index">
+      <header>
+        <span>MỤC LỤC</span>
+        <strong>{{ activeQuestions().length }} câu hỏi</strong>
+      </header>
+      <nav aria-label="Mục lục câu hỏi phỏng vấn">
+        @for (q of activeQuestions(); track $index) {
+          <button type="button" (click)="jumpToQuestion($index)">
+            <span>{{ $index + 1 }}</span>
+            <div>
+              <strong>{{ q.question.question }}</strong>
+              <small>{{ q.answer ? scoreFormat(q.answer.score) + '/100' : (q.transcript ? 'Có bản ghi' : 'Chưa có dữ liệu') }}</small>
+            </div>
+          </button>
+        }
+      </nav>
+    </aside>
+
+    <section class="question-reports">
+      <header class="section-title">
+        <div><span>CHI TIẾT PHỎNG VẤN</span><h3>Câu trả lời và đánh giá</h3></div>
+        <small>Hiển thị dữ liệu đã lưu, không thay đổi nội dung phòng phỏng vấn.</small>
+      </header>
+
+      @for (q of activeQuestions(); track $index) {
+        <article class="question-report" [id]="'report-question-' + $index">
+          <header>
+            <div class="question-number">{{ $index + 1 }}</div>
+            <div class="question-copy">
+              <div class="question-meta">
+                <span>{{ getCategoryLabel(q.question.category) }}</span>
+                @if (q.question.target_skill) { <span>{{ q.question.target_skill }}</span> }
+              </div>
+              <h4>{{ q.question.question }}</h4>
+              @if (q.question.purpose) { <p>Mục tiêu: {{ q.question.purpose }}</p> }
+            </div>
+            @if (q.answer) {
+              <strong class="question-score">{{ scoreFormat(q.answer.score) }}<small>/100</small></strong>
+            } @else {
+              <span class="question-no-score">Chưa chấm</span>
+            }
+          </header>
+
+          @if (q.transcript) {
+            <div class="transcript-block">
+              <span>BẢN GHI CÂU TRẢ LỜI</span>
+              <p>{{ q.transcript }}</p>
+              @if (getAudioSrc(q, $index)) {
+                <audio controls preload="none" [src]="getAudioSrc(q, $index)"></audio>
+              }
+            </div>
+          } @else {
+            <div class="no-answer">Chưa có bản ghi câu trả lời cho câu hỏi này.</div>
+          }
+
+          @if (q.answer) {
+            <div class="analysis-block">
+              <article class="assessment">
+                <span>NHẬN ĐỊNH</span>
+                <p>{{ q.answer.assessment }}</p>
+              </article>
+              <article>
+                <span>ĐIỂM THỂ HIỆN TỐT</span>
+                @if (q.answer.strengths.length) {
+                  <ul>@for (item of q.answer.strengths; track item) { <li>{{ item }}</li> }</ul>
+                } @else { <p>Chưa có dữ liệu.</p> }
+              </article>
+              <article>
+                <span>NỘI DUNG CẦN ĐÀO SÂU</span>
+                @if (q.answer.improvements.length) {
+                  <ul>@for (item of q.answer.improvements; track item) { <li>{{ item }}</li> }</ul>
+                } @else { <p>Chưa có dữ liệu.</p> }
+              </article>
+            </div>
+          }
+        </article>
+      } @empty {
+        <div class="report-empty">
+          <strong>Chưa có câu hỏi phỏng vấn</strong>
+          <span>Phiên này chưa ghi nhận bộ câu hỏi hoặc câu trả lời.</span>
+        </div>
+      }
+    </section>
+  </div>
+</article>

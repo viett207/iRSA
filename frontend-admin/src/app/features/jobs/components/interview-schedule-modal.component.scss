@@ -1,9 +1,9 @@
 .schedule-dialog { margin: -8px -4px -16px; color: #3f3f46; }
 .schedule-intro { display: flex; margin-bottom: 18px; padding: 14px 16px; border: 1px solid #e4dfd3; border-radius: 12px; background: #faf9f6; align-items: center; gap: 12px; }
 .schedule-intro__icon { display: inline-flex; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 9px; color: #52525b; background: #eeece6; align-items: center; justify-content: center; font-size: 18px; }
-.schedule-intro div > span, .schedule-section > header span { display: block; color: #8b8b93; font-size: 9px; font-weight: 700; letter-spacing: .08em; }
+.schedule-intro div > span, .schedule-section > header span { display: block; color: #8b8b93; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
 .schedule-intro strong { display: block; margin: 2px 0; color: #18181b; font-size: 14px; }
-.schedule-intro p { margin: 0; color: #71717a; font-size: 11px; }
+.schedule-intro p { margin: 0; color: #71717a; font-size: 12px; }
 .schedule-section { margin-bottom: 18px; }
 .schedule-section > header { display: flex; margin-bottom: 9px; align-items: flex-end; justify-content: space-between; }
 .schedule-section h4 { margin: 2px 0 0; color: #27272a; font-size: 14px; font-weight: 700; }
@@ -12,14 +12,14 @@
 .interview-item.cancelled { opacity: .56; background: #fafafa; }
 .interview-date-block { display: flex; width: 48px; height: 48px; border-radius: 9px; color: #52525b; background: #f1eee5; align-items: center; justify-content: center; flex-direction: column; }
 .interview-date-block strong { color: #18181b; font-family: var(--font-mono, monospace); font-size: 17px; line-height: 1; }
-.interview-date-block span { margin-top: 3px; font-size: 9px; }
+.interview-date-block span { margin-top: 3px; font-size: 12px; }
 .interview-time { color: #27272a; font-size: 13px; font-weight: 700; }
-.interview-meta { display: flex; margin-top: 5px; color: #8b8b93; align-items: center; gap: 5px; font-size: 10px; }
+.interview-meta { display: flex; margin-top: 5px; color: #8b8b93; align-items: center; gap: 5px; font-size: 12px; }
 .schedule-status { display: inline-flex; margin-right: 5px; color: #71717a; align-items: center; gap: 5px; }
 .schedule-status i { width: 6px; height: 6px; border-radius: 50%; background: #a1a1aa; }
 .schedule-status[data-status='scheduled'] i { background: #8a7654; }
 .schedule-status[data-status='completed'] i { background: #52705c; }
-.interview-info p { display: flex; margin: 6px 0 0; color: #71717a; align-items: flex-start; gap: 6px; font-size: 11px; line-height: 1.45; }
+.interview-info p { display: flex; margin: 6px 0 0; color: #71717a; align-items: flex-start; gap: 6px; font-size: 12px; line-height: 1.45; }
 .interview-actions { display: flex; align-items: center; gap: 5px; }
 .interview-actions .ant-btn { border-color: #dedbd3; border-radius: 7px; color: #3f3f46; background: #fff; }
 .interview-actions .ant-btn-dangerous { border-color: #ead4d1; color: #8f514a; }
@@ -27,9 +27,9 @@
 .schedule-form__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
 .form-field { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
 .form-field--wide { grid-column: 1 / -1; }
-.form-field > span { color: #3f3f46; font-size: 11px; font-weight: 600; }
+.form-field > span { color: #3f3f46; font-size: 12px; font-weight: 600; }
 .form-field > span b { color: #8f514a; }
-.form-field > small { color: #a1a1aa; font-size: 10px; }
+.form-field > small { color: #a1a1aa; font-size: 12px; }
 .form-field nz-date-picker, .form-field nz-select { width: 100%; }
 :host ::ng-deep .form-field .ant-picker, :host ::ng-deep .form-field .ant-select-selector, .form-field input, .form-field textarea { border-color: #dedbd3 !important; border-radius: 8px !important; box-shadow: none !important; }
 :host ::ng-deep .form-field .ant-picker, :host ::ng-deep .form-field .ant-select-selector, .form-field input { min-height: 40px; }

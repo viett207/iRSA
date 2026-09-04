@@ -34,10 +34,10 @@
   align-items: center;
   gap: 16px;
 }
-.banner-eyebrow { color: #85858e; font-size: 8.5px; font-weight: 750; letter-spacing: .08em; }
+.banner-eyebrow { color: #85858e; font-size: 12px; font-weight: 750; letter-spacing: .08em; }
 .candidate-name { margin: 2px 0 1px; color: #27272a; font-size: 18px; font-weight: 750; }
-.candidate-role { display: block; color: #55555d; font-size: 11px; font-weight: 650; }
-.candidate-meta { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 5px; color: #7a7a83; font-size: 10px; }
+.candidate-role { display: block; color: #55555d; font-size: 12px; font-weight: 650; }
+.candidate-meta { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 5px; color: #7a7a83; font-size: 12px; }
 .candidate-meta span + span::before { margin-right: 13px; color: #c3beb3; content: '·'; }
-.interview-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: #e8f0ea; color: #47604f; font-size: 10px; font-weight: 700; }
+.interview-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: #e8f0ea; color: #47604f; font-size: 12px; font-weight: 700; }
 .interview-status i { width: 6px; height: 6px; border-radius: 50%; background: #65816d; }

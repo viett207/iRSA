@@ -14,7 +14,6 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { AuthService } from '../../core/auth/auth.service';
@@ -32,7 +31,6 @@ import { environment } from '../../../environments/environment';
     NzButtonModule,
     NzCheckboxModule,
     NzIconModule,
-    NzDividerModule,
     NzModalModule,
     NzAlertModule,
   ],
@@ -59,18 +57,10 @@ export class LoginComponent {
     private message: NzMessageService
   ) {
     this.loginForm = this.fb.group({
-      email: ['nguyenviet2k72k3@gmail.com', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
-      password: ['12345abcde', [Validators.required, Validators.minLength(8)]],
+      email: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
+      password: ['', [Validators.required, Validators.minLength(8)]],
       remember: [true],
     });
-  }
-
-  fillCandidateAccount(): void {
-    this.loginForm.patchValue({
-      email: 'nguyenviet2k72k3@gmail.com',
-      password: '12345abcde',
-    });
-    this.message.info('Đã tự động điền tài khoản Ứng viên');
   }
 
   onSubmit(): void {

@@ -483,7 +483,7 @@ async def list_shortlisted_applications(
     status: str | None = Query(None),
     page: int = Query(1, ge=1),
     size: int = Query(50, ge=1, le=100),
-    sort_by: str = Query("date", pattern="^(date|score|ai_score)$"),
+    sort_by: str = Query("date", pattern="^(date|oldest|score|ai_score)$"),
 ):
     """List all shortlisted & scheduled applications across all jobs or for a specific job."""
     target_statuses = [status] if status else ["shortlisted", "interviewing"]
@@ -511,7 +511,12 @@ async def list_shortlisted_applications(
     total = (await db.execute(count_q)).scalar() or 0
 
     # Sorting
-    if sort_by == "score":
+    if sort_by == "oldest":
+        base_query = base_query.order_by(
+            Application.submitted_at.asc().nulls_last(),
+            Application.id.asc(),
+        )
+    elif sort_by == "score":
         base_query = base_query.outerjoin(ScoringResult).order_by(
             ScoringResult.total_score.desc().nulls_last()
         )
@@ -520,7 +525,10 @@ async def list_shortlisted_applications(
             ScoringResult.ai_score.desc().nulls_last()
         )
     else:
-        base_query = base_query.order_by(Application.updated_at.desc())
+        base_query = base_query.order_by(
+            Application.submitted_at.desc().nulls_last(),
+            Application.id.desc(),
+        )
 
     offset = (page - 1) * size
     result = await db.execute(base_query.offset(offset).limit(size))

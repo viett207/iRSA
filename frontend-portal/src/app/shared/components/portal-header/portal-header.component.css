@@ -42,6 +42,25 @@
   }
 }
 
+.irsa-header-mark {
+  align-items: flex-end;
+  gap: 3px;
+  padding: 5px;
+  border: 1px solid var(--irsa-border-muted);
+  border-radius: 8px;
+  background: var(--irsa-bg-card);
+}
+
+.irsa-header-mark i {
+  display: block;
+  width: 5px;
+  border-radius: 999px;
+}
+
+.irsa-header-mark i:nth-child(1) { height: 9px; background: #d4d4d8; }
+.irsa-header-mark i:nth-child(2) { height: 16px; background: #71717a; }
+.irsa-header-mark i:nth-child(3) { height: 22px; background: #d4d4d8; }
+
 .logo-text {
   font-family: var(--irsa-font-sans);
   font-size: 18px;

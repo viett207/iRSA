@@ -15,9 +15,9 @@
   gap: 24px;
   padding: 18px 20px;
 
-  span { color: #85858e; font-size: 8.5px; font-weight: 750; letter-spacing: .08em; }
+  span { color: #85858e; font-size: 12px; font-weight: 750; letter-spacing: .08em; }
   h3 { margin: 4px 0 3px; color: #2f2f34; font-size: 15px; font-weight: 750; }
-  p { margin: 0; color: #7c7c84; font-size: 10px; line-height: 1.5; }
+  p { margin: 0; color: #7c7c84; font-size: 12px; line-height: 1.5; }
 }
 
 .section-header { border-bottom: 1px solid #eeeae1; background: #faf9f6; }
@@ -39,18 +39,18 @@
   border: 1px solid #e4dfd5;
   border-radius: 9px;
   background: #fff;
-  > span { display: block; color: #85858e; font-size: 8.5px; font-weight: 750; letter-spacing: .06em; }
+  > span { display: block; color: #85858e; font-size: 12px; font-weight: 750; letter-spacing: .06em; }
 }
 .score-panel {
   background: #f3f0e9;
   strong { display: block; margin: 10px 0 8px; color: #27272a; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 30px; line-height: 1; }
-  strong small { color: #85858e; font-size: 10px; }
+  strong small { color: #85858e; font-size: 12px; }
 }
 .feedback-panel {
   display: flex;
   align-items: flex-start;
   flex-direction: column;
-  p { max-width: 850px; margin: 10px 0 14px; color: #55555d; font-size: 11px; line-height: 1.6; }
+  p { max-width: 850px; margin: 10px 0 14px; color: #55555d; font-size: 12px; line-height: 1.6; }
   button { margin-top: auto; }
 }
 
@@ -64,9 +64,9 @@
   border: 1px dashed #d8d2c6;
   border-radius: 9px;
   background: #faf9f6;
-  span { color: #8a867e; font-size: 8.5px; font-weight: 750; letter-spacing: .07em; }
+  span { color: #8a867e; font-size: 12px; font-weight: 750; letter-spacing: .07em; }
   h4 { margin: 5px 0 3px; color: #343438; font-size: 13px; }
-  p { margin: 0; color: #85858e; font-size: 9.5px; }
+  p { margin: 0; color: #85858e; font-size: 12px; }
 }
 
 .decision-panel { margin: 0 20px 20px; overflow: hidden; border: 1px solid #ded9cd; border-radius: 10px; }
@@ -75,7 +75,7 @@
   padding: 15px 16px;
   border-bottom: 1px solid #eeeae1;
   background: #f7f5f0;
-  small { max-width: 320px; color: #85858e; font-size: 9px; text-align: right; }
+  small { max-width: 320px; color: #85858e; font-size: 12px; text-align: right; }
 }
 .decision-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .decision-option {
@@ -87,17 +87,17 @@
   gap: 16px;
   border-right: 1px solid #eeeae1;
   &:last-child { border-right: 0; }
-  strong { color: #343438; font-size: 11.5px; }
-  p { margin: 5px 0 0; color: #85858e; font-size: 9px; line-height: 1.5; }
+  strong { color: #343438; font-size: 12px; }
+  p { margin: 5px 0 0; color: #85858e; font-size: 12px; line-height: 1.5; }
   button { align-self: flex-start; }
 }
 .primary-option { background: #faf9f6; }
 .danger-option { background: #fffafa; }
 
 :host ::ng-deep {
-  .ant-btn { height: 34px; border-radius: 7px; font-size: 9.5px; font-weight: 650; }
+  .ant-btn { height: 34px; border-radius: 7px; font-size: 12px; font-weight: 650; }
   .ant-btn-primary { border-color: #27272a; background: #27272a; }
-  .ant-tag { margin: 0; border: 0; border-radius: 999px; font-size: 8.5px; font-weight: 700; }
+  .ant-tag { margin: 0; border: 0; border-radius: 999px; font-size: 12px; font-weight: 700; }
 }
 
 @media (max-width: 850px) {
