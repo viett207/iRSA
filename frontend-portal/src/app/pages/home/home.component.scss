@@ -409,6 +409,125 @@
   white-space: nowrap;
 }
 
+/* Rich opportunity cards */
+.job-card {
+  position: relative;
+  display: flex;
+  height: 100%;
+  min-height: 410px;
+  overflow: hidden;
+  flex-direction: column;
+  border: 1px solid #ded9cf;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #fff 0%, #fff 72%, #fbfaf7 100%);
+  box-shadow: 0 8px 28px rgba(24, 24, 27, .045);
+  cursor: pointer;
+  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+}
+
+.job-card::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #a78b68, #d5c5aa 55%, transparent);
+  content: '';
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+.job-card:hover,
+.job-card:focus-visible {
+  border-color: #b9ad9b;
+  outline: 0;
+  box-shadow: 0 18px 42px rgba(24, 24, 27, .1);
+  transform: translateY(-5px);
+}
+
+.job-card:hover::before,
+.job-card:focus-visible::before { opacity: 1; }
+
+.job-card__topline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 22px 14px;
+}
+
+.job-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  place-items: center;
+  border: 1px solid #dfd4c3;
+  border-radius: 15px;
+  background: linear-gradient(145deg, #f3eadc, #ddc9ad);
+  color: #5c4935;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+
+.job-company { display: flex; min-width: 0; flex: 1; flex-direction: column; }
+.job-company strong { overflow: hidden; color: #4b4b4f; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.job-company span { display: flex; align-items: center; gap: 6px; margin-top: 3px; color: #7c8d80; font-size: 11px; }
+.job-company i, .company-active i { width: 6px; height: 6px; border-radius: 50%; background: #3fa065; box-shadow: 0 0 0 3px #e2f3e8; }
+.new-badge { padding: 5px 8px; border-radius: 999px; background: #20252f; color: #fff; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
+
+.job-card__body { display: flex; flex: 1; flex-direction: column; padding: 4px 22px 20px; }
+.job-card__body h3 { display: -webkit-box; min-height: 52px; margin: 7px 0 8px; overflow: hidden; color: #202126; font-size: 19px; font-weight: 750; letter-spacing: -.02em; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.job-summary { display: -webkit-box; min-height: 42px; margin: 0 0 18px; overflow: hidden; color: #76767c; font-size: 13px; line-height: 1.6; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.job-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; padding: 14px; border: 1px solid #eeebe5; border-radius: 14px; background: #faf9f6; }
+.job-meta-grid > span { display: grid; min-width: 0; grid-template-columns: 17px 1fr; grid-template-rows: auto auto; column-gap: 7px; color: #8c765a; }
+.job-meta-grid > span > [nz-icon] { grid-row: 1 / 3; margin-top: 3px; }
+.job-meta-grid small { color: #9a999c; font-size: 10px; }
+.job-meta-grid strong { overflow: hidden; color: #505158; font-size: 11px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.job-meta-grid > span:last-child { grid-column: 1 / -1; }
+.skill-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.skill-list span { padding: 5px 9px; border: 1px solid #e6e1d8; border-radius: 999px; background: #fff; color: #686970; font-size: 10px; font-weight: 600; }
+
+.job-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid #ebe7df;
+  background: rgba(250, 249, 246, .8);
+}
+.job-footer > div { display: flex; min-width: 0; flex-direction: column; }
+.job-footer small { color: #9a999d; font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
+.job-footer strong { margin-top: 2px; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.job-footer .salary { color: #247644; font-size: 12px; }
+.deadline { color: #575960; }.deadline.urgent { color: #b46a27; }
+.job-arrow { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; background: #242936; color: #fff; transition: transform .2s ease; }
+.job-card:hover .job-arrow { transform: translateX(3px); }
+
+/* Detailed employer cards */
+.companies-grid { grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 20px; }
+.company-card {
+  position: relative;
+  display: block;
+  min-height: 270px;
+  overflow: hidden;
+  padding: 22px;
+  border: 1px solid #e2ded6;
+  border-radius: 19px;
+  background: linear-gradient(145deg, #fff, #fbfaf7);
+  box-shadow: 0 7px 24px rgba(24,24,27,.04);
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.company-card:hover,.company-card:focus-visible { border-color: #b9ad9b; outline: 0; box-shadow: 0 16px 38px rgba(24,24,27,.09); transform: translateY(-4px); }
+.company-card__accent { position: absolute; top: 0; right: 0; width: 90px; height: 90px; border-radius: 0 0 0 100%; background: linear-gradient(135deg, rgba(224,211,192,.45),rgba(243,240,230,.1)); }
+.company-card__header { position: relative; display: flex; align-items: flex-start; justify-content: space-between; }
+.company-avatar { width: 54px; height: 54px; flex-basis: 54px; border: 1px solid #d9ccb9; border-radius: 16px; background: linear-gradient(145deg,#313846,#1d2330); color: #f1dfc6; font-size: 15px; }
+.company-active { display: flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: #edf7ef; color: #3d7650; font-size: 10px; font-weight: 700; }
+.company-info { margin-top: 16px; }.company-info h3 { margin: 0; overflow: hidden; color: #27282d; font-size: 17px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }.company-code { display: block; margin-top: 3px; color: #aaa7a1; font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }.company-info p { min-height: 21px; margin: 10px 0 0; color: #76777d; font-size: 12px; }
+.company-details { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 13px; color: #797b83; font-size: 11px; }.company-details span { display: inline-flex; align-items: center; gap: 5px; }
+.company-card footer { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; padding-top: 15px; border-top: 1px solid #ebe7df; }.company-card footer > div { display: flex; align-items: baseline; gap: 6px; }.company-card footer strong { color: #292c34; font-size: 20px; }.company-card footer div span { color: #85868c; font-size: 10px; }.explore-company { display: flex; align-items: center; gap: 7px; color: #66533e; font-size: 11px; font-weight: 700; }.company-card:hover .explore-company [nz-icon] { transform: translateX(3px); }
+
 @keyframes home-status-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.45; transform: scale(0.82); }
