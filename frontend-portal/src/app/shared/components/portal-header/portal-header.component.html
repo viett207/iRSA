@@ -38,17 +38,22 @@
     <div class="header-right">
       @if (authService.isAuthenticated()) {
         <!-- One notification trigger for every viewport. -->
-        <div
+        <button
+          type="button"
           class="notif-bell"
           nz-dropdown
           [nzDropdownMenu]="notifMenu"
           nzTrigger="click"
           nzPlacement="bottomRight"
+          aria-label="Mở thông báo"
         >
-          <nz-badge [nzCount]="notificationSvc.unreadCount()" [nzOverflowCount]="9" nzSize="small">
-            <span nz-icon nzType="bell" nzTheme="outline"></span>
-          </nz-badge>
-        </div>
+          <span class="notif-icon" nz-icon nzType="bell" nzTheme="outline"></span>
+          @if (notificationSvc.unreadCount() > 0) {
+            <span class="notif-count">
+              {{ notificationSvc.unreadCount() > 9 ? '9+' : notificationSvc.unreadCount() }}
+            </span>
+          }
+        </button>
         <nz-dropdown-menu #notifMenu>
           <div class="notif-dropdown">
             <div class="notif-dropdown-header">
@@ -91,8 +96,10 @@
         <nz-dropdown-menu #userMenu>
           <ul nz-menu class="user-dropdown">
             <li nz-menu-item disabled class="dropdown-header">
-              <strong>{{ authService.user()?.full_name }}</strong>
-              <small>{{ authService.user()?.email }}</small>
+              <div class="dropdown-user-details">
+                <strong>{{ authService.user()?.full_name }}</strong>
+                <small>{{ authService.user()?.email }}</small>
+              </div>
             </li>
             <li nz-menu-divider></li>
             <li nz-menu-item routerLink="/dashboard/profile">

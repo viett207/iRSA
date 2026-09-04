@@ -125,6 +125,17 @@
               >
                 Đăng nhập để ứng tuyển
               </button>
+            } @else if (checkingAppliedStatus) {
+              <button
+                nz-button
+                nzType="primary"
+                nzBlock
+                nzSize="large"
+                disabled
+                [nzLoading]="true"
+                class="apply-primary-action irsa-btn-primary"
+                aria-label="Đang kiểm tra trạng thái ứng tuyển"
+              ></button>
             } @else if (hasApplied) {
               <button
                 nz-button

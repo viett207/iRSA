@@ -1,92 +1,199 @@
 <div class="applications-page">
-  <div class="container">
-    <div class="page-header">
-      <h1>Hồ sơ ứng tuyển</h1>
-      <p>Theo dõi trạng thái các hồ sơ bạn đã nộp</p>
+  <div class="application-page-container">
+    <div class="page-toolbar">
+      <div class="page-header">
+        <h1>Hồ sơ ứng tuyển</h1>
+        <p>Theo dõi trạng thái các hồ sơ bạn đã nộp</p>
+      </div>
+
+      <div class="application-stats" aria-label="Thống kê hồ sơ ứng tuyển">
+        <div class="stat-item">
+          <span>Tổng số hồ sơ:</span>
+          <strong>{{ total }}</strong>
+        </div>
+        <div class="stat-item">
+          <span>Đã nộp:</span>
+          <strong>{{ total }}</strong>
+        </div>
+        <div class="stat-item">
+          <span>Đã chọn vòng 2:</span>
+          <strong>{{ statusCounts.shortlisted }}</strong>
+        </div>
+        <div class="stat-item">
+          <span>Đang xem xét:</span>
+          <strong>{{ statusCounts.in_review }}</strong>
+        </div>
+      </div>
     </div>
 
-    <nz-card>
+    <nz-card [nzBodyStyle]="{ padding: '16px' }">
       <nz-table
         #basicTable
-        [nzData]="applications"
+        [nzData]="filteredApplications"
         [nzLoading]="loading"
-        [nzPageSize]="pageSize"
-        [nzTotal]="total"
-        [nzFrontPagination]="false"
-        (nzPageIndexChange)="onPageChange($event)"
-        [nzShowPagination]="total > pageSize"
+        [(nzPageIndex)]="page"
+        [(nzPageSize)]="pageSize"
+        [nzShowPagination]="filteredApplications.length > pageSize"
         nzShowSizeChanger
         [nzPageSizeOptions]="[10, 20, 50]"
-        (nzPageSizeChange)="onPageSizeChange($event)"
+        nzTableLayout="fixed"
+        [nzNoResult]="emptyApplicationsTemplate"
       >
         <thead>
           <tr>
-            <th>Vị trí</th>
-            <th class="hide-mobile">Phòng ban</th>
-            <th class="hide-mobile">Địa điểm</th>
-            <th>Trạng thái</th>
-            <th class="hide-mobile">Ngày nộp</th>
-            <th nzWidth="180px"></th>
+            <th class="col-position" nzWidth="34%" nzCustomFilter>
+              Vị trí
+              <nz-filter-trigger
+                [nzVisible]="visiblePosition"
+                (nzVisibleChange)="onPositionVisibleChange($event)"
+                [nzActive]="searchTitle.trim().length > 0"
+                [nzDropdownMenu]="positionMenu"
+              >
+                <span nz-icon nzType="filter"></span>
+              </nz-filter-trigger>
+            </th>
+            <th
+              class="col-department hide-mobile"
+              nzWidth="13%"
+              [nzFilters]="departmentFilterList"
+              [nzFilterFn]="departmentFilterFn"
+            >
+              Phòng ban
+            </th>
+            <th
+              class="col-location hide-mobile"
+              nzWidth="14%"
+              [nzFilters]="locationFilterList"
+              [nzFilterFn]="locationFilterFn"
+            >
+              Địa điểm
+            </th>
+            <th
+              class="col-status"
+              nzWidth="14%"
+              [nzFilters]="statusFilterList"
+              [nzFilterFn]="statusFilterFn"
+            >
+              Trạng thái
+            </th>
+            <th
+              class="col-submitted hide-mobile"
+              nzWidth="12%"
+              [nzSortFn]="submittedSortFn"
+            >Ngày nộp</th>
+            <th class="col-actions" nzWidth="13%">Hành động</th>
           </tr>
         </thead>
         <tbody>
-          @for (app of applications; track app.id) {
-            <tr>
-              <td>
+          @for (app of basicTable.data; track app.id) {
+            <tr class="application-row">
+              <td class="col-position">
                 <div class="job-title">{{ app.job_title }}</div>
                 <div class="mobile-meta show-mobile-only">
                   {{ app.submitted_at | date: 'dd/MM/yyyy' }}
                 </div>
               </td>
-              <td class="hide-mobile">{{ app.job_department || '-' }}</td>
-              <td class="hide-mobile">{{ app.job_location || '-' }}</td>
-              <td>
-                <nz-tag [nzColor]="getStatusColor(app.public_status)">
+              <td class="col-department hide-mobile">{{ app.job_department || '-' }}</td>
+              <td class="col-location hide-mobile">{{ app.job_location || '-' }}</td>
+              <td class="col-status">
+                @if (app.public_status === 'in_review') {
+                  <span class="review-indicator" aria-hidden="true"></span>
+                }
+                <nz-tag
+                  [nzColor]="getStatusColor(app.public_status)"
+                  class="status-pill status-{{ app.public_status }}"
+                >
                   {{ getStatusLabel(app.public_status) }}
                 </nz-tag>
               </td>
-              <td class="hide-mobile">{{ app.submitted_at | date: 'dd/MM/yyyy' }}</td>
-              <td class="actions-cell">
-                <button
-                  nz-button
-                  nzType="link"
-                  nzSize="small"
-                  nz-tooltip
-                  nzTooltipTitle="Xem CV đã nộp"
-                  (click)="openPdfViewer(app)"
-                >
-                  <span nz-icon nzType="file-pdf" nzTheme="outline"></span>
-                  <span class="hide-mobile">Xem CV</span>
-                </button>
-                <a
-                  [routerLink]="['/jobs', app.job_slug]"
-                  nz-button
-                  nzType="link"
-                  nzSize="small"
-                  nz-tooltip
-                  nzTooltipTitle="Xem tin tuyển dụng"
-                >
-                  <span nz-icon nzType="eye" nzTheme="outline"></span>
-                  <span class="hide-mobile">Xem tin</span>
-                </a>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="6">
-                <nz-empty
-                  nzNotFoundImage="simple"
-                  nzNotFoundContent="Bạn chưa có hồ sơ ứng tuyển nào"
-                >
-                  <a routerLink="/jobs" nz-button nzType="primary">
-                    Tìm việc làm
+              <td class="col-submitted hide-mobile">{{ app.submitted_at | date: 'dd/MM/yyyy' }}</td>
+              <td class="col-actions">
+                <div class="actions-wrapper">
+                  <a
+                    [routerLink]="['/jobs', app.job_slug]"
+                    nz-button
+                    nzType="link"
+                    nzSize="small"
+                    nz-tooltip
+                    nzTooltipTitle="Xem tin tuyển dụng"
+                    aria-label="Xem tin tuyển dụng"
+                    class="action-btn"
+                  >
+                    <span nz-icon nzType="eye" nzTheme="outline"></span>
                   </a>
-                </nz-empty>
+                  <button
+                    nz-button
+                    nzType="link"
+                    nzSize="small"
+                    nz-tooltip
+                    nzTooltipTitle="Xem CV đã nộp"
+                    aria-label="Xem CV đã nộp"
+                    (click)="openPdfViewer(app)"
+                    class="action-btn"
+                  >
+                    <span nz-icon nzType="file-pdf" nzTheme="outline"></span>
+                  </button>
+                  <button
+                    nz-button
+                    nzType="link"
+                    nzSize="small"
+                    nz-tooltip
+                    nzTooltipTitle="Tải CV"
+                    aria-label="Tải CV"
+                    (click)="downloadResume(app)"
+                    class="action-btn"
+                  >
+                    <span nz-icon nzType="file-add" nzTheme="outline"></span>
+                  </button>
+                </div>
               </td>
             </tr>
           }
         </tbody>
       </nz-table>
+
+      <ng-template #emptyApplicationsTemplate>
+        @if (applications.length > 0) {
+          <nz-empty
+            nzNotFoundImage="simple"
+            nzNotFoundContent="Không tìm thấy hồ sơ nào phù hợp với bộ lọc"
+          >
+            <button nz-button nzType="default" (click)="resetAllFilters()">
+              Xóa bộ lọc
+            </button>
+          </nz-empty>
+        } @else {
+          <nz-empty
+            nzNotFoundImage="simple"
+            nzNotFoundContent="Bạn chưa có hồ sơ ứng tuyển nào"
+          >
+            <a routerLink="/jobs" nz-button nzType="primary">
+              Tìm việc làm
+            </a>
+          </nz-empty>
+        }
+      </ng-template>
     </nz-card>
   </div>
 </div>
+
+<nz-dropdown-menu #positionMenu="nzDropdownMenu">
+  <div class="table-filter-box">
+    <input
+      type="text"
+      nz-input
+      placeholder="Tìm kiếm vị trí..."
+      [(ngModel)]="searchTitleInput"
+      (keyup.enter)="applyTitleSearch()"
+      class="filter-search-input"
+    />
+    <div class="filter-box-footer">
+      <button nz-button nzSize="small" nzType="primary" (click)="applyTitleSearch()">
+        Tìm
+      </button>
+      <button nz-button nzSize="small" (click)="resetTitleSearch()">
+        Đặt lại
+      </button>
+    </div>
+  </div>
+</nz-dropdown-menu>

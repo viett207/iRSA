@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Bộ slide bảo vệ dự án iRSA — nền tảng sàng lọc hồ sơ tuyển dụng ứng dụng AI">
+  <title>iRSA — Technical Defense Deck</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap");
+
+    :root {
+      --navy-950: #071823;
+      --navy-900: #0c2333;
+      --navy-850: #123149;
+      --navy-800: #1a4261;
+      --slate-500: #6f8da3;
+      --slate-400: #a9c4d8;
+      --slate-300: #d8e7f2;
+      --white: #f7fbff;
+      --cyan: #91bbe5;
+      --cyan-2: #91bbe5;
+      --blue: #3376bc;
+      --emerald: #3376bc;
+      --amber: #f4a82c;
+      --rose: #c14d7c;
+      --purple: #c14d7c;
+      --line: rgba(145, 187, 229, 0.18);
+      --glass: rgba(12, 35, 51, 0.78);
+      --pink: #c14d7c;
+      --mauve: #91bbe5;
+      --lavender: #3376bc;
+      --butter: #f4a82c;
+      --apricot: #f4a82c;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: auto; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      color: var(--white);
+      background: var(--navy-950);
+      font-family: "DM Sans", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .deck {
+      counter-reset: slide;
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+      gap: 0;
+      padding: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-behavior: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      overscroll-behavior-x: contain;
+    }
+    .deck::-webkit-scrollbar { display: none; }
+
+    .slide-slot {
+      display: grid;
+      place-items: center;
+      width: 100vw;
+      height: 100vh;
+      flex: 0 0 100vw;
+      overflow: hidden;
+      background: var(--navy-950);
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+
+    .slide-stage {
+      position: relative;
+      width: var(--stage-width, 1280px);
+      height: var(--stage-height, 720px);
+      flex: none;
+    }
+
+    .slide {
+      counter-increment: slide;
+      position: relative;
+      width: 1280px;
+      height: 720px;
+      flex: none;
+      overflow: hidden;
+      padding: 46px 58px 44px;
+      background:
+        radial-gradient(circle at 88% 8%, rgba(51, 118, 188, .23), transparent 30%),
+        radial-gradient(circle at 7% 94%, rgba(193, 77, 124, .13), transparent 28%),
+        radial-gradient(circle at 48% 108%, rgba(244, 168, 44, .08), transparent 31%),
+        linear-gradient(138deg, #0c2333 0%, #102b40 54%, #0a1f2f 100%);
+      border: 1px solid rgba(145, 187, 229, 0.15);
+      box-shadow: 0 28px 80px rgba(0, 8, 15, 0.4);
+      transform: scale(var(--slide-scale, 1));
+      transform-origin: top left;
+      isolation: isolate;
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      opacity: 0.17;
+      background-image:
+        linear-gradient(rgba(145, 187, 229, 0.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(51, 118, 188, 0.10) 1px, transparent 1px);
+      background-size: 46px 46px;
+      mask-image: linear-gradient(to bottom, black, transparent 70%);
+    }
+
+    .slide::after {
+      content: "";
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      right: -170px;
+      bottom: -190px;
+      border: 1px solid rgba(145, 187, 229, 0.24);
+      border-radius: 50%;
+      box-shadow: 0 0 0 40px rgba(51, 118, 188, .06), 0 0 0 80px rgba(193, 77, 124, .035);
+    }
+
+    h1, h2, h3, h4, p { margin-top: 0; }
+    h1, h2, h3, h4 { font-family: "Plus Jakarta Sans", "DM Sans", Arial, sans-serif; }
+    h1 { margin-bottom: 22px; font-size: 59px; line-height: 1.05; letter-spacing: -2.6px; }
+    h2 { margin-bottom: 24px; font-size: 39px; line-height: 1.1; letter-spacing: -1.35px; }
+    h3 { margin-bottom: 10px; font-size: 20px; line-height: 1.22; }
+    h4 { margin-bottom: 7px; font-size: 15px; line-height: 1.2; }
+    p { color: var(--slate-300); font-size: 16px; line-height: 1.48; }
+    strong { color: var(--white); }
+    code {
+      padding: 2px 6px;
+      color: var(--cyan);
+      background: rgba(51, 118, 188, .16);
+      border: 1px solid rgba(145, 187, 229, .18);
+      border-radius: 5px;
+      font: 500 0.9em ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      color: var(--cyan);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { content: ""; width: 28px; height: 2px; background: var(--lavender); }
+    .brand-name { text-transform: none; }
+    .subtitle { max-width: 950px; color: var(--slate-300); font-size: 18px; line-height: 1.45; }
+    .gradient-text {
+      color: var(--cyan);
+      background: none;
+      -webkit-text-fill-color: var(--cyan);
+      text-shadow: none;
+    }
+
+    .top-rule { position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: linear-gradient(90deg, var(--apricot), var(--butter), var(--pink), var(--mauve), var(--lavender)); }
+    .footer {
+      position: absolute;
+      left: 58px;
+      right: 58px;
+      bottom: 17px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 20px;
+      color: var(--slate-500);
+      font-size: 10px;
+      letter-spacing: 0.2px;
+    }
+    .page-number {
+      min-width: 58px;
+      padding: 6px 9px;
+      text-align: center;
+      background: rgba(7, 24, 35, .62);
+      border: 1px solid rgba(145, 187, 229, .16);
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+    }
+    .page-number::after { content: counter(slide, decimal-leading-zero) " / 15"; color: var(--slate-400); font-weight: 700; }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; }
+    .split-55 { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 30px; align-items: center; }
+    .split-45 { display: grid; grid-template-columns: 0.86fr 1.14fr; gap: 28px; align-items: center; }
+
+    .card {
+      padding: 19px 20px;
+      background: linear-gradient(145deg, rgba(26, 66, 97, .72), rgba(12, 35, 51, .74));
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 12px 30px rgba(0, 8, 15, .14);
+    }
+    .card.cyan { border-top: 3px solid var(--cyan); }
+    .card.green { border-top: 3px solid var(--emerald); }
+    .card.amber { border-top: 3px solid var(--amber); }
+    .card.rose { border-top: 3px solid var(--rose); }
+    .card.purple { border-top: 3px solid var(--purple); }
+    .card p:last-child { margin-bottom: 0; }
+
+    .metric { padding: 19px; border-radius: 14px; background: rgba(18,49,73,.72); border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(0,8,15,.1); }
+    .metric .number { display: block; margin-bottom: 4px; color: var(--cyan); font: 800 39px/1 "Plus Jakarta Sans", sans-serif; letter-spacing: -1.5px; }
+    .metric .label { color: var(--slate-300); font-size: 13px; line-height: 1.35; }
+    .metric.green .number { color: var(--cyan); }
+    .metric.amber .number { color: var(--amber); }
+    .metric.rose .number { color: #dc7aa1; }
+
+    .icon {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      margin-bottom: 13px;
+      color: var(--cyan);
+      background: rgba(51, 118, 188, .17);
+      border: 1px solid rgba(145, 187, 229, .2);
+      border-radius: 10px;
+      font: 700 15px/1 ui-monospace, monospace;
+    }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      padding: 7px 10px;
+      color: var(--slate-300);
+      background: rgba(12, 35, 51, .74);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .chip.live { color: #cfe4f5; border-color: rgba(145,187,229,.42); background: rgba(51,118,188,.18); }
+
+    ul.clean { margin: 0; padding: 0; list-style: none; }
+    ul.clean li { position: relative; margin: 0 0 10px; padding-left: 20px; color: var(--slate-300); font-size: 14px; line-height: 1.38; }
+    ul.clean li::before { content: ""; position: absolute; left: 0; top: 7px; width: 7px; height: 7px; border-radius: 2px; background: var(--lavender); box-shadow: none; }
+    ul.clean.green li::before { background: var(--emerald); }
+    ul.clean.amber li::before { background: var(--amber); }
+
+    .note {
+      padding: 12px 14px;
+      color: var(--slate-300);
+      background: rgba(244, 168, 44, .1);
+      border: 1px solid rgba(244, 168, 44, .24);
+      border-left: 3px solid var(--amber);
+      border-radius: 9px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .note.good { background: rgba(51,118,188,.12); border-color: rgba(145,187,229,.22); border-left-color: var(--cyan); }
+    .note.bad { background: rgba(193,77,124,.12); border-color: rgba(193,77,124,.24); border-left-color: var(--rose); }
+
+    .pipeline { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 13px; align-items: stretch; }
+    .pipe-node { position: relative; min-height: 150px; padding: 17px 14px; border-radius: 13px; background: rgba(18,49,73,.76); border: 1px solid var(--line); box-shadow: 0 9px 22px rgba(0,8,15,.1); }
+    .pipe-node:not(:last-child)::after { content: "›"; position: absolute; right: -12px; top: 54px; z-index: 3; color: var(--cyan); font: 700 26px/1 sans-serif; }
+    .pipe-node .step { margin-bottom: 18px; color: var(--cyan); font: 700 11px/1 ui-monospace, monospace; }
+    .pipe-node h3 { font-size: 16px; }
+    .pipe-node p { margin: 0; color: var(--slate-400); font-size: 11.5px; line-height: 1.4; }
+
+    .arch { display: grid; grid-template-columns: 1fr 1.16fr 1fr; gap: 28px; align-items: stretch; }
+    .arch-col { display: flex; flex-direction: column; gap: 12px; }
+    .arch-label { margin-bottom: 3px; color: var(--slate-500); font-size: 10px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
+    .arch-box { position: relative; min-height: 91px; padding: 15px 16px; background: rgba(18,49,73,.76); border: 1px solid var(--line); border-radius: 13px; }
+    .arch-box strong { display: block; margin-bottom: 5px; font-size: 15px; }
+    .arch-box span { color: var(--slate-400); font-size: 11.5px; line-height: 1.4; }
+    .arch-col.center .arch-box { border-color: rgba(51,118,188,.74); box-shadow: 0 10px 24px rgba(0,8,15,.1); }
+    .arch-arrow { position: absolute; right: -23px; top: 34px; color: var(--cyan); font-size: 22px; }
+
+    .formula { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 19px; background: rgba(51,118,188,.15); border: 1px solid rgba(145,187,229,.22); border-radius: 14px; }
+    .formula span { color: var(--slate-400); font: 600 16px/1.3 ui-monospace, monospace; }
+    .formula b { color: var(--cyan); font-size: 22px; }
+
+    .scorebar { display: grid; grid-template-columns: 92px 1fr 42px; gap: 10px; align-items: center; margin-bottom: 12px; }
+    .scorebar label { color: var(--slate-300); font-size: 12px; font-weight: 600; }
+    .bar { height: 9px; overflow: hidden; background: rgba(145,187,229,.16); border-radius: 99px; }
+    .fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+    .scorebar output { color: var(--cyan); font-size: 12px; font-weight: 700; }
+
+    .agent-flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 24px; }
+    .agent-node { position: relative; min-height: 188px; padding: 20px 18px; border-radius: 15px; background: rgba(18,49,73,.76); border: 1px solid var(--line); }
+    .agent-node:not(:last-child)::after { content: "→"; position: absolute; right: -17px; top: 79px; z-index: 2; color: var(--cyan); font-size: 24px; }
+    .agent-node .node-no { display: grid; place-items: center; width: 31px; height: 31px; margin-bottom: 12px; color: var(--white); background: var(--blue); border-radius: 8px; font-weight: 800; }
+    .agent-node p { color: var(--slate-400); font-size: 12px; line-height: 1.45; }
+    .loop { position: absolute; left: 304px; top: 326px; width: 618px; height: 40px; border: 2px dashed rgba(244,168,44,.5); border-top: 0; border-radius: 0 0 22px 22px; }
+    .loop::after { content: "↺ verifier không đạt → quay lại evaluator · tối đa 2 lần"; position: absolute; left: 137px; bottom: -9px; padding: 1px 8px; color: var(--amber); background: var(--navy-900); font-size: 11px; font-weight: 700; }
+
+    .browser { overflow: hidden; background: #f7fbff; border: 1px solid rgba(145,187,229,.28); border-radius: 14px; box-shadow: 0 20px 48px rgba(0,8,15,.24); }
+    .browser-bar { display: flex; align-items: center; gap: 7px; height: 29px; padding: 0 12px; background: #dceaf6; }
+    .browser-bar i { width: 7px; height: 7px; border-radius: 50%; background: var(--mauve); }
+    .browser-body { display: grid; grid-template-columns: 134px 1fr; height: 382px; color: #0f172a; }
+    .side { padding: 17px 12px; color: #d8e7f2; background: var(--navy-900); }
+    .brand { margin-bottom: 22px; color: var(--butter); font: 800 15px/1 "Plus Jakarta Sans", sans-serif; }
+    .side-row { margin-bottom: 15px; padding: 7px 8px; color: #a9c4d8; font-size: 9px; border-radius: 6px; }
+    .side-row.active { color: #f7fbff; background: var(--blue); }
+    .ui-main { padding: 17px 18px; background: #f7fbff; }
+    .ui-title { margin-bottom: 13px; font: 800 16px/1 "Plus Jakarta Sans", sans-serif; }
+    .ui-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    .ui-kpi { padding: 10px; background: white; border: 1px solid #d9e7f3; border-radius: 8px; }
+    .ui-kpi small { display: block; margin-bottom: 5px; color: #637d91; font-size: 7px; }
+    .ui-kpi b { font-size: 16px; }
+    .ui-panel { padding: 10px; background: white; border: 1px solid #d9e7f3; border-radius: 8px; }
+    .ui-panel-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 9px; font-weight: 700; }
+    .candidate-row { display: grid; grid-template-columns: 24px 1.2fr .8fr .65fr .55fr; gap: 6px; align-items: center; min-height: 37px; padding: 5px 0; border-top: 1px solid #e4eef6; font-size: 8px; }
+    .avatar { display: grid; place-items: center; width: 22px; height: 22px; color: #f7fbff; background: var(--blue); border-radius: 50%; font-weight: 800; }
+    .badge { display: inline-block; padding: 3px 5px; color: #51370d; background: var(--amber); border-radius: 99px; font-size: 7px; font-weight: 700; }
+    .mini-score { color: var(--blue); font-weight: 800; }
+    .ui-btn { padding: 4px 7px; color: white; background: var(--blue); border-radius: 4px; text-align: center; }
+    .insight { margin-top: 10px; padding: 10px; background: rgba(193,77,124,.1); border: 1px solid rgba(193,77,124,.35); border-radius: 8px; }
+    .insight h4 { margin: 0 0 5px; color: #8d3458; font-size: 8px; }
+    .insight p { margin: 0; color: #334b5d; font-size: 7.5px; line-height: 1.35; }
+
+    .stack { display: flex; flex-direction: column; gap: 8px; }
+    .stack-row { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: center; padding: 10px 12px; background: rgba(18,49,73,.74); border: 1px solid var(--line); border-radius: 10px; }
+    .stack-row b { color: var(--cyan); font-size: 12px; }
+    .stack-row span { color: var(--slate-300); font-size: 12px; line-height: 1.35; }
+
+    table.qa { width: 100%; border-collapse: collapse; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; }
+    table.qa th, table.qa td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); font-size: 12px; line-height: 1.3; }
+    table.qa th { color: #d8e7f2; background: rgba(51,118,188,.32); font-size: 10px; letter-spacing: .8px; text-transform: uppercase; }
+    table.qa td { color: var(--slate-300); background: rgba(18,49,73,.66); }
+    table.qa tr:last-child td { border-bottom: 0; }
+    .status-ok { color: var(--cyan); font-weight: 700; }
+
+    .nav-rail {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      z-index: 210;
+      display: flex;
+      gap: 7px;
+      padding: 9px 12px;
+      background: rgba(7, 24, 35, .76);
+      border: 1px solid rgba(145, 187, 229, .18);
+      border-radius: 999px;
+      backdrop-filter: blur(10px);
+      transform: translateX(-50%);
+    }
+    .nav-rail a { width: 7px; height: 7px; background: #426683; border: 1px solid #6d95b4; border-radius: 50%; }
+    .nav-rail a:hover { background: var(--cyan); border-color: var(--cyan); }
+    .nav-rail a[aria-current="true"] { width: 22px; background: var(--blue); border-color: var(--cyan); }
+
+    .slide-control {
+      position: fixed;
+      top: 50%;
+      z-index: 220;
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      padding: 0 0 4px;
+      color: var(--white);
+      background: rgba(7, 24, 35, .82);
+      border: 1px solid rgba(145, 187, 229, .22);
+      border-radius: 50%;
+      box-shadow: 0 12px 30px rgba(0, 8, 15, .3);
+      backdrop-filter: blur(10px);
+      font: 400 38px/1 Arial, sans-serif;
+      cursor: pointer;
+      transform: translateY(-50%);
+    }
+    .slide-control:hover:not(:disabled) { color: var(--white); background: var(--blue); border-color: var(--cyan); }
+    .slide-control:focus-visible { outline: 3px solid rgba(145,187,229,.48); outline-offset: 3px; }
+    .slide-control:disabled { opacity: .2; cursor: default; }
+    .slide-control.prev { left: 20px; }
+    .slide-control.next { right: 20px; }
+
+    .title-slide { padding-top: 82px; }
+    .title-slide h1 { max-width: 980px; font-size: 72px; }
+    .title-slide .subtitle { max-width: 830px; font-size: 20px; }
+    .big-quote { max-width: 1040px; margin: 55px auto 0; text-align: center; font: 700 40px/1.32 "Plus Jakarta Sans", sans-serif; letter-spacing: -1.2px; }
+    .big-quote em { color: var(--cyan); font-style: normal; }
+    #s13 h2 { font-size: 36px; }
+
+    @media print {
+      @page { size: 1280px 720px; margin: 0; }
+      body { overflow: visible; background: white; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .deck { display: block; width: auto; height: auto; overflow: visible; scroll-snap-type: none; }
+      .slide-slot, .slide-stage { display: block; width: 1280px !important; height: 720px !important; overflow: visible; }
+      .slide-slot { break-after: page; page-break-after: always; }
+      .slide { margin: 0; opacity: 1 !important; filter: none !important; border: 0; box-shadow: none; transform: none !important; }
+      .nav-rail, .slide-control { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav-rail" aria-label="Điều hướng slide">
+    <a href="#s01" aria-label="Slide 1"></a><a href="#s02" aria-label="Slide 2"></a>
+    <a href="#s03" aria-label="Slide 3"></a><a href="#s04" aria-label="Slide 4"></a>
+    <a href="#s05" aria-label="Slide 5"></a><a href="#s06" aria-label="Slide 6"></a>
+    <a href="#s07" aria-label="Slide 7"></a><a href="#s08" aria-label="Slide 8"></a>
+    <a href="#s09" aria-label="Slide 9"></a><a href="#s10" aria-label="Slide 10"></a>
+    <a href="#s11" aria-label="Slide 11"></a><a href="#s12" aria-label="Slide 12"></a>
+    <a href="#s13" aria-label="Slide 13"></a><a href="#s14" aria-label="Slide 14"></a>
+    <a href="#s15" aria-label="Slide 15"></a>
+  </nav>
+
+  <button class="slide-control prev" type="button" aria-label="Slide trước">‹</button>
+  <button class="slide-control next" type="button" aria-label="Slide tiếp theo">›</button>
+
+  <main class="deck">
+    <section class="slide title-slide" id="s01">
+      <div class="top-rule"></div>
+      <div class="eyebrow">P-164 · Technical Defense Deck</div>
+      <h1>iRSA<br><span class="gradient-text">Evidence-first AI Recruitment</span></h1>
+      <p class="subtitle">Tự động hóa sàng lọc CV, giải thích mức độ phù hợp và chuẩn bị phỏng vấn — với bằng chứng truy vết từ hồ sơ.</p>
+      <div class="chips" style="margin-top:26px; max-width:760px">
+        <span class="chip live">Angular 17</span><span class="chip live">FastAPI</span>
+        <span class="chip live">SentenceTransformers</span><span class="chip live">LangGraph</span>
+        <span class="chip live">PostgreSQL</span><span class="chip live">Redis + Celery</span>
+      </div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s02">
+      <div class="top-rule"></div>
+      <div class="eyebrow">Problem &amp; Business Impact</div>
+      <h2>CV nhiều hơn. Thời gian ít hơn. Quyết định vẫn phải <span class="gradient-text">giải thích được.</span></h2>
+      <div class="grid-3" style="margin-top:34px">
+        <div class="metric rose"><span class="number">Rank</span><span class="label">ưu tiên hồ sơ theo tiêu chí của từng vị trí</span></div>
+        <div class="metric amber"><span class="number">Match</span><span class="label">kết hợp keyword, alias và semantic similarity</span></div>
+        <div class="metric"><span class="number">Explain</span><span class="label">trả về chi tiết để recruiter kiểm tra kết quả</span></div>
+      </div>
+      <div class="grid-2" style="margin-top:22px">
+        <div class="card rose">
+          <h3>Nút thắt nghiệp vụ</h3>
+          <ul class="clean">
+            <li>Đọc tuần tự, khó ưu tiên hồ sơ phù hợp nhất.</li>
+            <li>Kỹ năng đồng nghĩa/đa ngôn ngữ có thể bị bỏ sót.</li>
+            <li>Điểm số thiếu bằng chứng làm HR khó kiểm chứng.</li>
+          </ul>
+        </div>
+        <div class="card cyan">
+          <h3>Đích đến của iRSA</h3>
+          <ul class="clean green">
+            <li>Ranking theo tiêu chí JD và semantic similarity.</li>
+            <li>Nêu rõ matched/missing skills, kinh nghiệm, học vấn.</li>
+            <li>Giữ HR là người ra quyết định cuối cùng.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s03">
+      <div class="top-rule"></div>
+      <div class="eyebrow">Product Response</div>
+      <h2>Từ hồ sơ thô đến <span class="gradient-text">shortlist có căn cứ</span></h2>
+      <div class="pipeline" style="margin-top:36px">
+        <div class="pipe-node"><div class="step">01 · INGEST</div><h3>Upload CV</h3><p>Candidate Portal nhận PDF/DOCX, kiểm tra định dạng và lưu object storage.</p></div>
+        <div class="pipe-node"><div class="step">02 · PARSE</div><h3>Extract text</h3><p>PyMuPDF / python-docx đưa hồ sơ về plain text UTF-8.</p></div>
+        <div class="pipe-node"><div class="step">03 · MATCH</div><h3>Hybrid score</h3><p>Keyword + alias trước; embedding cosine cứu các skill bị miss.</p></div>
+        <div class="pipe-node"><div class="step">04 · RANK</div><h3>Weighted result</h3><p>Skills, experience, education → điểm tổng và match details.</p></div>
+        <div class="pipe-node"><div class="step">05 · EXPLAIN</div><h3>AI evaluation</h3><p>Agent tạo nhận định, strengths, concerns và bằng chứng.</p></div>
+        <div class="pipe-node"><div class="step">06 · ACT</div><h3>Interview</h3><p>HR shortlist; hệ thống sinh 8–10 câu hỏi cá nhân hóa.</p></div>
+      </div>
+      <div class="grid-4" style="margin-top:22px">
+        <div class="card"><h4>Ứng viên</h4><p style="font-size:12px">Tìm việc, upload CV, ứng tuyển, theo dõi trạng thái.</p></div>
+        <div class="card"><h4>Recruiter</h4><p style="font-size:12px">Tạo JD/criteria, xem xếp hạng, shortlist, phỏng vấn.</p></div>
+        <div class="card"><h4>Leader</h4><p style="font-size:12px">Phê duyệt tin và theo dõi funnel tuyển dụng.</p></div>
+        <div class="card"><h4>Admin</h4><p style="font-size:12px">Quản trị user, company và phạm vi truy cập.</p></div>
+      </div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s04">
+      <div class="top-rule"></div>
+      <div class="eyebrow">System Architecture</div>
+      <h2>Kiến trúc đa tầng, <span class="gradient-text">một API nghiệp vụ thống nhất</span></h2>
+      <div class="arch">
+        <div class="arch-col">
+          <div class="arch-label">Experience layer</div>
+          <div class="arch-box"><strong>Admin / Recruiter</strong><span>Angular 17 + Ng-Zorro · port 4200</span><i class="arch-arrow">→</i></div>
+          <div class="arch-box"><strong>Candidate Portal</strong><span>Angular 17 + Ng-Zorro · port 4300</span><i class="arch-arrow">→</i></div>
+          <div class="arch-box"><strong>REST / WebSocket</strong><span>JWT cookie/header · typed API clients</span><i class="arch-arrow">→</i></div>
+        </div>
+        <div class="arch-col center">
+          <div class="arch-label">Application &amp; AI layer</div>
+          <div class="arch-box"><strong>FastAPI Gateway</strong><span>Async endpoints · Pydantic validation · DI · rate limit</span><i class="arch-arrow">→</i></div>
+          <div class="arch-box"><strong>Service Layer</strong><span>Resume · Job · Application · Scoring · Storage · Email</span><i class="arch-arrow">→</i></div>
+          <div class="arch-box"><strong>AI Engine</strong><span>Underthesea · MiniLM-L12 · LangGraph · Gemini/OpenAI fallback</span><i class="arch-arrow">→</i></div>
+          <div class="arch-box"><strong>Background Work</strong><span>Celery tasks · Redis broker · eager fallback local</span><i class="arch-arrow">→</i></div>
+        </div>
+        <div class="arch-col">
+          <div class="arch-label">Data &amp; external services</div>
+          <div class="arch-box"><strong>PostgreSQL / Supabase</strong><span>SQLAlchemy async + Alembic · JSONB scoring results</span></div>
+          <div class="arch-box"><strong>S3-compatible Storage</strong><span>MinIO client against Supabase Storage · presigned URL</span></div>
+          <div class="arch-box"><strong>Upstash Redis</strong><span>Cache + Celery broker/backend · circuit breaker fallback</span></div>
+          <div class="arch-box"><strong>Gemini + Gmail SMTP</strong><span>LLM evaluation, STT/interview analysis, notifications</span></div>
+        </div>
+      </div>
+      <div class="note good" style="margin-top:17px"><strong>Scale rationale:</strong> API I/O dùng async; việc nặng tách qua Celery; model/cache lazy-load theo process; dữ liệu cloud tách khỏi container web.</div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s05">
+      <div class="top-rule"></div>
+      <div class="eyebrow">NLP Pipeline</div>
+      <h2>Pipeline thật trong code: <span class="gradient-text">parse → normalize → chunk → match → explain</span></h2>
+      <div class="grid-3">
+        <div class="card cyan">
+          <div class="icon">01</div><h3>Ingestion &amp; Parsing</h3>
+          <ul class="clean">
+            <li>PDF: PyMuPDF đọc text layer.</li>
+            <li>DOCX: python-docx đọc XML UTF-8.</li>
+            <li>File lưu S3-compatible storage.</li>
+          </ul>
+        </div>
+        <div class="card purple">
+          <div class="icon">02</div><h3>Normalize &amp; Evidence</h3>
+          <ul class="clean">
+            <li>Underthesea tokenize tiếng Việt, lọc stopword.</li>
+            <li>SectionDetector Việt/Anh + confidence.</li>
+            <li>Chunk line / sentence / window, giữ char offsets.</li>
+          </ul>
+        </div>
+        <div class="card green">
+          <div class="icon">03</div><h3>Semantic Matching</h3>
+          <ul class="clean">
+            <li>MiniLM multilingual lazy-load singleton.</li>
+            <li>Batch encode; vector chuẩn hóa.</li>
+            <li>Cosine = dot product; threshold 0.30.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="grid-3" style="margin-top:18px">
+        <div class="card"><h3>Scoring</h3><p style="font-size:13px">Must-have ×2, nice-to-have ×1; cộng kinh nghiệm và học vấn theo trọng số JD.</p></div>
+        <div class="card"><h3>Agent reasoning</h3><p style="font-size:13px">Extractor → Evaluator → Question Generator → Verifier, có vòng self-reflection.</p></div>
+        <div class="card"><h3>Output</h3><p style="font-size:13px">Điểm 0–100, matched/missing skills, strengths, concerns, evidence và câu hỏi.</p></div>
+      </div>
+      <div class="note" style="margin-top:17px"><strong>Lưu ý tích hợp:</strong> pipeline CVFingerprint/cache trong <code>src/cache/pipeline.py</code> được xây riêng; luồng upload/scoring nghiệp vụ hiện dùng <code>raw_text</code> và <code>ResumeScorer</code>.</div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s06">
+      <div class="top-rule"></div>
+      <div class="eyebrow">Scoring Logic</div>
+      <h2>Điểm số có công thức — và có <span class="gradient-text">đường lui an toàn</span></h2>
+      <div class="split-55">
+        <div>
+          <div class="formula"><b>Total</b><span>= Skill × 0.60 + Exp × 0.30 + Edu × 0.10</span></div>
+          <div class="card" style="margin-top:18px">
+            <h3>Hybrid skill matcher</h3>
+            <div class="scorebar"><label>Keyword + alias</label><div class="bar"><div class="fill" style="width:100%"></div></div><output>1st</output></div>
+            <div class="scorebar"><label>Embedding rescue</label><div class="bar"><div class="fill" style="width:72%"></div></div><output>2nd</output></div>
+            <div class="scorebar"><label>Fallback</label><div class="bar"><div class="fill" style="width:38%;background:var(--amber)"></div></div><output>KW</output></div>
+            <p style="margin:14px 0 0;font-size:12px">Nếu model embedding không load được, hệ thống ghi lỗi và tiếp tục bằng keyword-only.</p>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card cyan"><h3>Skills · 60%</h3><p style="font-size:12px">Exact/alias + Underthesea; phần miss được so sánh semantic theo chunk. Must-have nặng gấp đôi.</p></div>
+          <div class="card green"><h3>Experience · 30%</h3><p style="font-size:12px">Regex Việt/Anh, lấy số năm hợp lệ cao nhất, chặn false positive &gt;50 năm.</p></div>
+          <div class="card purple"><h3>Education · 10%</h3><p style="font-size:12px">Rank high school → bachelor → master → PhD; thấp hơn 1 bậc nhận 50 điểm.</p></div>
+          <div class="card amber"><h3>Per-job weights</h3><p style="font-size:12px">JD cho phép cấu hình 3 trọng số; service tự normalize tổng về 1.0.</p></div>
+        </div>
+      </div>
+      <div class="note good" style="margin-top:20px"><strong>Explainability by design:</strong> <code>match_details</code> lưu method, similarity, matched/missing, weights và từng score con trong PostgreSQL JSONB.</div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s07">
+      <div class="top-rule"></div>
+      <div class="eyebrow">Agentic Evaluation</div>
+      <h2>LangGraph biến scoring thành <span class="gradient-text">quy trình kiểm chứng</span></h2>
+      <div class="agent-flow">
+        <div class="agent-node"><div class="node-no">1</div><h3>Extractor</h3><p>Multi-level chunks; top-3 vector evidence cho từng skill must/nice.</p><span class="chip live">SentenceTransformer</span></div>
+        <div class="agent-node"><div class="node-no">2</div><h3>Evaluator</h3><p>Đánh giá score, recommendation, skill evidence, strengths và concerns.</p><span class="chip live">Gemini default</span></div>
+        <div class="agent-node"><div class="node-no">3</div><h3>Question Gen</h3><p>Tạo 8–10 câu hỏi kỹ thuật, hành vi và xác minh khoảng trống.</p><span class="chip live">Personalized</span></div>
+        <div class="agent-node"><div class="node-no">4</div><h3>Verifier</h3><p>Grounding evidence, chỉnh score/recommendation và phát hiện hallucination.</p><span class="chip live">Self-reflection</span></div>
+      </div>
+      <div class="loop"></div>
+      <div class="grid-3" style="margin-top:70px">
+        <div class="metric"><span class="number">Top‑3</span><span class="label">evidence chunks / kỹ năng</span></div>
+        <div class="metric green"><span class="number">8–10</span><span class="label">câu hỏi phỏng vấn mục tiêu</span></div>
+        <div class="metric amber"><span class="number">≤2</span><span class="label">lần reflection trước khi kết thúc</span></div>
+      </div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s08">
+      <div class="top-rule"></div>
+      <div class="eyebrow">Recruiter Workspace</div>
+      <h2>Một màn hình để <span class="gradient-text">ưu tiên, so sánh và hành động</span></h2>
+      <div class="split-45">
+        <div>
+          <div class="card cyan"><h3>UI đã có trong Angular</h3>
+            <ul class="clean">
+              <li>Danh sách ứng viên theo job, score và trạng thái.</li>
+              <li>Modal chi tiết match: skill, experience, education.</li>
+              <li>So sánh nhiều ứng viên và AI evaluation.</li>
+              <li>Xem/tải CV; shortlist; lên lịch phỏng vấn.</li>
+            </ul>
+          </div>
+          <div class="note good" style="margin-top:14px">Triết lý: đưa score + evidence + next action vào cùng ngữ cảnh, giảm chuyển màn hình.</div>
+          <div class="chips" style="margin-top:14px"><span class="chip live">Ng-Zorro</span><span class="chip live">Responsive</span><span class="chip live">i18n VI/EN</span></div>
+        </div>
+        <div class="browser">
+          <div class="browser-bar"><i></i><i></i><i></i></div>
+          <div class="browser-body">
+            <aside class="side"><div class="brand">iRSA</div><div class="side-row">Tổng quan</div><div class="side-row active">Tuyển dụng</div><div class="side-row">Phỏng vấn</div><div class="side-row">Báo cáo</div></aside>
+            <div class="ui-main">
+              <div class="ui-title">Backend Engineer · 24 ứng viên</div>
+              <div class="ui-kpis"><div class="ui-kpi"><small>Ứng viên</small><b>24</b></div><div class="ui-kpi"><small>Đã chấm</small><b>21</b></div><div class="ui-kpi"><small>Shortlist</small><b>6</b></div><div class="ui-kpi"><small>Điểm TB</small><b>72</b></div></div>
+              <div class="ui-panel"><div class="ui-panel-head"><span>Xếp hạng ứng viên</span><span style="color:#3376bc">So sánh (2)</span></div>
+                <div class="candidate-row"><div class="avatar">AN</div><b>An Nguyễn</b><span>Python · SQL</span><span class="mini-score">89/100</span><span class="badge">Strong fit</span></div>
+                <div class="candidate-row"><div class="avatar">BM</div><b>Bình Mai</b><span>Java · AWS</span><span class="mini-score">78/100</span><span class="badge">Good fit</span></div>
+                <div class="candidate-row"><div class="avatar">CT</div><b>Chi Trần</b><span>Node · Docker</span><span class="mini-score">71/100</span><span class="ui-btn">Chi tiết</span></div>
+                <div class="insight"><h4>AI insight · An Nguyễn</h4><p><b>Điểm mạnh:</b> Python/SQL có bằng chứng dự án. Các chi tiết liên quan được đưa vào ngữ cảnh để recruiter kiểm tra.</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s09">
+      <div class="top-rule"></div>
+      <div class="eyebrow">Insights &amp; Reporting</div>
+      <h2>Dashboard tổng hợp <span class="gradient-text">funnel và chất lượng ứng viên</span></h2>
+      <div class="grid-4" style="margin-top:34px">
+        <div class="metric"><span class="number" style="font-size:27px">KPI</span><span class="label">jobs, applications, scored, hired, avg score</span></div>
+        <div class="metric green"><span class="number" style="font-size:27px">Trend</span><span class="label">application theo ngày và khoảng 7–365 ngày</span></div>
+        <div class="metric amber"><span class="number" style="font-size:27px">Dist.</span><span class="label">phân phối điểm theo bucket 10</span></div>
+        <div class="metric"><span class="number" style="font-size:27px">Rank</span><span class="label">top jobs và thống kê phòng ban</span></div>
+      </div>
+      <div class="grid-2" style="margin-top:24px">
+        <div class="card green"><h3>Funnel tuyển dụng</h3><p>Overview kết hợp số lượng vị trí, hồ sơ, kết quả chấm điểm và trạng thái tuyển dụng trong cùng một màn hình.</p></div>
+        <div class="card cyan"><h3>Phạm vi dữ liệu</h3><p>API report lọc dữ liệu theo <code>company_code</code> của recruiter để bảo đảm đúng ngữ cảnh doanh nghiệp.</p></div>
+      </div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s10">
+      <div class="top-rule"></div>
+      <div class="eyebrow">Deployment &amp; DevOps</div>
+      <h2>Container hóa phần web; dịch vụ dữ liệu <span class="gradient-text">được quản lý bên ngoài</span></h2>
+      <div class="split-55">
+        <div class="stack">
+          <div class="stack-row"><b>Angular Admin</b><span>Node 20 builder → Nginx Alpine runtime · multi-stage</span></div>
+          <div class="stack-row"><b>Angular Portal</b><span>Node 20 builder → Nginx Alpine runtime · multi-stage</span></div>
+          <div class="stack-row"><b>FastAPI</b><span>Python 3.11 slim · non-root user · healthcheck · single runtime stage</span></div>
+          <div class="stack-row"><b>Migration</b><span>Alembic upgrade head chạy trước backend trong Compose</span></div>
+          <div class="stack-row"><b>Cloud data</b><span>Supabase PostgreSQL + S3-compatible storage + Upstash Redis</span></div>
+        </div>
+        <div>
+          <div class="card cyan">
+            <h3><code>docker-compose.yml</code></h3>
+            <div class="chips" style="margin:16px 0"><span class="chip live">migrate</span><span class="chip live">backend :8000</span><span class="chip live">admin :4200</span><span class="chip live">portal :4300</span></div>
+            <p style="font-size:13px">Compose kết nối backend và hai frontend với PostgreSQL, Redis và object storage được quản lý trên cloud.</p>
+          </div>
+          <div class="note good" style="margin-top:14px"><strong>CI:</strong> GitHub Actions chạy Python 3.11, Ruff và pytest trên runner self-hosted.</div>
+        </div>
+      </div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s11">
+      <div class="top-rule"></div>
+      <div class="eyebrow">Performance Engineering</div>
+      <h2>Các lớp tối ưu phối hợp để <span class="gradient-text">giảm chi phí xử lý</span></h2>
+      <div class="grid-4">
+        <div class="card cyan"><div class="icon">AI</div><h3>Lazy singleton</h3><p style="font-size:12px">Underthesea và MiniLM chỉ load ở lần dùng đầu; khóa thread tránh load trùng trong process.</p></div>
+        <div class="card green"><div class="icon">Σ</div><h3>Batch vectors</h3><p style="font-size:12px">Encode skills/chunks theo batch; normalize rồi dot-product toàn ma trận.</p></div>
+        <div class="card purple"><div class="icon">Q</div><h3>Worker control</h3><p style="font-size:12px">Celery concurrency 4, prefetch 1, ack-late, soft/hard limit 300/360s.</p></div>
+        <div class="card amber"><div class="icon">↺</div><h3>Resilient cache</h3><p style="font-size:12px">Redis timeout 0.5s, circuit breaker, memory fallback và distributed single-flight.</p></div>
+      </div>
+      <div class="grid-2" style="margin-top:24px">
+        <div class="card green">
+          <h3>Tái sử dụng kết quả</h3>
+          <ul class="clean green"><li>Parse cache và duration cache tách version/key.</li><li>Keyword-first tránh gọi embedding khi đã match đủ.</li><li>Async SQLAlchemy và FastAPI cho I/O.</li></ul>
+        </div>
+        <div class="card cyan">
+          <h3>Kiểm soát tác vụ nền</h3>
+          <ul class="clean"><li>Celery tách tác vụ nặng khỏi luồng request.</li><li>Prefetch 1 và ack-late kiểm soát phân phối công việc.</li><li>Circuit breaker duy trì luồng xử lý khi Redis lỗi.</li></ul>
+        </div>
+      </div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s12">
+      <div class="top-rule"></div>
+      <div class="eyebrow">Security &amp; Privacy</div>
+      <h2>Kiểm soát truy cập xuyên suốt <span class="gradient-text">API và lưu trữ</span></h2>
+      <div class="grid-3">
+        <div class="card green">
+          <h3>Identity &amp; Access</h3>
+          <ul class="clean green"><li>JWT HS256: access 30′, refresh 7 ngày.</li><li>HttpOnly + SameSite=Lax cookie.</li><li>RBAC: candidate / recruiter / leader / admin.</li><li>Bcrypt password hashing.</li></ul>
+        </div>
+        <div class="card cyan">
+          <h3>API &amp; Storage</h3>
+          <ul class="clean"><li>CORS origin/method/header explicit.</li><li>SlowAPI rate limiting cho auth.</li><li>Presigned object URL; storage TLS flag.</li><li>Startup chặn secret yếu ở production.</li></ul>
+        </div>
+        <div class="card purple">
+          <h3>Authorization Scope</h3>
+          <ul class="clean"><li>Dependency guards xác thực user trên endpoint được bảo vệ.</li><li>Role guards giới hạn nghiệp vụ candidate, recruiter, leader và admin.</li><li>Dữ liệu báo cáo được lọc theo doanh nghiệp của recruiter.</li><li>Object storage dùng presigned URL thay vì public URL cố định.</li></ul>
+        </div>
+      </div>
+      <div class="grid-3" style="margin-top:18px">
+        <div class="metric green"><span class="number">4</span><span class="label">vai trò RBAC chính</span></div>
+        <div class="metric"><span class="number">TLS</span><span class="label">storage secure tùy cấu hình production</span></div>
+        <div class="metric green"><span class="number">RBAC</span><span class="label">role guards áp dụng tại lớp API dependency</span></div>
+      </div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s13">
+      <div class="top-rule"></div>
+      <div class="eyebrow">Clean Code &amp; QA</div>
+      <h2>Test nhiều lớp và cấu trúc code <span class="gradient-text">type-safe</span></h2>
+      <div class="grid-4">
+        <div class="metric green"><span class="number">498</span><span class="label">pytest passed</span></div>
+        <div class="metric"><span class="number">42</span><span class="label">Python test files trong tests/</span></div>
+        <div class="metric amber"><span class="number">API</span><span class="label">endpoint và authorization tests</span></div>
+        <div class="metric"><span class="number">AI</span><span class="label">chunking, cache và agent tests</span></div>
+      </div>
+      <div class="grid-2" style="margin-top:20px">
+        <div class="card green">
+          <h3>Patterns đã có</h3>
+          <ul class="clean green"><li>Service Layer + FastAPI Dependency Injection.</li><li>Pydantic v2 schemas, TypedDict state, Python type hints.</li><li>SQLAlchemy async session + sync session cho Celery.</li><li>Tests: chunking, cache, agent, API, regression, service.</li></ul>
+        </div>
+        <div class="card cyan">
+          <h3>Phạm vi kiểm thử</h3>
+          <ul class="clean"><li>Chunking và section detection.</li><li>Cache, pipeline và scoring service.</li><li>Agent graph và LLM service.</li><li>API, regression và service flows.</li></ul>
+        </div>
+      </div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s14">
+      <div class="top-rule"></div>
+      <div class="eyebrow">Evidence Ledger</div>
+      <h2>Các năng lực cốt lõi đã được <span class="gradient-text">triển khai và kiểm chứng</span></h2>
+      <table class="qa">
+        <thead><tr><th>Năng lực</th><th>Trạng thái</th><th>Bằng chứng trong repository</th><th>Cách trình bày</th></tr></thead>
+        <tbody>
+          <tr><td>PDF/DOCX parsing</td><td class="status-ok">SHIPPED</td><td><code>text_extractor.py</code></td><td>Trích xuất text từ hồ sơ</td></tr>
+          <tr><td>Hybrid semantic matching</td><td class="status-ok">SHIPPED</td><td><code>scoring.py</code> + <code>embedding_scorer.py</code></td><td>Keyword-first + cosine rescue</td></tr>
+          <tr><td>LangGraph QA loop</td><td class="status-ok">SHIPPED</td><td><code>src/agents/graph.py</code></td><td>4 node, reflection tối đa 2</td></tr>
+          <tr><td>Python test suite</td><td class="status-ok">VERIFIED</td><td>498 passed</td><td>Kiểm thử parser, scorer, agent và API</td></tr>
+        </tbody>
+      </table>
+      <div class="note good" style="margin-top:17px"><strong>Thông điệp bảo vệ:</strong> giá trị nổi bật của iRSA không phải “AI chấm thay HR”, mà là đưa evidence, score và bước xác minh vào một workflow có kiểm soát.</div>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+
+    <section class="slide" id="s15">
+      <div class="top-rule"></div>
+      <div class="eyebrow" style="justify-content:center;margin-top:100px">P-164 · <span class="brand-name">iRSA</span></div>
+      <div class="big-quote">“Tự động hóa tốc độ.<br><em>Giữ lại bằng chứng.</em><br>Để con người quyết định tốt hơn.”</div>
+      <div class="chips" style="justify-content:center;margin-top:42px"><span class="chip live">FastAPI + Angular</span><span class="chip live">Hybrid NLP</span><span class="chip live">Grounded Agent</span></div>
+      <h2 style="margin-top:64px;text-align:center;font-size:48px">Q &amp; A</h2>
+      <p style="text-align:center;color:var(--slate-400)">Cảm ơn hội đồng và các anh/chị đã lắng nghe.</p>
+      <div class="footer"><span class="page-number"></span></div>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const deck = document.querySelector('.deck');
+      const slides = Array.from(deck.querySelectorAll('.slide'));
+      const dots = Array.from(document.querySelectorAll('.nav-rail a'));
+      const previousButton = document.querySelector('.slide-control.prev');
+      const nextButton = document.querySelector('.slide-control.next');
+      let currentSlide = 0;
+      let scrollFrame = 0;
+
+      slides.forEach((slide) => {
+        const slot = document.createElement('div');
+        const stage = document.createElement('div');
+        slot.className = 'slide-slot';
+        stage.className = 'slide-stage';
+        slide.before(slot);
+        slot.append(stage);
+        stage.append(slide);
+      });
+
+      const fitSlides = () => {
+        const scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+        deck.style.setProperty('--slide-scale', scale);
+        deck.style.setProperty('--stage-width', `${1280 * scale}px`);
+        deck.style.setProperty('--stage-height', `${720 * scale}px`);
+        deck.scrollTo({ left: currentSlide * deck.clientWidth, behavior: 'auto' });
+      };
+
+      const updateNavigation = (index) => {
+        currentSlide = Math.max(0, Math.min(index, slides.length - 1));
+        previousButton.disabled = currentSlide === 0;
+        nextButton.disabled = currentSlide === slides.length - 1;
+        dots.forEach((dot, dotIndex) => {
+          if (dotIndex === currentSlide) dot.setAttribute('aria-current', 'true');
+          else dot.removeAttribute('aria-current');
+        });
+      };
+
+      const goToSlide = (index) => {
+        const target = Math.max(0, Math.min(index, slides.length - 1));
+        updateNavigation(target);
+        deck.scrollTo({
+          left: target * deck.clientWidth,
+          behavior: 'auto'
+        });
+      };
+
+      previousButton.addEventListener('click', () => goToSlide(currentSlide - 1));
+      nextButton.addEventListener('click', () => goToSlide(currentSlide + 1));
+
+      dots.forEach((dot, index) => {
+        dot.addEventListener('click', (event) => {
+          event.preventDefault();
+          goToSlide(index);
+        });
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.target.matches('input, textarea, select, button')) return;
+        if (['ArrowRight', 'PageDown', ' '].includes(event.key)) {
+          event.preventDefault();
+          goToSlide(currentSlide + 1);
+        } else if (['ArrowLeft', 'PageUp'].includes(event.key)) {
+          event.preventDefault();
+          goToSlide(currentSlide - 1);
+        } else if (event.key === 'Home') {
+          event.preventDefault();
+          goToSlide(0);
+        } else if (event.key === 'End') {
+          event.preventDefault();
+          goToSlide(slides.length - 1);
+        }
+      });
+
+      deck.addEventListener('scroll', () => {
+        cancelAnimationFrame(scrollFrame);
+        scrollFrame = requestAnimationFrame(() => {
+          updateNavigation(Math.round(deck.scrollLeft / deck.clientWidth));
+        });
+      }, { passive: true });
+
+      window.addEventListener('resize', fitSlides);
+      fitSlides();
+      updateNavigation(0);
+    })();
+  </script>
+</body>
+</html>

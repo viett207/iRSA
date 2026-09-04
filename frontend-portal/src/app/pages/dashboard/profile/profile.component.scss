@@ -1,13 +1,14 @@
 .profile-page {
-  padding: var(--space-8) 0;
-  min-height: 100vh;
+  min-height: calc(100vh - var(--header-height));
+  padding: var(--space-8) 0 var(--space-12);
   background: var(--color-bg-primary);
 }
 
 .container {
-  max-width: 800px;
+  width: 100%;
+  max-width: var(--container-max);
   margin: 0 auto;
-  padding: 0 var(--container-padding);
+  padding-inline: var(--container-padding);
 }
 
 .page-header {
@@ -32,4 +33,14 @@
 
 .retry-button {
   margin-top: var(--space-4);
+}
+
+@media (max-width: 767px) {
+  .profile-page {
+    padding: var(--space-6) 0 var(--space-10);
+  }
+
+  .container {
+    padding-inline: var(--space-4);
+  }
 }

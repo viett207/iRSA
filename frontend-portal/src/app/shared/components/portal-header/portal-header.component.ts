@@ -7,7 +7,6 @@ import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
-import { NzBadgeModule } from 'ng-zorro-antd/badge';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationService, AppNotification } from '../../../core/services/notification.service';
@@ -24,7 +23,6 @@ import { NotificationService, AppNotification } from '../../../core/services/not
     NzMenuModule,
     NzButtonModule,
     NzDrawerModule,
-    NzBadgeModule,
   ],
   styleUrl: './portal-header.component.css',
   templateUrl: './portal-header.component.html',

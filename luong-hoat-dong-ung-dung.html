@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luồng Hoạt Động Ứng Dụng Tuyển Dụng Thông Minh</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- KaTeX for beautiful math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-purple: #8b5cf6;
+      --bg-dark: #0f172a;
+      --card-dark: #1e293b;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #090d16;
+      color: #f1f5f9;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Deck and Slide Container */
+    .deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2.2rem 3.5rem;
+      opacity: 0;
+      transform: scale(0.98) translateY(18px);
+      pointer-events: none;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      background: radial-gradient(circle at 85% 15%, rgba(37, 99, 235, 0.08), transparent 30%),
+                  radial-gradient(circle at 15% 85%, rgba(6, 182, 212, 0.06), transparent 25%),
+                  #0b1120;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    /* Glassmorphism cards */
+    .glass-card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1.25rem;
+    }
+
+    .glass-card-hover {
+      transition: all 0.25s ease;
+    }
+    .glass-card-hover:hover {
+      transform: translateY(-3px);
+      border-color: rgba(96, 165, 250, 0.35);
+      box-shadow: 0 12px 30px -10px rgba(37, 99, 235, 0.25);
+    }
+
+    /* Gradient text */
+    .gradient-text-blue {
+      background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gradient-text-rose {
+      background: linear-gradient(135deg, #fb7185 0%, #f43f5e 50%, #e11d48 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gradient-text-emerald {
+      background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gradient-text-amber {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gradient-text-purple {
+      background: linear-gradient(135deg, #c084fc 0%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Math Formula Block */
+    .formula-box {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+
+    /* Interactive playground inputs */
+    input[type="range"] {
+      accent-color: #3b82f6;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Slide Deck Root -->
+  <div class="deck" id="deck">
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 1: COVER / TIÊU ĐỀ -->
+    <!-- ========================================================================= -->
+    <section class="slide active" data-title="Giới thiệu quy trình" id="slide-1">
+      <!-- Topbar -->
+      <div class="flex items-center justify-between w-full border-b border-slate-800/80 pb-4">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div>
+            <div class="text-sm font-bold uppercase tracking-wider text-blue-400">Kiến Trúc Tuyển Dụng AI Thế Hệ Mới</div>
+            <div class="text-xs text-slate-400">Quy Trình 6 Chặng Khép Kín & Tự Động Hóa</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            Hệ Thống Sẵn Sàng Vận Hành
+          </span>
+        </div>
+      </div>
+
+      <!-- Main Hero Content -->
+      <div class="grid grid-cols-12 gap-8 items-center my-auto">
+        <div class="col-span-7 space-y-6">
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs font-semibold tracking-wide">
+            <span>✨</span> SMART RECRUITMENT WORKFLOW
+          </div>
+          <h1 class="text-5xl lg:text-6xl font-black tracking-tight leading-none text-white">
+            Luồng Hoạt Động Tuyển Dụng <br/>
+            <span class="gradient-text-blue">Minh Bạch & Tự Động</span>
+          </h1>
+          <p class="text-slate-300 text-base lg:text-lg leading-relaxed max-w-2xl">
+            Một chu trình tuyển dụng hiện đại giải quyết trọn vẹn từ lúc <strong class="text-white">Ứng viên nộp CV</strong>, 
+            <strong class="text-cyan-400">So khớp từ khóa có công thức toán học rõ ràng</strong>, trao quyền cho ứng viên 
+            <strong class="text-purple-400">Chấm điểm chuyên sâu AI</strong>, tự động hóa <strong class="text-amber-400">Hẹn lịch & Phỏng vấn trực tuyến</strong> 
+            cho đến bước ra <strong class="text-emerald-400">Quyết định tuyển dụng cuối cùng của HR</strong>.
+          </p>
+
+          <div class="grid grid-cols-3 gap-4 pt-2">
+            <div class="glass-card p-4 border-l-4 border-l-blue-500">
+              <div class="text-2xl font-bold text-white">100%</div>
+              <div class="text-xs text-slate-400 mt-1">Công thức minh bạch</div>
+            </div>
+            <div class="glass-card p-4 border-l-4 border-l-purple-500">
+              <div class="text-2xl font-bold text-white">2 Cấp độ</div>
+              <div class="text-xs text-slate-400 mt-1">Sàng lọc Keyword & AI</div>
+            </div>
+            <div class="glass-card p-4 border-l-4 border-l-emerald-500">
+              <div class="text-2xl font-bold text-white">Data-Driven</div>
+              <div class="text-xs text-slate-400 mt-1">Hỗ trợ HR ra quyết định</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Hero Cards -->
+        <div class="col-span-5 relative">
+          <div class="relative w-full max-w-md mx-auto aspect-square flex items-center justify-center">
+            <!-- Pulsing background orbs -->
+            <div class="absolute w-72 h-72 rounded-full bg-blue-600/15 blur-3xl"></div>
+            <div class="absolute w-56 h-56 rounded-full bg-purple-600/15 blur-2xl right-0 top-0"></div>
+
+            <!-- Central Badge -->
+            <div class="z-10 p-6 glass-card border border-blue-500/40 rounded-3xl text-center shadow-2xl relative">
+              <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-500 flex items-center justify-center text-white shadow-xl mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <div class="text-lg font-bold text-white">Dual-Stage Verification</div>
+              <div class="text-xs text-slate-400 mt-1">Keyword Match + AI Reasoning</div>
+              <div class="mt-4 pt-4 border-t border-slate-700/60 flex items-center justify-center gap-4 text-xs">
+                <span class="text-emerald-400 font-semibold flex items-center gap-1">✓ Khách quan</span>
+                <span class="text-blue-400 font-semibold flex items-center gap-1">✓ Chính xác</span>
+                <span class="text-purple-400 font-semibold flex items-center gap-1">✓ Tiết kiệm</span>
+              </div>
+            </div>
+
+            <!-- Orbiting Badge 1 -->
+            <div class="absolute top-2 left-0 glass-card px-3 py-2 text-xs font-semibold text-cyan-300 border border-cyan-500/30 shadow-lg flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span> 1. Nộp CV & Khớp Từ Khóa
+            </div>
+            <!-- Orbiting Badge 2 -->
+            <div class="absolute bottom-6 left-2 glass-card px-3 py-2 text-xs font-semibold text-purple-300 border border-purple-500/30 shadow-lg flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-purple-400"></span> 2. Quyết định Chấm AI
+            </div>
+            <!-- Orbiting Badge 3 -->
+            <div class="absolute top-10 right-0 glass-card px-3 py-2 text-xs font-semibold text-amber-300 border border-amber-500/30 shadow-lg flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span> 3. Phỏng Vấn Tự Động
+            </div>
+            <!-- Orbiting Badge 4 -->
+            <div class="absolute bottom-4 right-0 glass-card px-3 py-2 text-xs font-semibold text-emerald-300 border border-emerald-500/30 shadow-lg flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> 4. HR Ra Quyết Định
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide Footer -->
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/80 pt-3">
+        <div>Nhấn phím <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">➜</kbd> hoặc click nút điều hướng để tiếp tục</div>
+        <div>Slide 1 / 10</div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 2: PAIN POINTS - THỰC TRẠNG & ĐIỂM ĐAU TRONG TUYỂN DỤNG TRUYỀN THỐNG -->
+    <!-- ========================================================================= -->
+    <section class="slide" data-title="Thực trạng & Điểm đau (Pain Points)" id="slide-2">
+      <div class="flex items-center justify-between w-full border-b border-slate-800/80 pb-3">
+        <div class="flex items-center space-x-3">
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">THỰC TRẠNG & PAIN POINTS</span>
+          <h2 class="text-xl font-bold text-white">Tại Sao Quy Trình Tuyển Dụng Truyền Thống Đang Thất Bại?</h2>
+        </div>
+        <div class="text-xs text-rose-400 font-mono">HR Bottleneck vs Candidate Frustration</div>
+      </div>
+
+      <div class="my-auto space-y-4">
+        <!-- 3 Thẻ thống kê số liệu thực tế báo động -->
+        <div class="grid grid-cols-3 gap-4">
+          <div class="glass-card p-3.5 border-l-4 border-l-rose-500 flex items-center gap-3.5">
+            <div class="text-3xl font-black text-rose-400 font-mono">75%</div>
+            <div class="text-xs text-slate-300">
+              <strong class="text-white block">CV Bị Loại Oan Uổng</strong>
+              Các bộ lọc ATS cũ loại bỏ ứng viên giỏi chỉ vì dùng từ đồng nghĩa khác JD.
+            </div>
+          </div>
+
+          <div class="glass-card p-3.5 border-l-4 border-l-amber-500 flex items-center gap-3.5">
+            <div class="text-3xl font-black text-amber-400 font-mono">18h</div>
+            <div class="text-xs text-slate-300">
+              <strong class="text-white block">Mất 15 - 20h / Tuần</strong>
+              HR kiệt sức vì đọc, phân loại CV thủ công và gửi email hẹn lịch qua lại.
+            </div>
+          </div>
+
+          <div class="glass-card p-3.5 border-l-4 border-l-purple-500 flex items-center gap-3.5">
+            <div class="text-3xl font-black text-purple-400 font-mono">82%</div>
+            <div class="text-xs text-slate-300">
+              <strong class="text-white block">Hố Đen Tuyển Dụng (Ghosting)</strong>
+              Ứng viên nộp CV không nhận được phản hồi, không biết lý do bị từ chối.
+            </div>
+          </div>
+        </div>
+
+        <!-- Hai khối đối chiếu Pain Point: Nhà tuyển dụng vs Ứng viên -->
+        <div class="grid grid-cols-12 gap-5">
+          <!-- Cột trái: Nỗi đau của Nhà Tuyển Dụng / HR -->
+          <div class="col-span-6 glass-card p-4 border border-rose-500/30 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-700/80">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                <h3 class="text-sm font-bold text-white">Nỗi Đau Của Doanh Nghiệp & HR</h3>
+              </div>
+              <span class="text-[11px] font-mono text-rose-400 font-bold">HR Bottlenecks</span>
+            </div>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-2.5">
+                <span class="text-rose-400 font-bold text-sm mt-0.5">✕</span>
+                <div>
+                  <strong class="text-white block">Quá tải & Tồn đọng hồ sơ hàng tuần</strong>
+                  <span class="text-slate-400">Khối lượng CV lớn khiến thời gian xử lý kéo dài; dễ mệt mỏi dẫn đến đánh giá sót các ứng viên tiềm năng.</span>
+                </div>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-2.5">
+                <span class="text-rose-400 font-bold text-sm mt-0.5">✕</span>
+                <div>
+                  <strong class="text-white block">Mắc bẫy "Keyword Stuffing" tinh vi</strong>
+                  <span class="text-slate-400">Ứng viên nhồi nhét từ khóa JD vào CV để qua mặt bộ lọc, nhưng khi phỏng vấn thì hoàn toàn rỗng kiến thức.</span>
+                </div>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-2.5">
+                <span class="text-rose-400 font-bold text-sm mt-0.5">✕</span>
+                <div>
+                  <strong class="text-white block">Đánh giá cảm tính, thiếu chuẩn hóa & bằng chứng</strong>
+                  <span class="text-slate-400">Mỗi HR chấm theo góc nhìn riêng, thiếu rubric minh bạch và khó giải trình khi có thắc mắc.</span>
+                </div>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-2.5">
+                <span class="text-rose-400 font-bold text-sm mt-0.5">✕</span>
+                <div>
+                  <strong class="text-white block">Tốn công xếp lịch & tỷ lệ bỏ phỏng vấn (No-show) cao</strong>
+                  <span class="text-slate-400">Giao tiếp phân tán qua email, thiếu tự động hóa dẫn đến ứng viên quên lịch hoặc bỏ hẹn.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cột phải: Nỗi đau của Ứng Viên -->
+          <div class="col-span-6 glass-card p-4 border border-amber-500/30 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-700/80">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <h3 class="text-sm font-bold text-white">Nỗi Đau Của Ứng Viên Tìm Việc</h3>
+              </div>
+              <span class="text-[11px] font-mono text-amber-400 font-bold">Candidate Friction</span>
+            </div>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-2.5">
+                <span class="text-amber-400 font-bold text-sm mt-0.5">✕</span>
+                <div>
+                  <strong class="text-white block">Rơi vào "Hố đen tuyển dụng" — Thiếu minh bạch</strong>
+                  <span class="text-slate-400">Nộp CV xong không có tin tức, không biết hồ sơ của mình đã được xem hay chưa, thiếu hoàn toàn phản hồi xây dựng.</span>
+                </div>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-2.5">
+                <span class="text-amber-400 font-bold text-sm mt-0.5">✕</span>
+                <div>
+                  <strong class="text-white block">Bị loại bởi máy móc cứng nhắc dù có năng lực thực</strong>
+                  <span class="text-slate-400">Bộ lọc từ khóa đơn thuần không hiểu được bối cảnh dự án, giá trị kinh nghiệm thực chiến và từ đồng nghĩa.</span>
+                </div>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-2.5">
+                <span class="text-amber-400 font-bold text-sm mt-0.5">✕</span>
+                <div>
+                  <strong class="text-white block">Mất quyền chủ động & không được lựa chọn đánh giá sâu</strong>
+                  <span class="text-slate-400">Ứng viên bị phụ thuộc 100% vào thuật toán bí mật (Black-box), không có quyền chọn chấm điểm nâng cao bằng AI.</span>
+                </div>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-2.5">
+                <span class="text-amber-400 font-bold text-sm mt-0.5">✕</span>
+                <div>
+                  <strong class="text-white block">Phỏng vấn lan man, không bám sát điểm mạnh thực tế</strong>
+                  <span class="text-slate-400">Câu hỏi phỏng vấn chung chung không cá nhân hóa từ CV, gây mất thời gian và căng thẳng không cần thiết.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cầu nối giải pháp (The Solution Bridge) -->
+        <div class="p-3.5 glass-card border border-blue-500/40 bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/40 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 text-white flex items-center justify-center font-bold text-sm shadow-md">
+              💡
+            </div>
+            <div class="text-xs">
+              <strong class="text-white">Lời giải của chúng tôi:</strong> Hệ thống thiết lập 
+              <span class="text-cyan-400 font-semibold">Công thức so khớp minh bạch</span>, 
+              <span class="text-purple-400 font-semibold">Trao quyền chọn chấm AI cho ứng viên</span>, và 
+              <span class="text-emerald-400 font-semibold">Tự động hóa phòng phỏng vấn khép kín</span> giúp giải quyết trọn vẹn cả 2 phía!
+            </div>
+          </div>
+          <button onclick="goToSlide(3)" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-md">
+            Xem Sơ Đồ Khắc Phục <span>➔</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/80 pt-3">
+        <div>Hiểu rõ Pain Points để thiết kế một quy trình nhân văn, công bằng và tối ưu chi phí</div>
+        <div>Slide 2 / 10</div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 3: TỔNG QUAN LUỒNG HOẠT ĐỘNG (PIPELINE SƠ ĐỒ) -->
+    <!-- ========================================================================= -->
+    <section class="slide" data-title="Sơ đồ luồng hoạt động tổng quan" id="slide-3">
+      <div class="flex items-center justify-between w-full border-b border-slate-800/80 pb-3">
+        <div class="flex items-center space-x-3">
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">CHẶNG TOÀN CẢNH</span>
+          <h2 class="text-xl font-bold text-white">Sơ Đồ Luồng Hoạt Động 6 Bước Khép Kín</h2>
+        </div>
+        <div class="text-xs text-slate-400">Click vào bước bất kỳ để xem phân tích chi tiết</div>
+      </div>
+
+      <!-- 6-Step Visual Interactive Pipeline -->
+      <div class="my-auto py-2">
+        <div class="grid grid-cols-6 gap-3.5 relative">
+
+          <!-- Step 1 -->
+          <div onclick="goToSlide(4)" class="glass-card glass-card-hover p-4 cursor-pointer relative group flex flex-col justify-between border-t-4 border-t-cyan-500">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 font-bold text-xs flex items-center justify-center">01</span>
+                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Khởi đầu</span>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+              </div>
+              <h3 class="text-base font-bold text-white group-hover:text-cyan-400 transition-colors">Ứng Viên Nộp CV</h3>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                Ứng viên nộp hồ sơ qua cổng Portal. Hệ thống trích xuất văn bản (PDF/DOCX) và phân tích cấu trúc.
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-700/60 text-[11px] text-cyan-400 font-semibold flex items-center gap-1">
+              <span>Ứng viên thực hiện</span> ➔
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div onclick="goToSlide(4)" class="glass-card glass-card-hover p-4 cursor-pointer relative group flex flex-col justify-between border-t-4 border-t-blue-500">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 font-bold text-xs flex items-center justify-center">02</span>
+                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Tầng 1</span>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 class="text-base font-bold text-white group-hover:text-blue-400 transition-colors">So Khớp Từ Khóa</h3>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                Nhà tuyển dụng nhận CV. Chấm điểm theo công thức minh bạch: Kỹ năng, Kinh nghiệm, Học vấn.
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-700/60 text-[11px] text-blue-400 font-semibold flex items-center gap-1">
+              <span>Công thức chi tiết</span> ➔
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div onclick="goToSlide(7)" class="glass-card glass-card-hover p-4 cursor-pointer relative group flex flex-col justify-between border-t-4 border-t-purple-500">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 font-bold text-xs flex items-center justify-center">03</span>
+                <span class="text-[10px] uppercase font-bold text-purple-400 tracking-wider">Lựa chọn</span>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+              </div>
+              <h3 class="text-base font-bold text-white group-hover:text-purple-400 transition-colors">Quyết Định Chấm AI</h3>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                Ứng viên biết điểm từ khóa. Quyết định kích hoạt Chấm AI để đánh giá năng lực thực tế & trích dẫn chứng.
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-700/60 text-[11px] text-purple-400 font-semibold flex items-center gap-1">
+              <span>Đánh giá chuyên sâu</span> ➔
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div onclick="goToSlide(8)" class="glass-card glass-card-hover p-4 cursor-pointer relative group flex flex-col justify-between border-t-4 border-t-indigo-500">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center">04</span>
+                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Cổng kép</span>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 class="text-base font-bold text-white group-hover:text-indigo-400 transition-colors">Hẹn Lịch Phỏng Vấn</h3>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                Đạt điều kiện 2 lượt chấm (Keyword + AI). Tự động gửi thông báo xếp lịch & liên kết phòng họp.
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-700/60 text-[11px] text-indigo-400 font-semibold flex items-center gap-1">
+              <span>Automated Booking</span> ➔
+            </div>
+          </div>
+
+          <!-- Step 5 -->
+          <div onclick="goToSlide(9)" class="glass-card glass-card-hover p-3.5 cursor-pointer relative group flex flex-col justify-between border-t-4 border-t-amber-500">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-bold text-xs flex items-center justify-center">05</span>
+                <span class="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Phỏng vấn</span>
+              </div>
+              <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
+                </svg>
+              </div>
+              <h3 class="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">Phòng Phỏng Vấn</h3>
+              
+              <!-- 3 Khâu chi tiết: Thu âm -> Bóc script -> Chấm điểm -->
+              <div class="mt-2 space-y-1.5 text-[10.5px]">
+                <div class="p-1.5 rounded-lg bg-slate-900/80 border border-slate-800 flex items-center gap-2">
+                  <span class="w-4 h-4 rounded bg-amber-500/20 text-amber-400 font-bold text-[9px] flex items-center justify-center">1</span>
+                  <span><b class="text-amber-300">Thu âm:</b> Ghi mic trực tiếp</span>
+                </div>
+                <div class="p-1.5 rounded-lg bg-slate-900/80 border border-slate-800 flex items-center gap-2">
+                  <span class="w-4 h-4 rounded bg-cyan-500/20 text-cyan-400 font-bold text-[9px] flex items-center justify-center">2</span>
+                  <span><b class="text-cyan-300">Bóc script:</b> STT sang văn bản</span>
+                </div>
+                <div class="p-1.5 rounded-lg bg-slate-900/80 border border-slate-800 flex items-center gap-2">
+                  <span class="w-4 h-4 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[9px] flex items-center justify-center">3</span>
+                  <span><b class="text-emerald-300">Chấm điểm:</b> AI chấm rubric</span>
+                </div>
+              </div>
+            </div>
+            <div class="mt-2.5 pt-2 border-t border-slate-700/60 text-[10.5px] text-amber-400 font-semibold flex items-center justify-between">
+              <span>Thu âm ➔ Bóc ➔ Chấm</span> ➔
+            </div>
+          </div>
+
+          <!-- Step 6 -->
+          <div onclick="goToSlide(10)" class="glass-card glass-card-hover p-4 cursor-pointer relative group flex flex-col justify-between border-t-4 border-t-emerald-500">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center">06</span>
+                <span class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Chốt chặn</span>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 class="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">HR Ra Quyết Định</h3>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                Tổng hợp điểm cuối cùng (Keyword + AI + Phỏng vấn). HR xem xét Dashboard và quyết định tuyển dụng.
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-700/60 text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+              <span>Offer / Reject</span> ➔
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Flow description banner -->
+        <div class="mt-6 p-4 glass-card border border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center font-bold">
+              💡
+            </div>
+            <div class="text-xs text-slate-300">
+              <strong class="text-white">Điểm đột phá của luồng:</strong> Tách biệt rõ ràng giữa 
+              <span class="text-blue-400 font-semibold">Điểm công thức minh bạch</span> và 
+              <span class="text-purple-400 font-semibold">Điểm phân tích ngữ nghĩa AI</span>. 
+              Ứng viên có toàn quyền kiểm soát chi phí & quyết định tham gia vòng đánh giá nâng cao.
+            </div>
+          </div>
+          <button onclick="goToSlide(4)" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-md">
+            Xem chi tiết Bước 1 & 2 <span>➔</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/80 pt-3">
+        <div>Điều hướng: <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">⬅</kbd> Lùi | <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">➔</kbd> Tiến</div>
+        <div>Slide 3 / 10</div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 4: BƯỚC 1 & 2 - NỘP CV VÀ CÔNG THỨC SO KHỚP TỪ KHÓA CHI TIẾT -->
+    <!-- ========================================================================= -->
+    <section class="slide" data-title="Bước 1 & 2: Công thức So khớp từ khóa" id="slide-4">
+      <div class="flex items-center justify-between w-full border-b border-slate-800/80 pb-3">
+        <div class="flex items-center space-x-3">
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">BƯỚC 1 & 2</span>
+          <h2 class="text-xl font-bold text-white">Nộp CV & Chấm So Khớp Từ Khóa (Ghi Rõ Công Thức)</h2>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-cyan-400 font-mono">
+          <span>Tầng sàng lọc Rule-based</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-5 my-auto">
+        <!-- Cột trái: Công thức toán học và giải thích -->
+        <div class="col-span-7 space-y-4">
+          <!-- Main Formula Card -->
+          <div class="formula-box p-5 rounded-2xl">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+              <span class="text-xs font-bold uppercase tracking-wider text-blue-400">Công Thức Tổng Điểm Sàng Lọc Từ Khóa (Total Score)</span>
+              <span class="text-[11px] font-mono text-slate-400">Deterministic & Explainable</span>
+            </div>
+            
+            <div class="py-3 text-center">
+              <div class="text-lg lg:text-xl font-bold font-mono text-white tracking-wide">
+                $$S_{\text{Tổng}} = (S_{\text{Kỹ năng}} \times W_{\text{Skill}}) + (S_{\text{Kinh nghiệm}} \times W_{\text{Exp}}) + (S_{\text{Học vấn}} \times W_{\text{Edu}})$$
+              </div>
+              <div class="text-xs text-slate-400 mt-1">
+                Trọng số mặc định chuẩn hóa: <span class="text-cyan-400 font-bold">W_Skill = 60%</span>, 
+                <span class="text-amber-400 font-bold">W_Exp = 30%</span>, 
+                <span class="text-purple-400 font-bold">W_Edu = 10%</span> (Tổng = 100%)
+              </div>
+            </div>
+
+            <!-- Breakdown 3 thành phần -->
+            <div class="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-slate-800 text-xs">
+              <!-- Thành phần 1: Kỹ năng -->
+              <div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800">
+                <div class="text-cyan-400 font-bold mb-1">1. Điểm Kỹ Năng ($S_{\text{Skill}}$)</div>
+                <div class="text-[11px] text-slate-300 font-mono">
+                  $$S_{\text{Skill}} = \frac{2 \cdot M_{\text{must}} + 1 \cdot M_{\text{nice}}}{2 \cdot N_{\text{must}} + 1 \cdot N_{\text{nice}}} \times 100$$
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1 leading-snug">
+                  Must-have nhân trọng số 2, Nice-to-have nhân trọng số 1.
+                </p>
+              </div>
+
+              <!-- Thành phần 2: Kinh nghiệm -->
+              <div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800">
+                <div class="text-amber-400 font-bold mb-1">2. Điểm Kinh Nghiệm ($S_{\text{Exp}}$)</div>
+                <div class="text-[11px] text-slate-300 font-mono">
+                  $$S_{\text{Exp}} = \min\left( \frac{Y_{\text{thực tế}}}{Y_{\text{yêu cầu}}} \times 100, 100 \right)$$
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1 leading-snug">
+                  Tuyến tính số năm tìm thấy trong CV so với tối thiểu JD.
+                </p>
+              </div>
+
+              <!-- Thành phần 3: Học vấn -->
+              <div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800">
+                <div class="text-purple-400 font-bold mb-1">3. Điểm Học Vấn ($S_{\text{Edu}}$)</div>
+                <div class="text-[10px] text-slate-300 space-y-0.5 mt-1 font-mono">
+                  <div>• Đủ / Vượt cấp: <b class="text-emerald-400">100đ</b></div>
+                  <div>• Thấp hơn 1 bậc: <b class="text-amber-400">50đ</b></div>
+                  <div>• Thấp hơn $\ge 2$: <b class="text-rose-400">0đ</b></div>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1 leading-snug">
+                  Dựa trên thứ bậc: Tiến sĩ > Thạc sĩ > Đại học > Cao đẳng.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kỹ thuật so khớp từ khóa -->
+          <div class="glass-card p-4">
+            <div class="text-xs font-bold text-white mb-2 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+              Cơ chế quét từ khóa (Keyword Extraction & Matching Pipeline)
+            </div>
+            <div class="grid grid-cols-3 gap-3 text-xs text-slate-300">
+              <div class="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
+                <strong class="text-blue-400 block mb-1">NLP Tokenizer</strong>
+                Tách cụm từ chuyên môn, loại bỏ Stopwords, chuẩn hóa chữ thường (Case-insensitive).
+              </div>
+              <div class="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
+                <strong class="text-cyan-400 block mb-1">Alias Dictionary</strong>
+                Bản đồ từ đồng nghĩa: ví dụ <code class="text-[11px] text-white">JS ↔ JavaScript</code>, <code class="text-[11px] text-white">K8s ↔ Kubernetes</code>.
+              </div>
+              <div class="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
+                <strong class="text-emerald-400 block mb-1">Embedding Rescue</strong>
+                Cosine similarity vector cho các từ khóa biến thể nhằm chống bỏ sót ứng viên tiềm năng.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cột phải: Live Interactive Calculator (Mô phỏng tính điểm trực tiếp) -->
+        <div class="col-span-5">
+          <div class="glass-card p-5 border border-blue-500/30 h-full flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-3 border-b border-slate-700/80">
+                <div class="text-sm font-bold text-white flex items-center gap-2">
+                  <span>⚡</span> Bộ Tính Điểm Mô Phỏng Trực Tiếp
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400 font-mono">Live Demo</span>
+              </div>
+
+              <!-- Input sliders / controls -->
+              <div class="space-y-3.5 mt-4 text-xs">
+                <!-- Must-have skills -->
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-slate-300">Khớp Must-have skills (x2 trọng số):</span>
+                    <span id="must-val" class="font-mono font-bold text-cyan-400">3 / 4 skills</span>
+                  </div>
+                  <input type="range" id="must-slider" min="0" max="4" value="3" class="w-full h-1.5 bg-slate-700 rounded-lg cursor-pointer" oninput="calculateLiveScore()">
+                </div>
+
+                <!-- Nice-to-have skills -->
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-slate-300">Khớp Nice-to-have skills (x1 trọng số):</span>
+                    <span id="nice-val" class="font-mono font-bold text-cyan-400">2 / 2 skills</span>
+                  </div>
+                  <input type="range" id="nice-slider" min="0" max="2" value="2" class="w-full h-1.5 bg-slate-700 rounded-lg cursor-pointer" oninput="calculateLiveScore()">
+                </div>
+
+                <!-- Experience -->
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-slate-300">Số năm kinh nghiệm phát hiện:</span>
+                    <span id="exp-val" class="font-mono font-bold text-amber-400">3 năm (Y/c 3 năm)</span>
+                  </div>
+                  <input type="range" id="exp-slider" min="0" max="6" value="3" class="w-full h-1.5 bg-slate-700 rounded-lg cursor-pointer" oninput="calculateLiveScore()">
+                </div>
+
+                <!-- Education -->
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-slate-300">Bậc học vấn phát hiện trong CV:</span>
+                    <span id="edu-val" class="font-mono font-bold text-purple-400">Đại học (Bachelor)</span>
+                  </div>
+                  <select id="edu-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" onchange="calculateLiveScore()">
+                    <option value="100">Bằng Đại học / Thạc sĩ (Đạt yêu cầu - 100đ)</option>
+                    <option value="50">Cao đẳng (Kém 1 bậc - 50đ)</option>
+                    <option value="0">Trung cấp / THPT (Kém 2 bậc - 0đ)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Kết quả điểm tổng hợp -->
+            <div class="mt-4 pt-3 border-t border-slate-700/80 bg-slate-900/60 p-3 rounded-xl">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-[11px] text-slate-400 uppercase font-semibold">Điểm Khớp Từ Khóa</div>
+                  <div class="text-xs text-slate-500">Tầng sàng lọc số 1</div>
+                </div>
+                <div class="text-right">
+                  <div id="live-total-score" class="text-3xl font-black font-mono text-emerald-400">88.0</div>
+                  <div id="live-status" class="text-[10px] font-bold text-emerald-400">ĐẠT ĐIỀU KIỆN (≥ 65.0)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/80 pt-3">
+        <div>Nhà tuyển dụng công khai minh bạch thang điểm — Ứng viên biết chính xác lý do đạt hay trượt</div>
+        <div>Slide 4 / 10</div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 5: TẠI SAO CẦN BƯỚC LỌC CƠ BẢN TRƯỚC? BÀI TOÁN CHI PHÍ & TÀI NGUYÊN -->
+    <!-- ========================================================================= -->
+    <section class="slide" data-title="Tại sao cần Lọc cơ bản & Bài toán Chi phí" id="slide-5">
+      <div class="flex items-center justify-between w-full border-b border-slate-800/80 pb-3">
+        <div class="flex items-center space-x-3">
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">KIẾN TRÚC TỐI ƯU CHI PHÍ</span>
+          <h2 class="text-xl font-bold text-white">Tại Sao Cần Bước Lọc Cơ Bản Trước Khi Dùng LLM?</h2>
+        </div>
+        <div class="text-xs text-cyan-400 font-mono">Two-Stage Pipeline: Zero-Cost Filter vs Expensive LLM</div>
+      </div>
+
+      <div class="my-auto space-y-4">
+        <!-- 3 Thẻ số liệu tác động cốt lõi -->
+        <div class="grid grid-cols-3 gap-4">
+          <div class="glass-card p-3.5 border-l-4 border-l-emerald-500 flex items-center gap-3.5">
+            <div class="text-3xl font-black text-emerald-400 font-mono">70%</div>
+            <div class="text-xs text-slate-300">
+              <strong class="text-white block">Tiết Kiệm Chi Phí API</strong>
+              Chỉ chi trả tiền token LLM cho Top 30% ứng viên đã vượt qua vòng lọc cơ bản.
+            </div>
+          </div>
+
+          <div class="glass-card p-3.5 border-l-4 border-l-cyan-500 flex items-center gap-3.5">
+            <div class="text-3xl font-black text-cyan-400 font-mono">&lt;50ms</div>
+            <div class="text-xs text-slate-300">
+              <strong class="text-white block">Tốc Độ Lọc Siêu Nhanh</strong>
+              Chạy thuật toán Rule-based trên CPU nội bộ, độ trễ tức thì, chi phí = 0 VNĐ.
+            </div>
+          </div>
+
+          <div class="glass-card p-3.5 border-l-4 border-l-purple-500 flex items-center gap-3.5">
+            <div class="text-3xl font-black text-purple-400 font-mono">5x</div>
+            <div class="text-xs text-slate-300">
+              <strong class="text-white block">Giảm Tải Hàng Đợi (Queue)</strong>
+              Tránh nghẽn API Rate Limit (429) và rút ngắn thời gian xử lý từ 2 giờ xuống 20 phút.
+            </div>
+          </div>
+        </div>
+
+        <!-- Bảng So Sánh Dự Tính Chi Phí Thực Tế (Benchmark 1,000 CV) -->
+        <div class="grid grid-cols-12 gap-5">
+          <!-- Kịch bản 1: Không có lọc cơ bản -->
+          <div class="col-span-6 glass-card p-4 border border-rose-500/40 bg-rose-950/10 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-700/80">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                <h3 class="text-sm font-bold text-white">Kịch Bản A: KHÔNG CÓ Lọc Cơ Bản</h3>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 font-mono font-bold">100% Qua LLM</span>
+            </div>
+
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Mọi CV nộp vào (kể cả CV rác, CV thiếu kỹ năng cốt lõi) đều gửi thẳng lên LLM để phân tích.
+            </p>
+
+            <!-- Thống kê kịch bản A -->
+            <div class="space-y-2 text-xs">
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                <span class="text-slate-300">Số lượng CV gọi LLM:</span>
+                <span class="font-mono font-bold text-white">1,000 CV (100%)</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                <span class="text-slate-300">Token trung bình (~8k tokens/CV):</span>
+                <span class="font-mono font-bold text-rose-400">8,000,000 tokens</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                <span class="text-slate-300">Chi phí API ước tính (~$4.5/1M tokens):</span>
+                <span class="font-mono font-bold text-rose-400 text-sm">~36 - 50 USD / đợt</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                <span class="text-slate-300">Thời gian xử lý (~6s/CV):</span>
+                <span class="font-mono font-bold text-rose-400">100 - 120 phút (rất chậm)</span>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-rose-950/40 border border-rose-500/30 text-[11px] text-rose-300 leading-snug">
+              ⚠️ <strong>Lãng phí lớn:</strong> 70% ngân sách và thời gian bị tiêu tốn vô ích cho những hồ sơ thậm chí không đạt yêu cầu học vấn hoặc kỹ năng bắt buộc!
+            </div>
+          </div>
+
+          <!-- Kịch bản 2: Có lọc cơ bản -->
+          <div class="col-span-6 glass-card p-4 border border-emerald-500/40 bg-emerald-950/10 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-700/80">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+                <h3 class="text-sm font-bold text-white">Kịch Bản B: CÓ LỌC CƠ BẢN TRƯỚC (iRSA)</h3>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-mono font-bold">Two-Stage Pipeline</span>
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Tầng 1 lọc từ khóa & công thức loại ngay 70% CV rác. Chỉ Top 30% CV tiềm năng mới kích hoạt LLM.
+            </p>
+
+            <!-- Thống kê kịch bản B -->
+            <div class="space-y-2 text-xs">
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                <span class="text-slate-300">Tầng 1 (Rule-based 1,000 CV):</span>
+                <span class="font-mono font-bold text-emerald-400">0 VNĐ • Xử lý trong 5 giây</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                <span class="text-slate-300">Số lượng CV lọt vào Tầng 2 (LLM):</span>
+                <span class="font-mono font-bold text-cyan-400">~300 CV (Top 30%)</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                <span class="text-slate-300">Chi phí API thực tế (2.4M tokens):</span>
+                <span class="font-mono font-bold text-emerald-400 text-sm">~10.8 - 15 USD / đợt</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                <span class="text-slate-300">Thời gian xử lý LLM:</span>
+                <span class="font-mono font-bold text-emerald-400">18 - 25 phút (nhanh 5x)</span>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-300 leading-snug">
+              ✅ <strong>Hiệu quả tối ưu:</strong> Tiết kiệm ngay <strong class="text-white">~35 USD / 1,000 CV (giảm 70% chi phí)</strong> và loại bỏ triệt để nguy cơ nghẽn hàng đợi API!
+            </div>
+          </div>
+        </div>
+
+        <!-- Cầu nối chuyển tiếp sang Slide 6 -->
+        <div class="p-3.5 glass-card border border-cyan-500/40 bg-gradient-to-r from-slate-900 via-cyan-950/30 to-slate-900 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-cyan-600/30 text-cyan-300 flex items-center justify-center font-bold text-sm">
+              ⚡
+            </div>
+            <div class="text-xs text-slate-300">
+              <strong class="text-white">Không chỉ là tiền bạc, mà là HIỆU NĂNG HỆ THỐNG:</strong> Khám phá sự khác biệt về 
+              <span class="text-cyan-400 font-semibold">Tốc độ phản hồi (Latency)</span>, 
+              <span class="text-emerald-400 font-semibold">Chịu tải đỉnh (Concurrency)</span> và 
+              <span class="text-purple-400 font-semibold">Chống lỗi Rate Limit</span> ở slide kế tiếp.
+            </div>
+          </div>
+          <button onclick="goToSlide(6)" class="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-md">
+            So Sánh Hiệu Năng Kỹ Thuật <span>➔</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/80 pt-3">
+        <div>Kiến trúc 2 tầng (Two-stage Screening): Cân bằng hoàn hảo giữa Độ chính xác, Thời gian và Chi phí</div>
+        <div>Slide 5 / 10</div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 6: SO SÁNH HIỆU NĂNG KỸ THUẬT: THUẦN AI VS LỌC CƠ BẢN + AI -->
+    <!-- ========================================================================= -->
+    <section class="slide" data-title="So sánh Hiệu năng: Thuần AI vs Lọc cơ bản + AI" id="slide-6">
+      <div class="flex items-center justify-between w-full border-b border-slate-800/80 pb-3">
+        <div class="flex items-center space-x-3">
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">BENCHMARK KỸ THUẬT</span>
+          <h2 class="text-xl font-bold text-white">So Sánh Hiệu Năng: Chấm Thuần AI vs Lọc Cơ Bản + AI</h2>
+        </div>
+        <div class="text-xs text-cyan-400 font-mono">System Latency, Throughput & Rate Limit Tolerance</div>
+      </div>
+
+      <div class="my-auto space-y-4">
+        <!-- 3 Thẻ Metric Kỹ thuật cốt lõi -->
+        <div class="grid grid-cols-3 gap-4">
+          <div class="glass-card p-3.5 border-l-4 border-l-cyan-500 flex items-center gap-3.5">
+            <div class="text-3xl font-black text-cyan-400 font-mono">99%</div>
+            <div class="text-xs text-slate-300">
+              <strong class="text-white block">Giảm Độ Trễ P95 (Latency)</strong>
+              Từ 8.5s xuống dưới 50ms cho 70% ứng viên bị loại sớm; phản hồi tức thì trên UI.
+            </div>
+          </div>
+
+          <div class="glass-card p-3.5 border-l-4 border-l-emerald-500 flex items-center gap-3.5">
+            <div class="text-3xl font-black text-emerald-400 font-mono">12x</div>
+            <div class="text-xs text-slate-300">
+              <strong class="text-white block">Tăng Khả Năng Chịu Tải (QPS)</strong>
+              Hấp thụ đợt nộp CV dồn dập (Traffic Spike) trên CPU mà không làm nghẽn server.
+            </div>
+          </div>
+
+          <div class="glass-card p-3.5 border-l-4 border-l-purple-500 flex items-center gap-3.5">
+            <div class="text-3xl font-black text-purple-400 font-mono">&lt;0.1%</div>
+            <div class="text-xs text-slate-300">
+              <strong class="text-white block">Tỷ Lệ Timeout & Lỗi 429</strong>
+              Loại bỏ triệt để nguy cơ cháy hạn mức RPM/TPM của nhà cung cấp mô hình AI.
+            </div>
+          </div>
+        </div>
+
+        <!-- Ma trận đối đầu kỹ thuật chi tiết 5 tiêu chí -->
+        <div class="glass-card p-4 border border-slate-700/80 overflow-hidden">
+          <div class="grid grid-cols-12 gap-3 pb-2.5 border-b border-slate-700/80 text-xs font-bold uppercase tracking-wider">
+            <div class="col-span-4 text-slate-400">Tiêu Chí Kỹ Thuật (System Criteria)</div>
+            <div class="col-span-4 text-rose-400 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-rose-500"></span> Chấm Chỉ Bằng AI Thuần Túy
+            </div>
+            <div class="col-span-4 text-emerald-400 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Chấm Có Lọc Cơ Bản Trước (iRSA)
+            </div>
+          </div>
+
+          <div class="divide-y divide-slate-800 text-xs mt-1">
+            <!-- Row 1: Phản hồi người dùng -->
+            <div class="grid grid-cols-12 gap-3 py-2.5 items-center">
+              <div class="col-span-4">
+                <strong class="text-white block">1. Tốc độ phản hồi tức thì (Instant Feedback)</strong>
+                <span class="text-[11px] text-slate-400">Trải nghiệm ứng viên ngay khi bấm Submit</span>
+              </div>
+              <div class="col-span-4 text-rose-300">
+                <span class="text-rose-400 font-bold">❌ 6 - 15 giây / CV</span>
+                <p class="text-[10px] text-slate-400 mt-0.5">Ứng viên phải đợi spinner quay lâu, nguy cơ drop-off cao.</p>
+              </div>
+              <div class="col-span-4 text-emerald-300">
+                <span class="text-emerald-400 font-bold">⚡ &lt; 50 mili-giây</span>
+                <p class="text-[10px] text-slate-400 mt-0.5">Trả về bảng điểm từ khóa & điều kiện ngay tức khắc trên UI.</p>
+              </div>
+            </div>
+
+            <!-- Row 2: Khả năng chịu tải đột biến -->
+            <div class="grid grid-cols-12 gap-3 py-2.5 items-center">
+              <div class="col-span-4">
+                <strong class="text-white block">2. Chịu tải đột biến (Peak Traffic Spikes)</strong>
+                <span class="text-[11px] text-slate-400">Khi chiến dịch mở tuyển nhận 500 CV/giờ</span>
+              </div>
+              <div class="col-span-4 text-rose-300">
+                <span class="text-rose-400 font-bold">❌ Dễ nghẽn hàng đợi (Queue Jam)</span>
+                <p class="text-[10px] text-slate-400 mt-0.5">Dễ dính HTTP 504 Gateway Timeout hoặc treo Worker.</p>
+              </div>
+              <div class="col-span-4 text-emerald-300">
+                <span class="text-emerald-400 font-bold">🛡️ Hấp thụ 100% tải đỉnh</span>
+                <p class="text-[10px] text-slate-400 mt-0.5">Lọc CPU nội bộ cực êm; xả tải 70% trước khi chuyển nền.</p>
+              </div>
+            </div>
+
+            <!-- Row 3: Chống Rate Limit API -->
+            <div class="grid grid-cols-12 gap-3 py-2.5 items-center">
+              <div class="col-span-4">
+                <strong class="text-white block">3. Chống chạm trần API (Rate Limits)</strong>
+                <span class="text-[11px] text-slate-400">Hạn mức RPM (Request) & TPM (Token)</span>
+              </div>
+              <div class="col-span-4 text-rose-300">
+                <span class="text-rose-400 font-bold">❌ Dễ dính HTTP 429 Too Many Requests</span>
+                <p class="text-[10px] text-slate-400 mt-0.5">Bắt buộc phải cài backoff retry dài, làm tê liệt toàn bộ luồng.</p>
+              </div>
+              <div class="col-span-4 text-emerald-300">
+                <span class="text-emerald-400 font-bold">✅ Hoạt động 100% trong vùng an toàn</span>
+                <p class="text-[10px] text-slate-400 mt-0.5">Số lượng gọi API giảm 70%, không bao giờ chạm trần hạn ngạch.</p>
+              </div>
+            </div>
+
+            <!-- Row 4: Tính tất định & Kiểm toán -->
+            <div class="grid grid-cols-12 gap-3 py-2.5 items-center">
+              <div class="col-span-4">
+                <strong class="text-white block">4. Tính tất định & Độ tin cậy (Auditability)</strong>
+                <span class="text-[11px] text-slate-400">Độ ổn định điểm số khi chạy nhiều lần</span>
+              </div>
+              <div class="col-span-4 text-rose-300">
+                <span class="text-rose-400 font-bold">⚠️ Có dao động nhỏ (Variance)</span>
+                <p class="text-[10px] text-slate-400 mt-0.5">Cùng 1 CV chấm 2 lần có thể chênh điểm do tính xác suất LLM.</p>
+              </div>
+              <div class="col-span-4 text-emerald-300">
+                <span class="text-emerald-400 font-bold">🎯 Cố định 100% (Deterministic)</span>
+                <p class="text-[10px] text-slate-400 mt-0.5">Công thức toán học rõ ràng, unit test chuẩn, giải trình pháp lý minh bạch.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cầu nối chuyển tiếp sang Bước 3 -->
+        <div class="p-3.5 glass-card border border-purple-500/40 bg-gradient-to-r from-slate-900 via-purple-950/30 to-slate-900 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-purple-600/30 text-purple-300 flex items-center justify-center font-bold text-sm">
+              🎯
+            </div>
+            <div class="text-xs text-slate-300">
+              <strong class="text-white">Hiệu năng vững chắc là tiền đề:</strong> Nhờ lọc cơ bản chạy cực nhanh, 
+              <span class="text-purple-400 font-semibold">Ứng viên nhận điểm từ khóa tức thì</span> và tự do đưa ra 
+              quyết định có nâng cấp lên vòng chấm AI hay không mà không làm treo hệ thống!
+            </div>
+          </div>
+          <button onclick="goToSlide(7)" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-md">
+            Xem Bước 3: Quyết Định Chấm AI <span>➔</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/80 pt-3">
+        <div>Kiến trúc tối ưu: Tầng 1 chịu tải cho Tầng 2, mang lại trải nghiệm mượt mà và chi phí tối thiểu</div>
+        <div>Slide 6 / 10</div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 7: BƯỚC 3 - QUYẾT ĐỊNH CHẤM AI VÀ ĐÁNH GIÁ CHUYÊN SÂU -->
+    <!-- ========================================================================= -->
+    <section class="slide" data-title="Bước 3: Quyết định chấm AI của Ứng viên" id="slide-7">
+      <div class="flex items-center justify-between w-full border-b border-slate-800/80 pb-3">
+        <div class="flex items-center space-x-3">
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">BƯỚC 3</span>
+          <h2 class="text-xl font-bold text-white">Sau Điểm Từ Khóa ➔ Ứng Viên Quyết Định Chấm AI Hay Không</h2>
+        </div>
+        <div class="text-xs text-purple-400 font-mono">Candidate Empowerment</div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-6 my-auto">
+        <!-- Khối bên trái: Quyết định của ứng viên (2 hướng rẽ) -->
+        <div class="col-span-5 space-y-4">
+          <div class="glass-card p-5 border-l-4 border-l-purple-500">
+            <span class="text-xs font-bold uppercase tracking-wider text-purple-400">Quyền Lựa Chọn Của Ứng Viên</span>
+            <h3 class="text-lg font-bold text-white mt-1">Minh Bạch & Tiết Kiệm Chi Phí</h3>
+            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+              Sau khi nhận kết quả điểm so khớp từ khóa, hệ thống hiển thị chi tiết điểm kỹ năng, điểm thiếu hụt. 
+              Ứng viên tự do đưa ra quyết định:
+            </p>
+          </div>
+
+          <!-- Lựa chọn A -->
+          <div class="glass-card p-4 border border-purple-500/40 bg-purple-950/20 rounded-xl relative">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center text-white font-bold text-xs mt-0.5">
+                A
+              </div>
+              <div class="space-y-1">
+                <div class="text-sm font-bold text-white flex items-center gap-2">
+                  Đồng Ý Chấm Điểm AI
+                  <span class="px-1.5 py-0.5 text-[10px] rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">Khuyên dùng</span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                  Kích hoạt <strong>AI Evaluation Agent</strong> phân tích bối cảnh dự án, độ sâu chuyên môn và giải thích các kỹ năng tiềm ẩn mà từ khóa chưa quét hết.
+                </p>
+                <div class="text-[11px] text-purple-400 font-semibold pt-1">
+                  ➔ Chuyển tiếp vào vòng xét duyệt hẹn phỏng vấn
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lựa chọn B -->
+          <div class="glass-card p-4 border border-slate-700/70 bg-slate-900/40 rounded-xl">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 flex items-center justify-center font-bold text-xs mt-0.5">
+                B
+              </div>
+              <div class="space-y-1">
+                <div class="text-sm font-bold text-slate-300">Từ Chối Chấm Điểm AI</div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  Ứng viên giữ nguyên kết quả điểm từ khóa ban đầu hoặc cập nhật lại CV để thử lại vòng 1. Không phát sinh chi phí token AI.
+                </p>
+                <div class="text-[11px] text-slate-500 pt-1">
+                  ➔ Lưu trữ hồ sơ ở trạng thái chờ xem xét thủ công
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khối bên phải: Khả năng của AI khi chấm điểm chuyên sâu -->
+        <div class="col-span-7">
+          <div class="glass-card p-5 h-full flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-3 border-b border-slate-700/80">
+                <span class="text-xs font-bold uppercase tracking-wider text-blue-400">Cơ Chế Phân Tích Chuyên Sâu Của AI Agent</span>
+                <span class="text-xs text-slate-400 font-mono">LLM Multi-Agent Evaluator</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3.5 mt-4">
+                <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+                  <div class="flex items-center gap-2 text-xs font-bold text-cyan-400 mb-1">
+                    <span>🔍</span> Trích Xuất Dẫn Chứng Thực Tế
+                  </div>
+                  <p class="text-[11px] text-slate-300 leading-relaxed">
+                    Không chỉ đếm từ khóa, AI tìm bằng chứng dự án cụ thể trong CV (ví dụ: đã tối ưu query SQL giảm 40% latency).
+                  </p>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+                  <div class="flex items-center gap-2 text-xs font-bold text-emerald-400 mb-1">
+                    <span>🛡️</span> Phát Hiện Keyword Stuffing
+                  </div>
+                  <p class="text-[11px] text-slate-300 leading-relaxed">
+                    Nhận diện ứng viên chèn từ khóa ảo không có bối cảnh công việc thực tế nhằm qua mắt bộ lọc từ khóa ban đầu.
+                  </p>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+                  <div class="flex items-center gap-2 text-xs font-bold text-purple-400 mb-1">
+                    <span>📊</span> Thang Điểm Năng Lực 0 - 100
+                  </div>
+                  <p class="text-[11px] text-slate-300 leading-relaxed">
+                    AI chấm điểm độc lập ($S_{\text{AI}}$) dựa trên 4 trụ cột: Chuyên môn, Phạm vi dự án, Khả năng giải quyết vấn đề và Kỹ năng mềm.
+                  </p>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+                  <div class="flex items-center gap-2 text-xs font-bold text-amber-400 mb-1">
+                    <span>❓</span> Tự Động Sinh Câu Hỏi Phỏng Vấn
+                  </div>
+                  <p class="text-[11px] text-slate-300 leading-relaxed">
+                    Dựa vào các lỗ hổng phát hiện được trong CV để tạo câu hỏi thử thách riêng cho ứng viên ở vòng phỏng vấn kế tiếp.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bảng so sánh 2 tầng chấm -->
+            <div class="mt-4 p-3 rounded-xl bg-blue-950/30 border border-blue-500/20 text-xs flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="text-xl">⚖️</div>
+                <div>
+                  <div class="font-bold text-white">Điểm Từ Khóa vs Điểm AI</div>
+                  <div class="text-[11px] text-slate-400">Được lưu tách biệt hoàn toàn trong cơ sở dữ liệu để HR đối soát đa chiều.</div>
+                </div>
+              </div>
+              <div class="font-mono text-xs px-2.5 py-1 bg-slate-900 rounded border border-slate-700 text-blue-300">
+                Score_KW ≠ Score_AI
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/80 pt-3">
+        <div>Ứng viên nắm quyền chủ động: Tiết kiệm chi phí vận hành cho cả hai bên</div>
+        <div>Slide 7 / 10</div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 8: BƯỚC 4 - QUA 2 LƯỢT CHẤM & HẸN LỊCH PHỎNG VẤN TỰ ĐỘNG -->
+    <!-- ========================================================================= -->
+    <section class="slide" data-title="Bước 4: Đạt 2 lượt chấm & Hẹn lịch phỏng vấn" id="slide-8">
+      <div class="flex items-center justify-between w-full border-b border-slate-800/80 pb-3">
+        <div class="flex items-center space-x-3">
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">BƯỚC 4</span>
+          <h2 class="text-xl font-bold text-white">Đạt 2 Lượt Chấm ➔ Chuyển Qua Hẹn Lịch Phỏng Vấn</h2>
+        </div>
+        <div class="text-xs text-indigo-400 font-mono">Dual-Gate Pass ➔ Auto-Scheduler</div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-6 my-auto">
+        <!-- Cột trái: Điều kiện qua cổng kép (Dual-Gate Criteria) -->
+        <div class="col-span-5 space-y-4">
+          <div class="glass-card p-5 border-l-4 border-l-indigo-500">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">Điều Kiện Chuyển Tiếp</span>
+            <h3 class="text-lg font-bold text-white mt-1">Cổng Kép Đảm Bảo Chất Lượng (Dual Gate)</h3>
+            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+              Ứng viên chỉ được chuyển sang bước hẹn lịch phỏng vấn khi vượt qua đồng thời ngưỡng tiêu chuẩn của cả 2 lượt chấm:
+            </p>
+          </div>
+
+          <!-- 2 Thang điều kiện -->
+          <div class="space-y-3">
+            <div class="p-3.5 glass-card border border-blue-500/30 flex items-center justify-between">
+              <div>
+                <div class="text-xs font-bold text-blue-400">LƯỢT 1: Điểm Khớp Từ Khóa</div>
+                <div class="text-[11px] text-slate-300 mt-0.5">Tiêu chuẩn kỹ năng, kinh nghiệm, bằng cấp</div>
+              </div>
+              <div class="text-right">
+                <span class="px-2 py-1 rounded bg-blue-500/20 text-blue-300 font-mono font-bold text-xs">≥ 60 / 100</span>
+              </div>
+            </div>
+
+            <div class="text-center font-bold text-indigo-400 text-xs tracking-widest">+ VÀ +</div>
+
+            <div class="p-3.5 glass-card border border-purple-500/30 flex items-center justify-between">
+              <div>
+                <div class="text-xs font-bold text-purple-400">LƯỢT 2: Điểm Đánh Giá AI</div>
+                <div class="text-[11px] text-slate-300 mt-0.5">Mức độ uy tín dẫn chứng & độ sâu dự án</div>
+              </div>
+              <div class="text-right">
+                <span class="px-2 py-1 rounded bg-purple-500/20 text-purple-300 font-mono font-bold text-xs">≥ 65 / 100</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-xs text-emerald-300 flex items-center gap-2">
+            <span>✅</span> Đạt cả 2 lượt chấm ➔ Hệ thống lập tức kích hoạt luồng xếp lịch tự động!
+          </div>
+        </div>
+
+        <!-- Cột phải: Quy trình xếp lịch phỏng vấn tự động (Mock Scheduler UI) -->
+        <div class="col-span-7">
+          <div class="glass-card p-5 border border-indigo-500/20">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700/80">
+              <div class="flex items-center gap-2">
+                <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                <span class="text-xs font-bold text-white">Giao Diện Hẹn Lịch Phỏng Vấn Tự Động</span>
+              </div>
+              <span class="text-xs text-slate-400 font-mono">Calendar Integration</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mt-4">
+              <!-- Feature 1 -->
+              <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                <div class="text-indigo-400 text-sm mb-1">📅 Đồng Bộ Lịch</div>
+                <p class="text-[11px] text-slate-300">
+                  Tự động đồng bộ khung giờ trống của HR / Người phỏng vấn qua Google Calendar & Outlook.
+                </p>
+              </div>
+
+              <!-- Feature 2 -->
+              <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                <div class="text-cyan-400 text-sm mb-1">⏱️ Ứng Viên Tự Chọn</div>
+                <p class="text-[11px] text-slate-300">
+                  Ứng viên nhận email kèm đường dẫn lựa chọn ca phỏng vấn phù hợp trong 3 ngày làm việc.
+                </p>
+              </div>
+
+              <!-- Feature 3 -->
+              <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                <div class="text-emerald-400 text-sm mb-1">🔑 Cấp Mã Phòng</div>
+                <p class="text-[11px] text-slate-300">
+                  Hệ thống tự động khởi tạo phòng phỏng vấn trực tuyến duy nhất kèm mã truy cập bảo mật.
+                </p>
+              </div>
+            </div>
+
+            <!-- Mock Booking Confirmation Card -->
+            <div class="mt-4 p-4 rounded-xl bg-slate-900/90 border border-indigo-500/30 flex items-center justify-between">
+              <div class="space-y-1">
+                <div class="text-xs font-bold text-white flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-indigo-600 text-white text-[10px]">Đã xác nhận</span>
+                  Lịch phỏng vấn Kỹ thuật & Hành vi
+                </div>
+                <div class="text-xs text-slate-400">Thời gian: Thứ Sáu, 14:00 - 15:00 (60 phút)</div>
+                <div class="text-[11px] text-indigo-300 font-mono">Link: interview.irsa.vn/room/SEC-8924-VN</div>
+              </div>
+              <button onclick="goToSlide(9)" class="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors flex items-center gap-1 shadow-lg">
+                Vào Phòng Phỏng Vấn ➔
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/80 pt-3">
+        <div>Quy trình tự động loại bỏ hoàn toàn việc gửi email trao đổi qua lại thủ công mất thời gian</div>
+        <div>Slide 8 / 10</div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 9: BƯỚC 5 - VÀO PHÒNG PHỎNG VẤN & TRẢ LỜI CÂU HỎI -->
+    <!-- ========================================================================= -->
+    <section class="slide" data-title="Bước 5: Vào phòng phỏng vấn & Trả lời câu hỏi" id="slide-9">
+      <div class="flex items-center justify-between w-full border-b border-slate-800/80 pb-3">
+        <div class="flex items-center space-x-3">
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">BƯỚC 5</span>
+          <h2 class="text-xl font-bold text-white">Vào Phòng Phỏng Vấn & Trả Lời Câu Hỏi Phỏng Vấn</h2>
+        </div>
+        <div class="text-xs text-amber-400 font-mono">Interactive Interview Session</div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-6 my-auto">
+        <!-- Mock Video / Interview Room UI -->
+        <div class="col-span-7">
+          <div class="glass-card p-4 border border-amber-500/30 rounded-2xl relative overflow-hidden">
+            <!-- Top bar của phòng phỏng vấn -->
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-rose-500 animate-pulse"></span>
+                <span class="font-bold text-white">Phòng Phỏng Vấn Trực Tuyến: #SEC-8924</span>
+              </div>
+              <div class="text-amber-400 font-mono font-bold">Thời gian còn lại: 38:45</div>
+            </div>
+
+            <!-- Main Interactive Q&A Display -->
+            <div class="my-4 space-y-3">
+              <!-- Câu hỏi từ Interviewer/AI -->
+              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                <div class="flex items-center justify-between text-xs mb-1.5">
+                  <span class="font-bold text-amber-400 flex items-center gap-1.5">
+                    <span>🎙️</span> Câu hỏi phỏng vấn số 02 / 05
+                  </span>
+                  <span class="text-[10px] text-slate-400">Sinh từ CV & JD</span>
+                </div>
+                <p class="text-xs lg:text-sm text-slate-200 font-medium leading-relaxed">
+                  "Trong CV bạn ghi đã tối ưu hóa hiệu năng cơ sở dữ liệu PostgreSQL. Hãy giải thích cách bạn phân tích Execution Plan (EXPLAIN ANALYZE) và chiến lược đánh index khi bảng vượt quá 10 triệu bản ghi?"
+                </p>
+              </div>
+
+              <!-- Khu vực ghi nhận câu trả lời của ứng viên -->
+              <div class="p-3.5 rounded-xl bg-blue-950/20 border border-blue-500/30">
+                <div class="flex items-center justify-between text-xs mb-1.5">
+                  <span class="font-bold text-blue-400 flex items-center gap-1.5">
+                    <span>👤</span> Phản hồi trực tiếp của ứng viên
+                  </span>
+                  <span class="text-[10px] text-emerald-400 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đang phân tích âm thanh & văn bản
+                  </span>
+                </div>
+                <p class="text-xs text-slate-300 italic leading-relaxed">
+                  "Ứng viên phân tích chuẩn xác: sử dụng B-Tree kết hợp Partitioning theo ngày tháng, hạn chế Seq Scan, và sử dụng Connection Pooler PgBouncer để giảm tải connection overhead..."
+                </p>
+              </div>
+            </div>
+
+            <!-- Phân tích tín hiệu thời gian thực -->
+            <div class="grid grid-cols-3 gap-2 text-center text-xs pt-1">
+              <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                <span class="text-slate-400 block text-[10px]">Độ chính xác kỹ thuật</span>
+                <span class="text-emerald-400 font-bold font-mono">9.2 / 10</span>
+              </div>
+              <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                <span class="text-slate-400 block text-[10px]">Kỹ năng giải thích</span>
+                <span class="text-blue-400 font-bold font-mono">8.5 / 10</span>
+              </div>
+              <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                <span class="text-purple-400 font-bold font-mono">Khớp 95% CV</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cột phải: Các tiêu chí chấm điểm phỏng vấn -->
+        <div class="col-span-5 space-y-3.5">
+          <div class="glass-card p-4 border-l-4 border-l-amber-500">
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Bộ Khung Đánh Giá Phỏng Vấn</span>
+            <h3 class="text-base font-bold text-white mt-1">Chuẩn Hóa & Giảm Thiểu Định Kiến</h3>
+            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+              Tất cả câu trả lời được ghi nhận lại, chấm điểm theo rubric cố định để đảm bảo tính công bằng tối đa giữa các ứng viên.
+            </p>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div class="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800 flex items-start gap-3">
+              <span class="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xs mt-0.5">1</span>
+              <div>
+                <strong class="text-white block">Khâu 1: Thu Âm Trực Tiếp (Voice Capture via Mic)</strong>
+                <span class="text-slate-400">Ghi lại toàn bộ âm thanh câu trả lời theo thời gian thực với công nghệ lọc ồn chủ động.</span>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800 flex items-start gap-3">
+              <span class="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs mt-0.5">2</span>
+              <div>
+                <strong class="text-white block">Khâu 2: Bóc Script Chuẩn Xác (Whisper Speech-to-Text)</strong>
+                <span class="text-slate-400">Chuyển đổi âm thanh thành văn bản đầy đủ kèm timestamp, nhận diện thuật ngữ kỹ thuật chính xác.</span>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800 flex items-start gap-3">
+              <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs mt-0.5">3</span>
+              <div>
+                <strong class="text-white block">Khâu 3: Chấm Điểm Theo Rubric & Logic STAR (AI Scoring)</strong>
+                <span class="text-slate-400">AI phân tích văn bản script, đối soát chuyên môn, logic diễn đạt và văn hóa để tính điểm minh bạch.</span>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="goToSlide(10)" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shadow-lg flex items-center justify-center gap-2">
+            <span>Hoàn thành Phỏng vấn ➔ Chuyển HR Chấm Điểm Cuối Cùng</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/80 pt-3">
+        <div>Dữ liệu phỏng vấn được mã hóa bảo mật và chuyển thẳng đến Dashboard của HR</div>
+        <div>Slide 9 / 10</div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 10: BƯỚC 6 - CHẤM ĐIỂM CUỐI CÙNG VÀ HR RA QUYẾT ĐỊNH -->
+    <!-- ========================================================================= -->
+    <section class="slide" data-title="Bước 6: Chấm điểm cuối cùng & HR quyết định" id="slide-10">
+      <div class="flex items-center justify-between w-full border-b border-slate-800/80 pb-3">
+        <div class="flex items-center space-x-3">
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">BƯỚC 6 - BƯỚC CUỐI</span>
+          <h2 class="text-xl font-bold text-white">Chấm Điểm Cuối Cùng & HR Quyết Định Tuyển Dụng</h2>
+        </div>
+        <div class="text-xs text-emerald-400 font-mono">Final Composite Score & HR Decision</div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-6 my-auto">
+        <!-- Cột trái: Công thức tổng hợp cuối cùng & Thang điểm -->
+        <div class="col-span-5 space-y-4">
+          <!-- Final Composite Score Formula -->
+          <div class="formula-box p-4 rounded-2xl">
+            <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">
+              Công Thức Điểm Tuyển Dụng Tổng Hợp Cuối Cùng
+            </div>
+            <div class="text-base font-bold font-mono text-center text-white py-2">
+              $$S_{\text{Final}} = 0.25 \cdot S_{\text{Từ Khóa}} + 0.35 \cdot S_{\text{AI}} + 0.40 \cdot S_{\text{Phỏng Vấn}}$$
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2 text-center leading-relaxed">
+              Trọng số ưu tiên cao nhất cho <strong class="text-white">vòng phỏng vấn thực tế (40%)</strong> và 
+              <strong class="text-purple-400">năng lực thực chiến AI đã chứng minh (35%)</strong>.
+            </p>
+          </div>
+
+          <!-- Bảng điểm chi tiết của ứng viên mẫu -->
+          <div class="glass-card p-4 space-y-2.5 text-xs">
+            <div class="flex items-center justify-between text-slate-300">
+              <span>1. Điểm Khớp Từ Khóa CV:</span>
+              <span class="font-mono font-bold text-blue-400">88.0 / 100 (x25%) = 22.0</span>
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span>2. Điểm Đánh Giá AI:</span>
+              <span class="font-mono font-bold text-purple-400">85.0 / 100 (x35%) = 29.75</span>
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span>3. Điểm Vòng Phỏng Vấn:</span>
+              <span class="font-mono font-bold text-amber-400">90.0 / 100 (x40%) = 36.0</span>
+            </div>
+            <div class="pt-2 border-t border-slate-700/80 flex items-center justify-between font-bold text-sm">
+              <span class="text-white">ĐIỂM TỔNG CUỐI CÙNG:</span>
+              <span class="font-mono text-2xl text-emerald-400">87.8 / 100</span>
+            </div>
+          </div>
+
+          <!-- Nguyên tắc cốt lõi: AI tham mưu, Con người quyết định -->
+          <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-500/30 text-xs text-blue-300 flex items-start gap-2.5">
+            <span class="text-base">🛡️</span>
+            <div>
+              <strong class="text-white block">Nguyên tắc Human-in-the-loop:</strong>
+              Hệ thống cung cấp đầy đủ bằng chứng và điểm số phân tích đa chiều. Quyết định cuối cùng luôn thuộc về 
+              <strong class="text-cyan-300">Nhà tuyển dụng / HR Manager</strong>.
+            </div>
+          </div>
+        </div>
+
+        <!-- Cột phải: Giao diện quyết định của HR (Interactive Decision Panel) -->
+        <div class="col-span-7">
+          <div class="glass-card p-5 border border-emerald-500/30 h-full flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-3 border-b border-slate-700/80">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center">HR</div>
+                  <div>
+                    <div class="text-xs font-bold text-white">HR Review & Action Panel</div>
+                    <div class="text-[10px] text-slate-400">Ứng viên: Nguyễn Văn A • Vị trí: Senior Backend Engineer</div>
+                  </div>
+                </div>
+                <span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 font-mono text-[11px] font-bold">
+                  Khuyến nghị: TUYỂN DỤNG (OFFER)
+                </span>
+              </div>
+
+              <!-- Radar / Metric Cards -->
+              <div class="grid grid-cols-3 gap-3 my-4">
+                <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+                  <div class="text-[10px] text-slate-400 uppercase">Độ phù hợp kỹ thuật</div>
+                  <div class="text-xl font-black text-blue-400 mt-1">94%</div>
+                  <div class="text-[10px] text-emerald-400 mt-0.5">Vượt chuẩn yêu cầu</div>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+                  <div class="text-[10px] text-slate-400 uppercase">Độ chân thực CV</div>
+                  <div class="text-xl font-black text-purple-400 mt-1">Cao</div>
+                  <div class="text-[10px] text-purple-300 mt-0.5">Có dẫn chứng minh bạch</div>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+                  <div class="text-[10px] text-slate-400 uppercase">Thái độ & Phản xạ</div>
+                  <div class="text-xl font-black text-amber-400 mt-1">A+</div>
+                  <div class="text-[10px] text-amber-300 mt-0.5">Tự tin, cầu thị</div>
+                </div>
+              </div>
+
+              <!-- HR Feedback Note area -->
+              <div class="p-3 rounded-xl bg-slate-900/50 border border-slate-800 text-xs">
+                <div class="font-bold text-slate-300 mb-1">Ghi chú nhận xét của Hội đồng tuyển dụng:</div>
+                <p class="text-slate-400 text-[11px] leading-relaxed">
+                  "Ứng viên thể hiện nền tảng kiến thức hệ thống phân tán rất vững vàng. Giải quyết câu hỏi tối ưu hóa DB thực tế xuất sắc. Mức lương kỳ vọng nằm trong khung ngân sách vị trí."
+                </p>
+              </div>
+            </div>
+
+            <!-- Hai nút bấm ra quyết định của HR -->
+            <div class="mt-4 pt-3 border-t border-slate-700/80 flex items-center gap-3">
+              <button onclick="alert('Đã gửi Thư Mời Nhận Việc (Offer Letter) tự động tới ứng viên!')" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-900/30 transition-all flex items-center justify-center gap-2">
+                <span>🎉</span> CHẤP THUẬN TUYỂN DỤNG (OFFER)
+              </button>
+
+              <button onclick="alert('Đã lưu trạng thái và gửi Thư cảm ơn kèm báo cáo phản hồi chi tiết tới ứng viên.')" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition-colors">
+                Từ chối / Giữ hồ sơ
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/80 pt-3">
+        <div>Hoàn tất toàn bộ chu trình: Minh bạch cho ứng viên, Hiệu quả và Chuẩn xác cho Doanh nghiệp</div>
+        <div>Slide 10 / 10</div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Bottom Floating Navigation Bar -->
+  <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-full glass-card border border-slate-700/80 shadow-2xl bg-slate-950/80">
+    <button onclick="prevSlide()" class="p-1.5 rounded-full hover:bg-slate-800 text-slate-300 hover:text-white transition-colors" title="Slide trước (Mũi tên Trái)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    </button>
+
+    <!-- Slide Indicators -->
+    <div class="flex items-center gap-1.5 px-2" id="slide-indicators">
+      <!-- Generated via JavaScript -->
+    </div>
+
+    <button onclick="nextSlide()" class="p-1.5 rounded-full hover:bg-slate-800 text-slate-300 hover:text-white transition-colors" title="Slide tiếp theo (Mũi tên Phải / Phím Cách)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+
+    <div class="h-4 w-[1px] bg-slate-700 mx-1"></div>
+
+    <button onclick="toggleFullScreen()" class="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors" title="Bật/Tắt Toàn Màn Hình (Phím F)">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- JavaScript for Navigation and Live Formula Playground -->
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    let currentIndex = 0;
+
+    // Initialize Indicators
+    const indicatorsContainer = document.getElementById('slide-indicators');
+    slides.forEach((slide, idx) => {
+      const dot = document.createElement('button');
+      dot.className = `w-2.5 h-2.5 rounded-full transition-all duration-300 ${idx === 0 ? 'bg-blue-500 w-6' : 'bg-slate-700 hover:bg-slate-500'}`;
+      dot.title = `Tới slide ${idx + 1}: ${slide.dataset.title}`;
+      dot.onclick = () => goToSlide(idx + 1);
+      indicatorsContainer.appendChild(dot);
+    });
+
+    function updateSlide() {
+      slides.forEach((slide, idx) => {
+        slide.classList.toggle('active', idx === currentIndex);
+      });
+
+      // Update dots
+      const dots = indicatorsContainer.querySelectorAll('button');
+      dots.forEach((dot, idx) => {
+        if (idx === currentIndex) {
+          dot.className = 'w-6 h-2.5 rounded-full bg-blue-500 transition-all duration-300';
+        } else {
+          dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-700 hover:bg-slate-500 transition-all duration-300';
+        }
+      });
+
+      // Hash update
+      window.location.hash = `#${currentIndex + 1}`;
+    }
+
+    function nextSlide() {
+      if (currentIndex < slides.length - 1) {
+        currentIndex++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        updateSlide();
+      }
+    }
+
+    function goToSlide(slideNumber) {
+      const targetIndex = slideNumber - 1;
+      if (targetIndex >= 0 && targetIndex < slides.length) {
+        currentIndex = targetIndex;
+        updateSlide();
+      }
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen?.();
+      }
+    }
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (['ArrowRight', 'PageDown', ' '].includes(e.key)) {
+        e.preventDefault();
+        nextSlide();
+      } else if (['ArrowLeft', 'PageUp'].includes(e.key)) {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'Home') {
+        currentIndex = 0;
+        updateSlide();
+      } else if (e.key === 'End') {
+        currentIndex = slides.length - 1;
+        updateSlide();
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFullScreen();
+      }
+    });
+
+    // Hash check on load
+    window.addEventListener('DOMContentLoaded', () => {
+      const hash = window.location.hash.replace('#', '');
+      const num = parseInt(hash, 10);
+      if (!isNaN(num) && num >= 1 && num <= slides.length) {
+        currentIndex = num - 1;
+        updateSlide();
+      }
+      calculateLiveScore();
+    });
+
+    // =========================================================
+    // Interactive Live Score Calculator Logic (Slide 4)
+    // =========================================================
+    function calculateLiveScore() {
+      const mustMatch = parseInt(document.getElementById('must-slider').value, 10);
+      const niceMatch = parseInt(document.getElementById('nice-slider').value, 10);
+      const expDetected = parseInt(document.getElementById('exp-slider').value, 10);
+      const eduScore = parseFloat(document.getElementById('edu-select').value);
+
+      document.getElementById('must-val').textContent = `${mustMatch} / 4 skills`;
+      document.getElementById('nice-val').textContent = `${niceMatch} / 2 skills`;
+      document.getElementById('exp-val').textContent = `${expDetected} năm (Y/c 3 năm)`;
+
+      // Formula:
+      // Must total weight = 4 * 2 = 8
+      // Nice total weight = 2 * 1 = 2
+      // Total skill weight = 10
+      // Earned skill points = mustMatch * 2 + niceMatch * 1
+      const totalSkillWeight = 4 * 2 + 2 * 1;
+      const earnedSkillPoints = mustMatch * 2 + niceMatch * 1;
+      const skillScore = (earnedSkillPoints / totalSkillWeight) * 100;
+
+      // Exp score = min(expDetected / 3.0 * 100, 100)
+      const expScore = Math.min((expDetected / 3.0) * 100, 100.0);
+
+      // Weighted Total: 60% Skill + 30% Exp + 10% Edu
+      const totalScore = (skillScore * 0.6) + (expScore * 0.3) + (eduScore * 0.1);
+      const roundedTotal = totalScore.toFixed(1);
+
+      const totalDisplay = document.getElementById('live-total-score');
+      const statusDisplay = document.getElementById('live-status');
+
+      totalDisplay.textContent = roundedTotal;
+
+      if (totalScore >= 65.0) {
+        totalDisplay.className = 'text-3xl font-black font-mono text-emerald-400';
+        statusDisplay.textContent = 'ĐẠT ĐIỀU KIỆN (≥ 65.0)';
+        statusDisplay.className = 'text-[10px] font-bold text-emerald-400';
+      } else {
+        totalDisplay.className = 'text-3xl font-black font-mono text-rose-400';
+        statusDisplay.textContent = 'CHƯA ĐẠT (CẦN TỐI THIỂU 65.0)';
+        statusDisplay.className = 'text-[10px] font-bold text-rose-400';
+      }
+    }
+  </script>
+</body>
+</html>

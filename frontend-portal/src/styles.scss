@@ -1009,22 +1009,6 @@ a {
   outline-offset: 2px;
 }
 
-/* Skip link */
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: var(--color-primary);
-  color: white;
-  padding: 8px 16px;
-  z-index: 100;
-  transition: top var(--transition-fast);
-
-  &:focus {
-    top: 0;
-  }
-}
-
 /* Screen reader only */
 .sr-only {
   position: absolute;

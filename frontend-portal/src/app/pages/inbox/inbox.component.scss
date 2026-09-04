@@ -1,6 +1,6 @@
 .inbox-page {
-  min-height: calc(100vh - 72px);
-  padding: 24px 16px;
+  min-height: calc(100vh - var(--header-height));
+  padding: var(--space-8) var(--container-padding) var(--space-12);
   background-color: var(--irsa-bg-canvas, #F3F0E6);
   display: flex;
   justify-content: center;
@@ -9,8 +9,8 @@
 .inbox-container {
   display: flex;
   width: 100%;
-  max-width: 1200px;
-  height: calc(100vh - 120px);
+  max-width: calc(var(--container-max) - var(--container-padding) - var(--container-padding));
+  height: calc(100vh - var(--header-height) - var(--space-8) - var(--space-12));
   min-height: 560px;
   background: #FFFFFF;
   border: 1px solid var(--irsa-border-light, #E4DFD3);
@@ -22,6 +22,12 @@
     flex-direction: column;
     height: auto;
     min-height: 80vh;
+  }
+}
+
+@media (max-width: 767px) {
+  .inbox-page {
+    padding: var(--space-6) var(--space-4) var(--space-10);
   }
 }
 

@@ -67,6 +67,7 @@ export class JobDetailComponent implements OnInit {
   loading = true;
   error: string | null = null;
   hasApplied = false;
+  checkingAppliedStatus = false;
 
   // Apply modal
   applyModalVisible = false;
@@ -104,11 +105,15 @@ export class JobDetailComponent implements OnInit {
 
   private checkAppliedStatus(jobId: number): void {
     if (!this.authService.isAuthenticated()) return;
+    this.checkingAppliedStatus = true;
     this.applicationService.getAppliedJobIds().subscribe({
       next: (ids) => {
         this.hasApplied = ids.includes(jobId);
+        this.checkingAppliedStatus = false;
       },
-      error: () => {},
+      error: () => {
+        this.checkingAppliedStatus = false;
+      },
     });
   }
 
