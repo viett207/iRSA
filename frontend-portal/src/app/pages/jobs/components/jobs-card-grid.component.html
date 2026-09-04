@@ -100,20 +100,6 @@
         }
       </div>
 
-      <!-- Skills Chips Row -->
-      @if (job.skills && job.skills.length > 0) {
-        <div class="card-skills-row">
-          @for (skill of job.skills; track skill) {
-            <span class="skill-tag-pill irsa-tag-outline">{{ skill }}</span>
-          }
-        </div>
-      }
-
-      <!-- Description Snippet Preview -->
-      <p class="card-description-snippet irsa-text-justify">
-        {{ job.descriptionSnippet }}
-      </p>
-
       <!-- Card Footer Actions -->
       <div class="card-footer-row">
         <div class="posted-date-block">

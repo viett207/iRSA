@@ -6,6 +6,7 @@
   min-height: 100vh;
   background: #f4f6f9;
   color: var(--irsa-text-primary);
+  font-size: 15px;
 }
 
 
@@ -25,7 +26,7 @@
 
 .jobs-layout-grid {
   display: grid;
-  grid-template-columns: 246px minmax(0, 1fr);
+  grid-template-columns: clamp(280px, 21vw, 310px) minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 
