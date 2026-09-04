@@ -209,3 +209,14 @@
     display: none;
   }
 }
+
+/* Enterprise filter rail */
+.filter-sidebar { top: 76px; }
+.filter-card { border-color: #dfe4eb; border-radius: 16px; box-shadow: 0 8px 28px rgba(23,34,52,.055); }
+.filter-card-header { position: relative; padding: 17px 18px; border-bottom-color: #e7eaf0; background: #fff; }
+.filter-card-header::before { position: absolute; top: 14px; bottom: 14px; left: 0; width: 3px; border-radius: 0 3px 3px 0; background: #b18a58; content: ''; }
+.filter-card-header .header-left .filter-title-icon { color: #8a6a44; }.filter-card-header .header-left h3 { color: #202a3d; font-size: 14px; }.filter-heading-copy { display: flex; flex-direction: column; }.filter-heading-copy span { margin-top: 1px; color: #969ca8; font-size: 9px; font-weight: 500; }.filter-card-header .reset-btn { color: #747d8e; }.filter-card-header .reset-btn:hover:not(:disabled) { color: #202b3e; }.filter-card-header .filter-count-badge { background: #202b3e; color: #fff; }
+.filter-card-body { max-height: calc(100vh - 160px); padding: 18px; }.facet-divider { margin: 17px 0; border-top-color: #edf0f4; }
+.saved-facet { padding: 10px; border: 1px solid #e5e9ef; border-radius: 10px; background: #f7f9fb; }.saved-facet .saved-label { font-size: 12px; }
+.filter-facet .facet-title { margin-bottom: 12px; color: #273247; font-size: 12px; }.filter-facet .facet-title span { color: #8a6c48; }.filter-facet .salary-dynamic-text { border-color: #cfe7d7; background: #edf8f0; color: #287247; font-size: 10px; }
+.salary-quick-pill { border: 1px solid #e4e8ee; background: #f7f9fb; color: #596274; font-size: 10px; }.salary-quick-pill:hover { border-color: #bec7d4; background: #fff; }.salary-quick-pill.active { border-color: #202b3e; background: #202b3e; }
