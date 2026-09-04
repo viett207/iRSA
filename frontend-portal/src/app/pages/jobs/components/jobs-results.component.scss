@@ -7,8 +7,8 @@
    ========================================================================== */
 .skeleton-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 12px;
 
   &.split-skeleton {
     grid-template-columns: 1fr;
@@ -19,10 +19,10 @@
   background: #FFFFFF;
   border-radius: 18px;
   border: 1px solid #E2E8F0;
-  padding: 22px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 9px;
 }
 
 .skeleton-header {
