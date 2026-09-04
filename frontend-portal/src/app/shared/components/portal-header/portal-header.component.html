@@ -27,9 +27,11 @@
         Công ty
       </a>
       @if (authService.isAuthenticated()) {
-        <a routerLink="/dashboard/inbox" routerLinkActive="active" class="nav-link">
-          <span nz-icon nzType="message" nzTheme="outline"></span>
-          Hộp thư
+        <a routerLink="/dashboard/inbox" routerLinkActive="active" class="nav-link nav-link--inbox">
+          <nz-badge [nzDot]="chatService.unreadCount() > 0" [nzOffset]="[2, -2]">
+            <span nz-icon nzType="message" nzTheme="outline"></span>
+          </nz-badge>
+          <span>Hộp thư</span>
         </a>
       }
     </nav>
@@ -37,22 +39,26 @@
     <!-- Right Section -->
     <div class="header-right">
       @if (authService.isAuthenticated()) {
-        <!-- One notification trigger for every viewport. -->
+        <!-- Notification bell identical to admin -->
         <div
-          class="notif-bell"
+          class="header-action notification-trigger"
+          [class.has-unread]="notificationSvc.unreadCount() > 0"
           nz-dropdown
-          [nzDropdownMenu]="notifMenu"
+          [nzDropdownMenu]="notificationMenu"
           nzTrigger="click"
           nzPlacement="bottomRight"
+          nz-tooltip
+          nzTooltipTitle="Thông báo"
         >
-          <nz-badge [nzCount]="notificationSvc.unreadCount()" [nzOverflowCount]="9" nzSize="small">
+          <nz-badge [nzCount]="notificationSvc.unreadCount()" [nzOverflowCount]="9">
             <span nz-icon nzType="bell" nzTheme="outline"></span>
           </nz-badge>
         </div>
-        <nz-dropdown-menu #notifMenu>
-          <div class="notif-dropdown">
-            <div class="notif-dropdown-header">
-              <strong>Thông báo</strong>
+
+        <nz-dropdown-menu #notificationMenu="nzDropdownMenu">
+          <div class="notification-dropdown">
+            <div class="notification-header">
+              <span>Thông báo</span>
               <div class="notif-header-actions">
                 <button
                   type="button"
@@ -62,22 +68,26 @@
                 >
                   <span nz-icon [nzType]="soundSvc.soundEnabled() ? 'sound' : 'audio-muted'" nzTheme="outline"></span>
                 </button>
-                <button type="button" class="notif-mark-all" (click)="notificationSvc.markAllAsRead()">Đã đọc tất cả</button>
+                <a (click)="notificationSvc.markAllAsRead()">Đánh dấu đã đọc</a>
               </div>
             </div>
-            <div class="notif-list">
+            <div class="notification-list">
               @for (n of notificationSvc.notifications(); track n.id) {
                 <div
-                  (click)="onNotifClick(n)"
-                  class="notif-item"
+                  class="notification-item"
                   [class.unread]="!n.is_read"
+                  (click)="onNotifClick(n)"
                 >
-                  <div class="notif-message irsa-text-justify">{{ n.message }}</div>
-                  <div class="notif-time">{{ formatTime(n.created_at) }}</div>
+                  <div class="notification-content">
+                    <p class="notification-text text-irsa-muted irsa-text-justify">{{ n.message }}</p>
+                    <span class="notification-time">{{ formatTime(n.created_at) }}</span>
+                  </div>
                 </div>
               }
               @if (notificationSvc.notifications().length === 0) {
-                <div class="notif-empty">Không có thông báo</div>
+                <div class="notification-empty">
+                  Không có thông báo
+                </div>
               }
             </div>
           </div>
@@ -114,8 +124,10 @@
               Đơn ứng tuyển
             </li>
             <li nz-menu-item routerLink="/dashboard/inbox">
-              <span nz-icon nzType="message" nzTheme="outline"></span>
-              Hộp thư & Lịch hẹn
+              <nz-badge [nzDot]="chatService.unreadCount() > 0" [nzOffset]="[2, -2]">
+                <span nz-icon nzType="message" nzTheme="outline"></span>
+              </nz-badge>
+              <span style="margin-left: 6px;">Hộp thư & Lịch hẹn</span>
             </li>
             <li nz-menu-item routerLink="/dashboard/cv-search">
               <span nz-icon nzType="file-search" nzTheme="outline"></span>
@@ -215,8 +227,10 @@
             Đơn ứng tuyển
           </li>
           <li nz-menu-item routerLink="/dashboard/inbox" (click)="mobileMenuOpen = false">
-            <span nz-icon nzType="message" nzTheme="outline"></span>
-            Hộp thư & Lịch hẹn
+            <nz-badge [nzDot]="chatService.unreadCount() > 0" [nzOffset]="[2, -2]">
+              <span nz-icon nzType="message" nzTheme="outline"></span>
+            </nz-badge>
+            <span style="margin-left: 6px;">Hộp thư & Lịch hẹn</span>
           </li>
           <li nz-menu-item routerLink="/dashboard/cv-search" (click)="mobileMenuOpen = false">
             <span nz-icon nzType="file-search" nzTheme="outline"></span>
