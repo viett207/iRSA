@@ -74,7 +74,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   newMessageText = '';
   searchQuery = '';
   conversationFilter: 'all' | 'unread' | 'interview' = 'all';
-  detailsOpen = true;
+  detailsOpen = typeof window === 'undefined' || window.innerWidth > 1180;
 
   private sub = new Subscription();
 
@@ -240,6 +240,12 @@ export class InboxComponent implements OnInit, OnDestroy {
         this.sending.set(false);
       },
     });
+  }
+
+  onComposerKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    this.sendMessage();
   }
 
   confirmInterview(invitationId?: number): void {
