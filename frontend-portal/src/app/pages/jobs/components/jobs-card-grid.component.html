@@ -39,6 +39,7 @@
               >
                 <span nz-icon nzType="bank" nzTheme="outline"></span>
                 {{ job.company }}
+                <span class="company-profile-badge" nz-tooltip nzTooltipTitle="Có hồ sơ doanh nghiệp trên iRSA"><span nz-icon nzType="check"></span></span>
               </a>
             } @else {
               <span class="company-name-text">
@@ -112,6 +113,12 @@
       <p class="card-description-snippet irsa-text-justify">
         {{ job.descriptionSnippet }}
       </p>
+
+      <div class="match-prompt">
+        <span class="match-prompt-icon"><span nz-icon nzType="thunderbolt" nzTheme="fill"></span></span>
+        <span><strong>Vị trí này phù hợp với bạn đến đâu?</strong><small>iRSA AI có thể đối chiếu yêu cầu với CV của bạn.</small></span>
+        <a routerLink="/dashboard/cv-search" (click)="$event.stopPropagation()">So khớp CV <span nz-icon nzType="arrow-right"></span></a>
+      </div>
 
       <!-- Card Footer Actions -->
       <div class="card-footer-row">

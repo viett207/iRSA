@@ -5,7 +5,7 @@
     <div class="hero-eyebrow" aria-label="Thông tin nền tảng tuyển dụng">
       <span class="eyebrow-tag">
         <span nz-icon nzType="thunderbolt" nzTheme="fill" class="eyebrow-icon"></span>
-        CỔNG TUYỂN DỤNG THÔNG MINH iRSA
+        AI TALENT MATCHING PLATFORM
       </span>
       @if (totalJobs > 0) {
         <span class="eyebrow-sep">·</span>
@@ -16,9 +16,9 @@
       }
     </div>
 
-    <h1 class="hero-title">Tìm Kiếm Cơ Hội Nghề Nghiệp Đột Phá</h1>
+    <h1 class="hero-title">Tìm đúng công việc. <span>Hiểu rõ độ phù hợp.</span></h1>
     <p class="hero-subtitle text-justify leading-relaxed tracking-wide">
-      Khám phá hàng ngàn vị trí việc làm chất lượng cao từ các doanh nghiệp hàng đầu với mức đãi ngộ hấp dẫn
+      Khám phá cơ hội từ các doanh nghiệp uy tín hoặc để AI phân tích CV và giải thích vì sao một vị trí phù hợp với bạn.
     </p>
 
     <!-- Integrated Multi-Criteria Search Console -->
@@ -113,9 +113,31 @@
 
         <!-- Action Button -->
         <button nz-button nzSize="large" class="console-search-btn irsa-btn-primary" (click)="onSearch()">
-          <span>Tìm việc ngay</span>
+          <span>Tìm cơ hội</span>
         </button>
       </div>
+    </div>
+
+    <div class="ai-discovery-card">
+      <div class="ai-discovery-icon"><span nz-icon nzType="thunderbolt" nzTheme="fill"></span></div>
+      <div class="ai-discovery-copy">
+        <span class="ai-label">GỢI Ý CÁ NHÂN HÓA BỞI iRSA AI</span>
+        <strong>Bạn chưa biết công việc nào phù hợp?</strong>
+        <p>Tải CV để nhận danh sách việc làm được xếp hạng theo kỹ năng, kinh nghiệm và học vấn.</p>
+      </div>
+      <a routerLink="/dashboard/cv-search" class="ai-match-cta">
+        <span nz-icon nzType="file-search"></span>
+        Phân tích CV của tôi
+        <span nz-icon nzType="arrow-right"></span>
+      </a>
+    </div>
+
+    <div class="trust-strip" aria-label="Cam kết của nền tảng">
+      <span><span nz-icon nzType="safety-certificate"></span> Doanh nghiệp minh bạch</span>
+      <i></i>
+      <span><span nz-icon nzType="bulb"></span> AI giải thích kết quả</span>
+      <i></i>
+      <span><span nz-icon nzType="lock"></span> CV được bảo mật</span>
     </div>
 
     <!-- Quick Filter Chips -->

@@ -185,3 +185,31 @@
   .quick-view-btn,
   .card-primary-cta { flex: 1; justify-content: center; }
 }
+
+/* Premium enterprise opportunity cards */
+.jobs-cards-grid { gap: 20px; }
+.job-card-item {
+  position: relative;
+  gap: 17px;
+  overflow: hidden;
+  padding: 22px;
+  border: 1px solid #dfdbd3;
+  border-radius: 19px;
+  background: linear-gradient(160deg,#fff 0%,#fff 75%,#faf9f6 100%);
+  box-shadow: 0 7px 25px rgba(26,29,36,.045);
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.job-card-item::before { position: absolute; top: 0; right: 0; left: 0; height: 3px; background: linear-gradient(90deg,#9f8059,#d4c1a5 55%,transparent); content: ''; opacity: 0; transition: opacity .2s; }
+.job-card-item:hover { border-color: #b9ad9b; box-shadow: 0 18px 42px rgba(30,32,39,.1); transform: translateY(-4px); }.job-card-item:hover::before { opacity: 1; }
+.job-card-item.is-applied { border-color: #8eaa95; border-left-width: 1px; background: linear-gradient(160deg,#fff,#f7fbf8); }
+.company-avatar-box { width: 52px; height: 52px; flex-basis: 52px; border: 1px solid #d9ccb9; border-radius: 15px; background: linear-gradient(145deg,#303846,#1c222e); color: #e7cda9; font-size: 15px; font-weight: 800; }
+.job-card-title { font-size: 19px; font-weight: 750; }.job-card-title a:hover { color: #765c3e; text-decoration: none; }
+.company-meta-row { font-size: 12px; }.company-link { color: #666b75; font-weight: 600; }.company-profile-badge { display: inline-grid; width: 15px; height: 15px; place-items: center; border-radius: 50%; background: #627ca5; color: #fff; font-size: 8px; }
+.bookmark-btn { width: 36px; height: 36px; flex-basis: 36px; border-color: #ebe7df; border-radius: 11px; background: #fff; }
+.card-badges-row { gap: 7px; }.salary-pill-badge { padding: 6px 10px; border-radius: 8px; background: #edf7ef; color: #287247; }.salary-pill-badge strong { font-weight: 700; }
+.card-meta-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; padding: 13px; border: 1px solid #ece8e0; border-radius: 13px; background: #faf9f6; }.card-meta-grid .meta-item { min-height: 24px; }.meta-icon { color: #927653; }
+.skill-tag-pill { padding: 4px 9px; border-color: #e5dfd5; background: #fff; color: #5f626b; font-size: 11px; font-weight: 600; }
+.card-description-snippet { min-height: 60px; color: #747780; line-height: 1.55; }
+.match-prompt { display: grid; grid-template-columns: 34px minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 11px; border: 1px solid #e3d8c7; border-radius: 12px; background: linear-gradient(110deg,#fcf8f0,#f8f5ef); }.match-prompt-icon { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 9px; background: #2d3543; color: #e3c59c; }.match-prompt > span:nth-child(2) { display: flex; min-width: 0; flex-direction: column; }.match-prompt strong { color: #454851; font-size: 11px; }.match-prompt small { overflow: hidden; color: #888991; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }.match-prompt a { display: inline-flex; align-items: center; gap: 5px; color: #725a3f; font-size: 10px; font-weight: 800; white-space: nowrap; }
+.card-footer-row { margin-top: auto; padding-top: 15px; }.card-primary-cta { background: #242b38; border-color: #242b38; }.quick-view-btn { background: #fff; }
+@media(max-width:640px){.match-prompt{grid-template-columns:34px 1fr}.match-prompt a{grid-column:2}.card-meta-grid{grid-template-columns:1fr}.card-description-snippet{min-height:0}}
