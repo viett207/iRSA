@@ -1,4 +1,4 @@
-<div class="chat-dialog">
+<div class="chat-dialog" [class.dock-mode]="dockMode">
   <!-- Dialog Header -->
   <header class="dialog-header">
     <div class="dialog-header__info">
@@ -6,6 +6,7 @@
         {{ getCandidateInitials(candidateName) }}
       </div>
       <div>
+        <span class="header-eyebrow">TRAO ĐỔI VỚI ỨNG VIÊN</span>
         <div class="title-row">
           <h4>{{ candidateName }}</h4>
           @if (candidateResponse === 'accepted') {
@@ -19,9 +20,16 @@
         <p class="subtitle">{{ jobTitle }}</p>
       </div>
     </div>
-    <button class="close-btn" (click)="modalRef.close()">
-      <span nz-icon nzType="close"></span>
-    </button>
+    <div class="dialog-window-actions">
+      @if (dockMode) {
+        <button type="button" class="close-btn" (click)="minimizeChat()" aria-label="Thu nhỏ hội thoại">
+          <span nz-icon nzType="minus"></span>
+        </button>
+      }
+      <button type="button" class="close-btn" (click)="closeChat()" aria-label="Đóng hội thoại">
+        <span nz-icon nzType="close"></span>
+      </button>
+    </div>
   </header>
 
   <!-- Messages Scroll Area -->
@@ -35,6 +43,9 @@
         </div>
       } @else {
         @for (msg of messages(); track msg.id) {
+          @if (showDateSeparator($index)) {
+            <div class="date-separator"><span>{{ getDateLabel(msg.created_at) }}</span></div>
+          }
           <!-- INTERVIEW INVITATION CARD -->
           @if (msg.message_type === 'interview_invitation' && msg.metadata_json) {
             <div class="message-row invitation-row">
@@ -106,15 +117,21 @@
               class="message-row"
               [class.outgoing]="msg.sender_role === 'hr'"
               [class.incoming]="msg.sender_role === 'candidate'"
+              [class.continuation]="isMessageContinuation($index)"
             >
-              <div class="message-bubble">
-                @if (msg.sender_role !== 'hr') {
-                  <div class="sender-name">
-                    {{ msg.sender_name || 'Ứng viên' }}
-                  </div>
+              @if (msg.sender_role === 'candidate' && !isMessageContinuation($index)) {
+                <span class="message-avatar">{{ getCandidateInitials(msg.sender_name || candidateName) }}</span>
+              }
+              <div class="message-stack">
+                @if (msg.sender_role === 'candidate' && !isMessageContinuation($index)) {
+                  <div class="sender-name sender-name--outside">{{ msg.sender_name || candidateName || 'Ứng viên' }}</div>
                 }
-                <p class="bubble-text">{{ msg.content }}</p>
-                <span class="timestamp">{{ msg.created_at | date:'HH:mm' }}</span>
+                <div class="message-bubble">
+                  <p class="bubble-text">{{ msg.content }}</p>
+                  @if (isLastMessageInGroup($index)) {
+                    <span class="timestamp">{{ msg.created_at | date:'HH:mm' }} · Đã gửi</span>
+                  }
+                </div>
               </div>
             </div>
           }
@@ -128,9 +145,9 @@
     <textarea
       nz-input
       [(ngModel)]="newMessageText"
-      (keydown.enter)="$event.preventDefault(); sendMessage()"
+      (keydown.enter)="onComposerEnter($event)"
       [nzAutosize]="{ minRows: 1, maxRows: 3 }"
-      placeholder="Nhập tin nhắn gửi ứng viên... (Nhấn Enter để gửi)"
+      placeholder="Nhập tin nhắn..."
       [disabled]="sending()"
     ></textarea>
     <button
@@ -143,5 +160,6 @@
     >
       <span nz-icon nzType="send"></span> Gửi
     </button>
+    <small class="composer-hint">Enter để gửi · Shift + Enter để xuống dòng</small>
   </footer>
 </div>

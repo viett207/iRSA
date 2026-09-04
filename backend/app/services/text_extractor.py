@@ -7,9 +7,6 @@ Both handle UTF-8 natively, supporting Vietnamese diacritics.
 import logging
 from io import BytesIO
 
-import fitz  # PyMuPDF
-from docx import Document
-
 logger = logging.getLogger(__name__)
 
 
@@ -42,7 +39,11 @@ def _extract_from_pdf(file_bytes: bytes) -> str | None:
     PyMuPDF reads the PDF's internal text layer which preserves
     Unicode/UTF-8 encoding — Vietnamese diacritics work out of the box.
     """
-    doc = fitz.open(stream=file_bytes, filetype="pdf")
+    # These libraries are sizeable native dependencies. Import them only for
+    # upload/parser requests so normal API startup and list endpoints stay fast.
+    import pymupdf
+
+    doc = pymupdf.open(stream=file_bytes, filetype="pdf")
     try:
         pages = []
         for page in doc:
@@ -61,6 +62,8 @@ def _extract_from_docx(file_bytes: bytes) -> str | None:
     python-docx reads the XML inside the .docx zip, which is
     always UTF-8. Vietnamese text is preserved as-is.
     """
+    from docx import Document
+
     doc = Document(BytesIO(file_bytes))
     paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
     combined = "\n".join(paragraphs).strip()

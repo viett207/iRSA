@@ -1,9 +1,11 @@
 import {
   Component,
   ElementRef,
+  EventEmitter,
   Input,
   OnDestroy,
   OnInit,
+  Output,
   ViewChild,
   inject,
   signal,
@@ -45,13 +47,16 @@ export class InterviewChatModalComponent implements OnInit, OnDestroy {
   @Input() jobTitle = '';
   @Input() candidateResponse?: string = 'pending';
   @Input() interviewDate?: string;
+  @Input() dockMode = false;
+  @Output() chatClosed = new EventEmitter<void>();
+  @Output() chatMinimized = new EventEmitter<void>();
 
   @ViewChild('scrollContainer') private scrollContainer?: ElementRef;
 
   private jobService = inject(JobService);
   private notifService = inject(NotificationService);
   private message = inject(NzMessageService);
-  public modalRef = inject(NzModalRef);
+  public modalRef = inject(NzModalRef, { optional: true });
 
   messages = signal<any[]>([]);
   loading = signal<boolean>(false);
@@ -85,6 +90,15 @@ export class InterviewChatModalComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();
+  }
+
+  closeChat(): void {
+    if (this.dockMode) this.chatClosed.emit();
+    else this.modalRef?.close();
+  }
+
+  minimizeChat(): void {
+    this.chatMinimized.emit();
   }
 
   loadMessages(silent: boolean = false): void {
@@ -144,6 +158,56 @@ export class InterviewChatModalComponent implements OnInit, OnDestroy {
         this.sending.set(false);
       },
     });
+  }
+
+  onComposerEnter(event: Event): void {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.shiftKey) return;
+    keyboardEvent.preventDefault();
+    this.sendMessage();
+  }
+
+  showDateSeparator(index: number): boolean {
+    if (index === 0) return true;
+    const current = this.messages()[index]?.created_at;
+    const previous = this.messages()[index - 1]?.created_at;
+    if (!current || !previous) return false;
+    return new Date(current).toDateString() !== new Date(previous).toDateString();
+  }
+
+  getDateLabel(value: string): string {
+    const date = new Date(value);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    if (date.toDateString() === today.toDateString()) return 'Hôm nay';
+    if (date.toDateString() === yesterday.toDateString()) return 'Hôm qua';
+    return new Intl.DateTimeFormat('vi-VN', {
+      weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
+    }).format(date);
+  }
+
+  isMessageContinuation(index: number): boolean {
+    if (index <= 0) return false;
+    const current = this.messages()[index];
+    const previous = this.messages()[index - 1];
+    if (!this.isRegularMessage(current) || !this.isRegularMessage(previous)) return false;
+    if (current.sender_role !== previous.sender_role) return false;
+    const elapsed = new Date(current.created_at).getTime() - new Date(previous.created_at).getTime();
+    return elapsed >= 0 && elapsed <= 5 * 60 * 1000;
+  }
+
+  isLastMessageInGroup(index: number): boolean {
+    const next = this.messages()[index + 1];
+    const current = this.messages()[index];
+    if (!next || !this.isRegularMessage(current) || !this.isRegularMessage(next)) return true;
+    if (current.sender_role !== next.sender_role) return true;
+    const elapsed = new Date(next.created_at).getTime() - new Date(current.created_at).getTime();
+    return elapsed < 0 || elapsed > 5 * 60 * 1000;
+  }
+
+  private isRegularMessage(message: any): boolean {
+    return !!message && !['interview_invitation', 'interview_response'].includes(message.message_type);
   }
 
   private scrollToBottom(): void {

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, interval, of, startWith, switchMap } from 'rxjs';
+import { catchError, of, switchMap, timer } from 'rxjs';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -16,6 +16,9 @@ import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { ChatDockService } from '../../core/services/chat-dock.service';
+import { CandidateConversation, JobService } from '../../features/jobs/services/job.service';
+import { InterviewChatModalComponent } from '../../features/jobs/components/interview-chat-modal.component';
 import { SoundService } from '../../core/services/sound.service';
 
 @Component({
@@ -34,6 +37,7 @@ import { SoundService } from '../../core/services/sound.service';
     NzToolTipModule,
     NzDividerModule,
     NzBreadCrumbModule,
+    InterviewChatModalComponent,
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',
@@ -44,11 +48,21 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   processMenuOpen = true;
   workspaceSearch = '';
   readonly newApplicationCount = signal(0);
+  readonly conversations = signal<CandidateConversation[]>([]);
+  readonly conversationsLoading = signal(false);
+  readonly conversationSelectionMode = signal(false);
+  readonly selectedConversationIds = signal<number[]>([]);
+  readonly unreadMessageCount = computed(() => this.conversations().reduce((total, item) => total + item.unread_count, 0));
+  private readonly chatDockService = inject(ChatDockService);
+  readonly openChats = this.chatDockService.openChats;
+  readonly minimizedChats = this.chatDockService.minimizedChats;
   readonly soundSvc = inject(SoundService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dashboardService = inject(DashboardService);
+  private readonly jobService = inject(JobService);
   private readonly acknowledgedApplicationIds = new Set<number>();
   private applicationAlertSnapshotReady = false;
+  private allConversationIds: number[] = [];
 
   userInitial = computed(() =>
     this.authService.user()?.full_name?.charAt(0).toUpperCase() || 'U'
@@ -78,7 +92,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       [/^\/jobs\/new\/?$/, ['Quản lý tuyển dụng', 'Tin tuyển dụng', 'Tạo tin tuyển dụng mới']],
       [/^\/jobs\/shortlisted\/?$/, ['Quản lý tuyển dụng', 'Quy trình tuyển dụng AI', '1. Hẹn lịch phỏng vấn']],
       [/^\/jobs\/interviewing\/?$/, ['Quản lý tuyển dụng', 'Quy trình tuyển dụng AI', '2. Phỏng vấn AI']],
-      [/^\/jobs\/interview-passed\/?$/, ['Quản lý tuyển dụng', 'Quy trình tuyển dụng AI', '3. Đạt phỏng vấn']],
+      [/^\/jobs\/interview-passed\/?$/, ['Quản lý tuyển dụng', 'Quy trình tuyển dụng AI', '3. Chốt tuyển dụng']],
       [/^\/jobs\/[^/]+\/?$/, ['Quản lý tuyển dụng', 'Tin tuyển dụng', 'Chi tiết tin tuyển dụng']],
       [/^\/jobs\/?$/, ['Quản lý tuyển dụng', 'Tin tuyển dụng', 'Tất cả tin tuyển dụng']],
       [/^\/applications\/?$/, ['Quản lý tuyển dụng', 'Tin tuyển dụng', 'Hồ sơ ứng tuyển']],
@@ -111,16 +125,29 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.notificationSvc.setNotificationsMuted(this.readNotificationPreference());
     this.notificationSvc.connect();
+    this.loadConversations();
+    this.notificationSvc.chatMessages$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
+        const applicationId = Number(event?.application_id || event?.message?.application_id);
+        if (applicationId) {
+          this.unhideConversation(applicationId);
+          this.chatDockService.incrementMinimizedUnread(applicationId);
+        }
+        this.loadConversations();
+      });
     this.route.queryParamMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
         this.workspaceSearch = params.get('search') ?? '';
       });
 
-    interval(30_000)
+    // Notifications already arrive over WebSocket. Keep this fallback refresh
+    // out of the initial navigation's critical path and reduce API/DB traffic.
+    timer(15_000, 120_000)
       .pipe(
-        startWith(0),
         switchMap(() => this.dashboardService.getStats().pipe(catchError(() => of(null)))),
         takeUntilDestroyed(this.destroyRef),
       )
@@ -129,6 +156,132 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
           if (dashboard) this.updateApplicationAlerts(dashboard.recent_applications);
         },
       });
+  }
+
+  toggleNotifications(): void {
+    const muted = !this.notificationSvc.notificationsMuted();
+    this.notificationSvc.setNotificationsMuted(muted);
+    try {
+      localStorage.setItem(this.notificationPreferenceKey(), muted ? 'muted' : 'enabled');
+    } catch {
+      // Preference remains active for the current session if storage is unavailable.
+    }
+  }
+
+  private readNotificationPreference(): boolean {
+    try {
+      return localStorage.getItem(this.notificationPreferenceKey()) === 'muted';
+    } catch {
+      return false;
+    }
+  }
+
+  private notificationPreferenceKey(): string {
+    return `irsa:notifications:${this.authService.user()?.id ?? 'anonymous'}`;
+  }
+
+  loadConversations(): void {
+    this.conversationsLoading.set(true);
+    this.jobService.getCandidateConversations()
+      .pipe(takeUntilDestroyed(this.destroyRef), catchError(() => of([])))
+      .subscribe((items) => {
+        this.allConversationIds = items.map((item) => item.application_id);
+        const hidden = this.readHiddenConversations();
+        this.conversations.set(items.filter((item) => !hidden.has(item.application_id)).sort((left, right) => {
+          if (right.unread_count !== left.unread_count) return right.unread_count - left.unread_count;
+          return new Date(right.latest_message?.created_at || 0).getTime() - new Date(left.latest_message?.created_at || 0).getTime();
+        }));
+        this.conversationsLoading.set(false);
+      });
+  }
+
+  toggleConversationSelectionMode(): void {
+    this.conversationSelectionMode.update((active) => !active);
+    this.selectedConversationIds.set([]);
+  }
+
+  toggleConversationSelection(applicationId: number): void {
+    this.selectedConversationIds.update((ids) => ids.includes(applicationId)
+      ? ids.filter((id) => id !== applicationId)
+      : [...ids, applicationId]);
+  }
+
+  handleConversationClick(conversation: CandidateConversation): void {
+    if (this.conversationSelectionMode()) this.toggleConversationSelection(conversation.application_id);
+    else this.openConversation(conversation);
+  }
+
+  deleteSelectedConversations(): void {
+    const ids = this.selectedConversationIds();
+    if (!ids.length) return;
+    this.hideConversations(ids);
+    this.selectedConversationIds.set([]);
+    this.conversationSelectionMode.set(false);
+  }
+
+  deleteAllConversations(): void {
+    this.hideConversations(this.allConversationIds);
+    this.selectedConversationIds.set([]);
+    this.conversationSelectionMode.set(false);
+  }
+
+  private hideConversations(ids: number[]): void {
+    const hidden = this.readHiddenConversations();
+    ids.forEach((id) => hidden.add(id));
+    this.persistHiddenConversations(hidden);
+    this.conversations.update((items) => items.filter((item) => !hidden.has(item.application_id)));
+    this.chatDockService.removeChats(hidden);
+  }
+
+  private unhideConversation(applicationId: number): void {
+    const hidden = this.readHiddenConversations();
+    if (!hidden.delete(applicationId)) return;
+    this.persistHiddenConversations(hidden);
+  }
+
+  private readHiddenConversations(): Set<number> {
+    try {
+      const raw = localStorage.getItem(this.hiddenConversationsKey());
+      const values: unknown = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(values) ? values.filter((id): id is number => typeof id === 'number') : []);
+    } catch {
+      return new Set<number>();
+    }
+  }
+
+  private persistHiddenConversations(ids: Set<number>): void {
+    try {
+      localStorage.setItem(this.hiddenConversationsKey(), JSON.stringify([...ids].slice(-1000)));
+    } catch {
+      // The inbox remains updated for this session when storage is unavailable.
+    }
+  }
+
+  private hiddenConversationsKey(): string {
+    return `irsa:hidden-conversations:${this.authService.user()?.id ?? 'anonymous'}`;
+  }
+
+  openConversation(conversation: CandidateConversation): void {
+    this.chatDockService.openChat(conversation);
+  }
+
+  closeChat(applicationId: number): void {
+    this.chatDockService.closeChat(applicationId);
+    this.loadConversations();
+  }
+
+  closeAllChats(): void {
+    this.chatDockService.closeAllChats();
+    this.loadConversations();
+  }
+
+  minimizeChat(conversation: CandidateConversation): void {
+    this.chatDockService.minimizeChat(conversation);
+    this.loadConversations();
+  }
+
+  restoreChat(conversation: CandidateConversation): void {
+    this.chatDockService.restoreChat(conversation);
   }
 
   ngOnDestroy(): void {

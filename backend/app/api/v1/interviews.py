@@ -674,6 +674,10 @@ async def summarize_interview(
     interview.overall_feedback = summary_data.get("overall_feedback", "")
     interview.recommendation = summary_data.get("recommendation", "CONSIDER")
     interview.status = "completed"
+    # A completed interview leaves round 2 automatically. "offered" is the
+    # round-3 review queue where HR still decides hired or rejected.
+    app.status = "offered"
+    app.public_status = "shortlisted"
 
     await db.commit()
     await db.refresh(interview)
@@ -1021,6 +1025,14 @@ async def update_interview(
         if body.status not in ("scheduled", "completed", "cancelled"):
             raise HTTPException(status_code=400, detail="Invalid status")
         interview.status = body.status
+        if body.status == "completed":
+            app_result = await db.execute(
+                select(Application).where(Application.id == app_id)
+            )
+            application = app_result.scalar_one_or_none()
+            if application:
+                application.status = "offered"
+                application.public_status = "shortlisted"
 
     await db.commit()
     await db.refresh(interview)

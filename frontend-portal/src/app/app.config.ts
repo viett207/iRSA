@@ -13,14 +13,43 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { IconDefinition } from '@ant-design/icons-angular';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import * as AllIcons from '@ant-design/icons-angular/icons';
+import {
+  AlertFill, AlertOutline, ApartmentOutline, AppstoreFill, AppstoreOutline, ArrowLeftOutline, ArrowRightOutline, AuditOutline,
+  BankFill, BankOutline, BellFill, BellOutline, BuildFill, BuildOutline, CalendarFill, CalendarOutline,
+  CheckCircleFill, CheckCircleOutline, CheckOutline, ClockCircleFill, ClockCircleOutline, CloseCircleFill, CloseCircleOutline, CloseOutline,
+  CodeFill, CodeOutline, ContainerFill, ContainerOutline, DashboardFill, DashboardOutline, DollarOutline, DownOutline,
+  DownloadOutline, EnvironmentFill, EnvironmentOutline, ExclamationCircleFill, ExclamationCircleOutline, EyeFill, EyeInvisibleFill, EyeInvisibleOutline,
+  EyeOutline, FileFill, FileOutline, FilePdfFill, FilePdfOutline, FileProtectOutline, FileSearchOutline, FileTextFill,
+  FileTextOutline, FilterFill, FilterOutline, FireFill, FireOutline, FormOutline, GlobalOutline, GroupOutline,
+  HeartFill, HeartOutline, HomeFill, HomeOutline, HourglassFill, HourglassOutline, IdcardFill, IdcardOutline,
+  InboxOutline, InfoCircleFill, InfoCircleOutline, KeyOutline, LaptopOutline, LayoutFill, LayoutOutline, LinkOutline,
+  LoadingOutline, LockFill, LockOutline, LoginOutline, LogoutOutline, MailFill, MailOutline, MedicineBoxFill,
+  MedicineBoxOutline, MenuOutline, MessageFill, MessageOutline, NotificationFill, NotificationOutline, PhoneFill, PhoneOutline,
+  ProfileFill, ProfileOutline, ReadFill, ReadOutline, ReloadOutline, RightOutline, SaveFill, SaveOutline,
+  ScheduleFill, ScheduleOutline, SearchOutline, SendOutline, ShareAltOutline, SolutionOutline, StarFill, StarOutline,
+  TagsFill, TagsOutline, TeamOutline, ThunderboltFill, ThunderboltOutline, TrophyFill, TrophyOutline, UploadOutline,
+  UserOutline, VideoCameraFill, VideoCameraOutline, WarningFill, WarningOutline,
+} from '@ant-design/icons-angular/icons';
 
 registerLocaleData(vi);
 
-const antDesignIcons = AllIcons as Record<string, IconDefinition>;
-const icons: IconDefinition[] = Object.keys(antDesignIcons).map(
-  (key) => antDesignIcons[key]
-);
+const icons: IconDefinition[] = [
+  AlertFill, AlertOutline, ApartmentOutline, AppstoreFill, AppstoreOutline, ArrowLeftOutline, ArrowRightOutline, AuditOutline,
+  BankFill, BankOutline, BellFill, BellOutline, BuildFill, BuildOutline, CalendarFill, CalendarOutline,
+  CheckCircleFill, CheckCircleOutline, CheckOutline, ClockCircleFill, ClockCircleOutline, CloseCircleFill, CloseCircleOutline, CloseOutline,
+  CodeFill, CodeOutline, ContainerFill, ContainerOutline, DashboardFill, DashboardOutline, DollarOutline, DownOutline,
+  DownloadOutline, EnvironmentFill, EnvironmentOutline, ExclamationCircleFill, ExclamationCircleOutline, EyeFill, EyeInvisibleFill, EyeInvisibleOutline,
+  EyeOutline, FileFill, FileOutline, FilePdfFill, FilePdfOutline, FileProtectOutline, FileSearchOutline, FileTextFill,
+  FileTextOutline, FilterFill, FilterOutline, FireFill, FireOutline, FormOutline, GlobalOutline, GroupOutline,
+  HeartFill, HeartOutline, HomeFill, HomeOutline, HourglassFill, HourglassOutline, IdcardFill, IdcardOutline,
+  InboxOutline, InfoCircleFill, InfoCircleOutline, KeyOutline, LaptopOutline, LayoutFill, LayoutOutline, LinkOutline,
+  LoadingOutline, LockFill, LockOutline, LoginOutline, LogoutOutline, MailFill, MailOutline, MedicineBoxFill,
+  MedicineBoxOutline, MenuOutline, MessageFill, MessageOutline, NotificationFill, NotificationOutline, PhoneFill, PhoneOutline,
+  ProfileFill, ProfileOutline, ReadFill, ReadOutline, ReloadOutline, RightOutline, SaveFill, SaveOutline,
+  ScheduleFill, ScheduleOutline, SearchOutline, SendOutline, ShareAltOutline, SolutionOutline, StarFill, StarOutline,
+  TagsFill, TagsOutline, TeamOutline, ThunderboltFill, ThunderboltOutline, TrophyFill, TrophyOutline, UploadOutline,
+  UserOutline, VideoCameraFill, VideoCameraOutline, WarningFill, WarningOutline,
+];
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -39,4 +68,3 @@ export const appConfig: ApplicationConfig = {
     }),
   ],
 };
-

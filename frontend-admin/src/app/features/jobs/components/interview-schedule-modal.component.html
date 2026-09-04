@@ -34,12 +34,49 @@
   <section class="schedule-section schedule-form">
     <header><div><span>{{ interviews.length ? 'ĐỔI LỊCH' : 'TẠO LỊCH' }}</span><h4>{{ interviews.length ? 'Cập nhật thời gian hoặc hình thức' : 'Thông tin cuộc phỏng vấn' }}</h4></div></header>
     <div class="schedule-form__grid">
-      <label class="form-field form-field--wide"><span>Ngày và giờ <b>*</b></span><nz-date-picker [(ngModel)]="form.interview_date" nzShowTime nzFormat="dd/MM/yyyy HH:mm" nzPlaceHolder="Chọn ngày và giờ"></nz-date-picker></label>
-      <label class="form-field"><span>Hình thức</span><nz-select [(ngModel)]="form.interview_type"><nz-option nzValue="online" nzLabel="Trực tuyến"></nz-option><nz-option nzValue="offline" nzLabel="Trực tiếp"></nz-option></nz-select></label>
-      <label class="form-field"><span>{{ form.interview_type === 'online' ? 'Liên kết tham gia' : 'Địa điểm' }}</span><input nz-input [(ngModel)]="form.location" [placeholder]="form.interview_type === 'online' ? 'meet.google.com/...' : 'Nhập địa chỉ phỏng vấn'" /></label>
-      <label class="form-field form-field--wide"><span>Ghi chú gửi ứng viên</span><textarea nz-input [(ngModel)]="form.notes" [nzAutosize]="{ minRows: 3, maxRows: 5 }" placeholder="Nội dung cần chuẩn bị, người liên hệ hoặc hướng dẫn tham gia..."></textarea><small>Thông tin này có thể được gửi kèm thông báo lịch phỏng vấn.</small></label>
+      <div class="form-field form-field--wide">
+        <span class="field-label">Ngày và giờ <b>*</b></span>
+        <nz-date-picker [(ngModel)]="form.interview_date" nzShowTime nzFormat="dd/MM/yyyy HH:mm" nzPlaceHolder="Chọn ngày và giờ"></nz-date-picker>
+      </div>
+      <div class="form-field">
+        <span class="field-label">Hình thức <b>*</b></span>
+        <div class="interview-type-toggle" role="radiogroup" aria-label="Hình thức phỏng vấn">
+          <button
+            type="button"
+            class="type-toggle-btn"
+            [class.active]="form.interview_type === 'online'"
+            (click)="setInterviewType('online')"
+          >
+            <span nz-icon nzType="video-camera"></span>
+            <span>Trực tuyến</span>
+          </button>
+          <button
+            type="button"
+            class="type-toggle-btn"
+            [class.active]="form.interview_type === 'offline'"
+            (click)="setInterviewType('offline')"
+          >
+            <span nz-icon nzType="environment"></span>
+            <span>Trực tiếp</span>
+          </button>
+        </div>
+      </div>
+      <div class="form-field">
+        <span class="field-label">{{ form.interview_type === 'online' ? 'Liên kết tham gia' : 'Địa điểm' }}</span>
+        <input nz-input [(ngModel)]="form.location" [placeholder]="form.interview_type === 'online' ? 'meet.google.com/...' : 'Nhập địa chỉ phỏng vấn'" />
+      </div>
+      <div class="form-field form-field--wide">
+        <span class="field-label">Ghi chú gửi ứng viên</span>
+        <textarea nz-input [(ngModel)]="form.notes" [nzAutosize]="{ minRows: 3, maxRows: 5 }" placeholder="Nội dung cần chuẩn bị, người liên hệ hoặc hướng dẫn tham gia..."></textarea>
+        <small>Thông tin này có thể được gửi kèm thông báo lịch phỏng vấn.</small>
+      </div>
     </div>
   </section>
 
-  <footer class="modal-footer"><button nz-button (click)="modalRef.close()">Đóng</button><button nz-button nzType="primary" [nzLoading]="submitting" [disabled]="!form.interview_date" (click)="submit()"><span nz-icon nzType="calendar"></span>{{ interviews.length ? 'Xác nhận đổi lịch' : 'Xác nhận đặt lịch' }}</button></footer>
+  <footer class="modal-footer">
+    <button nz-button nzType="primary" [nzLoading]="submitting" [disabled]="!form.interview_date" (click)="submit()">
+      <span nz-icon nzType="calendar"></span>
+      {{ interviews.length ? 'Xác nhận đổi lịch' : 'Xác nhận đặt lịch' }}
+    </button>
+  </footer>
 </div>

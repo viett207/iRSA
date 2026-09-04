@@ -22,11 +22,6 @@
     </section>
   } @else {
     @if (overview(); as data) {
-    <section class="company-cover" aria-hidden="true">
-      <span class="cover-orb cover-orb--one"></span>
-      <span class="cover-orb cover-orb--two"></span>
-      <span class="cover-grid"></span>
-    </section>
     <section class="company-hero" aria-labelledby="company-title">
       <div class="company-avatar" aria-hidden="true">{{ getInitial(data.company.company_name) }}</div>
       <div class="company-identity">
@@ -35,56 +30,17 @@
         <div class="company-tags">
           <nz-tag nzColor="blue">{{ data.company.company_code }}</nz-tag>
           @if (data.company.industry) {
-            <span><span nz-icon nzType="appstore" aria-hidden="true"></span>{{ data.company.industry }}</span>
+            <span>{{ data.company.industry }}</span>
           }
           @if (data.company.location) {
-            <span><span nz-icon nzType="environment" aria-hidden="true"></span>{{ data.company.location }}</span>
+            <span>{{ data.company.location }}</span>
           }
         </div>
       </div>
-      <div class="company-hero-actions">
-        @if (editMode()) {
-          <span class="editing-status">Đang chỉnh sửa hồ sơ</span>
-        } @else {
-          <button nz-button nzType="primary" type="button" (click)="startEditing()">Chỉnh sửa hồ sơ</button>
-        }
-      </div>
     </section>
 
-    <nav class="profile-tabs" aria-label="Nội dung hồ sơ công ty">
-      <a class="profile-tab profile-tab--active" href="#company-overview">Hồ sơ công ty</a>
-      <a class="profile-tab" href="#company-jobs">Tin tuyển dụng <span>{{ data.stats.active_jobs }}</span></a>
-    </nav>
-
-    <section class="stat-grid" aria-label="Chỉ số tuyển dụng">
-      <article class="metric-card metric-card--accent">
-        <span class="metric-icon" nz-icon nzType="global" aria-hidden="true"></span>
-        <span class="metric-label">Đang tuyển</span>
-        <strong>{{ data.stats.active_jobs }}</strong>
-        <span class="metric-note">vị trí đã đăng tuyển</span>
-      </article>
-      <article class="metric-card">
-        <span class="metric-icon" nz-icon nzType="solution" aria-hidden="true"></span>
-        <span class="metric-label">Tổng vị trí</span>
-        <strong>{{ data.stats.total_jobs }}</strong>
-        <span class="metric-note">tin đã tạo trong hệ thống</span>
-      </article>
-      <article class="metric-card">
-        <span class="metric-icon" nz-icon nzType="file-text" aria-hidden="true"></span>
-        <span class="metric-label">Tổng hồ sơ</span>
-        <strong>{{ data.stats.total_applications }}</strong>
-        <span class="metric-note">hồ sơ đã nộp</span>
-      </article>
-      <article class="metric-card">
-        <span class="metric-icon" nz-icon nzType="clock-circle" aria-hidden="true"></span>
-        <span class="metric-label">Đang xử lý</span>
-        <strong>{{ data.stats.in_progress_applications }}</strong>
-        <span class="metric-note">hồ sơ trong quy trình tuyển</span>
-      </article>
-    </section>
-
-    <section class="content-grid" id="company-overview">
-      <nz-card class="jobs-card">
+    <section class="company-profile-card" id="company-overview">
+      <nz-card>
         <article class="company-introduction">
           <div class="introduction-heading profile-section-heading">
             <div>
@@ -92,7 +48,13 @@
               <h2>{{ editMode() ? 'Chỉnh sửa thông tin công ty' : 'Thông tin công ty' }}</h2>
               <p>{{ editMode() ? 'Các thay đổi sẽ được cập nhật trực tiếp vào hồ sơ đang xem.' : 'Thông tin nhận diện dùng chung trong toàn bộ quy trình tuyển dụng.' }}</p>
             </div>
-            @if (!editMode()) { <button type="button" (click)="startEditing()">Chỉnh sửa</button> }
+            @if (!editMode()) {
+              <button class="edit-profile-action" type="button" (click)="startEditing()" aria-label="Chỉnh sửa thông tin công ty">
+                Chỉnh sửa thông tin
+              </button>
+            } @else {
+              <span class="editing-status">Đang chỉnh sửa</span>
+            }
           </div>
 
           @if (editMode()) {
@@ -148,72 +110,10 @@
             </div>
           }
         </article>
-
-        <div class="section-divider"></div>
-        <div class="section-header">
-          <div>
-            <h2 id="company-jobs">Tin tuyển dụng</h2>
-            <p>{{ data.stats.active_jobs }} vị trí đang tuyển · Hiển thị {{ data.jobs.length }} trên {{ data.stats.total_jobs }} tin.</p>
-          </div>
-        </div>
-
-        @if (data.jobs.length) {
-          <div class="job-list">
-            @for (job of data.jobs; track job.id) {
-              <a class="job-row" [routerLink]="['/jobs', job.id]">
-                <div class="job-primary">
-                  <strong>{{ job.title_vi }}</strong>
-                  <div class="job-meta">
-                    @if (job.department) { <span>{{ job.department }}</span> }
-                    @if (job.location) { <span><span nz-icon nzType="environment" aria-hidden="true"></span>{{ job.location }}</span> }
-                    <span>{{ formatDate(job.created_at) }}</span>
-                  </div>
-                </div>
-                <nz-tag [nzColor]="getStatusColor(job.status)">{{ getStatusLabel(job.status) }}</nz-tag>
-                <div class="application-total">
-                  <strong>{{ job.applications_count }}</strong>
-                  <span>hồ sơ</span>
-                </div>
-                <span nz-icon nzType="right" class="job-arrow" aria-hidden="true"></span>
-              </a>
-            }
-          </div>
-        } @else {
-          <nz-empty nzNotFoundContent="Công ty này chưa tạo tin tuyển dụng nào"></nz-empty>
-        }
       </nz-card>
-
-      <aside aria-label="Thông tin công ty">
-        <nz-card class="information-card">
-          <h2>Tình trạng hồ sơ</h2>
-          <dl>
-            <div>
-              <dt>Mức hoàn thiện</dt>
-              <dd>{{ data.company.industry && data.company.location && data.company.description ? 'Đã hoàn thiện' : 'Cần bổ sung thông tin' }}</dd>
-            </div>
-            <div>
-              <dt>Đội ngũ tuyển dụng</dt>
-              <dd>{{ data.stats.hr_members }} thành viên HR đang hoạt động</dd>
-            </div>
-            <div>
-              <dt>Ngày tham gia</dt>
-              <dd>{{ formatDate(data.company.created_at) }}</dd>
-            </div>
-            <div>
-              <dt>Cập nhật gần nhất</dt>
-              <dd>{{ data.company.updated_at ? formatDate(data.company.updated_at) : 'Chưa có thay đổi' }}</dd>
-            </div>
-          </dl>
-        </nz-card>
-
-        <nz-card class="workflow-card">
-          <div>
-            <strong>Dữ liệu dùng chung</strong>
-            <p>Hồ sơ này được dùng cho tin tuyển dụng, quản lý thành viên HR và báo cáo của công ty.</p>
-          </div>
-        </nz-card>
-      </aside>
     </section>
+
+    <app-company-jobs-panel [jobs]="data.jobs" [activeJobs]="data.stats.active_jobs"></app-company-jobs-panel>
     }
   }
 </main>

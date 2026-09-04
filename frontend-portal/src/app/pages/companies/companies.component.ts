@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -43,6 +44,7 @@ export class CompaniesComponent implements OnInit {
   private readonly jobService = inject(JobService);
   private readonly message = inject(NzMessageService);
   private readonly destroyRef = inject(DestroyRef);
+  private companiesRequest?: Subscription;
 
   companies = signal<PublicCompanyItem[]>([]);
   loading = signal(false);
@@ -62,8 +64,9 @@ export class CompaniesComponent implements OnInit {
   }
 
   loadCompanies(): void {
+    this.companiesRequest?.unsubscribe();
     this.loading.set(true);
-    this.jobService.listCompanies({
+    this.companiesRequest = this.jobService.listCompanies({
       page: this.pageIndex,
       page_size: this.pageSize,
       search: this.searchText.trim() || undefined,

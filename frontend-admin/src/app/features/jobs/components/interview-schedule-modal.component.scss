@@ -33,6 +33,54 @@
 .form-field nz-date-picker, .form-field nz-select { width: 100%; }
 :host ::ng-deep .form-field .ant-picker, :host ::ng-deep .form-field .ant-select-selector, .form-field input, .form-field textarea { border-color: #dedbd3 !important; border-radius: 8px !important; box-shadow: none !important; }
 :host ::ng-deep .form-field .ant-picker, :host ::ng-deep .form-field .ant-select-selector, .form-field input { min-height: 40px; }
+
+.interview-type-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.type-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #dedbd3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #52525b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+
+  &:hover {
+    border-color: #a1a1aa;
+    background: #faf9f6;
+    color: #18181b;
+  }
+
+  &.active {
+    border-color: #18181b;
+    background: #18181b;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(24, 24, 27, 0.15);
+
+    [nz-icon] {
+      color: #ffffff;
+    }
+  }
+
+  [nz-icon] {
+    font-size: 15px;
+    color: #71717a;
+  }
+}
+
 .modal-footer { position: sticky; bottom: -16px; display: flex; margin: 18px -20px 0; padding: 12px 20px; border-top: 1px solid #e4dfd3; background: rgba(255,255,255,.98); justify-content: flex-end; gap: 8px; }
 .modal-footer .ant-btn { height: 38px; border-radius: 8px; font-weight: 600; }
 .modal-footer .ant-btn-primary { border-color: #18181b; background: #18181b; }

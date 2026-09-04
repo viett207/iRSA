@@ -17,20 +17,21 @@
 .overview-item > strong { display: block; margin: 8px 0 4px; color: #202024; font-family: var(--font-mono); font-size: 27px; line-height: 1; }
 .overview-item > small { color: #aaa7a0; font-size: 12px; }
 
-.filter-panel { display: grid; grid-template-columns: minmax(280px, 1.4fr) minmax(210px, 1fr) minmax(190px, .8fr) auto; gap: 12px; align-items: end; padding: 14px 16px; border: 1px solid #e1dccf; border-radius: 14px; background: #fff; }
+.company-directory { overflow: hidden; border: 1px solid #e1dccf; border-radius: 14px; background: #fff; }
+.directory-heading { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 13px; text-align: left; }
+.directory-heading h2 { margin: 0 0 3px; color: #27272a; font-size: 16px; }
+.directory-heading p { margin: 0; color: #97979e; font-size: 13px; }
+.directory-filter-summary { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.directory-filter-summary span { color: #919198; font-size: 12px; }
+.directory-filter-summary button { padding: 0; border: 0; background: none; color: #6f5d3a; font-size: 12px; font-weight: 700; cursor: pointer; }
+
+.filter-panel { display: grid; grid-template-columns: minmax(280px, 1.4fr) minmax(210px, 1fr) minmax(190px, .8fr) auto; align-items: end; gap: 12px; padding: 13px 18px 15px; border-top: 1px solid #f0ede7; border-bottom: 1px solid #e8e4da; background: #fdfcf9; }
 .filter-field { min-width: 0; text-align: left; }
 .filter-field label { display: block; margin-bottom: 6px; color: #67676f; font-size: 12px; font-weight: 700; }
 .filter-field input, .filter-field nz-select { width: 100%; height: 38px; }
-.filter-result { display: flex; height: 38px; align-items: center; justify-content: flex-end; gap: 12px; white-space: nowrap; }
-.filter-result span { color: #919198; font-size: 12px; }
-.filter-result button { padding: 0; border: 0; background: none; color: #6f5d3a; font-size: 12px; font-weight: 700; cursor: pointer; }
+.clear-filters { height: 38px; padding: 0 4px; border: 0; background: none; color: #765f38; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 
-.company-directory { overflow: hidden; border: 1px solid #e1dccf; border-radius: 14px; background: #fff; }
-.directory-heading { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid #e8e4da; text-align: left; }
-.directory-heading h2 { margin: 0 0 3px; color: #27272a; font-size: 16px; }
-.directory-heading p { margin: 0; color: #97979e; font-size: 13px; }
-
-:host ::ng-deep .company-table .ant-table-thead > tr > th { padding: 11px 14px; background: #f1f3f4; color: #74747d; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-align: left; text-transform: uppercase; }
+:host ::ng-deep .company-table .ant-table-thead > tr > th { padding: 11px 14px; background: #f1f3f4; color: #74747d; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-align: left; text-transform: uppercase; vertical-align: middle; }
 :host ::ng-deep .company-table .ant-table-tbody > tr > td { padding: 13px 14px; border-bottom-color: #efede7; text-align: left; vertical-align: middle; }
 :host ::ng-deep .company-table .ant-table-tbody > tr:hover > td { background: #faf8f3 !important; }
 
@@ -67,8 +68,9 @@
 @media (max-width: 720px) {
   .companies-page { padding: 16px; }
   .page-header { align-items: stretch; flex-direction: column; }
-  .company-overview, .filter-panel { grid-template-columns: 1fr; }
+  .company-overview { grid-template-columns: 1fr; }
+  .filter-panel { grid-template-columns: 1fr; }
   .overview-item { border-right: 0; border-bottom: 1px solid #ebe7de; }
-  .filter-result { justify-content: flex-start; }
+  .directory-heading { align-items: flex-start; flex-direction: column; gap: 9px; }
   .directory-pagination { align-items: flex-start; flex-direction: column; }
 }

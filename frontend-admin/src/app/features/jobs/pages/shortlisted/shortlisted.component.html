@@ -2,9 +2,8 @@
   <!-- Page Header -->
   <div class="page-top-bar">
     <div class="header-content">
-      <h2 class="page-title">
-        Vòng 1 - Hẹn lịch phỏng vấn
-      </h2>
+      <span class="page-eyebrow">VÒNG 1</span>
+      <h2 class="page-title">Hẹn lịch phỏng vấn</h2>
       <p class="page-subtitle">
         Danh sách ứng viên đã qua sơ loại CV. Xem báo cáo AI & JD, thiết lập lịch hẹn hoặc bắt đầu phỏng vấn AI trực tiếp.
       </p>
@@ -16,7 +15,7 @@
         (click)="setViewMode('flat')"
       >
         Bảng tổng hợp
-        <span class="tab-badge">{{ jobsOptions().length }} vị trí</span>
+        <span class="tab-badge" [attr.title]="formatExactCount(jobsOptions().length, 'vị trí')">{{ formatCompactCount(jobsOptions().length) }} vị trí</span>
       </button>
 
       <button
@@ -25,7 +24,7 @@
         (click)="setViewMode('grouped')"
       >
         Hàng đợi xử lý
-        <span class="tab-badge">{{ applicants().length }} hồ sơ</span>
+        <span class="tab-badge" [attr.title]="formatExactCount(applicants().length, 'hồ sơ')">{{ formatCompactCount(applicants().length) }} hồ sơ</span>
       </button>
 
       <button
@@ -34,7 +33,7 @@
         (click)="setViewMode('calendar')"
       >
         Lịch tổng thể
-        <span class="tab-badge">{{ scheduledCount() }} lịch</span>
+        <span class="tab-badge" [attr.title]="formatExactCount(scheduledCount(), 'lịch')">{{ formatCompactCount(scheduledCount()) }} lịch</span>
       </button>
     </nav>
   </div>
@@ -76,6 +75,18 @@
           <nz-option nzValue="all" nzLabel="Tất cả lịch hẹn"></nz-option>
           <nz-option nzValue="unscheduled" [nzLabel]="'Chờ xếp lịch (' + unscheduledCount() + ')'" ></nz-option>
           <nz-option nzValue="scheduled" [nzLabel]="'Đã có lịch (' + scheduledCount() + ')'" ></nz-option>
+        </nz-select>
+
+        <nz-select
+          class="confirmation-select-filter"
+          [ngModel]="confirmationFilter()"
+          (ngModelChange)="confirmationFilter.set($event)"
+        >
+          <nz-option nzValue="all" nzLabel="Mọi xác nhận"></nz-option>
+          <nz-option nzValue="pending" [nzLabel]="'Chưa xác nhận (' + pendingConfirmationCount() + ')'" ></nz-option>
+          <nz-option nzValue="accepted" nzLabel="Đã xác nhận"></nz-option>
+          <nz-option nzValue="declined" nzLabel="Đã từ chối"></nz-option>
+          <nz-option nzValue="reschedule_requested" nzLabel="Yêu cầu đổi lịch"></nz-option>
         </nz-select>
 
         <nz-select
@@ -158,9 +169,13 @@
                 <span class="candidate-queue-card__content">
                   <span class="candidate-queue-card__heading">
                     <strong>{{ app.candidate_name }}</strong>
-                    <span class="queue-status" [attr.data-status]="getScheduleStatusClass(app)">{{ getScheduleStatusLabel(app) }}</span>
+                    <span
+                      class="queue-status"
+                      [attr.data-status]="getScheduleStatusClass(app)"
+                      [attr.title]="getScheduleStatusLabel(app)"
+                    >{{ getQueueScheduleStatusLabel(app) }}</span>
                   </span>
-                  <small class="candidate-job-name">{{ app.job_title }}</small>
+                  <small class="candidate-job-name" [attr.title]="app.job_title">{{ app.job_title }}</small>
                   <span class="candidate-score-line">
                     <span>Khớp JD <b>{{ getMatchingScore(app) != null ? getMatchingScore(app) + '/100' : '—' }}</b></span>
                     <span>AI <b>{{ app.ai_score != null ? (app.ai_score | number:'1.0-0') + '/100' : 'Chưa chấm' }}</b></span>
@@ -192,6 +207,9 @@
                 <p>{{ selected.candidate_email }} · {{ selected.job_title }}</p>
               </div>
               <div class="workspace-header-status">
+                <button type="button" class="workspace-chat-action" (click)="openCandidateChat(selected)" aria-label="Mở tin nhắn với ứng viên" title="Tin nhắn">
+                  <span nz-icon nzType="message" aria-hidden="true"></span>
+                </button>
                 <span class="queue-status" [attr.data-status]="getScheduleStatusClass(selected)">{{ getScheduleStatusLabel(selected) }}</span>
                 <span class="question-readiness-badge" [attr.data-status]="getQuestionPreparationStatus(selected)">{{ getQuestionPreparationLabel(selected) }}</span>
                 <button type="button" class="workspace-close" (click)="clearWorkspaceApplicant()">Đóng</button>
@@ -518,10 +536,7 @@
                     }
                   </div>
                   <footer class="workspace-actions">
-                    <button nz-button (click)="openCandidateChat(selected)">
-                      <span nz-icon nzType="message"></span> Nhắn tin ứng viên
-                    </button>
-                    <button nz-button (click)="openScheduleInterview(selected)">Đổi hoặc quản lý lịch</button>
+                    <button nz-button (click)="manageInterviewSchedule(selected)">Quản lý lịch</button>
                     <button
                       nz-button
                       nzType="primary"
@@ -751,8 +766,9 @@
                             nzSize="small"
                             class="btn-interview-room"
                             (click)="openInterviewRoom(app)"
+                            [disabled]="app.status !== 'interviewing' || !app.interview_date"
                             nz-tooltip
-                            nzTooltipTitle="Mở phòng phỏng vấn trực tiếp với AI"
+                            [nzTooltipTitle]="app.interview_date ? 'Mở phòng phỏng vấn trực tiếp với AI' : 'Cần đặt lịch trước khi vào Phỏng vấn AI'"
                           >
                                 Vào phỏng vấn
                           </button>
@@ -769,12 +785,10 @@
                               nzSize="small"
                               nzType="dashed"
                               class="btn-pass-round"
-                              nz-popconfirm
-                              nzPopconfirmTitle="Xác nhận chuyển ứng viên sang Vòng 2: Phỏng vấn?"
-                              (nzOnConfirm)="updateStatus(app, 'interviewing')"
+                              (click)="openScheduleInterview(app)"
                               [disabled]="transitioningApplicationId() !== null"
                             >
-                              Đạt vòng
+                              {{ app.interview_date ? 'Đổi lịch' : 'Đặt lịch & đạt vòng' }}
                             </button>
 
                             <button
@@ -791,11 +805,9 @@
                               <ul nz-menu>
                                 <li
                                   nz-menu-item
-                                  nz-popconfirm
-                                  nzPopconfirmTitle="Chuyển sang Vòng 2 - Phỏng vấn?"
-                                  (nzOnConfirm)="updateStatus(app, 'interviewing')"
+                                  (click)="openScheduleInterview(app)"
                                 >
-                                  <span nz-icon nzType="arrow-right"></span> Sang Vòng 2: Phỏng vấn
+                                  <span nz-icon nzType="calendar"></span> Đặt lịch để sang Vòng 2
                                 </li>
                                 <li
                                   nz-menu-item

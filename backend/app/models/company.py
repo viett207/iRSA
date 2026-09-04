@@ -27,4 +27,7 @@ class Company(Base, TimestampMixin):
 
     __table_args__ = (
         Index("ix_companies_name", "company_name"),
+        Index("ix_companies_industry", "industry"),
+        Index("ix_companies_location", "location"),
+        Index("ix_companies_created_at", "created_at"),
     )

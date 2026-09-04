@@ -1,25 +1,15 @@
 import { Routes } from '@angular/router';
 import { authGuard, hrGuard, adminGuard } from './core/auth/auth.guard';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
-import { LoginComponent } from './pages/login/login.component';
-import { HRRegisterComponent } from './pages/hr-register/hr-register.component';
-import { DashboardComponent } from './pages/dashboard/dashboard.component';
-import { ReportsComponent } from './pages/reports/reports.component';
-import { UsersComponent } from './pages/users/users.component';
-import { CompaniesComponent } from './pages/companies/companies.component';
-import { CompanyDetailComponent } from './pages/company-detail/company-detail.component';
-import { ApplicationsComponent } from './pages/applications/applications.component';
-import { CandidatesComponent } from './pages/candidates/candidates.component';
-
 
 export const routes: Routes = [
   {
     path: 'login',
-    component: LoginComponent,
+    loadComponent: () => import('./pages/login/login.component').then((m) => m.LoginComponent),
   },
   {
     path: 'register-hr',
-    component: HRRegisterComponent,
+    loadComponent: () => import('./pages/hr-register/hr-register.component').then((m) => m.HRRegisterComponent),
   },
   {
     path: '',
@@ -27,19 +17,19 @@ export const routes: Routes = [
     canActivate: [hrGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard', component: DashboardComponent },
+      { path: 'dashboard', loadComponent: () => import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent) },
       {
         path: 'jobs',
         loadChildren: () =>
           import('./features/jobs/jobs.routes').then((m) => m.JOB_ROUTES),
       },
-      { path: 'applications', component: ApplicationsComponent },
-      { path: 'candidates', component: CandidatesComponent },
-      { path: 'reports', component: ReportsComponent },
-      { path: 'users', component: UsersComponent, canActivate: [adminGuard] },
-      { path: 'companies', component: CompaniesComponent, canActivate: [adminGuard] },
-      { path: 'companies/:id', component: CompanyDetailComponent, canActivate: [adminGuard] },
-      { path: 'approvals', component: UsersComponent, canActivate: [adminGuard], data: { accountMode: 'pending' } },
+      { path: 'applications', loadComponent: () => import('./pages/applications/applications.component').then((m) => m.ApplicationsComponent) },
+      { path: 'candidates', loadComponent: () => import('./pages/candidates/candidates.component').then((m) => m.CandidatesComponent) },
+      { path: 'reports', loadComponent: () => import('./pages/reports/reports.component').then((m) => m.ReportsComponent) },
+      { path: 'users', loadComponent: () => import('./pages/users/users.component').then((m) => m.UsersComponent), canActivate: [adminGuard] },
+      { path: 'companies', loadComponent: () => import('./pages/companies/companies.component').then((m) => m.CompaniesComponent), canActivate: [adminGuard] },
+      { path: 'companies/:id', loadComponent: () => import('./pages/company-detail/company-detail.component').then((m) => m.CompanyDetailComponent), canActivate: [adminGuard] },
+      { path: 'approvals', loadComponent: () => import('./pages/users/users.component').then((m) => m.UsersComponent), canActivate: [adminGuard], data: { accountMode: 'pending' } },
     ],
   },
   { path: '**', redirectTo: '' },

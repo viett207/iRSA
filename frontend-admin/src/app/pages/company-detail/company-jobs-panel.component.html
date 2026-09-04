@@ -1,0 +1,59 @@
+<section class="jobs-panel" id="company-jobs" aria-labelledby="company-jobs-title">
+  <header class="panel-heading">
+    <div>
+      <span class="section-kicker">HOẠT ĐỘNG TUYỂN DỤNG</span>
+      <h2 id="company-jobs-title">Tin tuyển dụng</h2>
+      <p>Tìm kiếm, theo dõi hiệu quả và mở nhanh vị trí cần xử lý.</p>
+    </div>
+    <div class="summary">
+      <span><strong>{{ activeJobs() }}</strong> đang tuyển</span>
+      @if (withoutApplications() > 0) { <span class="attention"><strong>{{ withoutApplications() }}</strong> chưa có hồ sơ</span> }
+    </div>
+  </header>
+
+  @if (jobs().length) {
+    <div class="toolbar">
+      <input nz-input type="search" placeholder="Tìm theo vị trí, phòng ban, địa điểm..." [ngModel]="search()" (ngModelChange)="updateSearch($event)" />
+      <nz-select [ngModel]="status()" (ngModelChange)="updateStatus($event)" aria-label="Lọc trạng thái tin">
+        <nz-option nzValue="all" nzLabel="Tất cả trạng thái"></nz-option>
+        <nz-option nzValue="active" nzLabel="Đang tuyển"></nz-option>
+        <nz-option nzValue="pending_approval" nzLabel="Chờ duyệt"></nz-option>
+        <nz-option nzValue="draft" nzLabel="Bản nháp"></nz-option>
+        <nz-option nzValue="closed" nzLabel="Đã đóng"></nz-option>
+      </nz-select>
+      <nz-select [ngModel]="sort()" (ngModelChange)="updateSort($event)" aria-label="Sắp xếp tin">
+        <nz-option nzValue="newest" nzLabel="Mới nhất"></nz-option>
+        <nz-option nzValue="applications" nzLabel="Nhiều hồ sơ nhất"></nz-option>
+        <nz-option nzValue="title" nzLabel="Tên vị trí A–Z"></nz-option>
+      </nz-select>
+      @if (hasFilters()) { <button type="button" class="clear-filter" (click)="clearFilters()">Xóa lọc</button> }
+    </div>
+
+    <div class="table-heading"><span>Vị trí tuyển dụng</span><span>Trạng thái</span><span>Hồ sơ</span><span></span></div>
+    <div class="job-list" aria-live="polite">
+      @for (job of visibleJobs(); track job.id) {
+        <a class="job-row" [routerLink]="['/jobs', job.id]">
+          <div class="job-primary">
+            <strong>{{ job.title_vi }}</strong>
+            <div class="job-meta">
+              @if (job.department) { <span>{{ job.department }}</span> }
+              @if (job.location) { <span>{{ job.location }}</span> }
+              <span>{{ formatDate(job.created_at) }}</span>
+            </div>
+          </div>
+          <span class="job-status" [class]="'job-status job-status--' + statusClass(job.status)">{{ statusLabel(job.status) }}</span>
+          <div class="applications"><strong>{{ job.applications_count }}</strong><span>hồ sơ</span></div>
+          <span class="row-arrow">›</span>
+        </a>
+      }
+    </div>
+
+    @if (filteredJobs().length === 0) {
+      <div class="empty-filter"><strong>Không tìm thấy tin phù hợp</strong><p>Thử thay đổi từ khóa hoặc trạng thái.</p><button type="button" (click)="clearFilters()">Đặt lại bộ lọc</button></div>
+    } @else {
+      <footer><span>Hiển thị {{ visibleJobs().length }} trên {{ filteredJobs().length }} tin</span><div><button type="button" [disabled]="page() === 1" (click)="changePage(-1)">‹</button><strong>{{ page() }} / {{ totalPages() }}</strong><button type="button" [disabled]="page() === totalPages()" (click)="changePage(1)">›</button></div></footer>
+    }
+  } @else {
+    <nz-empty nzNotFoundContent="Công ty này chưa tạo tin tuyển dụng nào"></nz-empty>
+  }
+</section>

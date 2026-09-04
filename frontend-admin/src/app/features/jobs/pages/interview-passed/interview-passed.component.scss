@@ -163,7 +163,7 @@
 .result-missing strong, .result-missing small { display: block; }
 .result-missing strong { color: #755a2e; font-size: 13px; }
 .result-missing small { margin-top: 4px; color: #92929a; font-size: 12px; }
-.status-badge { display: inline-flex; padding: 5px 9px; border-radius: 999px; background: #f5eddd; color: #755a2e; font-size: 12px; font-weight: 700; }
+.status-badge { display: inline-flex; align-items: center; flex-wrap: nowrap; padding: 5px 9px; border-radius: 999px; background: #f5eddd; color: #755a2e; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .status-badge[data-status='hired'] { background: #e8f0ea; color: #47604f; }
 .updated-date { color: #65656d; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; }
 .row-actions { display: flex; align-items: flex-start; flex-direction: column; gap: 7px; }

@@ -31,9 +31,9 @@
 
 .page-title {
   font-size: 26px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 4px 0;
+  font-weight: 750;
+  color: #27272a;
+  margin: 3px 0 5px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -44,9 +44,17 @@
   }
 }
 
+.page-eyebrow {
+  display: block;
+  color: #85858e;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: .1em;
+}
+
 .page-subtitle {
   font-size: 14px;
-  color: #64748b;
+  color: #73737c;
   margin: 0;
 }
 
@@ -101,6 +109,10 @@
     color: #8a8a92;
     border-left: 1px solid #ddd8cd;
     border-radius: 0;
+    max-width: 92px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -119,7 +131,7 @@
 
 .toolbar-left {
   display: grid;
-  grid-template-columns: minmax(210px, 1.5fr) minmax(150px, 1.1fr) 142px 145px 166px 148px;
+  grid-template-columns: minmax(210px, 1.5fr) minmax(150px, 1.1fr) repeat(2, minmax(138px, 0.9fr)) minmax(138px, 0.9fr) minmax(166px, 1fr) minmax(138px, 0.9fr);
   flex: 1;
   align-items: center;
   gap: 8px;
@@ -132,6 +144,7 @@
 
 .job-select-filter,
 .schedule-select-filter,
+.confirmation-select-filter,
 .priority-select-filter,
 .question-select-filter,
 .sort-select-filter { width: 100%; }
@@ -344,23 +357,29 @@
   gap: 7px;
 
   strong {
+    display: -webkit-box;
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     color: #27272a;
     font-size: 12.5px;
     font-weight: 700;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 }
 
 .candidate-job-name {
+  display: -webkit-box;
   overflow: hidden;
   margin-top: 2px;
   color: #6b7280;
   font-size: 12px;
   font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .candidate-score-line {
@@ -421,6 +440,8 @@
   white-space: nowrap;
 
   &[data-status='pending-confirmation'] { background: #f3eee2; color: #826a3e; }
+  &[data-status='confirmed'] { background: #e8f0ea; color: #47604f; }
+  &[data-status='reschedule-requested'] { background: #e9eef4; color: #4e6079; }
   &[data-status='completed'] { background: #e9efea; color: #526a59; }
   &[data-status='cancelled'] { background: #f2e9e7; color: #8a5b51; }
 }
@@ -473,6 +494,25 @@
   gap: 12px;
 
   .question-readiness-badge { margin-top: 0; }
+}
+
+.workspace-chat-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  min-height: 31px;
+  padding: 0;
+  border: 1px solid #ddd9cf;
+  border-radius: 7px;
+  color: #4f4f56;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover { border-color: #aaa69c; background: #faf9f6; color: #27272a; }
+  span { font-size: 15px; }
 }
 
 .workspace-tabs {
@@ -2491,6 +2531,6 @@
 
 @media (min-width: 1101px) and (max-width: 1450px) {
   .shortlisted-toolbar { align-items: stretch; flex-direction: column; }
-  .toolbar-left { grid-template-columns: minmax(260px, 1.5fr) repeat(4, minmax(145px, 1fr)); }
+  .toolbar-left { grid-template-columns: minmax(260px, 1.5fr) repeat(3, minmax(145px, 1fr)); }
   .toolbar-right { justify-content: flex-end; }
 }
